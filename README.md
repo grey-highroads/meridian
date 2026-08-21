@@ -19,7 +19,6 @@ In this order. Each answers one question and none restates another.
 | `docs/meridian-thesis-and-architecture.md` | What is Meridian? Three layers, the seam, what it is not. Authority on scope. |
 | `docs/meridian-roadmap.md` | What gets built, in what order, and what done means. |
 | `docs/meridian-seam-with-jim.md` | Where the line with Jim's system sits, what crosses it, what we need from his side. Written for his agent. |
-| `docs/meridian-rules-of-the-road.md` | Why each working rule exists, with the incident that produced it. |
 
 Changes to the thesis are decisions, recorded as such. Findings that conflict with it are recorded before anything is designed around them.
 
@@ -36,6 +35,8 @@ Step 1 of the roadmap. First artist: Dierks Bentley.
 `docs/deferred-work.md` holds what is known and not yet done. Read it fresh; every handoff ages the moment it is written.
 
 ## Working here
+
+Full rules for anyone pushing to this repo are in `CONTRIBUTING.md`. The short version:
 
 - Read the thesis before forming any opinion. Read the seam document before forming any opinion about Jim's side.
 - Fetch from the committed tree before any judgment. Never from memory or local copies.
