@@ -7,23 +7,16 @@ dist/
 # ADR 0016 step 1 prototype inputs and outputs. Real client brain payloads,
 # product records, and captured suggestion sets stay out of the repo per the
 # ADR 0004 separation of shared platform and private brand data.
-fixtures/adr-0016-step1-brains/
-fixtures/adr-0016-step1-products/
-fixtures/adr-0016-step1-captures/
 
 # ADR 0017 step 1 gate inputs. The two brands' currently approved guardrails and
 # lived-world rejects are client state, held here for the fixture gate and never
 # committed, per ADR 0004 and the ADR 0016 step 1 precedent.
-fixtures/adr-0017-approved-refusals/
 
 # ADR 0017 finding 2 investigation inputs and step 2 guidance-principle inputs.
 # Both brands' approved claims documents and approved guidance principles are
 # client state, held for the gate work and never committed.
-fixtures/adr-0017-claims-inputs/
 
 # ADR 0018 phase 0 baseline inputs and captures. Approved brains, accepted
 # protections, and product records are client state and never committed, per
 # ADR 0004 and the ADR 0016 and 0017 precedents. Captures stay out because
 # they embed the brains verbatim.
-fixtures/adr-0018-phase0-inputs/
-fixtures/adr-0018-phase0-captures/

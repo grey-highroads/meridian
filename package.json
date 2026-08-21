@@ -9,7 +9,7 @@
     "build": "vite build",
     "predev": "pnpm run build",
     "dev": "node scripts/dev-server.js",
-    "test": "node --test",
+    "test": "node --test \"test/**/*.test.js\"",
     "validate:fixtures": "node scripts/validate-fixtures.js"
   },
   "engines": {
