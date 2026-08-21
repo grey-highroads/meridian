@@ -239,7 +239,7 @@ const formatSizes = {
 
 // The synthesizer stores brandDescription as a complete sentence, and it
 // usually opens with the brand name. The template here supplied the subject as
-// well, which produced "MycoPop is MycoPop is a functional mushroom energy
+// well, which produced "Brand is Brand is a functional mushroom energy
 // drink." When the description already names the brand, use it as written.
 function brandOpener(approvedBrain) {
   const name = cleanText(approvedBrain.brandName);

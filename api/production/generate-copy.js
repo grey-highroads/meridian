@@ -406,7 +406,7 @@ async function handleSceneBrief({ body, brain, product, apiKey, response }) {
   if (dossier.desiredFeeling) context.push(`DESIRED FEELING: ${dossier.desiredFeeling}`);
   // Step 1 finding: two channels describe light in the same prompt. When the
   // grammar owns light, the dossier line stops being sent rather than being
-  // narrowed, because on Dialog Health it is not about light at all: it lists
+  // narrowed, because on one client it was not about light at all: it listed
   // message threads, console views, forms, and canonical asset files. Keeping
   // it beside the grammar's LIGHT section sends the writer two answers.
   if (dossier.materials?.length && !grammarMode) context.push(`MATERIALS AND LIGHT: ${dossier.materials.join(", ")}`);

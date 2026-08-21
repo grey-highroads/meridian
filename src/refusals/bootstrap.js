@@ -18,15 +18,15 @@
 const SLATES = {};
 
 // Real client ids are not the slate keys. `clients/store.js#create` builds an
-// id as `slugify(name)-shortId`, so MycoPop is stored as mycopop-fbad242f and
-// Dialog Health as dialog-health followed by its own suffix. Matching on the
+// id as `slugify(name)-shortId`, so a client named Example is stored as
+// example followed by a hyphen and its own suffix. Matching on the
 // slug plus a hyphen is therefore a match against the documented way ids are
 // made rather than a guess about their shape, and reading the client index to
 // resolve by name would add a blob call and a dependency on that index being
 // current to learn something the id already states.
 //
-// The hyphen boundary is load bearing: without it mycopop would also match a
-// later client named MycoPop2. An exact match is accepted too, so fixtures and
+// The hyphen boundary is load bearing: without it example would also match a
+// later client named Example2. An exact match is accepted too, so fixtures and
 // local runs that use the bare key still resolve.
 //
 // One function serves both the availability check and the seed itself. If the

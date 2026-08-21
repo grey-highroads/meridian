@@ -294,3 +294,7 @@ A replacement should measure whether every compiled statement is a physical fact
 ## Three model names in the copied code
 
 Recorded 2026-08-21 at the Meridian fork, from the tree at BWS `b11e994`. The code reads three different OpenAI models. Brain synthesis (`src/brand-brain/chat-completions-provider.js`) and products (`src/products/service.js`) default to `gpt-5.6` when `OPENAI_MODEL` is unset. Copy generation (`src/copy/generate.js`, `src/claims/copy-audit.js`, `api/production/generate-copy.js`) is hard-coded to `gpt-4o`. Image rendering (`src/renderers/openai-images.js`, `src/production/composite.js`) is hard-coded to `gpt-image-2`. One environment value does not govern all three. `OPENAI_MODEL` is left unset on the Meridian deployment so the brain uses `gpt-5.6`. Decide in step 2 which of these paths survive before consolidating the setting.
+
+## Two-commit deploy is still required on the Meridian project
+
+Verified 2026-08-21 at the fork. Commit e773ca7 on main produced no Vercel deployment in 150 seconds. Trigger commit 105057f on the same tree deployed in under two minutes. The BWS pattern carries over: every content commit is followed by a trigger commit. Find the cause in step 2 (likely the Git Data API push not firing the integration webhook) and drop the rule if it can be fixed at the project level.
