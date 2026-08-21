@@ -6,7 +6,7 @@ Purpose: roadmap step 2. Four maps, plus a fifth on decision records, plus the b
 
 Every entry is labeled Verified (read from the tree at head), Reasoned (derived from something verified), or Assumed (needs checking).
 
-Note on the fifth map: roadmap step 2 authorizes four maps and one blockers list. The decisions map was added by the instruction that produced this file. It is recorded so the count is not mistaken for drift. Verified against `docs/meridian-roadmap.md` at head.
+Note on the fifth map: roadmap step 2 authorizes four maps and one blockers list. The decisions map makes five. It is here because the owner ruled that decision records are classified in step 2, not because the instruction added it. Verified against `docs/meridian-roadmap.md` at head for the count, and by owner ruling for the fifth map.
 
 ---
 
@@ -248,38 +248,39 @@ Everything that stops one assignment making the fourteen-step loop in `docs/meri
 6. **No artboard object and no artboard version.** Steps 5, 6, 7, 8, and 9 all address one. The nearest live object is an output record with a `jobId`, no version chain, and no brief version. Verified.
 7. **No revision path against a version.** Step 7 and step 8 need feedback tied to a specific artboard version. Nothing in the production store models a revision. Verified.
 8. **No production intent record.** Step 14 freezes a version with the job, brief, and artboard identifiers. No such record exists. Verified.
+9. **No technical profile object.** Step 6 shows technical details for the tour's screens that need a decision, and step 14 carries a technical profile reference into production intent. Nothing in the tree models a venue, a screen, or a profile. Verified.
 
 ### No seam
 
-9. **No stand-in for Jim.** Steps 4, 5, 8, and 9 all cross the seam. Nothing in the tree sends a brief out or accepts an artboard back. Verified.
-10. **No job identifier that survives the loop.** `jobId` exists in production Blob paths and refers to a render job, not to an assignment. Verified.
+10. **No stand-in for Jim.** Steps 4, 5, 8, and 9 all cross the seam. Nothing in the tree sends a brief out or accepts an artboard back. Verified.
+11. **No job identifier that survives the loop.** `jobId` exists in production Blob paths and refers to a render job, not to an assignment. Verified.
 
 ### No people
 
-11. **One shared password, no roles.** Steps 10 through 13 need Higher Roads approval and a separate client reviewer login. `middleware.js` and `src/server/http.js` check one installation password with no user identity. Verified.
-12. **`resolveClientId` trusts the caller.** Any authenticated request can name any client id in a header. A client reviewer cannot be given a scoped view until this closes. Verified from the `PROTOTYPE ONLY` comment and the code under it.
-13. **No permission model.** The thesis puts permissions in the organization layer and has tours read them. No permission field exists anywhere in the tree. Verified.
-14. **No distinct approval actions.** Approve for client viewing, return for revision, client approval, and promote to canon are four actions. The tree has brain approval and product approval, both single-actor. Verified.
+12. **One shared password, no roles.** Steps 10 through 13 need Higher Roads approval and a separate client reviewer login. `middleware.js` and `src/server/http.js` check one installation password with no user identity. Verified.
+13. **`resolveClientId` trusts the caller.** Any authenticated request can name any client id in a header. A client reviewer cannot be given a scoped view until this closes. Verified from the `PROTOTYPE ONLY` comment and the code under it.
+14. **No permission model.** The thesis puts permissions in the organization layer and has tours read them. No permission field exists anywhere in the tree. Verified.
+15. **No distinct approval actions.** Approve for client viewing, return for revision, client approval, and promote to canon are four actions. The tree has brain approval and product approval, both single-actor. Verified.
 
 ### Known damage on the artist layer
 
-15. **Rebuild erases the approved brain.** `src/brand-brain/service.js` writes `approvedResult: null` on a non-incremental synthesis and the store overwrites in place. The roadmap puts the candidate-not-erase fix before intake runs. Verified from the code and from `docs/deferred-work.md`.
-16. **Campaigns are seeded in memory and shared across clients.** Whatever a campaign becomes, its state today is not client-scoped and does not survive a reload. Verified.
+16. **Rebuild erases the approved brain.** `src/brand-brain/service.js` writes `approvedResult: null` on a non-incremental synthesis and the store overwrites in place. The roadmap puts the candidate-not-erase fix before intake runs. Verified from the code and from `docs/deferred-work.md`.
+17. **Campaigns are seeded in memory and shared across clients.** Whatever a campaign becomes, its state today is not client-scoped and does not survive a reload. Verified.
 
 ### Five tests fail today
 
 Run at head with Node 22.22.2: 125 tests, 120 pass, 5 fail. Verified.
 
-17. `the brand world package is deterministic and preserves the approved Brain version`, `test/production-openai.test.js:49`. The compiled prompt no longer carries the creative-direction sentence the test matches on.
-18. `a locked asset uses the edits endpoint with format-aware protection`, `test/production-openai.test.js:157`. The protection block no longer contains the phrase the test matches on.
-19. `integrationSentence adds format-specific physical behaviors`, `test/prompt-craft.test.js:31`.
-20. `locked product asset gets format-aware protection with state lock`, `test/prompt-craft.test.js:85`.
-21. `non-stateful product format skips the state-lock sentence`, `test/prompt-craft.test.js:96`.
+18. `the brand world package is deterministic and preserves the approved Brain version`, `test/production-openai.test.js:49`. The compiled prompt no longer carries the creative-direction sentence the test matches on.
+19. `a locked asset uses the edits endpoint with format-aware protection`, `test/production-openai.test.js:157`. The protection block no longer contains the phrase the test matches on.
+20. `integrationSentence adds format-specific physical behaviors`, `test/prompt-craft.test.js:31`.
+21. `locked product asset gets format-aware protection with state lock`, `test/prompt-craft.test.js:85`.
+22. `non-stateful product format skips the state-lock sentence`, `test/prompt-craft.test.js:96`.
 
 All five assert exact strings against output from `src/production/prompt-craft.js` and `src/production/package.js`. The wording in those two files changed and the assertions did not follow. Reasoned from reading both sides. All five sit on the prompt compile path, which the vocabulary map places on Jim's side.
 
 ### Platform
 
-22. **Two-commit deploy is still required.** Verified at the fork on 2026-08-21 and recorded in `docs/deferred-work.md`. Every content commit needs a trigger commit behind it.
-23. **Function count is at twelve.** Twelve files under `api/` means twelve serverless functions. `docs/deferred-work.md` names a twelve-function Hobby ceiling; `README.md` says this project is on a paid tier. Which limit applies here is unverified. Assumed until the Vercel project settings are read.
-24. **The repo still calls itself Brand World System.** `package.json` name, the `brand-world-system` Blob prefix on every stored path, and `BRAND_WORLD_ACCESS_PASSWORD`. None of it blocks the loop mechanically. Recorded because a client reviewer in step 12 reaches a page behind a password named for another product. Reasoned.
+23. **Two-commit deploy, unsettled.** Two observations point opposite ways. Commit `e773ca7` at the fork produced no deployment in 150 seconds and the trigger commit on the same tree deployed, which is what `docs/deferred-work.md` records. Content commit `4e28e1b` on 2026-08-21 fired its own production deployment three seconds ahead of its trigger commit. Assumed until one deliberate test settles it. The rule stands meanwhile.
+24. **Function count is at twelve.** Twelve files under `api/` means twelve serverless functions. Verified by count. The Vercel project is on Pro, Verified by owner statement on 2026-08-21, so the twelve-function Hobby ceiling recorded in `docs/deferred-work.md` is not the limit here.
+25. **The repo still calls itself Brand World System.** `package.json` name, the `brand-world-system` Blob prefix on every stored path, and `BRAND_WORLD_ACCESS_PASSWORD`. None of it blocks the loop mechanically. Recorded because a client reviewer in step 12 reaches a page behind a password named for another product. Reasoned.
