@@ -33,6 +33,10 @@ If your change touches the boundary with Jim's system, read `docs/meridian-seam-
 - No generic platform layer. Shared code is extracted only after two real uses exist.
 - Code that is uncertain goes in `/legacy` with a reason, an owner, a decision date, and a deletion default. Nothing lives there indefinitely.
 
+## The /legacy folder
+
+`/legacy` holds BWS client work that came across with the fork. It is kept for reference while the step 2 maps are made. Grey owns it. It is deleted when the real Jim adapter lands in roadmap step 7. If a pilot workflow references a file in there, that file is moved out of `/legacy` first, and the deletion is never postponed.
+
 ## Writing rules
 
 These apply to comments, commit messages, interface copy, generated text, and docs.
