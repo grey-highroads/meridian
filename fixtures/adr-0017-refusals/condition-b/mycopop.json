@@ -1,0 +1,140 @@
+{
+  "fixture": "adr-0017-step2-condition-b",
+  "client": "mycopop",
+  "brandName": "MycoPop",
+  "status": "Held-out fixture for the ADR 0017 step 2 matcher gate. Built from the cycle 2 capture alone, so the S1, S2, and S3 prohibitions are matched against a document whose wording never saw them.",
+  "authoredFrom": {
+    "note": "Entries are the step 1 entries whose concern is reached by at least one cycle 2 grammar-reject prohibition, carried over unchanged in wording and ruled active. Nothing was rewritten for this condition."
+  },
+  "schema_version": "1.0.0",
+  "version": 1,
+  "updated_at": "2026-08-17T00:00:00.000Z",
+  "entries": [
+    {
+      "id": "ref-myc-property",
+      "concern": "Borrowed entertainment property in frame",
+      "statement": "Do not show recognizable characters, title screens, cabinet art, controllers, logos, type treatments, package designs, or playfields belonging to an existing entertainment property. Retro objects and symbols in frame are original to MycoPop.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "High",
+        "derivedFrom": "The 8-bit style source is an outside party's material supplied as creative direction. Reached by all five grammar-reject captures and by the regenerated guardrails naming original retro forms."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-pixel-layer",
+      "concern": "Retro direction pasted on as a graphic layer",
+      "statement": "Do not add game interfaces, score bars, lives counters, sprite overlays, pixel filters, or scan lines over a photograph. Build retro cues as physical sets, props, surfaces, and light inside the frame.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "High",
+        "derivedFrom": "The 8-bit style source asks for a physical brand version of an outside reference rather than a copied graphic treatment. Reached by four of five grammar-reject captures."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-refreshment",
+      "concern": "Refreshment simulated rather than recorded",
+      "statement": "Do not signal coldness through color washes, stock splashes, lens flares, weather panels, or stickers added after capture, and do not present the hero can warm, dusty, or dry. Record cold metal, condensation, ice, water, fruit, and daylight in camera.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "High",
+        "derivedFrom": "The Odyssey Screenshot was supplied to raise the sense of refreshment as a physical quality rather than as a surface treatment. Reached by all five grammar-reject captures."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-competitor",
+      "concern": "Competitor execution reproduced",
+      "statement": "Do not reproduce another beverage's can design, color assignments, typography, slogans, product lineup, retail composition, campaign props, or recurring social layout.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail on learning without copying, naming the Odyssey Screenshot as a competitor supplied only to inspire a more refreshing appearance. Reached by four grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-artwork",
+      "concern": "Identity artwork rebuilt from a screenshot",
+      "statement": "Do not redraw, recolor, relabel, approximate, or reconstruct the MycoPop logo or can artwork from a screenshot, and do not photograph a screen capture as if it were finished artwork. Photograph the current physical package, or place supplied master files when they exist.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail protecting missing master assets: no logo master, packaging artwork, typography specification, or approved color values were supplied, and screenshots document current use without becoming production artwork. Reached by four grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-medicine",
+      "concern": "The drink staged as medicine",
+      "statement": "Do not place the can in white examination rooms, dosage rows, medicine cabinets, laboratory coats, brain scans, anatomical displays, or before-and-after treatment layouts, and do not stage it among scattered powders, tinctures, pill piles, or apothecary clutter. Keep it in a beverage context.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of chalky or medicinal formats, alongside the FDA disclaimer and disease-claim prohibition on the Official Website. Reached by all five grammar-reject captures, three regenerated guardrails, and three regenerated lived-world rejects."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    }
+  ]
+}

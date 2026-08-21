@@ -1,0 +1,420 @@
+{
+  "mycopop": {
+    "grammar:cycle1:No copied game worlds": [
+      "ref-myc-property"
+    ],
+    "grammar:cycle2:No borrowed game property": [
+      "ref-myc-property"
+    ],
+    "grammar:S1:No Borrowed Game Property": [
+      "ref-myc-property"
+    ],
+    "grammar:S2:No borrowed properties": [
+      "ref-myc-property"
+    ],
+    "grammar:S3:No readable game property": [
+      "ref-myc-property"
+    ],
+    "guardrail:S1:Create original retro forms": [
+      "ref-myc-property"
+    ],
+    "guardrail:S2:Build an original world": [
+      "ref-myc-property"
+    ],
+    "guardrail:S3:Build an original retro world": [
+      "ref-myc-property"
+    ],
+    "grammar:cycle2:No pasted pixel layer": [
+      "ref-myc-pixel-layer"
+    ],
+    "grammar:S1:No Pixel Overlay": [
+      "ref-myc-pixel-layer"
+    ],
+    "grammar:S2:No pasted game layer": [
+      "ref-myc-pixel-layer"
+    ],
+    "grammar:S3:No pasted pixel layer": [
+      "ref-myc-pixel-layer"
+    ],
+    "grammar:cycle1:No costume nostalgia": [
+      "ref-myc-costume"
+    ],
+    "grammar:cycle1:Limit artificial forests": [
+      "ref-myc-fantasy-forest"
+    ],
+    "grammar:cycle1:No warm dry hero": [
+      "ref-myc-refreshment"
+    ],
+    "grammar:cycle2:No borrowed refresh filter": [
+      "ref-myc-refreshment"
+    ],
+    "grammar:S1:No Borrowed Filter": [
+      "ref-myc-refreshment"
+    ],
+    "grammar:S2:No freshness filter": [
+      "ref-myc-refreshment"
+    ],
+    "grammar:S3:No borrowed freshness layer": [
+      "ref-myc-refreshment"
+    ],
+    "grammar:cycle2:No competitor imitation": [
+      "ref-myc-competitor"
+    ],
+    "grammar:S1:No Competitor Copy": [
+      "ref-myc-competitor"
+    ],
+    "grammar:S2:No competitor copying": [
+      "ref-myc-competitor"
+    ],
+    "grammar:S3:No competitor property": [
+      "ref-myc-competitor"
+    ],
+    "guardrail:S1:Own refreshment": [
+      "ref-myc-competitor"
+    ],
+    "guardrail:S3:Own refreshment physically": [
+      "ref-myc-competitor"
+    ],
+    "approved-guardrail:3": [
+      "ref-myc-competitor"
+    ],
+    "grammar:cycle2:No package approximation": [
+      "ref-myc-artwork"
+    ],
+    "grammar:S1:No Rebuilt Artwork": [
+      "ref-myc-artwork"
+    ],
+    "grammar:S2:No rebuilt identity": [
+      "ref-myc-artwork"
+    ],
+    "guardrail:S1:Protect brand artwork": [
+      "ref-myc-artwork"
+    ],
+    "guardrail:S2:Do not use screenshots as masters": [
+      "ref-myc-artwork"
+    ],
+    "approved-guardrail:4": [
+      "ref-myc-artwork"
+    ],
+    "grammar:cycle2:No clinical staging": [
+      "ref-myc-medicine"
+    ],
+    "grammar:cycle2:No murky supplement cues": [
+      "ref-myc-medicine"
+    ],
+    "grammar:S1:No Clinical Staging": [
+      "ref-myc-medicine"
+    ],
+    "grammar:S2:No clinical staging": [
+      "ref-myc-medicine"
+    ],
+    "grammar:S3:No clinical staging": [
+      "ref-myc-medicine"
+    ],
+    "guardrail:S1:Stay beverage first": [
+      "ref-myc-medicine"
+    ],
+    "lwr:S1:2": [
+      "ref-myc-medicine"
+    ],
+    "lwr:S2:4": [
+      "ref-myc-medicine"
+    ],
+    "lwr:S3:4": [
+      "ref-myc-medicine"
+    ],
+    "approved-lwr:2": [
+      "ref-myc-medicine"
+    ],
+    "grammar:S1:No Unclear Child Use": [
+      "ref-myc-child-use"
+    ],
+    "lwr:S1:5": [
+      "ref-myc-child-use"
+    ],
+    "grammar:S3:No superhuman results": [
+      "ref-myc-transformation"
+    ],
+    "lwr:S1:1": [
+      "ref-myc-transformation"
+    ],
+    "guardrail:S1:Keep benefits qualified": [
+      "ref-myc-claims"
+    ],
+    "guardrail:S2:Keep health language qualified": [
+      "ref-myc-claims"
+    ],
+    "guardrail:S3:Keep health language responsible": [
+      "ref-myc-claims"
+    ],
+    "approved-guardrail:0": [
+      "ref-myc-claims"
+    ],
+    "guardrail:S1:Verify product facts": [
+      "ref-myc-unsupported-facts"
+    ],
+    "guardrail:S2:Tie proof to records": [
+      "ref-myc-unsupported-facts"
+    ],
+    "guardrail:S3:Make proof specific": [
+      "ref-myc-unsupported-facts"
+    ],
+    "guardrail:S2:Protect caffeine free positioning": [
+      "ref-myc-stimulant"
+    ],
+    "lwr:S1:3": [
+      "ref-myc-stimulant"
+    ],
+    "lwr:S3:3": [
+      "ref-myc-stimulant"
+    ],
+    "approved-guardrail:1": [
+      "ref-myc-stimulant"
+    ],
+    "approved-lwr:4": [
+      "ref-myc-stimulant"
+    ],
+    "guardrail:S2:Separate guidance from practice": [
+      "ref-myc-practice-as-rule"
+    ],
+    "guardrail:S3:Separate practice from rules": [
+      "ref-myc-practice-as-rule"
+    ],
+    "lwr:S1:0": [
+      "ref-myc-optimization-life"
+    ],
+    "lwr:S3:0": [
+      "ref-myc-optimization-life"
+    ],
+    "lwr:S1:4": [
+      "ref-myc-gamer-stereotype"
+    ],
+    "lwr:S2:0": [
+      "ref-myc-ritual-cost"
+    ],
+    "lwr:S2:2": [
+      "ref-myc-ritual-cost"
+    ],
+    "lwr:S3:2": [
+      "ref-myc-ritual-cost"
+    ],
+    "lwr:S2:1": [
+      "ref-myc-artificial-taste"
+    ],
+    "approved-lwr:1": [
+      "ref-myc-artificial-taste"
+    ],
+    "lwr:S2:3": [
+      "ref-myc-crash"
+    ],
+    "approved-lwr:0": [
+      "ref-myc-crash"
+    ],
+    "lwr:S3:1": [
+      "ref-myc-fear-wellness"
+    ],
+    "approved-guardrail:2": [
+      "ref-myc-direction-as-identity"
+    ],
+    "approved-guardrail:5": [
+      "ref-myc-testimony"
+    ],
+    "approved-lwr:3": [
+      "ref-myc-mysticism"
+    ],
+    "approved-lwr:5": [
+      "ref-myc-dense-science"
+    ]
+  },
+  "dialog-health": {
+    "grammar:cycle1:Anonymous message screens": [
+      "ref-dh-sender"
+    ],
+    "grammar:S2:No unclear sender": [
+      "ref-dh-sender"
+    ],
+    "grammar:cycle1:Empty office posing": [
+      "ref-dh-no-task"
+    ],
+    "grammar:S3:No empty care scenes": [
+      "ref-dh-no-task"
+    ],
+    "lwr:S3:3": [
+      "ref-dh-no-task"
+    ],
+    "grammar:cycle1:Unreadable screen clutter": [
+      "ref-dh-clutter"
+    ],
+    "grammar:cycle1:Exposed personal data": [
+      "ref-dh-personal-data"
+    ],
+    "grammar:cycle2:Visible private information": [
+      "ref-dh-personal-data"
+    ],
+    "grammar:S2:No exposed data": [
+      "ref-dh-personal-data"
+    ],
+    "grammar:S3:No exposed records": [
+      "ref-dh-personal-data"
+    ],
+    "guardrail:S2:Protect personal information": [
+      "ref-dh-personal-data"
+    ],
+    "grammar:cycle2:Rebuilt brand artwork": [
+      "ref-dh-logo-rebuild"
+    ],
+    "grammar:S1:No rebuilt logo": [
+      "ref-dh-logo-rebuild"
+    ],
+    "grammar:S2:No rebuilt logo": [
+      "ref-dh-logo-rebuild"
+    ],
+    "grammar:S3:No rebuilt identity": [
+      "ref-dh-logo-rebuild"
+    ],
+    "guardrail:S1:Protect supplied logo artwork": [
+      "ref-dh-logo-rebuild"
+    ],
+    "guardrail:S2:Protect supplied artwork": [
+      "ref-dh-logo-rebuild"
+    ],
+    "guardrail:S3:Protect approved identity assets": [
+      "ref-dh-logo-rebuild"
+    ],
+    "approved-guardrail:0": [
+      "ref-dh-logo-rebuild"
+    ],
+    "grammar:S1:No guessed green": [
+      "ref-dh-guessed-color"
+    ],
+    "guardrail:S1:Do not guess color values": [
+      "ref-dh-guessed-color"
+    ],
+    "grammar:cycle2:False clinical staging": [
+      "ref-dh-clinical-product"
+    ],
+    "grammar:cycle2:Generic phone spectacle": [
+      "ref-dh-unreal-tech"
+    ],
+    "approved-lwr:0": [
+      "ref-dh-unreal-tech"
+    ],
+    "grammar:cycle2:Sample identity confusion": [
+      "ref-dh-demo-as-fact"
+    ],
+    "grammar:S1:No invented interface": [
+      "ref-dh-demo-as-fact"
+    ],
+    "guardrail:S1:Separate evidence from guidance": [
+      "ref-dh-demo-as-fact"
+    ],
+    "guardrail:S3:Separate demonstration from proof": [
+      "ref-dh-demo-as-fact"
+    ],
+    "approved-guardrail:4": [
+      "ref-dh-demo-as-fact"
+    ],
+    "grammar:S1:No generic chat": [
+      "ref-dh-generic-category"
+    ],
+    "guardrail:S1:Keep the healthcare context": [
+      "ref-dh-generic-category"
+    ],
+    "guardrail:S2:Stay outcome connected": [
+      "ref-dh-generic-category"
+    ],
+    "guardrail:S3:Connect features to work": [
+      "ref-dh-generic-category"
+    ],
+    "lwr:S1:0": [
+      "ref-dh-generic-category"
+    ],
+    "lwr:S2:0": [
+      "ref-dh-generic-category"
+    ],
+    "lwr:S3:0": [
+      "ref-dh-generic-category"
+    ],
+    "approved-guardrail:2": [
+      "ref-dh-generic-category"
+    ],
+    "grammar:S1:No clinical theater": [
+      "ref-dh-clinical-theater"
+    ],
+    "grammar:S2:No clinical shorthand": [
+      "ref-dh-clinical-theater"
+    ],
+    "lwr:S2:2": [
+      "ref-dh-clinical-theater"
+    ],
+    "grammar:S2:No app fiction": [
+      "ref-dh-app-step"
+    ],
+    "guardrail:S2:Keep access simple": [
+      "ref-dh-app-step"
+    ],
+    "approved-lwr:2": [
+      "ref-dh-app-step"
+    ],
+    "grammar:S3:No visual overclaim": [
+      "ref-dh-overclaim"
+    ],
+    "guardrail:S1:Keep claims within scope": [
+      "ref-dh-overclaim"
+    ],
+    "guardrail:S2:Substantiate strong claims": [
+      "ref-dh-overclaim"
+    ],
+    "guardrail:S3:Substantiate strong claims": [
+      "ref-dh-overclaim"
+    ],
+    "approved-guardrail:1": [
+      "ref-dh-overclaim"
+    ],
+    "approved-lwr:3": [
+      "ref-dh-overclaim"
+    ],
+    "guardrail:S3:Keep people in the process": [
+      "ref-dh-automation"
+    ],
+    "lwr:S2:4": [
+      "ref-dh-automation"
+    ],
+    "lwr:S3:1": [
+      "ref-dh-automation"
+    ],
+    "approved-lwr:1": [
+      "ref-dh-automation"
+    ],
+    "lwr:S1:1": [
+      "ref-dh-frictionless"
+    ],
+    "lwr:S2:3": [
+      "ref-dh-frictionless"
+    ],
+    "lwr:S3:2": [
+      "ref-dh-frictionless"
+    ],
+    "lwr:S1:2": [
+      "ref-dh-roles"
+    ],
+    "lwr:S2:1": [
+      "ref-dh-roles"
+    ],
+    "lwr:S1:3": [
+      "ref-dh-patient-passive"
+    ],
+    "lwr:S3:4": [
+      "ref-dh-patient-passive"
+    ],
+    "approved-guardrail:3": [
+      "ref-dh-fear"
+    ],
+    "approved-lwr:4": [
+      "ref-dh-fear"
+    ],
+    "approved-lwr:5": [
+      "ref-dh-feature-inventory"
+    ]
+  }
+}

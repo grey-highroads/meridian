@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brand-world-system.local/schemas/v1/installation-profile.schema.json",
+  "title": "Installation profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "installation_id", "profile_version", "core_version", "brand_id", "isolation", "configured_preset_ids", "allowed_capabilities"],
+  "properties": {
+    "schema_version": { "$ref": "common.schema.json#/$defs/schema_version" },
+    "installation_id": { "$ref": "common.schema.json#/$defs/identifier" },
+    "profile_version": { "$ref": "common.schema.json#/$defs/version" },
+    "core_version": { "$ref": "common.schema.json#/$defs/version" },
+    "brand_id": { "$ref": "common.schema.json#/$defs/identifier" },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "data_namespace"],
+      "properties": {
+        "mode": { "const": "isolated_client_installation" },
+        "data_namespace": { "$ref": "common.schema.json#/$defs/identifier" }
+      }
+    },
+    "configured_preset_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "common.schema.json#/$defs/identifier" } },
+    "allowed_capabilities": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "common.schema.json#/$defs/identifier" } }
+  }
+}

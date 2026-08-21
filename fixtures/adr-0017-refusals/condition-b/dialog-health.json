@@ -1,0 +1,119 @@
+{
+  "fixture": "adr-0017-step2-condition-b",
+  "client": "dialog-health",
+  "brandName": "Dialog Health",
+  "status": "Held-out fixture for the ADR 0017 step 2 matcher gate. Built from the cycle 2 capture alone, so the S1, S2, and S3 prohibitions are matched against a document whose wording never saw them.",
+  "authoredFrom": {
+    "note": "Entries are the step 1 entries whose concern is reached by at least one cycle 2 grammar-reject prohibition, carried over unchanged in wording and ruled active. Nothing was rewritten for this condition."
+  },
+  "schema_version": "1.0.0",
+  "version": 1,
+  "updated_at": "2026-08-17T00:00:00.000Z",
+  "entries": [
+    {
+      "id": "ref-dh-personal-data",
+      "concern": "Real personal or health information in frame",
+      "statement": "Do not show real names, dates of birth, diagnoses, phone numbers, account details, clinical results, or message histories on any screen or paper surface. Visible content is invented.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The Official Website states privacy is paramount and describes the platform as HIPAA compliant. Reached by four grammar-reject captures and one regenerated guardrail. No approved guardrail states this rule."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-logo-rebuild",
+      "concern": "Identity artwork rebuilt from a screenshot",
+      "statement": "Do not redraw, approximate, stretch, crop, recolor, or reconstruct the Dialog Health logo or its approved arrangements. Place the supplied artwork unaltered, and use RCS Template.png unchanged in its role.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail against reconstructing exact identity assets, naming the brand kit as the authority for logos and lockups and RCS Template.png as a separate canonical background asset. Reached by four grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-clinical-product",
+      "concern": "The platform staged as clinical treatment",
+      "statement": "Do not arrange the product as medication, diagnostic equipment, dosage instructions, or a treatment tool. It stays visibly in the communication and workflow role.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The Official Website positions Dialog Health as healthcare communication software rather than a clinical treatment. Reached by one grammar-reject capture."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-unreal-tech",
+      "concern": "Unreal technology imagery instead of a real scene",
+      "statement": "Do not use floating message bubbles, artificial interface overlays, glowing data trails, or decorative message streams in place of a real phone, a real room, and a person acting.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of generic technology spectacle disconnected from healthcare work. Reached by one grammar-reject capture."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-demo-as-fact",
+      "concern": "Demonstration material presented as identity or fact",
+      "statement": "Do not present the fictional sender name, sample logos, invented screens, patient names, dates, or message designs from the RCS deck as Dialog Health identity assets or as a live customer deployment.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail keeping sales examples in their proper role: the RCS presentation is representative sales evidence that can be improved, and its WynterHealth examples are demonstrations. Reached by two grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": "cycle2"
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    }
+  ]
+}

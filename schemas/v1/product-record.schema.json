@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brand-world-system.local/schemas/v1/product-record.schema.json",
+  "title": "Product record",
+  "description": "A governed product record synthesized from product-specific sources. Stored alongside the Brand Brain, versioned independently. See ADR 0012.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "product_id",
+    "version",
+    "product_name",
+    "category",
+    "one_true_thing",
+    "audience_note",
+    "features",
+    "proof_points",
+    "visual_direction",
+    "exclusions",
+    "review_questions",
+    "source_summary",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.schema.json#/$defs/schema_version"
+    },
+    "product_id": {
+      "$ref": "common.schema.json#/$defs/identifier"
+    },
+    "version": {
+      "$ref": "common.schema.json#/$defs/version"
+    },
+    "product_name": {
+      "$ref": "common.schema.json#/$defs/non_empty_string"
+    },
+    "category": {
+      "$ref": "common.schema.json#/$defs/non_empty_string"
+    },
+    "one_true_thing": {
+      "$ref": "common.schema.json#/$defs/non_empty_string"
+    },
+    "audience_note": {
+      "$ref": "common.schema.json#/$defs/non_empty_string"
+    },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/feature"
+      }
+    },
+    "proof_points": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "$ref": "common.schema.json#/$defs/non_empty_string"
+      }
+    },
+    "visual_direction": {
+      "$ref": "common.schema.json#/$defs/non_empty_string"
+    },
+    "images": {
+      "type": "array",
+      "description": "Optional. Product imagery attached to this record. Absent on records created before imagery was supported, so consumers must treat it as optional.",
+      "items": {
+        "$ref": "#/$defs/product_image"
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "$ref": "common.schema.json#/$defs/non_empty_string"
+      }
+    },
+    "review_questions": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/$defs/review_question"
+      }
+    },
+    "source_summary": {
+      "$ref": "common.schema.json#/$defs/non_empty_string"
+    },
+    "provenance": {
+      "$ref": "common.schema.json#/$defs/provenance"
+    },
+    "synthesized_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp of when this version of the record was synthesized. Set by the service on write."
+    },
+    "approved_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO 8601 timestamp of when this version was approved for production consumption, or null while the record is a candidate. Governance-critical: production only compiles from records with a non-null approved_at."
+    },
+    "response_id": {
+      "type": "string",
+      "description": "Provider response identifier from the synthesis call. Operational metadata for tracing back to the model call."
+    },
+    "model": {
+      "type": "string",
+      "description": "The model that produced this synthesis. Operational metadata."
+    }
+  },
+  "$defs": {
+    "feature_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quote",
+        "location"
+      ],
+      "properties": {
+        "quote": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        },
+        "location": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "benefit",
+        "approved_claim_language",
+        "accuracy_note",
+        "origin",
+        "evidence"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        },
+        "benefit": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        },
+        "approved_claim_language": {
+          "type": "string",
+          "description": "Verbatim wording from the source. Empty string when the source does not supply claim language."
+        },
+        "accuracy_note": {
+          "type": "string",
+          "description": "Accuracy or labeling constraint such as conditional availability. Empty string when none applies."
+        },
+        "origin": {
+          "enum": [
+            "stated",
+            "inferred"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/feature_evidence"
+          }
+        }
+      }
+    },
+    "review_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "summary",
+        "evidence_quote",
+        "confidence"
+      ],
+      "properties": {
+        "title": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        },
+        "summary": {
+          "$ref": "common.schema.json#/$defs/non_empty_string"
+        },
+        "evidence_quote": {
+          "type": "string",
+          "description": "Verbatim quote from the source that prompted the question. Empty string when no single quote applies."
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "note",
+            "resolved_at"
+          ],
+          "properties": {
+            "note": {
+              "$ref": "common.schema.json#/$defs/non_empty_string"
+            },
+            "resolved_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "description": "A reviewer's recorded answer. Optional; absent while the question is open. Recording an answer does not change the record version or approval state."
+        },
+        "suggested_answers": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "common.schema.json#/$defs/non_empty_string"
+          },
+          "description": "Candidate resolutions the reviewer can confirm with one click. Model-drafted phrasings of possible answers; the reviewer choosing one is what makes it the recorded answer. Optional; may be empty when no plausible answer set exists."
+        },
+        "deferred_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Set when a reviewer tables the question for later. A tabled question does not block approval; production surfaces a warning while approved records carry open questions. Cleared when an answer is recorded."
+        }
+      }
+    },
+    "product_image": {
+      "type": "object",
+      "description": "An image of the product. Kind decides how production treats it: isolated images are placed as the protected subject, in-context images inform the scene without being reproduced.",
+      "additionalProperties": false,
+      "required": [
+        "image_id",
+        "kind",
+        "file_name",
+        "blob_pathname",
+        "content_type",
+        "added_at"
+      ],
+      "properties": {
+        "image_id": {
+          "$ref": "common.schema.json#/$defs/identifier"
+        },
+        "kind": {
+          "enum": [
+            "isolated",
+            "in_context"
+          ]
+        },
+        "file_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blob_pathname": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "caption": {
+          "type": "string"
+        },
+        "added_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,521 @@
+{
+  "fixture": "adr-0017-step1-refusals",
+  "client": "mycopop",
+  "brandName": "MycoPop",
+  "status": "Prototype fixture. Hand authored for the ADR 0017 step 1 gate. Not client state and not approved guidance.",
+  "authoredFrom": {
+    "grammarRejects": "Ten captures in docs/evaluations/2026-08-16-adr-0016-step3-parity.md, cycle 1, cycle 2, and stability runs S1 to S3, both brands.",
+    "regeneratedGuardrailsAndRejects": "The six stability captures in the same document.",
+    "approvedGuardrailsAndRejects": "Owner paste held gitignored under fixtures/adr-0017-approved-refusals/. Content is not committed; derivedFrom names the guardrail or reject it rests on.",
+    "note": "Entries carried by currently approved material are authored active with an accepted ruling. Entries appearing only in regenerated captures are authored proposed, so the fixture shows what a step 2 diff would surface."
+  },
+  "schema_version": "1.0.0",
+  "version": 1,
+  "updated_at": "2026-08-17T00:00:00.000Z",
+  "entries": [
+    {
+      "id": "ref-myc-property",
+      "concern": "Borrowed entertainment property in frame",
+      "statement": "Do not show recognizable characters, title screens, cabinet art, controllers, logos, type treatments, package designs, or playfields belonging to an existing entertainment property. Retro objects and symbols in frame are original to MycoPop.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "High",
+        "derivedFrom": "The 8-bit style source is an outside party's material supplied as creative direction. Reached by all five grammar-reject captures and by the regenerated guardrails naming original retro forms."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-pixel-layer",
+      "concern": "Retro direction pasted on as a graphic layer",
+      "statement": "Do not add game interfaces, score bars, lives counters, sprite overlays, pixel filters, or scan lines over a photograph. Build retro cues as physical sets, props, surfaces, and light inside the frame.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "High",
+        "derivedFrom": "The 8-bit style source asks for a physical brand version of an outside reference rather than a copied graphic treatment. Reached by four of five grammar-reject captures."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-costume",
+      "concern": "Period reenactment instead of original retro form",
+      "statement": "Do not build full period costumes, imitation collector rooms, or sets crowded with branded memorabilia. Retro forms sit beside current clothing and the current can.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The Official Website describes a modern convenient beverage while the 8-bit source asks for retro technology as a direction. Reached by one grammar-reject capture."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-fantasy-forest",
+      "concern": "Unreal nature staging around the product",
+      "statement": "Do not build forests with impossible scale, saturated green glow, or a can placed without weight or contact. Record moss, bark, leaves, moisture, and daylight that a camera could have found.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The current Instagram screenshot shows repeated forest scenes with unusually saturated glow and isolated product placement. Reached by one grammar-reject capture."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-refreshment",
+      "concern": "Refreshment simulated rather than recorded",
+      "statement": "Do not signal coldness through color washes, stock splashes, lens flares, weather panels, or stickers added after capture, and do not present the hero can warm, dusty, or dry. Record cold metal, condensation, ice, water, fruit, and daylight in camera.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "High",
+        "derivedFrom": "The Odyssey Screenshot was supplied to raise the sense of refreshment as a physical quality rather than as a surface treatment. Reached by all five grammar-reject captures."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-competitor",
+      "concern": "Competitor execution reproduced",
+      "statement": "Do not reproduce another beverage's can design, color assignments, typography, slogans, product lineup, retail composition, campaign props, or recurring social layout.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail on learning without copying, naming the Odyssey Screenshot as a competitor supplied only to inspire a more refreshing appearance. Reached by four grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-artwork",
+      "concern": "Identity artwork rebuilt from a screenshot",
+      "statement": "Do not redraw, recolor, relabel, approximate, or reconstruct the MycoPop logo or can artwork from a screenshot, and do not photograph a screen capture as if it were finished artwork. Photograph the current physical package, or place supplied master files when they exist.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail protecting missing master assets: no logo master, packaging artwork, typography specification, or approved color values were supplied, and screenshots document current use without becoming production artwork. Reached by four grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-medicine",
+      "concern": "The drink staged as medicine",
+      "statement": "Do not place the can in white examination rooms, dosage rows, medicine cabinets, laboratory coats, brain scans, anatomical displays, or before-and-after treatment layouts, and do not stage it among scattered powders, tinctures, pill piles, or apothecary clutter. Keep it in a beverage context.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of chalky or medicinal formats, alongside the FDA disclaimer and disease-claim prohibition on the Official Website. Reached by all five grammar-reject captures, three regenerated guardrails, and three regenerated lived-world rejects."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-child-use",
+      "concern": "A child shown consuming an adult-listed product",
+      "statement": "Do not show children drinking, opening, or being handed the can. In family scenes consumption stays clearly with adults until intended age guidance is confirmed.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The Amazon listing identifies an adult intended age range while the Instagram screenshot shows children holding cans. Reached by one grammar-reject capture and one regenerated lived-world reject."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-transformation",
+      "concern": "Instant physical or cognitive transformation shown",
+      "statement": "Do not show glowing bodies, transformed brains, energy entering a person, impossible endurance, or extreme athletic feats presented as what the drink produces.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Current product facts and the FDA disclaimer on the Official Website. Reached by one grammar-reject capture and one regenerated lived-world reject."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-claims",
+      "concern": "Health benefits stated as promises",
+      "statement": "Do not state or imply that MycoPop diagnoses, treats, cures, prevents, or guarantees an outcome. Traditional use and research relationships stay described as such.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail on keeping functional claims measured, and the FDA disclaimer on the Official Website. Reached by three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-unsupported-facts",
+      "concern": "Product specifics stated without records",
+      "statement": "Do not state quantities, sourcing, certifications, calorie count, caffeine status, testing, organic status, or manufacturing standards unless a current product record supports the exact claim.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The Official Website and Amazon listing carry claims that need alignment before broad reuse. Reached by three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-stimulant",
+      "concern": "Stimulant culture signaling",
+      "statement": "Do not depict the drink as a high stimulant hit: no frantic speed, no aggressive gym-bro staging, no extreme-energy signaling, no always-on hustle framing where rest reads as failure.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail against imitating stimulant culture and the approved lived-world reject of aggressive gym-bro or extreme-energy signaling. The brand's differentiator is caffeine-free balanced energy. Reached by one regenerated guardrail and two regenerated lived-world rejects."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-practice-as-rule",
+      "concern": "Current practice promoted to approved guidance",
+      "statement": "Do not treat the Instagram screenshot or the Amazon listing as approved identity standards. They document present practice; the Official Website governs approved claims.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The regenerated guardrails separating guidance from practice on two runs. No approved guardrail states this rule."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-optimization-life",
+      "concern": "A life organized around optimization",
+      "statement": "Do not build the scene around tracking apps, supplement stacks, regimen boards, or a routine whose whole subject is self-optimization.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The regenerated lived-world rejects on two runs. Reasoned from the brand's ease and balance positioning on the Official Website."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-gamer-stereotype",
+      "concern": "Gamer stereotype standing in for the person",
+      "statement": "Do not cast a narrow gamer stereotype, a darkened bedroom rig, or a headset-and-energy-drink setup as the person the brand serves.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The regenerated lived-world reject on one run, reasoned against the retro technology direction, which motivates the aesthetic without narrowing the audience."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-ritual-cost",
+      "concern": "Preparation ritual as the cost of the product",
+      "statement": "Do not show scoops, shakers, measuring, blending, steeping, or any multi-step preparation as what taking the product requires.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The regenerated lived-world rejects on two runs, reasoned from the convenience positioning on the Official Website."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-artificial-taste",
+      "concern": "Artificial taste cues",
+      "statement": "Do not stage the drink with candy-bright syrups, neon pours, or sweetener imagery that reads as artificial flavor.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "Medium",
+        "derivedFrom": "Approved lived-world reject of artificial-tasting sweetness or a strange aftertaste. Reached by one regenerated lived-world reject."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-crash",
+      "concern": "Jitters and a crash as the cost of energy",
+      "statement": "Do not show the shake, spike, and slump arc of a stimulant: no jittery hands, no wired stare, no collapse afterward.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of jitters and a hard crash. Reached by one regenerated lived-world reject."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-fear-wellness",
+      "concern": "Fear-based wellness framing",
+      "statement": "Do not build the scene around what happens without the product: no depletion imagery, no decline framing, no threat that the drink resolves.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The regenerated lived-world reject on one run, reasoned from the brand's ease and balance positioning."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-direction-as-identity",
+      "concern": "A declared direction presented as established identity",
+      "statement": "Do not present the 8-bit direction as an identity the brand already owns. It is a direction to develop, and material built from it says so.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail treating 8-bit as a direction, sourced from an outside reference rather than from an established identity system. The direction source is named here because it motivated the refusal; the refusal itself is a rule in force."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-testimony",
+      "concern": "Customer testimony used as substantiation",
+      "statement": "Do not convert review language into a brand claim. Reviews can show occasions and vocabulary; they do not evidence efficacy.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail separating customer testimony from proof."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-mysticism",
+      "concern": "Wellness mysticism without product facts",
+      "statement": "Do not stage the product inside vague spiritual wellness imagery with nothing concrete about what it is: no ritual smoke, no unexplained symbols, no mystical staging standing in for ingredients and use.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of vague wellness mysticism without product facts."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-myc-dense-science",
+      "concern": "Dense scientific language without practical meaning",
+      "statement": "Do not lead with mechanism language, compound names, or study framing that carries no practical meaning for the person drinking it.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of dense scientific language with no practical meaning."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    }
+  ]
+}

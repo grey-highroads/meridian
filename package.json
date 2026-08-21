@@ -1,0 +1,28 @@
+{
+  "name": "brand-world-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic Brand World production compiler foundation",
+  "exports": "./src/index.js",
+  "scripts": {
+    "build": "vite build",
+    "predev": "pnpm run build",
+    "dev": "node scripts/dev-server.js",
+    "test": "node --test",
+    "validate:fixtures": "node scripts/validate-fixtures.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.6.1",
+    "@vercel/functions": "^3.7.6",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "officeparser": "^7.5.1"
+  },
+  "devDependencies": {
+    "vite": "^8.2.0"
+  }
+}

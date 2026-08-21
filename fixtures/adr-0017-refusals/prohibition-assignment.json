@@ -1,0 +1,781 @@
+{
+  "note": "Each prohibition assigned to exactly one concern entry, or marked new. This is the answer key the matcher is scored against and never sees.",
+  "clients": {
+    "mycopop": {
+      "grammar:cycle1:No copied game worlds#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "grammar:cycle2:No borrowed game property#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "grammar:S1:No Borrowed Game Property#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "grammar:S2:No borrowed properties#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "grammar:S3:No readable game property#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "guardrail:S1:Create original retro forms#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "guardrail:S2:Build an original world#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "guardrail:S2:Build an original world#b": {
+        "concern": "ref-myc-competitor",
+        "note": "One of the four multi-prohibition items step 1 named."
+      },
+      "guardrail:S3:Build an original retro world#a": {
+        "concern": "ref-myc-property",
+        "note": ""
+      },
+      "grammar:cycle2:No pasted pixel layer#a": {
+        "concern": "ref-myc-pixel-layer",
+        "note": ""
+      },
+      "grammar:S1:No Pixel Overlay#a": {
+        "concern": "ref-myc-pixel-layer",
+        "note": ""
+      },
+      "grammar:S2:No pasted game layer#a": {
+        "concern": "ref-myc-pixel-layer",
+        "note": ""
+      },
+      "grammar:S3:No pasted pixel layer#a": {
+        "concern": "ref-myc-pixel-layer",
+        "note": ""
+      },
+      "grammar:cycle1:No costume nostalgia#a": {
+        "concern": "ref-myc-costume",
+        "note": ""
+      },
+      "grammar:cycle1:Limit artificial forests#a": {
+        "concern": "ref-myc-fantasy-forest",
+        "note": ""
+      },
+      "grammar:cycle1:Limit artificial forests#b": {
+        "concern": "new",
+        "note": "The floating product. Step 1 finding 3 recorded this territory as living in a creative guidance principle and therefore outside the fixture population. The per-prohibition cut recovers it from the grammar channel, where it was hiding inside a forest-staging reject. No fixture entry holds it."
+      },
+      "grammar:cycle1:No warm dry hero#a": {
+        "concern": "ref-myc-refreshment",
+        "note": ""
+      },
+      "grammar:cycle2:No borrowed refresh filter#a": {
+        "concern": "ref-myc-refreshment",
+        "note": ""
+      },
+      "grammar:S1:No Borrowed Filter#a": {
+        "concern": "ref-myc-refreshment",
+        "note": ""
+      },
+      "grammar:S2:No freshness filter#a": {
+        "concern": "ref-myc-refreshment",
+        "note": ""
+      },
+      "grammar:S3:No borrowed freshness layer#a": {
+        "concern": "ref-myc-refreshment",
+        "note": ""
+      },
+      "grammar:cycle2:No competitor imitation#a": {
+        "concern": "ref-myc-competitor",
+        "note": ""
+      },
+      "grammar:S1:No Competitor Copy#a": {
+        "concern": "ref-myc-competitor",
+        "note": ""
+      },
+      "grammar:S2:No competitor copying#a": {
+        "concern": "ref-myc-competitor",
+        "note": ""
+      },
+      "grammar:S3:No competitor property#a": {
+        "concern": "ref-myc-competitor",
+        "note": ""
+      },
+      "guardrail:S1:Own refreshment#a": {
+        "concern": "ref-myc-competitor",
+        "note": ""
+      },
+      "guardrail:S3:Own refreshment physically#a": {
+        "concern": "ref-myc-competitor",
+        "note": ""
+      },
+      "approved-guardrail:3#a": {
+        "concern": "ref-myc-competitor",
+        "note": ""
+      },
+      "grammar:cycle2:No package approximation#a": {
+        "concern": "ref-myc-artwork",
+        "note": ""
+      },
+      "grammar:S1:No Rebuilt Artwork#a": {
+        "concern": "ref-myc-artwork",
+        "note": ""
+      },
+      "grammar:S2:No rebuilt identity#a": {
+        "concern": "ref-myc-artwork",
+        "note": ""
+      },
+      "guardrail:S1:Protect brand artwork#a": {
+        "concern": "ref-myc-artwork",
+        "note": ""
+      },
+      "guardrail:S2:Do not use screenshots as masters#a": {
+        "concern": "ref-myc-artwork",
+        "note": ""
+      },
+      "approved-guardrail:4#a": {
+        "concern": "ref-myc-artwork",
+        "note": ""
+      },
+      "grammar:cycle2:No clinical staging#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "grammar:cycle2:No murky supplement cues#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "grammar:S1:No Clinical Staging#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "grammar:S2:No clinical staging#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "grammar:S3:No clinical staging#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "guardrail:S1:Stay beverage first#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "lwr:S1:2#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "lwr:S2:4#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "lwr:S3:4#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "approved-lwr:2#a": {
+        "concern": "ref-myc-medicine",
+        "note": ""
+      },
+      "grammar:S1:No Unclear Child Use#a": {
+        "concern": "ref-myc-child-use",
+        "note": ""
+      },
+      "lwr:S1:5#a": {
+        "concern": "ref-myc-child-use",
+        "note": ""
+      },
+      "grammar:S3:No superhuman results#a": {
+        "concern": "ref-myc-transformation",
+        "note": ""
+      },
+      "lwr:S1:1#a": {
+        "concern": "ref-myc-transformation",
+        "note": ""
+      },
+      "guardrail:S1:Keep benefits qualified#a": {
+        "concern": "ref-myc-claims",
+        "note": ""
+      },
+      "guardrail:S2:Keep health language qualified#a": {
+        "concern": "ref-myc-claims",
+        "note": ""
+      },
+      "guardrail:S3:Keep health language responsible#a": {
+        "concern": "ref-myc-claims",
+        "note": ""
+      },
+      "approved-guardrail:0#a": {
+        "concern": "ref-myc-claims",
+        "note": ""
+      },
+      "guardrail:S1:Verify product facts#a": {
+        "concern": "ref-myc-unsupported-facts",
+        "note": ""
+      },
+      "guardrail:S2:Tie proof to records#a": {
+        "concern": "ref-myc-unsupported-facts",
+        "note": ""
+      },
+      "guardrail:S3:Make proof specific#a": {
+        "concern": "ref-myc-unsupported-facts",
+        "note": ""
+      },
+      "guardrail:S2:Protect caffeine free positioning#a": {
+        "concern": "ref-myc-stimulant",
+        "note": ""
+      },
+      "lwr:S1:3#a": {
+        "concern": "ref-myc-stimulant",
+        "note": ""
+      },
+      "lwr:S3:3#a": {
+        "concern": "ref-myc-stimulant",
+        "note": ""
+      },
+      "approved-guardrail:1#a": {
+        "concern": "ref-myc-stimulant",
+        "note": ""
+      },
+      "approved-lwr:4#a": {
+        "concern": "ref-myc-stimulant",
+        "note": ""
+      },
+      "guardrail:S2:Separate guidance from practice#a": {
+        "concern": "ref-myc-practice-as-rule",
+        "note": ""
+      },
+      "guardrail:S3:Separate practice from rules#a": {
+        "concern": "ref-myc-practice-as-rule",
+        "note": ""
+      },
+      "lwr:S1:0#a": {
+        "concern": "ref-myc-optimization-life",
+        "note": ""
+      },
+      "lwr:S3:0#a": {
+        "concern": "ref-myc-optimization-life",
+        "note": ""
+      },
+      "lwr:S1:4#a": {
+        "concern": "ref-myc-gamer-stereotype",
+        "note": ""
+      },
+      "lwr:S2:0#a": {
+        "concern": "ref-myc-stimulant",
+        "note": "One of the four multi-prohibition items step 1 named."
+      },
+      "lwr:S2:0#b": {
+        "concern": "ref-myc-ritual-cost",
+        "note": ""
+      },
+      "lwr:S2:2#a": {
+        "concern": "ref-myc-ritual-cost",
+        "note": ""
+      },
+      "lwr:S3:2#a": {
+        "concern": "ref-myc-ritual-cost",
+        "note": ""
+      },
+      "lwr:S2:1#a": {
+        "concern": "ref-myc-artificial-taste",
+        "note": ""
+      },
+      "approved-lwr:1#a": {
+        "concern": "ref-myc-artificial-taste",
+        "note": ""
+      },
+      "lwr:S2:3#a": {
+        "concern": "ref-myc-stimulant",
+        "note": "Step 1 boundary case 5 read this reject as one concern. The per-prohibition cut reverses that reading, because the approved lived-world rejects hold the two as separate entries and the cut follows the material rather than the earlier call. Recorded as a reversal rather than made quietly."
+      },
+      "lwr:S2:3#b": {
+        "concern": "ref-myc-crash",
+        "note": ""
+      },
+      "approved-lwr:0#a": {
+        "concern": "ref-myc-crash",
+        "note": ""
+      },
+      "lwr:S3:1#a": {
+        "concern": "ref-myc-fear-wellness",
+        "note": ""
+      },
+      "approved-guardrail:2#a": {
+        "concern": "ref-myc-direction-as-identity",
+        "note": ""
+      },
+      "approved-guardrail:5#a": {
+        "concern": "ref-myc-testimony",
+        "note": ""
+      },
+      "approved-lwr:3#a": {
+        "concern": "ref-myc-mysticism",
+        "note": ""
+      },
+      "approved-lwr:5#a": {
+        "concern": "ref-myc-dense-science",
+        "note": ""
+      },
+      "guidance:foundation:0#a": {
+        "concern": "new:mushrooms-in-isolation",
+        "note": "Mushrooms presented in isolation rather than as caffeine-free functional energy."
+      },
+      "guidance:foundation:3#a": {
+        "concern": "ref-myc-stimulant",
+        "note": "The promise pitched as stimulant intensity rather than balanced momentum."
+      },
+      "guidance:foundation:4#a": {
+        "concern": "ref-myc-practice-as-rule",
+        "note": "Audience description beyond the two supplied reviews treated as established fact."
+      },
+      "guidance:identity:0#a": {
+        "concern": "ref-myc-artwork",
+        "note": "The can's current colour identity changed before approved packaging masters exist."
+      },
+      "guidance:identity:2#a": {
+        "concern": "ref-myc-property",
+        "note": "Recognizable game imagery lifted instead of proprietary pixel forms developed."
+      },
+      "guidance:identity:4#a": {
+        "concern": "ref-myc-fantasy-forest",
+        "note": "Generic fantasy-forest composites relied on as the expression of sourcing."
+      },
+      "guidance:identity:5#a": {
+        "concern": "new:identity-specs-inferred",
+        "note": "Exact colour values, typefaces, clear space, or logo rules inferred from screenshots."
+      },
+      "guidance:world:0#a": {
+        "concern": "ref-myc-optimization-life",
+        "note": "The product occupying the whole day rather than supporting it."
+      },
+      "guidance:world:2#a": {
+        "concern": "new:generic-lifestyle-aspiration",
+        "note": "Generic lifestyle aspiration used in place of real routines."
+      },
+      "guidance:voice:4#a": {
+        "concern": "ref-myc-claims",
+        "note": "Game language used to guarantee a bodily result."
+      },
+      "guidance:voice:3#a": {
+        "concern": "ref-myc-dense-science",
+        "note": "Technical facts left untranslated into ordinary language."
+      },
+      "guidance:creative:0#a": {
+        "concern": "new:floating-product",
+        "note": "A floating product used as the starting point instead of a recognizable human need."
+      },
+      "guidance:creative:0#b": {
+        "concern": "ref-myc-claims",
+        "note": "An unsupported promise used as the starting point."
+      },
+      "guidance:creative:1#a": {
+        "concern": "ref-myc-refreshment",
+        "note": "Abstract functional symbolism placed ahead of a cold, tactile, drinkable can."
+      },
+      "guidance:creative:2#a": {
+        "concern": "ref-myc-costume",
+        "note": "Retro-game devices used as decorative nostalgia throughout rather than as structure."
+      },
+      "guidance:creative:4#a": {
+        "concern": "new:single-spokesperson",
+        "note": "A single spokesperson and repeated handheld can presentation as the only format."
+      },
+      "guidance:creative:5#a": {
+        "concern": "ref-myc-fantasy-forest",
+        "note": "Synthetic forest scenes as the only expression of mushroom sourcing."
+      },
+      "guidance:rules:0#a": {
+        "concern": "ref-myc-practice-as-rule",
+        "note": "A source other than the official website treated as governing for positioning."
+      },
+      "guidance:rules:2#a": {
+        "concern": "ref-myc-claims",
+        "note": "Diagnosis, treatment, cure, or prevention stated or implied."
+      },
+      "guidance:rules:3#a": {
+        "concern": "ref-myc-testimony",
+        "note": "Customer efficacy claims reused as brand facts or scientific proof."
+      },
+      "guidance:rules:4#a": {
+        "concern": "ref-myc-property",
+        "note": "Third-party game characters, screens, logos, typography, or package designs copied."
+      },
+      "guidance:rules:4#b": {
+        "concern": "ref-myc-competitor",
+        "note": "Odyssey's distinctive executions copied."
+      },
+      "guidance:rules:5#a": {
+        "concern": "ref-myc-artwork",
+        "note": "The logo or can artwork redrawn or reconstructed from screenshots."
+      }
+    },
+    "dialog-health": {
+      "grammar:cycle1:Anonymous message screens#a": {
+        "concern": "ref-dh-sender",
+        "note": ""
+      },
+      "grammar:cycle1:Anonymous message screens#b": {
+        "concern": "ref-dh-sender",
+        "note": "The fixture entry ref-dh-sender is itself compound: its concern name carries both halves. The per-prohibition cut can separate the prohibitions but has nowhere separate to put them. Recorded as a compound entry rather than resolved."
+      },
+      "grammar:S2:No unclear sender#a": {
+        "concern": "ref-dh-sender",
+        "note": ""
+      },
+      "grammar:S2:No unclear sender#b": {
+        "concern": "ref-dh-sender",
+        "note": "Compound entry, as above."
+      },
+      "grammar:cycle1:Empty office posing#a": {
+        "concern": "ref-dh-no-task",
+        "note": ""
+      },
+      "grammar:S3:No empty care scenes#a": {
+        "concern": "ref-dh-no-task",
+        "note": ""
+      },
+      "lwr:S3:3#a": {
+        "concern": "ref-dh-no-task",
+        "note": ""
+      },
+      "grammar:cycle1:Unreadable screen clutter#a": {
+        "concern": "ref-dh-clutter",
+        "note": ""
+      },
+      "grammar:cycle1:Exposed personal data#a": {
+        "concern": "ref-dh-personal-data",
+        "note": ""
+      },
+      "grammar:cycle2:Visible private information#a": {
+        "concern": "ref-dh-personal-data",
+        "note": ""
+      },
+      "grammar:S2:No exposed data#a": {
+        "concern": "ref-dh-personal-data",
+        "note": ""
+      },
+      "grammar:S3:No exposed records#a": {
+        "concern": "ref-dh-personal-data",
+        "note": ""
+      },
+      "guardrail:S2:Protect personal information#a": {
+        "concern": "ref-dh-personal-data",
+        "note": ""
+      },
+      "grammar:cycle2:Rebuilt brand artwork#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": ""
+      },
+      "grammar:S1:No rebuilt logo#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": ""
+      },
+      "grammar:S2:No rebuilt logo#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": ""
+      },
+      "grammar:S3:No rebuilt identity#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": ""
+      },
+      "guardrail:S1:Protect supplied logo artwork#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": ""
+      },
+      "guardrail:S2:Protect supplied artwork#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": ""
+      },
+      "guardrail:S3:Protect approved identity assets#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": ""
+      },
+      "approved-guardrail:0#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": "One of the four multi-prohibition items step 1 named. It carries three."
+      },
+      "approved-guardrail:0#b": {
+        "concern": "ref-dh-guessed-color",
+        "note": ""
+      },
+      "approved-guardrail:0#c": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": "The template's fixed role is folded into the artwork entry's statement. It is arguably its own concern and is flagged here rather than split, because no capture reaches it independently."
+      },
+      "grammar:S1:No guessed green#a": {
+        "concern": "ref-dh-guessed-color",
+        "note": ""
+      },
+      "guardrail:S1:Do not guess color values#a": {
+        "concern": "ref-dh-guessed-color",
+        "note": ""
+      },
+      "grammar:cycle2:False clinical staging#a": {
+        "concern": "ref-dh-clinical-product",
+        "note": ""
+      },
+      "grammar:cycle2:Generic phone spectacle#a": {
+        "concern": "ref-dh-unreal-tech",
+        "note": ""
+      },
+      "approved-lwr:0#a": {
+        "concern": "ref-dh-unreal-tech",
+        "note": "One of the four multi-prohibition items step 1 named."
+      },
+      "approved-lwr:0#b": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "grammar:cycle2:Sample identity confusion#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": ""
+      },
+      "grammar:S1:No invented interface#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": ""
+      },
+      "guardrail:S1:Separate evidence from guidance#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": ""
+      },
+      "guardrail:S3:Separate demonstration from proof#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": ""
+      },
+      "approved-guardrail:4#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": ""
+      },
+      "grammar:S1:No generic chat#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "grammar:S1:No generic chat#b": {
+        "concern": "ref-dh-sender",
+        "note": ""
+      },
+      "guardrail:S1:Keep the healthcare context#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "guardrail:S2:Stay outcome connected#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "guardrail:S3:Connect features to work#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "lwr:S1:0#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "lwr:S2:0#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "lwr:S3:0#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "approved-guardrail:2#a": {
+        "concern": "ref-dh-generic-category",
+        "note": ""
+      },
+      "grammar:S1:No clinical theater#a": {
+        "concern": "ref-dh-clinical-theater",
+        "note": ""
+      },
+      "grammar:S2:No clinical shorthand#a": {
+        "concern": "ref-dh-clinical-theater",
+        "note": ""
+      },
+      "lwr:S2:2#a": {
+        "concern": "ref-dh-clinical-theater",
+        "note": ""
+      },
+      "grammar:S2:No app fiction#a": {
+        "concern": "ref-dh-app-step",
+        "note": ""
+      },
+      "guardrail:S2:Keep access simple#a": {
+        "concern": "ref-dh-app-step",
+        "note": ""
+      },
+      "approved-lwr:2#a": {
+        "concern": "ref-dh-app-step",
+        "note": ""
+      },
+      "grammar:S3:No visual overclaim#a": {
+        "concern": "ref-dh-overclaim",
+        "note": ""
+      },
+      "guardrail:S1:Keep claims within scope#a": {
+        "concern": "ref-dh-overclaim",
+        "note": ""
+      },
+      "guardrail:S2:Substantiate strong claims#a": {
+        "concern": "ref-dh-overclaim",
+        "note": ""
+      },
+      "guardrail:S3:Substantiate strong claims#a": {
+        "concern": "ref-dh-overclaim",
+        "note": ""
+      },
+      "approved-guardrail:1#a": {
+        "concern": "ref-dh-overclaim",
+        "note": ""
+      },
+      "approved-lwr:3#a": {
+        "concern": "ref-dh-overclaim",
+        "note": ""
+      },
+      "guardrail:S3:Keep people in the process#a": {
+        "concern": "ref-dh-automation",
+        "note": ""
+      },
+      "lwr:S2:4#a": {
+        "concern": "ref-dh-automation",
+        "note": ""
+      },
+      "lwr:S3:1#a": {
+        "concern": "ref-dh-automation",
+        "note": ""
+      },
+      "approved-lwr:1#a": {
+        "concern": "ref-dh-automation",
+        "note": ""
+      },
+      "lwr:S1:1#a": {
+        "concern": "ref-dh-frictionless",
+        "note": ""
+      },
+      "lwr:S2:3#a": {
+        "concern": "ref-dh-frictionless",
+        "note": ""
+      },
+      "lwr:S3:2#a": {
+        "concern": "ref-dh-frictionless",
+        "note": ""
+      },
+      "lwr:S1:2#a": {
+        "concern": "ref-dh-roles",
+        "note": ""
+      },
+      "lwr:S2:1#a": {
+        "concern": "ref-dh-roles",
+        "note": ""
+      },
+      "lwr:S1:3#a": {
+        "concern": "ref-dh-patient-passive",
+        "note": ""
+      },
+      "lwr:S3:4#a": {
+        "concern": "ref-dh-patient-passive",
+        "note": ""
+      },
+      "approved-guardrail:3#a": {
+        "concern": "ref-dh-fear",
+        "note": ""
+      },
+      "approved-lwr:4#a": {
+        "concern": "ref-dh-fear",
+        "note": ""
+      },
+      "approved-lwr:5#a": {
+        "concern": "ref-dh-feature-inventory",
+        "note": ""
+      },
+      "guidance:foundation:2#a": {
+        "concern": "ref-dh-generic-category",
+        "note": "Dialog Health positioned as a generic texting utility."
+      },
+      "guidance:foundation:3#a": {
+        "concern": "new:practice-as-approved-rule",
+        "note": "Connect, automate, and analyze presented as formally adopted structure without confirmation."
+      },
+      "guidance:identity:0#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": "A logo or lockup used that is not canonical to the brand kit."
+      },
+      "guidance:identity:1#a": {
+        "concern": "ref-dh-guessed-color",
+        "note": "Main Green estimated from the extract or from screen imagery."
+      },
+      "guidance:identity:2#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": "Master-brand assets mixed with fictional or client-branded demonstration examples."
+      },
+      "guidance:identity:3#a": {
+        "concern": "new:undocumented-specs-invented",
+        "note": "Undocumented typography, spacing, sizes, backgrounds, iconography, photography, or motion invented."
+      },
+      "guidance:identity:4#a": {
+        "concern": "new:rcs-template-altered",
+        "note": "RCS Template.png altered, or its graphics, colours, title, logo, or endorsement extracted or reconstructed."
+      },
+      "guidance:world:1#a": {
+        "concern": "ref-dh-roles",
+        "note": "Only one side shown: the recipient acting or the team gaining, never both."
+      },
+      "guidance:world:2#a": {
+        "concern": "ref-dh-patient-passive",
+        "note": "People reduced to workflow units."
+      },
+      "guidance:world:4#a": {
+        "concern": "ref-dh-overclaim",
+        "note": "Unsupported clinical claims made."
+      },
+      "guidance:world:4#b": {
+        "concern": "ref-dh-fear",
+        "note": "Sensationalized clinical scenarios used."
+      },
+      "guidance:voice:2#a": {
+        "concern": "ref-dh-generic-category",
+        "note": "Abstract innovation language used in place of plain healthcare language."
+      },
+      "guidance:voice:3#a": {
+        "concern": "new:slogan-stacking",
+        "note": "Slogans and superlatives stacked."
+      },
+      "guidance:voice:5#a": {
+        "concern": "new:forced-informality",
+        "note": "Forced informality used in place of warmth through usefulness."
+      },
+      "guidance:creative:3#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": "Product interfaces decorated with unsupported features or invented data."
+      },
+      "guidance:creative:4#a": {
+        "concern": "ref-dh-overclaim",
+        "note": "A result used as the resolution without its source and context travelling with it."
+      },
+      "guidance:rules:0#a": {
+        "concern": "ref-dh-logo-rebuild",
+        "note": "Canonical brand assets redrawn, recoloured, approximated, or replaced."
+      },
+      "guidance:rules:1#a": {
+        "concern": "new:undocumented-specs-invented",
+        "note": "Missing identity specifications inferred from a sparse extraction."
+      },
+      "guidance:rules:2#a": {
+        "concern": "new:practice-as-approved-rule",
+        "note": "Website or sales deck patterns turned into approved rules without review."
+      },
+      "guidance:rules:3#a": {
+        "concern": "ref-dh-overclaim",
+        "note": "Healthcare, privacy, compliance, reliability, performance, or comparative claims taken past documented evidence."
+      },
+      "guidance:rules:4#a": {
+        "concern": "ref-dh-demo-as-fact",
+        "note": "Dialog Health branding, client branding, and fictional demonstration branding conflated."
+      },
+      "guidance:rules:5#a": {
+        "concern": "new:conditional-capability-unlabelled",
+        "note": "Emerging or conditional product experiences presented without accurate labelling."
+      }
+    }
+  }
+}

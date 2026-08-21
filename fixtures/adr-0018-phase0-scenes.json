@@ -1,0 +1,105 @@
+{
+  "adr": "0018",
+  "purpose": "Frozen fixture scenes for the phase 0 prompt baseline and every later phase gate. A scene changes only by owner ruling recorded in the evaluations document, because the baseline is only comparable to later captures while the inputs hold still.",
+  "status": "frozen",
+  "statusNote": "Frozen 2026-08-17 by the chief architect under the owner's build-then-refine delegation of this session; the owner rules on the output and can amend any scene by ruling, recorded in the evaluations document. The two MycoPop scenes reproduce the 2026-08-17 external audit inputs, proven by a zero-diff compile against the audit prompt. The two Dialog Health scenes are hand authored and freeze as written; a correction by the owner is an amendment, not a re-litigation. Both were approved by the owner on 2026-08-19 on the strength of their baseline renders, so all four scenes now carry owner approval.",
+  "scenes": [
+    {
+      "id": "mycopop-park-lifestyle",
+      "client": "mycopop",
+      "register": "lifestyle with person",
+      "provenance": "Verbatim from the 2026-08-17 external audit v1 test prompt. The full input set (brain, product record, accepted protections, scene brief) was reconstructed from that prompt and compiles byte-identical to it at the freeze commit, so this scene's baseline joins the existing evidence trail exactly.",
+      "productId": "mycopop-hgl-4pack",
+      "productNote": "The Hibiscus Ginger Lemon 4 Pack record, reconstructed from the audit prompt and validated by the zero-diff compile. Its isolated image entry promotes to the locked asset, matching the production path.",
+      "leakageMarkers": [
+        "8-bit",
+        "arcade",
+        "pixel",
+        "scan lines",
+        "controllers",
+        "moss",
+        "condensation"
+      ],
+      "brief": {
+        "scene": "A late afternoon in a city park. A person takes a moment during their jog to stretch and sip from their MycoPop can. They are dressed in contemporary athletic gear with a retro-inspired nylon track jacket. Trees, park benches, and other joggers form the backdrop, adding energy and context to the scene. The largest shape in the Instagram feed, which is why it is the default. It arrives top edge first as someone scrolls, so put the subject in the upper two thirds and let the lower third carry ground, shadow, or open space. Vertical depth reads better here than side to side composition. Caption text sits directly beneath, so the bottom edge should feel finished rather than cut off.",
+        "sceneComposition": "Shot at eye level with a 35 mm lens, the horizon line is level. The person is positioned off-center left, mid-stretch, with the can held casually in their right hand. In the background, other joggers and trees create depth. The focus starts with the jogger's movement, expands to include the park environment, and finally, the can.",
+        "sceneLighting": "The light is a warm dusk glow, casting long shadows and highlighting the jogger's outline. The retro jacket catches the light, emphasizing its texture. Background joggers are illuminated in the same warm tones, threading the scene with consistent light.",
+        "sceneProps": "nylon track jacket, MycoPop can, park bench, jogging shoes, water bottle",
+        "placement": "Instagram feed",
+        "format": "4:5 portrait",
+        "assetType": "scene",
+        "exclusions": "Generic stock-photo polish, staged smiles, visual clutter, or added copy."
+      }
+    },
+    {
+      "id": "mycopop-fourpack-product",
+      "client": "mycopop",
+      "register": "product forward",
+      "provenance": "DRAFT, hand authored for phase 0. Pending owner approval before freeze.",
+      "productId": "mycopop-hgl-4pack",
+      "productNote": "Same reconstructed product record as the park scene.",
+      "leakageMarkers": [
+        "8-bit",
+        "arcade",
+        "pixel",
+        "scan lines",
+        "controllers",
+        "jogger",
+        "park"
+      ],
+      "brief": {
+        "scene": "A MycoPop Hibiscus Ginger Lemon four-pack on a kitchen counter in the first hour of the morning. One can is separated from the pack, opened, and beaded with condensation. Behind it, the ordinary evidence of a morning underway: a cutting board with sliced lemon, a kettle, a window with daylight. The four-pack is the subject; the kitchen explains when and why.",
+        "sceneComposition": "Shot slightly above counter height with a 50 mm lens. The separated can stands nearest the camera with the four-pack just behind it, both in the left two thirds of the frame. The window falls out of focus in the background.",
+        "sceneLighting": "One source: morning daylight through the window behind and to the left. The can's left edges catch it; the right sides fall into soft shadow. No fill from the camera side.",
+        "sceneProps": "MycoPop four-pack, one opened can, cutting board, sliced lemon, kettle",
+        "placement": "Instagram feed",
+        "format": "4:5 portrait",
+        "assetType": "scene"
+      }
+    },
+    {
+      "id": "dialog-health-office-interior",
+      "client": "dialog-health",
+      "register": "interior",
+      "provenance": "APPROVED AND FROZEN 2026-08-19 by owner ruling on the phase 0 baseline render, recorded in the close-out section of docs/evaluations/2026-08-17-adr-0018-phase0-baseline.md. Hand authored for phase 0. It was drafted without verified knowledge of Dialog Health's approved scene vocabulary and carried a pending flag until the owner read the render and called the frame plain as directed and correct as a starting point. A change from here is a dated amendment, not a re-litigation.",
+      "productId": null,
+      "leakageMarkers": [
+        "8-bit",
+        "arcade",
+        "pixel"
+      ],
+      "brief": {
+        "scene": "A community health clinic front desk in the quiet minutes before opening. A staff member in ordinary work clothes reviews the day's schedule at the desk, coffee beside the keyboard. Morning light comes through the entrance glass. The room is clean and lived in: patient chairs, a plant that gets watered, notices pinned straight.",
+        "sceneComposition": "Shot at standing eye level with a 35 mm lens from the waiting area, angled across the desk. The staff member occupies the right third; the entrance glass and waiting chairs give depth on the left.",
+        "sceneLighting": "Daylight through the entrance glass is the single source, raking across the desk. The room behind the desk falls a step darker. No overhead fluorescent wash.",
+        "sceneProps": "front desk, desktop computer, coffee cup, waiting chairs, potted plant",
+        "placement": "Website feature",
+        "format": "1200x800",
+        "assetType": "scene"
+      },
+      "formatNote": "Amended 2026-08-18. The scene originally read 16:9 landscape, taken from the placementFormats table in app/app.js. The website flow that actually renders Website feature uses the websiteOutputFormats table and submits the pixel dimensions, so production sends 1200x800 at 3:2. Amended so the capture matches the render path."
+    },
+    {
+      "id": "dialog-health-patient-message",
+      "client": "dialog-health",
+      "register": "clinical register with device",
+      "provenance": "APPROVED AND FROZEN 2026-08-19 by owner ruling on the phase 0 baseline render, recorded in the close-out section of docs/evaluations/2026-08-17-adr-0018-phase0-baseline.md. Hand authored for phase 0 and chosen deliberately to exercise the screen bearing path: the scene contains a phone, so the screen abstraction rules compile. It carried a pending flag until the owner read the render and called the frame plain as directed and correct as a starting point. A change from here is a dated amendment, not a re-litigation.",
+      "productId": null,
+      "leakageMarkers": [
+        "8-bit",
+        "arcade",
+        "pixel"
+      ],
+      "brief": {
+        "scene": "A patient at their own kitchen table on a weekday morning, checking a text message on their phone with one hand while the other rests on a mug. The moment is small and unremarkable: a reminder read in passing between ordinary tasks, not a health crisis. The kitchen is real and modest, breakfast dishes not yet cleared.",
+        "sceneComposition": "Shot from across the table at seated eye level with a 50 mm lens. The person and phone hold the left half of the frame; the kitchen recedes soft behind them.",
+        "sceneLighting": "Window light from camera left is the only source. The phone side of the face is lit by the room, not by the screen. Shadows stay soft and ordinary.",
+        "sceneProps": "smartphone, coffee mug, kitchen table, breakfast dishes",
+        "placement": "Website feature",
+        "format": "1200x800",
+        "assetType": "scene"
+      },
+      "formatNote": "Amended 2026-08-18. The scene originally read 16:9 landscape, taken from the placementFormats table in app/app.js. The website flow that actually renders Website feature uses the websiteOutputFormats table and submits the pixel dimensions, so production sends 1200x800 at 3:2. Amended so the capture matches the render path."
+    }
+  ]
+}

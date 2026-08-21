@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brand-world-system.local/schemas/v1/brand-brain-snapshot-reference.schema.json",
+  "title": "Brand Brain snapshot reference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "snapshot_id", "brain_version", "brand_id", "snapshot_uri", "content_digest", "entities"],
+  "properties": {
+    "schema_version": { "$ref": "common.schema.json#/$defs/schema_version" },
+    "snapshot_id": { "$ref": "common.schema.json#/$defs/identifier" },
+    "brain_version": { "$ref": "common.schema.json#/$defs/version" },
+    "brand_id": { "$ref": "common.schema.json#/$defs/identifier" },
+    "snapshot_uri": { "$ref": "common.schema.json#/$defs/non_empty_string" },
+    "content_digest": { "$ref": "common.schema.json#/$defs/checksum" },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "version", "kind", "domain", "name", "instruction", "governance_role", "lifecycle", "current_version", "epistemic_origin", "provenance", "component"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/identifier" },
+          "version": { "$ref": "common.schema.json#/$defs/version" },
+          "kind": { "enum": ["knowledge", "scoped_rule"] },
+          "domain": { "enum": ["foundation", "identity", "world", "production", "memory"] },
+          "name": { "$ref": "common.schema.json#/$defs/non_empty_string" },
+          "instruction": { "$ref": "common.schema.json#/$defs/non_empty_string" },
+          "governance_role": { "enum": ["canonical", "contextual"] },
+          "lifecycle": { "const": "approved" },
+          "current_version": { "const": true },
+          "epistemic_origin": { "enum": ["sourced", "inferred", "authored", "generated"] },
+          "production_effect": { "enum": ["required", "permitted", "conditional", "prohibited"] },
+          "rationale": { "$ref": "common.schema.json#/$defs/non_empty_string" },
+          "scope": { "$ref": "common.schema.json#/$defs/scope" },
+          "component": { "$ref": "common.schema.json#/$defs/component" },
+          "semantic_tags": { "type": "array", "uniqueItems": true, "items": { "$ref": "common.schema.json#/$defs/identifier" } },
+          "provenance": { "$ref": "common.schema.json#/$defs/provenance" },
+          "confidence": { "$ref": "common.schema.json#/$defs/epistemic_confidence" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "kind": { "const": "scoped_rule" } }, "required": ["kind"] },
+            "then": { "required": ["production_effect", "scope", "rationale"] },
+            "else": { "not": { "required": ["production_effect"] } }
+          },
+          {
+            "if": { "properties": { "epistemic_origin": { "enum": ["inferred", "generated"] } }, "required": ["epistemic_origin"] },
+            "then": { "required": ["confidence"] }
+          },
+          {
+            "if": { "properties": { "governance_role": { "const": "canonical" } }, "required": ["governance_role"] },
+            "then": { "properties": { "lifecycle": { "const": "approved" }, "current_version": { "const": true } } }
+          }
+        ]
+      }
+    }
+  }
+}

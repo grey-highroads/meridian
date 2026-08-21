@@ -1,0 +1,416 @@
+{
+  "fixture": "adr-0017-step1-refusals",
+  "client": "dialog-health",
+  "brandName": "Dialog Health",
+  "status": "Prototype fixture. Hand authored for the ADR 0017 step 1 gate. Not client state and not approved guidance.",
+  "authoredFrom": {
+    "grammarRejects": "Ten captures in docs/evaluations/2026-08-16-adr-0016-step3-parity.md, cycle 1, cycle 2, and stability runs S1 to S3, both brands.",
+    "regeneratedGuardrailsAndRejects": "The six stability captures in the same document.",
+    "approvedGuardrailsAndRejects": "Owner paste held gitignored under fixtures/adr-0017-approved-refusals/. Content is not committed; derivedFrom names the guardrail or reject it rests on.",
+    "note": "Entries carried by currently approved material are authored active with an accepted ruling. Entries appearing only in regenerated captures are authored proposed, so the fixture shows what a step 2 diff would surface."
+  },
+  "schema_version": "1.0.0",
+  "version": 1,
+  "updated_at": "2026-08-17T00:00:00.000Z",
+  "entries": [
+    {
+      "id": "ref-dh-sender",
+      "concern": "Unidentified sender or no visible next action",
+      "statement": "Do not show a message screen with an unidentified sender, an unclear purpose, or no visible action to take. Sender identity and the requested action are legible whenever a message is central to the frame.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The RCS Presentation emphasizes verified senders, organization branding, and clear direct actions. Reached by two grammar-reject captures."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-no-task",
+      "concern": "Staged scene with no real task in it",
+      "statement": "Do not show staged groups smiling at the camera, handshakes, unused devices, empty corridors, or generic bedside scenes with no communication task underway. People and tools are engaged in recognizable work.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "Reasoned from the Official Website's focus on practical workflows and reduced staff burden. Reached by two grammar-reject captures and one regenerated lived-world reject."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-clutter",
+      "concern": "Screen content that obscures the action",
+      "statement": "Do not show screens crowded with tiny copy, competing buttons, decorative charts, or layered windows that hide the intended action.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "Reasoned from the Official Website's emphasis on simple communication and the RCS Presentation's direct action structure. Reached by one grammar-reject capture."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-personal-data",
+      "concern": "Real personal or health information in frame",
+      "statement": "Do not show real names, dates of birth, diagnoses, phone numbers, account details, clinical results, or message histories on any screen or paper surface. Visible content is invented.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The Official Website states privacy is paramount and describes the platform as HIPAA compliant. Reached by four grammar-reject captures and one regenerated guardrail. No approved guardrail states this rule."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-logo-rebuild",
+      "concern": "Identity artwork rebuilt from a screenshot",
+      "statement": "Do not redraw, approximate, stretch, crop, recolor, or reconstruct the Dialog Health logo or its approved arrangements. Place the supplied artwork unaltered, and use RCS Template.png unchanged in its role.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail against reconstructing exact identity assets, naming the brand kit as the authority for logos and lockups and RCS Template.png as a separate canonical background asset. Reached by four grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-guessed-color",
+      "concern": "Brand color estimated by eye",
+      "statement": "Do not pick a green from a website capture, PDF preview, or slide screenshot. Use a confirmed production value from the brand files, and where no value is supplied, leave the color unset rather than inventing one.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "The brand kit names Main Green but the supplied extraction carries no numerical specification, and the approved guardrail directs use of the canonical file rather than estimating a color. Reached by one grammar-reject capture and one regenerated guardrail."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-clinical-product",
+      "concern": "The platform staged as clinical treatment",
+      "statement": "Do not arrange the product as medication, diagnostic equipment, dosage instructions, or a treatment tool. It stays visibly in the communication and workflow role.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The Official Website positions Dialog Health as healthcare communication software rather than a clinical treatment. Reached by one grammar-reject capture."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-unreal-tech",
+      "concern": "Unreal technology imagery instead of a real scene",
+      "statement": "Do not use floating message bubbles, artificial interface overlays, glowing data trails, or decorative message streams in place of a real phone, a real room, and a person acting.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of generic technology spectacle disconnected from healthcare work. Reached by one grammar-reject capture."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-demo-as-fact",
+      "concern": "Demonstration material presented as identity or fact",
+      "statement": "Do not present the fictional sender name, sample logos, invented screens, patient names, dates, or message designs from the RCS deck as Dialog Health identity assets or as a live customer deployment.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail keeping sales examples in their proper role: the RCS presentation is representative sales evidence that can be improved, and its WynterHealth examples are demonstrations. Reached by two grammar-reject captures and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-generic-category",
+      "concern": "The work is not identifiably healthcare",
+      "statement": "Do not build a frame that could be any consumer messaging app or any software company: no anonymous phone close-up, no generic office life, no person defined by devices or trends, no day dominated by software for its own sake. The healthcare or employee communication task is visible.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail on presenting more than messaging, which keeps the platform larger than a generic texting utility and describes a suite connecting patient and employee journeys. Reached by one grammar-reject capture, three regenerated guardrails, and three regenerated lived-world rejects."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-clinical-theater",
+      "concern": "Clinical theater as healthcare shorthand",
+      "statement": "Do not use white seamless clinical sets, staged laboratory props, floating medical symbols, diagnostic poses, or rows of unused devices to signal healthcare. Show the communication task in a working environment.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "Reasoned from the Official Website's description of healthcare workflows and secure communication rather than clinical practice. Reached by two grammar-reject captures and one regenerated lived-world reject."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-app-step",
+      "concern": "An app download shown as a required step",
+      "statement": "Do not show app store badges, installation screens, or a recipient downloading a separate Dialog Health app before they can act. The action happens in mobile messaging.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of extra apps or unnecessary steps when a direct mobile action will work, and the Official Website's statement that the cloud-based software requires no app download. Reached by one grammar-reject capture and one regenerated guardrail."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-overclaim",
+      "concern": "Outcome, compliance, or leadership claims beyond their evidence",
+      "statement": "Do not use treatment imagery, medical result graphics, perfect attendance boards, or before-and-after constructions to imply a clinical or performance result, and do not broaden security, privacy, or compliance statements past the scope their evidence supports.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved guardrail against broadening regulated or quantified claims, and the approved lived-world reject of unqualified promises about outcomes, security, compliance, or industry leadership. The website makes HIPAA, TCPA, CTIA, reliability, and outcome claims with no supporting documentation in the register. Reached by one grammar-reject capture and three regenerated guardrails."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-automation",
+      "concern": "Automation replacing human judgment",
+      "statement": "Do not show a system acting with no person in the loop, and do not show cold automated messaging that leaves no visible way to respond or reach help. Automation directs attention to where a person then acts.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of cold automation that obscures how a person can respond or get help. Reached by one regenerated guardrail and two regenerated lived-world rejects."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-frictionless",
+      "concern": "The frictionless fantasy",
+      "statement": "Do not show every recipient responding, every workflow running without exception, or a person with unlimited time, staff, and support. Show the real conditions the work happens in.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The regenerated lived-world rejects across all three stability runs. Reasoned from the Official Website's framing of staff burden and follow-up load."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-roles",
+      "concern": "A role portrayed without the work it actually does",
+      "statement": "Do not build the story around executives alone, or cast an administrator with no visible connection to patient or employee outcomes. Include the staff who manage calls, schedules, forms, billing, and follow-up.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The regenerated lived-world rejects on two runs. Reasoned from the Official Website's account of who does the communication work."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-patient-passive",
+      "concern": "The patient as a passive recipient or a metric",
+      "statement": "Do not show patients only receiving messages, and do not reduce a patient to a number on a dashboard. Show a person completing a healthcare task.",
+      "basis": {
+        "origin": "inference",
+        "confidence": "Medium",
+        "derivedFrom": "The regenerated lived-world rejects on two runs. Reasoned from the approved world guidance requiring both sides of the communication."
+      },
+      "ruling": {
+        "decision": null,
+        "ruled_at": null,
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "proposed",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-fear",
+      "concern": "Patient vulnerability dramatized",
+      "statement": "Do not dramatize fear, distress, or clinical crisis: no frightened patient, no emergency staging, no vulnerable moment used to make the message matter. Show a useful action such as confirming, scheduling, completing a form, paying, preparing, or requesting help.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of fear-based depictions of patients or clinical situations, and partly the approved guardrail on making care communication practical, which directs focus onto useful actions rather than dramatizing patient vulnerability. Absent from the regenerated guardrails, the regenerated lived-world rejects, and the grammar rejects in all three stability runs."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    },
+    {
+      "id": "ref-dh-feature-inventory",
+      "concern": "Feature inventory without consequence",
+      "statement": "Do not present a list of capabilities with no user or business consequence attached to them.",
+      "basis": {
+        "origin": "evidence",
+        "confidence": "High",
+        "derivedFrom": "Approved lived-world reject of dense feature inventories without a clear user or business consequence."
+      },
+      "ruling": {
+        "decision": "accepted",
+        "ruled_at": "2026-08-17T00:00:00.000Z",
+        "ruled_by": null,
+        "proposed_by_run": null
+      },
+      "status": "active",
+      "observations": [],
+      "proposed_at": "2026-08-17T00:00:00.000Z",
+      "superseded_at": null,
+      "superseded_by": null
+    }
+  ]
+}

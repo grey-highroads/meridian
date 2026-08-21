@@ -1,0 +1,106 @@
+/*
+ * Place on background. A spike page that lives beside the app rather than
+ * inside it, so removing it removes nothing else.
+ *
+ * Every value here is a token from styles.css or polish.css. Nothing new is
+ * invented and nothing existing is overridden.
+ */
+
+.place-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: var(--section-gap);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .place-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.place-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+}
+
+.place-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  max-height: 260px;
+  overflow-y: auto;
+  padding: var(--space-1);
+}
+
+.place-option {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.place-option.is-chosen {
+  border-color: var(--lavender);
+  box-shadow: inset 0 0 0 1px var(--lavender);
+}
+
+.place-option img {
+  display: block;
+  width: 100%;
+  height: 68px;
+  object-fit: cover;
+}
+
+.place-option span {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.3;
+  color: var(--ink-950);
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.place-stage {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  margin: 0 auto;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  touch-action: none;
+  cursor: grab;
+}
+
+.place-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.place-empty {
+  padding: var(--space-10) var(--space-4);
+  text-align: center;
+}
+
+.place-direction {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.place-result img {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.place-note {
+  margin-top: var(--space-2);
+}

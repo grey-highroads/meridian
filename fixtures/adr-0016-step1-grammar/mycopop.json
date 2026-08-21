@@ -1,0 +1,319 @@
+{
+  "fixture": "adr-0016-step1-visual-grammar",
+  "client": "mycopop",
+  "brandName": "MycoPop",
+  "status": "Prototype fixture. Hand authored for ADR 0016 step 1. Not a schema artifact and not approved guidance.",
+  "authoredFrom": {
+    "brainSavedAt": "2026-08-14T23:28:23.208Z",
+    "approvedVersion": 1,
+    "synthesisModel": "gpt-5.6-sol",
+    "note": "Every statement below traces to the approved brain payload of that date. derivedFrom names the guidance section, artifact field, guardrail, or intake source it rests on."
+  },
+  "originEnum": [
+    "evidence",
+    "inference",
+    "ambition"
+  ],
+  "sections": {
+    "people": [
+      {
+        "id": "people-1",
+        "statement": "Adults doing their own work rather than models presenting a product. The person is mid task and the drink is incidental to it.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "World guidance principle: show people pursuing their own work, movement, interests, and relationships, with the product supporting the day rather than becoming the whole day. Lived World person describes an adult knowledge worker, creator, or active professional."
+        }
+      },
+      {
+        "id": "people-2",
+        "statement": "Cast varies between frames. Do not build every image around the same single spokesperson holding a can toward the lens.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Creative guidance principle: preserve founder-led directness while expanding beyond a single spokesperson and repeated handheld can presentation."
+        }
+      },
+      {
+        "id": "people-3",
+        "statement": "Wardrobe is everyday clothing that has been worn: cotton tees, flannel, fleece, knit caps, running gear with visible use. No styled athleisure sets, no lab coats, no branded team kit.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Lived World person and the guardrail against imitating stimulant culture. The brain documents no wardrobe direction, so this reads the person description into clothing."
+        }
+      },
+      {
+        "id": "people-4",
+        "statement": "In the arcade era direction the period reaches the person through fabric and cut rather than through licensed graphics: solid or striped cotton, nylon windbreakers with color blocking, corduroy, ribbed knit. Any graphic on clothing is an original MycoPop mark or the garment is blank.",
+        "basis": {
+          "origin": "ambition",
+          "confidence": "Medium",
+          "derivedFrom": "Intake source 8-bit style, declared as a direction to explore with strong influence. Identity guidance principle: develop proprietary pixel icons, interface frames, and motion rules rather than lifting recognizable game imagery."
+        }
+      },
+      {
+        "id": "people-5",
+        "statement": "Hands are in frame and occupied. Holding the can, typing, tying a shoe, opening a door. The grip on a cold can shows contact with wet aluminum.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Creative guidance principle: make the can cold, tactile, and drinkable before adding abstract functional symbolism. Cultural codes record close handheld product demonstration in current Instagram practice."
+        }
+      }
+    ],
+    "objects": [
+      {
+        "id": "objects-1",
+        "statement": "One 12 fl oz aluminum can, cold, carrying condensation. It is held or set down where a person put it, never arranged.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Product truth: caffeine free 25 calorie Hibiscus Ginger Lemon drink in a 12 fl oz can. Dossier materials: cold aluminum can and condensation."
+        }
+      },
+      {
+        "id": "objects-2",
+        "statement": "In the arcade era direction the hardware in frame belongs to roughly 1985 through 1995 and is present as physical object rather than as graphic: beige and grey injection molded plastic yellowed with age, ribbed vent slots, a chunky keyboard with worn keycaps, coiled cable, a curved glass CRT, blank spined cartridge cases stacked on a shelf. All forms original. No manufacturer marks, no game titles, no cabinet artwork.",
+        "basis": {
+          "origin": "ambition",
+          "confidence": "High",
+          "derivedFrom": "Intake source 8-bit style, marked emulate and aspiration with strong influence, usage note describing retro and tech affinity with nerd culture. Guardrail treat 8-bit as a direction. Rules guidance principle: do not copy third-party game characters, screens, logos, typography, or package designs."
+        }
+      },
+      {
+        "id": "objects-3",
+        "statement": "Objects carry use. Ring marks on the desk, a notebook with a bent cover, a cable looped and reused, a mug that has been washed many times.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Lived World patterns naming early mornings and long work sessions as the recurring occasions. Wear is inferred from repeated use rather than documented."
+        }
+      },
+      {
+        "id": "objects-4",
+        "statement": "Ingredient evidence appears as real material at real scale: whole dried hibiscus, a cut ginger root, a halved lemon, dried mushroom on a board. Not as icon, not scaled larger than life.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Dossier materials listing hibiscus, ginger, and lemon flavor cues. Creative guidance principle: pair one ingredient or sourcing fact with one creative idea per asset. Identity guidance principle: add credible human use and ingredient detail."
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "places-1",
+        "statement": "A desk that is worked at. Laminate or wood surface with edge wear, a chair that has been adjusted, papers and hardware within arm reach, a wall close enough behind to read.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Lived World environment the focused workspace, itself carried at evidence origin and high confidence from an Amazon review naming early mornings and long work sessions."
+        }
+      },
+      {
+        "id": "places-2",
+        "statement": "Places reached on foot: a trailhead with packed dirt, a park bench, a practice field edge, a gym floor with rubber matting and scuffs.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Lived World environment the movement break, carried at inference origin and medium confidence from Amazon listing workout and refreshment uses."
+        }
+      },
+      {
+        "id": "places-3",
+        "statement": "Transitional everyday places: a porch step, a car interior with worn upholstery, a neighborhood sidewalk, the aisle of a local shop.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Lived World environment the everyday outdoors, carried at inference origin and medium confidence from the Instagram screenshot showing snow, wooded settings, walking, and retail moments."
+        }
+      },
+      {
+        "id": "places-4",
+        "statement": "In the arcade era direction rooms are built from period building material rather than from screen graphics: wood veneer paneling, low pile carpet, textured wallpaper, painted cinderblock, a laminate desktop with a chipped edge.",
+        "basis": {
+          "origin": "ambition",
+          "confidence": "Medium",
+          "derivedFrom": "Intake source 8-bit style with strong declared influence. Identity guidance principle: balance nature and technology, where technology adds wit, structure, and cultural distinction."
+        }
+      },
+      {
+        "id": "places-5",
+        "statement": "Where nature appears it is a real place with real texture: moss on actual bark, wet leaf litter, snow with footprints, moving water. Shot on location rather than composited.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Dossier materials naming forest moss, wood, foliage, ice, snow, water, and sunlight. Creative guidance principle: create credible nature imagery and real world texture, and avoid letting synthetic forest scenes become the only expression of mushroom sourcing."
+        }
+      }
+    ],
+    "light": [
+      {
+        "id": "light-1",
+        "statement": "Outdoors and in refreshment frames the dominant source is direct daylight. Hard shadow edges, a specular highlight running down the wet can wall, condensation beading with visible edge light.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Identity guidance principle: use coldness, liquid, fruit, and daylight to make the product immediately drinkable. Dossier materials: cold aluminum can and condensation."
+        }
+      },
+      {
+        "id": "light-2",
+        "statement": "In the arcade era direction the dominant source is practical screen light in an otherwise dark room. A CRT throws magenta and orange across a face and desk from frame left, falls off within about four feet, and leaves a near black field behind the subject.",
+        "basis": {
+          "origin": "ambition",
+          "confidence": "Medium",
+          "derivedFrom": "Palette entry Arcade Black at hex 101010, recorded in the brain as suggested by the 8-bit reference as a future contrast field and labeled directional rather than current approved guidance. Palette entries Can Magenta at D92F6F and Hibiscus Citrus Orange at ED8B45, both observed on the current can."
+        }
+      },
+      {
+        "id": "light-3",
+        "statement": "Interior work light is one practical source, a window or a desk lamp, with falloff across the room rather than an even fill.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Low",
+          "derivedFrom": "Read from the focused workspace environment. The brain documents no lighting direction, so this is a reasoned default that keeps interiors from defaulting to the arcade entry above."
+        }
+      },
+      {
+        "id": "light-4",
+        "statement": "Contrast holds high enough that the can reads cold. Highlights on aluminum keep detail rather than clipping.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Desired feeling, which states the brand wants to look colder, brighter, and more refreshing."
+        }
+      }
+    ],
+    "camera": [
+      {
+        "id": "camera-1",
+        "statement": "Capture format is 35mm full frame, or an emulation of ISO 400 color negative. Fine grain visible in shadow, warm highlight rolloff, no clipped whites.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the creative guidance requirement for credible human use and real world texture, and from the rejection of synthetic composite treatment. The brain specifies no capture format."
+        }
+      },
+      {
+        "id": "camera-2",
+        "statement": "Focal length is 35mm for workspace and outdoor frames, 50mm for a single person with the can, 85mm only when isolating hands or the can inside a wider scene. Never wider than 28mm and never longer than 105mm.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the world guidance requirement that the place stay legible around the person. No focal length is documented in the brain."
+        }
+      },
+      {
+        "id": "camera-3",
+        "statement": "Aperture is f/2.8 to f/4 on people, which keeps the room readable behind the subject, and f/5.6 or narrower when the place carries the story. Subject isolation that erases the environment is out.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the world guidance principle that the product should support the day rather than become the whole day, which requires the day to remain visible."
+        }
+      },
+      {
+        "id": "camera-4",
+        "statement": "Camera height is eye level or slightly below, standing or seated with the subject. Framing distance is medium to medium wide, with the person occupying roughly a third to a half of the frame height. No overhead flat lay and no low hero angle on the can.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the creative guidance principle to start with a recognizable human need rather than a floating product."
+        }
+      },
+      {
+        "id": "camera-5",
+        "statement": "Symmetry discipline: the subject sits on a vertical third rather than center, one element is cropped by a frame edge, and the horizon or desk edge sits off the horizontal center line.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the same principle. Recorded here as settings so the scene writer has a construction rule rather than a mood word."
+        }
+      },
+      {
+        "id": "camera-6",
+        "statement": "Exposure is set for the face, with the background sitting a half to one stop under. Highlights on aluminum and condensation retain detail.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the desired feeling of colder and brighter, which fails if highlights blow out."
+        }
+      },
+      {
+        "id": "camera-7",
+        "statement": "Register shorthand resolves here or does not appear. Documentary resolves to 35mm at f/4, eye level, available light with no added fill, subject off center, one element cropped. Any other register word must resolve to settings in this section before it can be used.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "The ADR 0016 register rule, which permits a register word only as shorthand that resolves to stated settings in the same entry."
+        }
+      }
+    ],
+    "rejects": [
+      {
+        "id": "rejects-1",
+        "statement": "Readable third-party marks of any kind: game characters, title screens, logos, typefaces, cabinet artwork, package designs, or the distinctive executions of the Odyssey reference.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Rules guidance principle prohibiting copying of third-party game characters, screens, logos, typography, package designs, or Odyssey executions. Guardrail learn without copying."
+        }
+      },
+      {
+        "id": "rejects-2",
+        "statement": "A reconstructed MycoPop logo or can label. The physical can is photographed. Label artwork is never redrawn, traced, or rebuilt from a screenshot.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Guardrail protect missing master assets. Identity guidance principle: do not infer exact color values, typefaces, clear space, or logo rules from screenshots."
+        }
+      },
+      {
+        "id": "rejects-3",
+        "statement": "The floating product. A can centered on a plain surface facing the camera with no person and no place around it.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Creative guidance principle: start with a recognizable human need, not a floating product or unsupported promise."
+        }
+      },
+      {
+        "id": "rejects-4",
+        "statement": "Fantasy forest composite. Glowing mushrooms, volumetric shafts through fog, mushrooms scaled larger than life, forest backdrops assembled behind a product.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Identity guidance principle to reduce reliance on generic fantasy forest composites. Creative guidance principle to avoid letting synthetic forest scenes become the only expression of mushroom sourcing."
+        }
+      },
+      {
+        "id": "rejects-5",
+        "statement": "Stimulant culture signaling. Sweat sheen gym close ups, chalk dust, exertion faces, motion blurred sprints, electricity or lightning graphics.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Guardrail do not imitate stimulant culture. Lived World reject: aggressive gym-bro or extreme energy signaling."
+        }
+      },
+      {
+        "id": "rejects-6",
+        "statement": "Clinical or supplement staging. White seamless backdrops, pill bottle arrangements, powder scoops, dosage layouts.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Lived World reject: chalky or medicinal formats. Desired feeling states the intended combination is not clinical, medicinal, or aggressively extreme."
+        }
+      },
+      {
+        "id": "rejects-7",
+        "statement": "Decorative pixel overlay. Pixel sparkles, 8-bit hearts, scanline filters, or arcade interface elements laid on top of a photograph. The era lives in the physical objects and the light, never as a graphic layer added afterward.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Creative guidance principle: use original retro-game devices as framing, transitions, motion, navigation, or data display, not as decorative nostalgia everywhere."
+        }
+      }
+    ]
+  }
+}

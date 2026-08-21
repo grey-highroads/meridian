@@ -1,0 +1,594 @@
+{
+  "note": "Every captured item cut into the distinct prohibitions it carries. Authored before the matcher exists and committed separately from the assignment, so a reader can disagree with either half alone.",
+  "clients": {
+    "mycopop": {
+      "grammar:cycle1:No copied game worlds": [
+        "grammar:cycle1:No copied game worlds#a"
+      ],
+      "grammar:cycle2:No borrowed game property": [
+        "grammar:cycle2:No borrowed game property#a"
+      ],
+      "grammar:S1:No Borrowed Game Property": [
+        "grammar:S1:No Borrowed Game Property#a"
+      ],
+      "grammar:S2:No borrowed properties": [
+        "grammar:S2:No borrowed properties#a"
+      ],
+      "grammar:S3:No readable game property": [
+        "grammar:S3:No readable game property#a"
+      ],
+      "guardrail:S1:Create original retro forms": [
+        "guardrail:S1:Create original retro forms#a"
+      ],
+      "guardrail:S2:Build an original world": [
+        "guardrail:S2:Build an original world#a",
+        "guardrail:S2:Build an original world#b"
+      ],
+      "guardrail:S3:Build an original retro world": [
+        "guardrail:S3:Build an original retro world#a"
+      ],
+      "grammar:cycle2:No pasted pixel layer": [
+        "grammar:cycle2:No pasted pixel layer#a"
+      ],
+      "grammar:S1:No Pixel Overlay": [
+        "grammar:S1:No Pixel Overlay#a"
+      ],
+      "grammar:S2:No pasted game layer": [
+        "grammar:S2:No pasted game layer#a"
+      ],
+      "grammar:S3:No pasted pixel layer": [
+        "grammar:S3:No pasted pixel layer#a"
+      ],
+      "grammar:cycle1:No costume nostalgia": [
+        "grammar:cycle1:No costume nostalgia#a"
+      ],
+      "grammar:cycle1:Limit artificial forests": [
+        "grammar:cycle1:Limit artificial forests#a",
+        "grammar:cycle1:Limit artificial forests#b"
+      ],
+      "grammar:cycle1:No warm dry hero": [
+        "grammar:cycle1:No warm dry hero#a"
+      ],
+      "grammar:cycle2:No borrowed refresh filter": [
+        "grammar:cycle2:No borrowed refresh filter#a"
+      ],
+      "grammar:S1:No Borrowed Filter": [
+        "grammar:S1:No Borrowed Filter#a"
+      ],
+      "grammar:S2:No freshness filter": [
+        "grammar:S2:No freshness filter#a"
+      ],
+      "grammar:S3:No borrowed freshness layer": [
+        "grammar:S3:No borrowed freshness layer#a"
+      ],
+      "grammar:cycle2:No competitor imitation": [
+        "grammar:cycle2:No competitor imitation#a"
+      ],
+      "grammar:S1:No Competitor Copy": [
+        "grammar:S1:No Competitor Copy#a"
+      ],
+      "grammar:S2:No competitor copying": [
+        "grammar:S2:No competitor copying#a"
+      ],
+      "grammar:S3:No competitor property": [
+        "grammar:S3:No competitor property#a"
+      ],
+      "guardrail:S1:Own refreshment": [
+        "guardrail:S1:Own refreshment#a"
+      ],
+      "guardrail:S3:Own refreshment physically": [
+        "guardrail:S3:Own refreshment physically#a"
+      ],
+      "approved-guardrail:3": [
+        "approved-guardrail:3#a"
+      ],
+      "grammar:cycle2:No package approximation": [
+        "grammar:cycle2:No package approximation#a"
+      ],
+      "grammar:S1:No Rebuilt Artwork": [
+        "grammar:S1:No Rebuilt Artwork#a"
+      ],
+      "grammar:S2:No rebuilt identity": [
+        "grammar:S2:No rebuilt identity#a"
+      ],
+      "guardrail:S1:Protect brand artwork": [
+        "guardrail:S1:Protect brand artwork#a"
+      ],
+      "guardrail:S2:Do not use screenshots as masters": [
+        "guardrail:S2:Do not use screenshots as masters#a"
+      ],
+      "approved-guardrail:4": [
+        "approved-guardrail:4#a"
+      ],
+      "grammar:cycle2:No clinical staging": [
+        "grammar:cycle2:No clinical staging#a"
+      ],
+      "grammar:cycle2:No murky supplement cues": [
+        "grammar:cycle2:No murky supplement cues#a"
+      ],
+      "grammar:S1:No Clinical Staging": [
+        "grammar:S1:No Clinical Staging#a"
+      ],
+      "grammar:S2:No clinical staging": [
+        "grammar:S2:No clinical staging#a"
+      ],
+      "grammar:S3:No clinical staging": [
+        "grammar:S3:No clinical staging#a"
+      ],
+      "guardrail:S1:Stay beverage first": [
+        "guardrail:S1:Stay beverage first#a"
+      ],
+      "lwr:S1:2": [
+        "lwr:S1:2#a"
+      ],
+      "lwr:S2:4": [
+        "lwr:S2:4#a"
+      ],
+      "lwr:S3:4": [
+        "lwr:S3:4#a"
+      ],
+      "approved-lwr:2": [
+        "approved-lwr:2#a"
+      ],
+      "grammar:S1:No Unclear Child Use": [
+        "grammar:S1:No Unclear Child Use#a"
+      ],
+      "lwr:S1:5": [
+        "lwr:S1:5#a"
+      ],
+      "grammar:S3:No superhuman results": [
+        "grammar:S3:No superhuman results#a"
+      ],
+      "lwr:S1:1": [
+        "lwr:S1:1#a"
+      ],
+      "guardrail:S1:Keep benefits qualified": [
+        "guardrail:S1:Keep benefits qualified#a"
+      ],
+      "guardrail:S2:Keep health language qualified": [
+        "guardrail:S2:Keep health language qualified#a"
+      ],
+      "guardrail:S3:Keep health language responsible": [
+        "guardrail:S3:Keep health language responsible#a"
+      ],
+      "approved-guardrail:0": [
+        "approved-guardrail:0#a"
+      ],
+      "guardrail:S1:Verify product facts": [
+        "guardrail:S1:Verify product facts#a"
+      ],
+      "guardrail:S2:Tie proof to records": [
+        "guardrail:S2:Tie proof to records#a"
+      ],
+      "guardrail:S3:Make proof specific": [
+        "guardrail:S3:Make proof specific#a"
+      ],
+      "guardrail:S2:Protect caffeine free positioning": [
+        "guardrail:S2:Protect caffeine free positioning#a"
+      ],
+      "lwr:S1:3": [
+        "lwr:S1:3#a"
+      ],
+      "lwr:S3:3": [
+        "lwr:S3:3#a"
+      ],
+      "approved-guardrail:1": [
+        "approved-guardrail:1#a"
+      ],
+      "approved-lwr:4": [
+        "approved-lwr:4#a"
+      ],
+      "guardrail:S2:Separate guidance from practice": [
+        "guardrail:S2:Separate guidance from practice#a"
+      ],
+      "guardrail:S3:Separate practice from rules": [
+        "guardrail:S3:Separate practice from rules#a"
+      ],
+      "lwr:S1:0": [
+        "lwr:S1:0#a"
+      ],
+      "lwr:S3:0": [
+        "lwr:S3:0#a"
+      ],
+      "lwr:S1:4": [
+        "lwr:S1:4#a"
+      ],
+      "lwr:S2:0": [
+        "lwr:S2:0#a",
+        "lwr:S2:0#b"
+      ],
+      "lwr:S2:2": [
+        "lwr:S2:2#a"
+      ],
+      "lwr:S3:2": [
+        "lwr:S3:2#a"
+      ],
+      "lwr:S2:1": [
+        "lwr:S2:1#a"
+      ],
+      "approved-lwr:1": [
+        "approved-lwr:1#a"
+      ],
+      "lwr:S2:3": [
+        "lwr:S2:3#a",
+        "lwr:S2:3#b"
+      ],
+      "approved-lwr:0": [
+        "approved-lwr:0#a"
+      ],
+      "lwr:S3:1": [
+        "lwr:S3:1#a"
+      ],
+      "approved-guardrail:2": [
+        "approved-guardrail:2#a"
+      ],
+      "approved-guardrail:5": [
+        "approved-guardrail:5#a"
+      ],
+      "approved-lwr:3": [
+        "approved-lwr:3#a"
+      ],
+      "approved-lwr:5": [
+        "approved-lwr:5#a"
+      ],
+      "guidance:foundation:0": [
+        "guidance:foundation:0#a"
+      ],
+      "guidance:foundation:3": [
+        "guidance:foundation:3#a"
+      ],
+      "guidance:foundation:4": [
+        "guidance:foundation:4#a"
+      ],
+      "guidance:identity:0": [
+        "guidance:identity:0#a"
+      ],
+      "guidance:identity:2": [
+        "guidance:identity:2#a"
+      ],
+      "guidance:identity:4": [
+        "guidance:identity:4#a"
+      ],
+      "guidance:identity:5": [
+        "guidance:identity:5#a"
+      ],
+      "guidance:world:0": [
+        "guidance:world:0#a"
+      ],
+      "guidance:world:2": [
+        "guidance:world:2#a"
+      ],
+      "guidance:voice:4": [
+        "guidance:voice:4#a"
+      ],
+      "guidance:voice:3": [
+        "guidance:voice:3#a"
+      ],
+      "guidance:creative:0": [
+        "guidance:creative:0#a",
+        "guidance:creative:0#b"
+      ],
+      "guidance:creative:1": [
+        "guidance:creative:1#a"
+      ],
+      "guidance:creative:2": [
+        "guidance:creative:2#a"
+      ],
+      "guidance:creative:4": [
+        "guidance:creative:4#a"
+      ],
+      "guidance:creative:5": [
+        "guidance:creative:5#a"
+      ],
+      "guidance:rules:0": [
+        "guidance:rules:0#a"
+      ],
+      "guidance:rules:2": [
+        "guidance:rules:2#a"
+      ],
+      "guidance:rules:3": [
+        "guidance:rules:3#a"
+      ],
+      "guidance:rules:4": [
+        "guidance:rules:4#a",
+        "guidance:rules:4#b"
+      ],
+      "guidance:rules:5": [
+        "guidance:rules:5#a"
+      ]
+    },
+    "dialog-health": {
+      "grammar:cycle1:Anonymous message screens": [
+        "grammar:cycle1:Anonymous message screens#a",
+        "grammar:cycle1:Anonymous message screens#b"
+      ],
+      "grammar:S2:No unclear sender": [
+        "grammar:S2:No unclear sender#a",
+        "grammar:S2:No unclear sender#b"
+      ],
+      "grammar:cycle1:Empty office posing": [
+        "grammar:cycle1:Empty office posing#a"
+      ],
+      "grammar:S3:No empty care scenes": [
+        "grammar:S3:No empty care scenes#a"
+      ],
+      "lwr:S3:3": [
+        "lwr:S3:3#a"
+      ],
+      "grammar:cycle1:Unreadable screen clutter": [
+        "grammar:cycle1:Unreadable screen clutter#a"
+      ],
+      "grammar:cycle1:Exposed personal data": [
+        "grammar:cycle1:Exposed personal data#a"
+      ],
+      "grammar:cycle2:Visible private information": [
+        "grammar:cycle2:Visible private information#a"
+      ],
+      "grammar:S2:No exposed data": [
+        "grammar:S2:No exposed data#a"
+      ],
+      "grammar:S3:No exposed records": [
+        "grammar:S3:No exposed records#a"
+      ],
+      "guardrail:S2:Protect personal information": [
+        "guardrail:S2:Protect personal information#a"
+      ],
+      "grammar:cycle2:Rebuilt brand artwork": [
+        "grammar:cycle2:Rebuilt brand artwork#a"
+      ],
+      "grammar:S1:No rebuilt logo": [
+        "grammar:S1:No rebuilt logo#a"
+      ],
+      "grammar:S2:No rebuilt logo": [
+        "grammar:S2:No rebuilt logo#a"
+      ],
+      "grammar:S3:No rebuilt identity": [
+        "grammar:S3:No rebuilt identity#a"
+      ],
+      "guardrail:S1:Protect supplied logo artwork": [
+        "guardrail:S1:Protect supplied logo artwork#a"
+      ],
+      "guardrail:S2:Protect supplied artwork": [
+        "guardrail:S2:Protect supplied artwork#a"
+      ],
+      "guardrail:S3:Protect approved identity assets": [
+        "guardrail:S3:Protect approved identity assets#a"
+      ],
+      "approved-guardrail:0": [
+        "approved-guardrail:0#a",
+        "approved-guardrail:0#b",
+        "approved-guardrail:0#c"
+      ],
+      "grammar:S1:No guessed green": [
+        "grammar:S1:No guessed green#a"
+      ],
+      "guardrail:S1:Do not guess color values": [
+        "guardrail:S1:Do not guess color values#a"
+      ],
+      "grammar:cycle2:False clinical staging": [
+        "grammar:cycle2:False clinical staging#a"
+      ],
+      "grammar:cycle2:Generic phone spectacle": [
+        "grammar:cycle2:Generic phone spectacle#a"
+      ],
+      "approved-lwr:0": [
+        "approved-lwr:0#a",
+        "approved-lwr:0#b"
+      ],
+      "grammar:cycle2:Sample identity confusion": [
+        "grammar:cycle2:Sample identity confusion#a"
+      ],
+      "grammar:S1:No invented interface": [
+        "grammar:S1:No invented interface#a"
+      ],
+      "guardrail:S1:Separate evidence from guidance": [
+        "guardrail:S1:Separate evidence from guidance#a"
+      ],
+      "guardrail:S3:Separate demonstration from proof": [
+        "guardrail:S3:Separate demonstration from proof#a"
+      ],
+      "approved-guardrail:4": [
+        "approved-guardrail:4#a"
+      ],
+      "grammar:S1:No generic chat": [
+        "grammar:S1:No generic chat#a",
+        "grammar:S1:No generic chat#b"
+      ],
+      "guardrail:S1:Keep the healthcare context": [
+        "guardrail:S1:Keep the healthcare context#a"
+      ],
+      "guardrail:S2:Stay outcome connected": [
+        "guardrail:S2:Stay outcome connected#a"
+      ],
+      "guardrail:S3:Connect features to work": [
+        "guardrail:S3:Connect features to work#a"
+      ],
+      "lwr:S1:0": [
+        "lwr:S1:0#a"
+      ],
+      "lwr:S2:0": [
+        "lwr:S2:0#a"
+      ],
+      "lwr:S3:0": [
+        "lwr:S3:0#a"
+      ],
+      "approved-guardrail:2": [
+        "approved-guardrail:2#a"
+      ],
+      "grammar:S1:No clinical theater": [
+        "grammar:S1:No clinical theater#a"
+      ],
+      "grammar:S2:No clinical shorthand": [
+        "grammar:S2:No clinical shorthand#a"
+      ],
+      "lwr:S2:2": [
+        "lwr:S2:2#a"
+      ],
+      "grammar:S2:No app fiction": [
+        "grammar:S2:No app fiction#a"
+      ],
+      "guardrail:S2:Keep access simple": [
+        "guardrail:S2:Keep access simple#a"
+      ],
+      "approved-lwr:2": [
+        "approved-lwr:2#a"
+      ],
+      "grammar:S3:No visual overclaim": [
+        "grammar:S3:No visual overclaim#a"
+      ],
+      "guardrail:S1:Keep claims within scope": [
+        "guardrail:S1:Keep claims within scope#a"
+      ],
+      "guardrail:S2:Substantiate strong claims": [
+        "guardrail:S2:Substantiate strong claims#a"
+      ],
+      "guardrail:S3:Substantiate strong claims": [
+        "guardrail:S3:Substantiate strong claims#a"
+      ],
+      "approved-guardrail:1": [
+        "approved-guardrail:1#a"
+      ],
+      "approved-lwr:3": [
+        "approved-lwr:3#a"
+      ],
+      "guardrail:S3:Keep people in the process": [
+        "guardrail:S3:Keep people in the process#a"
+      ],
+      "lwr:S2:4": [
+        "lwr:S2:4#a"
+      ],
+      "lwr:S3:1": [
+        "lwr:S3:1#a"
+      ],
+      "approved-lwr:1": [
+        "approved-lwr:1#a"
+      ],
+      "lwr:S1:1": [
+        "lwr:S1:1#a"
+      ],
+      "lwr:S2:3": [
+        "lwr:S2:3#a"
+      ],
+      "lwr:S3:2": [
+        "lwr:S3:2#a"
+      ],
+      "lwr:S1:2": [
+        "lwr:S1:2#a"
+      ],
+      "lwr:S2:1": [
+        "lwr:S2:1#a"
+      ],
+      "lwr:S1:3": [
+        "lwr:S1:3#a"
+      ],
+      "lwr:S3:4": [
+        "lwr:S3:4#a"
+      ],
+      "approved-guardrail:3": [
+        "approved-guardrail:3#a"
+      ],
+      "approved-lwr:4": [
+        "approved-lwr:4#a"
+      ],
+      "approved-lwr:5": [
+        "approved-lwr:5#a"
+      ],
+      "guidance:foundation:2": [
+        "guidance:foundation:2#a"
+      ],
+      "guidance:foundation:3": [
+        "guidance:foundation:3#a"
+      ],
+      "guidance:identity:0": [
+        "guidance:identity:0#a"
+      ],
+      "guidance:identity:1": [
+        "guidance:identity:1#a"
+      ],
+      "guidance:identity:2": [
+        "guidance:identity:2#a"
+      ],
+      "guidance:identity:3": [
+        "guidance:identity:3#a"
+      ],
+      "guidance:identity:4": [
+        "guidance:identity:4#a"
+      ],
+      "guidance:world:1": [
+        "guidance:world:1#a"
+      ],
+      "guidance:world:2": [
+        "guidance:world:2#a"
+      ],
+      "guidance:world:4": [
+        "guidance:world:4#a",
+        "guidance:world:4#b"
+      ],
+      "guidance:voice:2": [
+        "guidance:voice:2#a"
+      ],
+      "guidance:voice:3": [
+        "guidance:voice:3#a"
+      ],
+      "guidance:voice:5": [
+        "guidance:voice:5#a"
+      ],
+      "guidance:creative:3": [
+        "guidance:creative:3#a"
+      ],
+      "guidance:creative:4": [
+        "guidance:creative:4#a"
+      ],
+      "guidance:rules:0": [
+        "guidance:rules:0#a"
+      ],
+      "guidance:rules:1": [
+        "guidance:rules:1#a"
+      ],
+      "guidance:rules:2": [
+        "guidance:rules:2#a"
+      ],
+      "guidance:rules:3": [
+        "guidance:rules:3#a"
+      ],
+      "guidance:rules:4": [
+        "guidance:rules:4#a"
+      ],
+      "guidance:rules:5": [
+        "guidance:rules:5#a"
+      ]
+    }
+  },
+  "excluded_guidance_principles": {
+    "note": "Guidance principles carrying no prohibition, listed so the exclusion is auditable rather than trusted, per the step 1 Rule B precedent.",
+    "mycopop": [
+      "foundation:1",
+      "foundation:2",
+      "identity:1",
+      "identity:3",
+      "world:1",
+      "world:3",
+      "world:4",
+      "voice:0",
+      "voice:1",
+      "voice:2",
+      "voice:5",
+      "creative:3",
+      "rules:1 (a disclosure requirement, not a prohibition)"
+    ],
+    "dialog-health": [
+      "foundation:0",
+      "foundation:1",
+      "identity: none",
+      "world:0",
+      "world:3",
+      "voice:0",
+      "voice:1",
+      "voice:4",
+      "creative:0",
+      "creative:1",
+      "creative:2",
+      "creative:5"
+    ]
+  }
+}

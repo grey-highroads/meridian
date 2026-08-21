@@ -1,0 +1,284 @@
+{
+  "fixture": "adr-0016-step1-visual-grammar",
+  "client": "dialog-health",
+  "brandName": "Dialog Health",
+  "status": "Prototype fixture. Hand authored for ADR 0016 step 1. Not a schema artifact and not approved guidance.",
+  "authoredFrom": {
+    "brainSavedAt": "2026-08-09T15:27:36.840Z",
+    "approvedVersion": 2,
+    "synthesisModel": "gpt-5.6-sol",
+    "note": "This brain predates the ADR 0015 basis field, so its Lived World environments carry an earned justification but no origin or confidence. Origins below are assigned by reading the earned text, and that assignment is itself an inference recorded in the findings doc."
+  },
+  "authoringConstraint": "This fixture's job is to be unsurprising. Where the brain evidences nothing, the entry says less or does not exist. The light and camera sections are thin on purpose, because the identity guidance explicitly lists photography as undocumented.",
+  "originEnum": [
+    "evidence",
+    "inference",
+    "ambition"
+  ],
+  "sections": {
+    "people": [
+      {
+        "id": "people-1",
+        "statement": "Two roles appear. The person receiving a message, who is a patient or an employee, and the staff member sending or monitoring it. A frame shows one or both.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "World guidance principle: include both sides of the experience, the recipient acting and the team gaining time or visibility."
+        }
+      },
+      {
+        "id": "people-2",
+        "statement": "People are mid action on the small practical thing the message asked for: confirming, scheduling, completing a form, paying, preparing, responding, requesting help.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Guardrail make care communication practical, which names those actions directly. Creative guidance principle: build stories around one missed step transformed into one clear action."
+        }
+      },
+      {
+        "id": "people-3",
+        "statement": "Ages, roles, and settings vary across frames. No single patient archetype and no single staff archetype.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "World guidance principle: represent the breadth of patient and employee journeys without reducing people to workflow units."
+        }
+      },
+      {
+        "id": "people-4",
+        "statement": "Dress is ordinary for the setting. Scrubs and badge lanyards in clinical areas, business casual in administrative areas, street clothes for a patient at home.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Read from the Lived World person, a capable healthcare communicator working under pressure, and from the operations console and before an appointment environments. The brain documents no wardrobe direction."
+        }
+      }
+    ],
+    "objects": [
+      {
+        "id": "objects-1",
+        "statement": "A mobile phone showing a message thread is the recurring object.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Dossier materials, first entry: mobile message threads."
+        }
+      },
+      {
+        "id": "objects-2",
+        "statement": "Console and analytics views on a laptop or a desktop monitor, showing confirmations, delivery information, replies, and exceptions.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Dossier materials: product console and analytics views. Lived World environment the operations console."
+        }
+      },
+      {
+        "id": "objects-3",
+        "statement": "Digital forms and trackable links appear on a phone screen as what they are, at the size a person actually reads them.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Dossier materials: digital forms and trackable links."
+        }
+      },
+      {
+        "id": "objects-4",
+        "statement": "Ordinary clinic and office objects: a check-in counter, a scheduling monitor, a printed preparation instruction sheet.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Read from the before an appointment environment, which names appointment, NPO instruction, scheduling link, and form examples. The objects that carry those moments are inferred."
+        }
+      },
+      {
+        "id": "objects-5",
+        "statement": "Anything readable on a screen is plausible and supported. No invented dashboards, no unsupported features, no made up figures.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Creative guidance principle: let product interfaces prove simplicity, and do not decorate them with unsupported features or invented data."
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "places-1",
+        "statement": "A practice or clinic administrative area: shared desks, two or three monitors, a check-in counter visible behind, ordinary office storage.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Read from the operations console environment, which describes staff monitoring confirmations and exceptions but names no room. The physical space is inferred."
+        }
+      },
+      {
+        "id": "places-2",
+        "statement": "Ordinary places where a person reads a phone: a home kitchen, a parked car, a waiting room chair, a break room table.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Read from the before an appointment, after a procedure, and re-entry into care environments, which describe recipient moments without naming locations."
+        }
+      },
+      {
+        "id": "places-3",
+        "statement": "Surfaces run to white and near white neutrals with high contrast dark text on screens and printed material.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Palette entries white as an observed neutral and black or near black as an observed text neutral. The brain records both as observed rather than approved, with no formal palette supplied."
+        }
+      },
+      {
+        "id": "places-4",
+        "statement": "Employee settings are workplaces rather than clinical rooms: an onboarding desk, a break area, a shift board.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Low",
+          "derivedFrom": "Read from the employee journey environment, which names onboarding, open enrollment, wellness reminders, surveys, and alerts but no physical setting."
+        }
+      }
+    ],
+    "light": [
+      {
+        "id": "light-1",
+        "statement": "Available interior light. Overhead fixtures in clinical and office space, window light in homes. No added theatrical source.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Identity guidance principle states that photography is undocumented and should be treated as such rather than open to invention. Light therefore stays at what the setting supplies."
+        }
+      },
+      {
+        "id": "light-2",
+        "statement": "When a phone is the subject, screen light falls on the face and hands at a level that keeps the screen content legible rather than blown out.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from dossier materials naming mobile message threads and the creative guidance requirement that interfaces prove simplicity, which fails if the screen is unreadable."
+        }
+      }
+    ],
+    "camera": [
+      {
+        "id": "camera-1",
+        "statement": "Focal length is 35mm to 50mm. Never wider than 28mm.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the requirement that both the person and the setting stay readable. No focal length is documented in the brain."
+        }
+      },
+      {
+        "id": "camera-2",
+        "statement": "Aperture is f/4 to f/5.6, so the phone screen or console view stays legible in the same frame as the person.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the creative guidance principle that product interfaces prove simplicity, which requires them to be in focus."
+        }
+      },
+      {
+        "id": "camera-3",
+        "statement": "Camera height is eye level, seated or standing with the subject. No overhead angle and no low angle.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the guardrail to use healthcare situations concretely and respectfully rather than dramatizing them. Angle is a dramatization lever."
+        }
+      },
+      {
+        "id": "camera-4",
+        "statement": "Framing distance is medium, with the person occupying roughly half the frame height. When a screen carries the story, close enough that its content reads at delivered size.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the same legibility requirement."
+        }
+      },
+      {
+        "id": "camera-5",
+        "statement": "Exposure is set for the face and the screen together. Screens retain their content.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "Reasoned from the same legibility requirement."
+        }
+      },
+      {
+        "id": "camera-6",
+        "statement": "Symmetry discipline: the subject sits on a vertical third rather than center, and one element is cropped by a frame edge.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Low",
+          "derivedFrom": "Reasoned from the general composition discipline in the scene writer rules rather than from any Dialog Health source. Flagged as the weakest entry in this fixture."
+        }
+      },
+      {
+        "id": "camera-7",
+        "statement": "No register words. If a brief reaches for one, it resolves to the settings above before it can be used.",
+        "basis": {
+          "origin": "inference",
+          "confidence": "Medium",
+          "derivedFrom": "The ADR 0016 register rule. Recorded here because the brand supplies no register vocabulary of its own."
+        }
+      }
+    ],
+    "rejects": [
+      {
+        "id": "rejects-1",
+        "statement": "Fear based depiction of patients or clinical situations. Distress performance, emergency drama, invasive procedure imagery.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Lived World reject: fear based depictions of patients or clinical situations. Guardrail make care communication practical, which directs focus onto useful actions rather than dramatized vulnerability."
+        }
+      },
+      {
+        "id": "rejects-2",
+        "statement": "Generic technology spectacle. Glowing data streams, holographic interfaces, abstract network graphics, floating user interface panels in midair.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Lived World reject: generic technology spectacle disconnected from healthcare work."
+        }
+      },
+      {
+        "id": "rejects-3",
+        "statement": "Reconstructed identity assets. Redrawn, recolored, or approximated Dialog Health logos and lockups, and any rebuild or extraction of the canonical RCS slide background.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Identity guidance principles requiring canonical logos only and requiring RCS Template.png be used unchanged. Guardrail never reconstruct exact identity assets. Rules guidance principle: do not redraw, recolor, approximate, or replace canonical brand assets."
+        }
+      },
+      {
+        "id": "rejects-4",
+        "statement": "Fictional or client branding presented as Dialog Health branding inside a demonstration.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Identity guidance principle to keep master brand assets distinct from fictional or client branded examples. Guardrail keep sales examples in their proper role, which names the fictional WynterHealth examples as demonstrations."
+        }
+      },
+      {
+        "id": "rejects-5",
+        "statement": "Cold automation framing. A screen with no person reachable in the frame, or a machine standing in for the staff member.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "High",
+          "derivedFrom": "Lived World reject: cold automation that obscures how a person can respond or get help."
+        }
+      },
+      {
+        "id": "rejects-6",
+        "statement": "Quantified claims rendered as image. Outcome percentages, leadership badges, or compliance seals composited into a frame.",
+        "basis": {
+          "origin": "evidence",
+          "confidence": "Medium",
+          "derivedFrom": "Guardrail do not broaden regulated or quantified claims. Lived World reject: unqualified promises about outcomes, security, compliance, or industry leadership."
+        }
+      }
+    ]
+  }
+}
