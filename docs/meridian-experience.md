@@ -33,7 +33,7 @@ Most pages should have one clear next step. A second action is appropriate only 
 
 Persistent navigation answers two questions: where am I, and where can I go next? It should not repeat the client, artist, tour, Scene, status, and version in several regions.
 
-Scenes and Artist Brain are the everyday destinations. Admin is available to Higher Roads as a quiet utility. Page-specific stages do not become permanent navigation.
+Scenes, Tour, and Artist Brain are the everyday destinations. Tour is a quiet reference for the active production. Admin is available to Higher Roads as a quiet utility. Page-specific stages do not become permanent navigation.
 
 ### Client views remove operational weight
 
@@ -57,7 +57,7 @@ The Brain has a home for approved source review and maintenance, but it should n
 
 ### Source, direction, and approved work remain distinct
 
-Client input is preserved as received. Higher Roads may consolidate that input into a Full Creative Brief and may add Scene Direction. Production work is reviewed against the issued brief. Approval locks an exact version of the work and the technical profile into Production Intent.
+Client input is preserved as received. Tour Direction is preserved as given by the director and stored as a named version. Higher Roads may consolidate Scene input into a Full Creative Brief and may add Scene Direction. Each Scene Direction names the Tour Direction version it was written against. Production work is reviewed against the issued brief. Approval locks an exact version of the work and the technical profile into Production Intent.
 
 No later action silently replaces an approved source, brief, Artboard, or production record.
 
@@ -68,6 +68,12 @@ Status is not decoration. Show it when it tells someone what is waiting, what au
 Version history belongs beside the work during comparison and review. It does not need to remain visible during intake or concept authoring.
 
 ## Canonical flows
+
+### Tour reference
+
+Tour Home holds the active dates, venues, playback system, themes, and the current director-provided Tour Direction. It is a governed reference, not a dashboard or a Scene authoring surface.
+
+Tour Direction is stored as given with a named version. Scene Direction remains a separate object inside each Scene and records the Tour Direction version used when it was written.
 
 ### Request and intake
 
@@ -97,6 +103,7 @@ The approved set becomes Production Intent. Later changes require a new governed
 
 - Scenes sit inside the active tour.
 - One active tour is enough for Meridian V1.
+- Tour Direction is a versioned tour-level source. Scene Direction remains a separate Scene-level object.
 - Client and Higher Roads surfaces share a visual language but not the same density.
 - The Artist Brain is a contextual contributor to Scene work.
 - Source, Higher Roads direction, reviewed work, and approved production intent remain distinct.
@@ -119,6 +126,7 @@ The reference screens do not settle these questions. They give builders a stable
 The coded samples in `app/design/samples/` are the source of truth for structure and component use.
 
 - `index.html` shows the active Scenes directory.
+- `tour.html` shows the active tour record and governed Tour Direction.
 - `request.html` shows the client request surface.
 - `intake.html` shows preserved source review.
 - `develop.html` shows brief authoring and contextual Brain suggestions.
@@ -128,6 +136,7 @@ The coded samples in `app/design/samples/` are the source of truth for structure
 The anonymized Superdesign drafts remain useful as visual process references:
 
 - [Scenes directory](https://p.superdesign.dev/draft/21785c10-074f-456c-8102-cb104c066953)
+- [Tour Home](https://p.superdesign.dev/draft/6864b35b-b407-45a8-8894-e47bb970fe30)
 - [Client Scene request](https://p.superdesign.dev/draft/099f74be-17c5-409b-aa57-942020c38106)
 - [Higher Roads intake](https://p.superdesign.dev/draft/6219f7d6-69c5-4768-8fbf-6facdf65e89e)
 - [Develop Scene concept](https://p.superdesign.dev/draft/2f24bb1f-bdc5-489c-bfac-caafcabf103e)

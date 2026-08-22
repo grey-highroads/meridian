@@ -75,9 +75,10 @@ Brain guidance never becomes Scene Direction by itself. Do not reserve permanent
 
 Use `.m-shell` for the application frame.
 
-The everyday navigation has two destinations:
+The everyday navigation has three destinations:
 
 - Scenes
+- Tour
 - Artist Brain
 
 Admin work is a quiet utility. Concept development, review, and handoff are states inside a Scene. They are not top-level navigation.
@@ -150,6 +151,7 @@ npm run check:design
 Use the static screens in `app/design/samples/` as composition references:
 
 - `index.html` for a quiet active Scenes directory;
+- `tour.html` for the active tour record and governed Tour Direction;
 - `request.html` for a client request with a short valid path;
 - `intake.html` for vertical source review;
 - `develop.html` for Scene Direction and contextual Brain contribution;
