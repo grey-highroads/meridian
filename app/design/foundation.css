@@ -1,0 +1,99 @@
+@layer meridian-reset, meridian-base, meridian-components, meridian-patterns, meridian-utilities;
+
+@layer meridian-reset {
+  .m-ui,
+  .m-ui *,
+  .m-ui *::before,
+  .m-ui *::after {
+    box-sizing: border-box;
+  }
+
+  .m-ui :where(h1, h2, h3, p, ul, ol, dl, dd, figure, blockquote) {
+    margin: 0;
+  }
+
+  .m-ui :where(button, input, textarea, select) {
+    font: inherit;
+  }
+
+  .m-ui :where(button, summary) {
+    cursor: pointer;
+  }
+
+  .m-ui :where(img, svg, video) {
+    display: block;
+    max-width: 100%;
+  }
+}
+
+@layer meridian-base {
+  .m-ui {
+    min-height: 100%;
+    background: var(--m-surface-page);
+    color: var(--m-text-primary);
+    font-family: var(--m-font-sans);
+    font-size: var(--m-type-copy);
+    font-weight: var(--m-weight-regular);
+    line-height: var(--m-leading-copy);
+    text-rendering: optimizeLegibility;
+  }
+
+  .m-ui :where(a) {
+    color: inherit;
+    text-underline-offset: 0.2em;
+  }
+
+  .m-ui :where(button) {
+    color: inherit;
+  }
+
+  .m-ui :where(:focus-visible) {
+    outline: var(--m-focus-width) solid var(--m-signal-current);
+    outline-offset: var(--m-space-1);
+  }
+
+  .m-ui :where([hidden]) {
+    display: none;
+  }
+
+  .m-ui ::selection {
+    background: var(--m-signal-current);
+    color: var(--m-surface-page);
+  }
+}
+
+@layer meridian-utilities {
+  .m-visually-hidden {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: var(--m-rule-width);
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: var(--m-rule-width);
+  }
+
+  .m-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-space-5);
+  }
+
+  .m-cluster {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--m-space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-ui *,
+  .m-ui *::before,
+  .m-ui *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

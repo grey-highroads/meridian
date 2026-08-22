@@ -1,0 +1,90 @@
+:root {
+  color-scheme: dark;
+
+  /* Core color */
+  --m-color-stage: #050505;
+  --m-color-shell: #0b0b0b;
+  --m-color-work: #111110;
+  --m-color-raised: #171716;
+  --m-color-active: #222220;
+  --m-color-chalk: #f1f0ea;
+  --m-color-chalk-muted: #cbcac3;
+  --m-color-fog: #a3a29b;
+  --m-color-dim: #696862;
+  --m-color-current: #d79a45;
+  --m-color-approved: #7e9b78;
+  --m-color-change: #a56f5c;
+  --m-color-system: #82909b;
+  --m-color-rule-soft: #1a1a19;
+  --m-color-rule: #292927;
+  --m-color-rule-strong: #464641;
+
+  /* Semantic color */
+  --m-surface-page: var(--m-color-stage);
+  --m-surface-shell: var(--m-color-shell);
+  --m-surface-work: var(--m-color-work);
+  --m-surface-raised: var(--m-color-raised);
+  --m-surface-active: var(--m-color-active);
+  --m-text-primary: var(--m-color-chalk);
+  --m-text-secondary: var(--m-color-chalk-muted);
+  --m-text-muted: var(--m-color-fog);
+  --m-text-quiet: var(--m-color-dim);
+  --m-signal-current: var(--m-color-current);
+  --m-signal-approved: var(--m-color-approved);
+  --m-signal-change: var(--m-color-change);
+  --m-signal-system: var(--m-color-system);
+  --m-border-soft: var(--m-color-rule-soft);
+  --m-border-default: var(--m-color-rule);
+  --m-border-strong: var(--m-color-rule-strong);
+
+  /* Type */
+  --m-font-sans: Inter, "Helvetica Neue", Arial, sans-serif;
+  --m-font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --m-weight-regular: 400;
+  --m-weight-medium: 550;
+  --m-weight-strong: 650;
+  --m-leading-tight: 0.94;
+  --m-leading-copy: 1.55;
+  --m-tracking-tight: -0.04em;
+  --m-tracking-label: 0.16em;
+  --m-type-label: 0.625rem;
+  --m-type-meta: 0.75rem;
+  --m-type-copy: 1rem;
+  --m-type-object: 1.25rem;
+  --m-type-section: clamp(1.5rem, 2.2vw, 2.125rem);
+  --m-type-page: clamp(2.375rem, 5vw, 4.5rem);
+
+  /* Space */
+  --m-space-1: 0.25rem;
+  --m-space-2: 0.5rem;
+  --m-space-3: 0.75rem;
+  --m-space-4: 1rem;
+  --m-space-5: 1.5rem;
+  --m-space-6: 2rem;
+  --m-space-7: 2.5rem;
+  --m-space-8: 3rem;
+  --m-space-9: 4rem;
+  --m-space-10: 5rem;
+  --m-space-11: 6rem;
+
+  /* Shape and size */
+  --m-radius-small: 0.125rem;
+  --m-radius-control: 0.25rem;
+  --m-control-small: 2rem;
+  --m-control-default: 2.5rem;
+  --m-control-large: 3rem;
+  --m-target-minimum: 2.75rem;
+  --m-rail-width: 12rem;
+  --m-page-width: 76rem;
+  --m-copy-width: 44rem;
+  --m-rule-width: 0.0625rem;
+  --m-focus-width: 0.125rem;
+
+  /* Motion and layer */
+  --m-motion-fast: 180ms;
+  --m-motion-default: 280ms;
+  --m-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --m-layer-shell: 20;
+  --m-layer-overlay: 40;
+  --m-layer-dialog: 60;
+}

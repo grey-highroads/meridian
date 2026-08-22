@@ -12,6 +12,28 @@ Entries are grouped by what kind of debt they are, since the kinds have differen
 
 ---
 
+## Design pattern requests
+
+This is the only register for missing Meridian UI patterns. Builders use the system in `app/design/` and do not edit that folder.
+
+Each request names the job, the missing state, and where it occurs. Use one of four plain status phrases: requested, being designed, available, or use the existing pattern.
+
+There are no active requests.
+
+Use this shape when a real job exposes a gap:
+
+### Pattern name
+
+Status: requested
+
+Job: What the person is trying to complete.
+
+Missing state: What the current system cannot show or support.
+
+Where: The screen or step where the need occurs.
+
+---
+
 ## Prototype-only behavior
 
 Things that hold up in a demo and would not survive real use. These are the entries most likely to cause harm if forgotten, because nothing about the interface signals that they are temporary.

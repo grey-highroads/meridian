@@ -1,6 +1,8 @@
-# UI contribution guide
+# Legacy UI contribution guide
 
-How new feature code should work with the existing design system.
+Status: Legacy BWS prototype reference.
+
+New Meridian UI follows `docs/design-system.md` and uses `app/design/`. Do not use this guide to start a Meridian screen or add a Meridian pattern. This file remains only for a necessary fix to the inherited prototype while that prototype still runs.
 
 ## Why this exists
 
