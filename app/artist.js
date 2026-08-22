@@ -109,6 +109,7 @@ function chrome(name, counts) {
     ? `${counts.findings} findings, ${counts.approved} approved, from ${counts.claims} claims across ${counts.sources} sources.`
     : "Nothing has been imported for this artist yet.";
   return `<header class="artist-head">
+      <p class="artist-note"><a href="./index.html">Back to the workspace</a></p>
       <h1>${escape(name)}</h1>
       <p class="artist-note">${escape(summary)}</p>
     </header>

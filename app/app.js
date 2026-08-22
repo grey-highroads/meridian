@@ -1510,6 +1510,7 @@ function shell(content) {
         </div>
 
         <nav class="sidebar-nav" aria-label="Primary navigation">
+          <a class="nav-item" href="./artist.html"><span class="nav-glyph" aria-hidden="true"></span><span>Artist</span></a>
           ${navItem("Snapshot", state.screen === "workspace", "workspace")}
           ${navItem("Brand Brain", inBrain, "brand-brain")}
           ${navItem("Design Studio", state.screen === "chooser" || state.screen === "studio-setup" || state.screen === "brief" || state.screen === "preflight" || state.screen === "result", "chooser")}
