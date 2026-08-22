@@ -4,7 +4,7 @@ import { parseTourFixture } from "../../src/tour/parse-fixture.js";
 import { assembleContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
 import { createTourStore } from "../../src/tour/store.js";
-import { compileBrief, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
+import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
@@ -74,6 +74,29 @@ async function contextFor(body, options) {
   return { fixture, assignment, context: assembleContext(brain, fixture.tour, assignment, options) };
 }
 
+// What the brand avoids is attached from the brain whether or not anyone asked
+// it for suggestions, because a prohibition a person never saw is the one that
+// costs the most. The brain's findings for this Scene's identity lead. Notes
+// the brain wrote about this request follow, and a note that names a finding
+// already attached is dropped.
+export function avoidFor(context, notes) {
+  const attached = (context.avoids || []).map((entry) => ({
+    findingId: entry.findingId,
+    text: findingSentence(entry.text),
+  }));
+  const seen = new Set(attached.map((entry) => entry.findingId));
+  for (const note of Array.isArray(notes) ? notes : []) {
+    const entry = typeof note === "string"
+      ? { findingId: null, text: note }
+      : { findingId: (note && note.findingId) || null, text: String((note && note.text) || "") };
+    if (!entry.text.trim()) continue;
+    if (entry.findingId && seen.has(entry.findingId)) continue;
+    if (entry.findingId) seen.add(entry.findingId);
+    attached.push(entry);
+  }
+  return attached;
+}
+
 export async function handleAction(body, options = {}) {
   if (body.action === "get-tour") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
@@ -104,7 +127,7 @@ export async function handleAction(body, options = {}) {
   }
 
   if (body.action === "choose-concept") {
-    const { fixture, assignment } = await contextFor(body, options);
+    const { fixture, assignment, context } = await contextFor(body, options);
     const tourStore = options.tourStore || createTourStore();
     const source = body.concept || {};
     if (!String(source.title || "").trim() || !String(source.idea || "").trim()) {
@@ -127,7 +150,7 @@ export async function handleAction(body, options = {}) {
       asksOfProduction: String(source.asksOfProduction || "").trim(),
       whereItMightMiss: String(source.whereItMightMiss || "").trim(),
       rhymesWith: Array.isArray(source.rhymesWith) ? source.rhymesWith : [],
-      avoid: Array.isArray(source.avoid) ? source.avoid : [],
+      avoid: avoidFor(context, source.avoid),
       artistContext: Array.isArray(source.artistContext) ? source.artistContext : [],
       creativeLatitude: Array.isArray(source.creativeLatitude) ? source.creativeLatitude : [],
       openQuestions: Array.isArray(source.openQuestions) ? source.openQuestions : [],

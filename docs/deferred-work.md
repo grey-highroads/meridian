@@ -342,3 +342,13 @@ Recorded 2026-08-22. The compiled brief leads with required elements and the tec
 The compiled brief is the cheapest way to test it. Hand Jim a real one and let him say what sits in the wrong place. The sidecar labels itself provisional in its own `contractStatus` field for the same reason: its shape is our guess and it is not an obligation on his system until the seam document says both sides agreed to it.
 
 Bring it back when: Jim has read a real brief and said what he would move.
+
+## One avoid entry is a record about the intake, not about the artist
+
+Recorded 2026-08-22 when the brief started carrying the brand's prohibitions whether or not anyone asked the brain for suggestions. Ten of the eleven entries in the avoid part of the first brain are facts about the artist and travel cleanly. One, `finding-78`, records that the prior's guesses were not testable and were dropped. It is Higher Roads writing to Higher Roads and it names our own vocabulary, so it cannot go to Jim.
+
+The compile drops any avoid entry that still carries our vocabulary after the bookkeeping tail is stripped, and a test asserts the effect: nothing in a compiled brief says bin, facet, governance, candidate, proposed, or a finding id. The drop is mechanical rather than a judgment about content, so it cannot quietly remove a real prohibition on the grounds that someone disagreed with it.
+
+The gap is in the file. An entry that records what was removed from the prior belongs in the intake log rather than in the artist's prohibitions, and a second entry, `finding-70`, buries its own operator commentary after the source count where a reader would take it for a fact about the artist.
+
+Bring it back when: the findings file is regenerated and the intake playbook says an entry in the avoid part states something the artist avoids and nothing else. The filter can come out in the same commit that lands the corrected file.

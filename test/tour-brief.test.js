@@ -4,7 +4,7 @@ import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore, tourPathFor } from "../src/tour/store.js";
-import { directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
+import { carriesOurWords, compileBrief, directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
 
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";
@@ -283,4 +283,111 @@ test("nothing in the brief path writes to the artist layer", async () => {
   await tourAction({ action: "freeze-brief", ...AT, person: "Grey" }, options);
   assert.deepEqual([...artistBackend.files.keys()].sort(), [...before.keys()].sort());
   for (const [pathname, body] of artistBackend.files) assert.equal(body, before.get(pathname), `${pathname} changed`);
+});
+
+// A second tour, written here rather than committed, so a Scene for the other
+// identity can be read end to end. The artist is the same because the brain is
+// the thing under test.
+const HCK_TOUR = `# Knights Run
+
+Artist: dierks-bentley
+Tour id: hck-run-2026
+Playback system: One machine, one spare.
+
+## Direction, version 1
+
+Set by: Nadia Rourke, Creative Director
+Set on: 2026-02-02
+
+Play it straight and never wink at the audience.
+`;
+
+const HCK_ASSIGNMENT = `# The entrance
+
+Assignment id: entrance
+Tour id: hck-run-2026
+Identity: hot-country-knights
+Written against direction version: 1
+
+## What we are asking for
+
+They arrive and the room has to believe them.
+`;
+
+function hckOptions(options) {
+  return {
+    ...options,
+    reader: async (pathname) => (String(pathname).endsWith("tour.md") ? HCK_TOUR : HCK_ASSIGNMENT),
+    lister: async () => ["entrance.md"],
+  };
+}
+
+test("a Scene direction saved without asking the brain still carries what the artist avoids", async () => {
+  const { options } = await ready();
+  // Nothing is passed in, which is what happens when a person writes their own
+  // direction and never asks for suggestions.
+  await tourAction({ action: "choose-concept", ...AT, person: "Grey", concept: { ...CONCEPT, avoid: [] } }, options);
+  const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
+  const { context } = await tourAction({ action: "assignment-context", ...AT }, options);
+
+  const expected = context.avoids
+    .map((entry) => findingSentence(entry.text))
+    .filter((text) => !carriesOurWords(text));
+  assert.ok(expected.length > 5, "the approved brain holds several of these");
+  assert.deepEqual(brief.avoid, expected);
+  for (const text of expected) assert.ok(document.includes(text), "every one of them reaches the document");
+  assert.ok(!document.includes("None recorded.\n\n## What was asked for"));
+});
+
+test("a Scene for the other identity carries only that identity's prohibitions", async () => {
+  const { options } = await ready();
+  const at = { tourId: "hck-run-2026", assignmentId: "entrance" };
+  const withHck = hckOptions(options);
+  await tourAction({ action: "choose-concept", ...at, person: "Grey", concept: CONCEPT }, withHck);
+  const { brief, document } = await tourAction({ action: "compile-brief", ...at }, withHck);
+  const { context } = await tourAction({ action: "assignment-context", ...at }, withHck);
+
+  assert.equal(context.identity, "hot-country-knights");
+  const mine = context.avoids.map((entry) => findingSentence(entry.text));
+  assert.ok(mine.length > 0);
+  for (const text of mine) assert.ok(document.includes(text));
+
+  // The main stage prohibitions belong to the other identity and never travel
+  // with this one.
+  const mainStage = await tourAction({ action: "assignment-context", ...AT }, options);
+  const theirs = mainStage.context.avoids.map((entry) => findingSentence(entry.text));
+  const shared = theirs.filter((text) => mine.includes(text));
+  assert.equal(shared.length, 0, "the two identities hold different prohibitions here");
+  for (const text of theirs) assert.ok(!document.includes(text), "no main stage prohibition reaches this brief");
+  // The brain's findings for this identity lead, and the one note the concept
+  // carried follows.
+  assert.deepEqual(brief.avoid, [...mine, CONCEPT.avoid[0]]);
+});
+
+test("a brain with nothing on record to avoid says so in plain words", () => {
+  const brief = compileBrief({
+    tour: { id: "t", direction: { version: 1, setBy: "X", setOn: "2026-01-01", words: "A line." } },
+    assignment: { id: "a", title: "A", request: "Something.", requiredElements: [] },
+    concept: { title: "C", idea: "An idea.", avoid: [] },
+    artistId: "dierks-bentley",
+    briefVersion: 1,
+  });
+  const document = renderBriefDocument(brief);
+  assert.deepEqual(brief.avoid, []);
+  assert.ok(document.includes("Nothing on record that this artist avoids."));
+  assert.ok(!/## What to avoid\n\n- None recorded/.test(document));
+});
+
+test("an entry that is a record about the intake rather than the artist stays here", async () => {
+  const { options } = await ready();
+  const { context } = await tourAction({ action: "assignment-context", ...AT }, options);
+  const held = context.avoids.map((entry) => findingSentence(entry.text));
+  const kept = held.filter((text) => !carriesOurWords(text));
+  assert.ok(kept.length < held.length, "the brain holds at least one entry that is bookkeeping");
+
+  await tourAction({ action: "choose-concept", ...AT, person: "Grey", concept: CONCEPT }, options);
+  const { document } = await tourAction({ action: "compile-brief", ...AT }, options);
+  for (const word of ["bin", "facet", "governance", "candidate", "proposed", "finding-"]) {
+    assert.ok(!new RegExp(`\\b${word}`, "i").test(document), `the document says "${word}"`);
+  }
 });
