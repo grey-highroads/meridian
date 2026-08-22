@@ -49,7 +49,7 @@ The gate is counted from the new bin and called by a person who reads the findin
 4. Established music press interviews.
 5. Concert and local reviews.
 6. Setlist and tour databases. Delivered more than expected on the first run, including a conflict with a finding from a higher tier.
-7. Album packaging credits: liner notes and physical release credits are tier 1 when read from the release, tier 2 from a label page; credit aggregators stay index only. Added after the first run found no art director or photographer in any other tier. Ruling pending the owner's confirmation.
+7. Album packaging credits: liner notes and physical release credits are tier 1 when read from the release, tier 2 from a label page; credit aggregators stay index only. Added after the first run found no art director or photographer in any other tier. Ruled 2026-08-21.
 
 ## Cost of the first run
 
