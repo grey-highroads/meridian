@@ -7,6 +7,10 @@
   "functions": {
     "api/**/*.js": {
       "maxDuration": 300
+    },
+    "api/artist/index.js": {
+      "maxDuration": 300,
+      "includeFiles": "artists/**"
     }
   },
   "headers": [

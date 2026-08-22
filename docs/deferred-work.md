@@ -286,3 +286,21 @@ A replacement should measure whether every compiled statement is a physical fact
 ## Three model names in the copied code
 
 Recorded 2026-08-21 at the Meridian fork, from the tree at BWS `b11e994`. The code reads three different OpenAI models. Brain synthesis (`src/brand-brain/chat-completions-provider.js`) and products (`src/products/service.js`) default to `gpt-5.6` when `OPENAI_MODEL` is unset. Copy generation (`src/copy/generate.js`, `src/claims/copy-audit.js`, `api/production/generate-copy.js`) is hard-coded to `gpt-4o`. Image rendering (`src/renderers/openai-images.js`, `src/production/composite.js`) is hard-coded to `gpt-image-2`. One environment value does not govern all three. `OPENAI_MODEL` is left unset on the Meridian deployment so the brain uses `gpt-5.6`. Decide in step 2 which of these paths survive before consolidating the setting.
+
+## Findings do not name the claims behind them
+
+Recorded 2026-08-22 while importing the first artist. The intake files carry a full evidence chain in two of its three links and not the third. Every claim in `02-claims.md` names its source and its locator. Every finding in `03-findings.md` names how many independent sources sit behind it and which tiers they came from. No finding names which claims those are.
+
+So `get-evidence` returns the source count and the tiers and reports the chain as unlinked. It cannot open a finding down to the claims and the URLs, which is the thing the thesis means when it says anything the brain asserts carries its evidence. The gap is in the files, not in the code: a matcher that guessed which claims sit behind which finding would produce a confident wrong answer, which is worse than an honest empty one.
+
+The fix belongs to stage 4 of `docs/intake-playbook.md`, which should require a claim id list on every finding. The first run's own log already says findings should be regenerated in one pass rather than patched, so this is a re-run of that stage on the existing claims rather than new research.
+
+Bring it back when: the playbook is corrected and `03-findings.md` is regenerated with claim ids. The import parser reads `claimIds` and sets `evidenceLinked` already, so nothing in the app changes when the file does.
+
+## A claim's source is prose, not a source id
+
+Recorded 2026-08-22, same import. `02-claims.md` names a claim's source as text, for example `plsn.com Jands Vista article 2013`. `01-sources.md` numbers its rows. Nothing joins the two.
+
+The parser resolves a claim to a source id only when exactly one source row carries that host, which covers 47 of 261 claims. The other 214 keep the prose and carry no id. Two reasons for the miss. Outlets with several rows, PLSN and Chauvet among them, are ambiguous by host alone. And 17 hosts named in claims are not in the source list at all, because batches 2 through 8 read articles the original list never held: `wwd.com`, `mr-mag.com`, `bluegrasstoday.com`, `cmt.com`, `songfacts.com`, `tribedesign.net` and others. The first run's own handoff already asks for two URL corrections and four additions to that file.
+
+Bring it back when: the claims file carries a source number rather than a source name, and the source list holds every source a claim cites. Both are cheap and both belong in the playbook rather than in the parser.
