@@ -102,17 +102,9 @@ The compiled package is now written per job at generation time, which is what ma
 
 No backfill is possible. The package was never stored. Recorded so nobody spends time looking for a migration.
 
-### Rebuild erases the approved brain before it has a replacement
+### Re-reading one source
 
-A non-incremental synthesis does not add a candidate beside the approved version the way an update does. It replaces the stored payload outright: `src/brand-brain/service.js` writes `approvedResult: null` and no `brain` block, and the blob store overwrites in place with `allowOverwrite: true` and no random suffix, so the previous payload is gone rather than superseded. The interface reaches this through Rebuild, which sends `mode: "initial"`. A confirmation dialog stands in front of it, so this is one confirm click rather than a bare misclick, and behind that click the approved brain, its version history block, and its resolutions are unrecoverable.
-
-A timestamped backup blob is now written under the client's own namespace before any non-incremental write, and the synthesis refuses to proceed if that backup fails. That is a mitigation and it is not the fix. Recovery still means someone reading a blob path and restoring it by hand, which is not a thing a marketer can do and not a thing a governance product should require.
-
-**The fix is candidate-not-erase.** A rebuild should produce a candidate for review beside the approved version, exactly as an update does, and the approved version should retire only when a person approves its replacement. That is the same separation every other path into the brain already respects, and the rebuild path is the one place it is not honored.
-
-Bring it back when: it gets its own decision record. This is a product decision about what rebuild means, not an implementation detail, and it touches the brain state model, the version numbering, and what the interface promises before the confirm. The backup mitigation holds the line meanwhile.
-
-**Update 2026-08-17.** ADR 0017 absorbs this item as its sequencing step 5, on the reading that candidate-not-erase and durable refusals are the same insight: a rebuild produces a reviewable candidate against persistent state rather than a fresh reality. The ADR is Proposed, so this entry stands until it is accepted and step 5 ships. The backup mitigation is unchanged.
+"Re-read this one source" is the update path with a single source in it, so it needs no separate mechanism. Built when intake shows the need.
 
 ### Refusals that govern language have no durable home
 

@@ -297,7 +297,7 @@ test("Brand Brain prototype connects empty onboarding to a production-ready stor
   session.input("brain-source-usage", "Use only as company background; do not treat growth targets as brand guidance.");
   session.click("add-url-source");
   assert.match(session.appRoot.innerHTML, /1 pending/);
-  assert.match(session.appRoot.innerHTML, /Prepare proposed update/);
+  assert.match(session.appRoot.innerHTML, /Integrate new sources/);
 });
 
 test("shared visual polish layer centralizes spacing, surfaces, and semantic states", () => {

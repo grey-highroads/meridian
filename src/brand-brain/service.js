@@ -53,8 +53,17 @@ export async function synthesizeBrandBrain(body, options) {
   // state. It exists so a synthesis can be evaluated without persisting one,
   // which no other path allows.
   const dryRun = body.dryRun === true;
-  const stored = incremental ? await store.read() : null;
-  const baseline = incremental ? selectApprovedBaseline(stored) : null;
+  const stored = await store.read();
+  const baseline = selectApprovedBaseline(stored);
+  // After the first approval there is no full synthesis. The brain changes only
+  // by integrating sources, each change ruled by a person, so a request that is
+  // not incremental is refused here before anything is read or synthesized.
+  // Ruled 2026-08-21; see docs/meridian-thesis-and-architecture.md.
+  if (!incremental && baseline) {
+    const error = new Error("This artist already has an approved brain. Add sources to propose changes to it.");
+    error.status = 409;
+    throw error;
+  }
   if (incremental && !baseline) {
     const error = new Error("The approved Brand Brain baseline could not be found. Reopen the approved version before preparing this update.");
     error.status = 409;
@@ -97,33 +106,10 @@ export async function synthesizeBrandBrain(body, options) {
   };
 
   if (dryRun) {
-    // Returns before any write, so nothing below runs: no backup is taken
-    // because nothing is being replaced, and stored state is untouched. The
-    // flag travels back on the payload so a captured result cannot be mistaken
-    // for something the system stored.
+    // Returns before any write, so stored state is untouched. The flag travels
+    // back on the payload so a captured result cannot be mistaken for something
+    // the system stored.
     return { ...saved, dryRun: true };
-  }
-
-  // A non-incremental synthesis replaces the stored payload rather than adding
-  // a candidate beside it: the write below carries approvedResult null and no
-  // brain block, so the approved brain and its state are gone. The blob store
-  // overwrites in place with no suffix, so the loss is permanent. Back the
-  // existing payload up first, and refuse to proceed if the backup fails,
-  // because destroying a brain to save a failed rebuild is the wrong trade.
-  // This is a mitigation, not the fix. The fix is a rebuild that produces a
-  // candidate for review instead of erasing first; see docs/deferred-work.md.
-  if (!incremental) {
-    const existing = await store.read();
-    if (existing && typeof store.writeBackup === "function") {
-      try {
-        await store.writeBackup(existing);
-      } catch (backupError) {
-        const error = new Error("The current Brand Brain could not be backed up, so it was not replaced. Nothing changed. Try again in a moment.");
-        error.status = 503;
-        error.cause = backupError;
-        throw error;
-      }
-    }
   }
 
   await store.write(saved);

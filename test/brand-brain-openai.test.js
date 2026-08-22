@@ -259,3 +259,120 @@ test("incremental synthesis keeps the stored approved baseline and merges only n
   );
   assert.deepEqual(merged.map((source) => source.name), ["Approved source", "Updated record", "New source"]);
 });
+
+// The three tests below pin the 2026-08-21 ruling: after the first approval
+// there is no full synthesis. They assert effect rather than a flag. The first
+// checks that nothing was written and nothing was synthesized, not that a guard
+// exists; the second and third check that the two surviving paths still write.
+
+test("a full synthesis over an approved brain is refused and writes nothing", async () => {
+  const stored = {
+    sources: [{ id: "approved-note", name: "Approved note" }],
+    result: { brandName: "Fallow" },
+    approvedResult: { brandName: "Fallow" },
+    brain: { artifactStatus: "ready", approvedVersion: 2 },
+  };
+  let writes = 0;
+  let synthesisCalls = 0;
+  const store = {
+    async read() {
+      return stored;
+    },
+    async write() {
+      writes += 1;
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      synthesizeBrandBrain(
+        { mode: "initial", sources: [{ id: "new-note", name: "New note", content: "Later material.", files: [] }] },
+        {
+          store,
+          env: { OPENAI_API_KEY: "test-only" },
+          async synthesize() {
+            synthesisCalls += 1;
+            return { result: {}, responseId: "", model: "", usage: null };
+          },
+        },
+      ),
+    (error) => {
+      assert.equal(error.status, 409);
+      assert.match(error.message, /already has an approved brain/);
+      return true;
+    },
+  );
+
+  assert.equal(writes, 0);
+  assert.equal(synthesisCalls, 0);
+  assert.deepEqual(stored.approvedResult, { brandName: "Fallow" });
+});
+
+test("a full synthesis over an empty store still writes the first brain", async () => {
+  let stored = null;
+  const store = {
+    async read() {
+      return stored;
+    },
+    async write(value) {
+      stored = value;
+    },
+  };
+
+  const saved = await synthesizeBrandBrain(
+    { mode: "initial", sources: [{ id: "first-note", name: "First note", content: "Opening material.", files: [] }] },
+    {
+      store,
+      env: { OPENAI_API_KEY: "test-only" },
+      async synthesize() {
+        return { result: { brandName: "Fallow" }, responseId: "chatcmpl-first", model: "gpt-5.6", usage: null };
+      },
+    },
+  );
+
+  assert.equal(saved.kind, "synthesis");
+  assert.equal(stored.result.brandName, "Fallow");
+  assert.equal(stored.approvedResult, null);
+  assert.equal(stored.sources[0].id, "first-note");
+});
+
+test("integrating a new source into an approved brain writes a candidate beside it", async () => {
+  let stored = {
+    sources: [{ id: "approved-note", name: "Approved note" }],
+    result: { brandName: "Fallow" },
+    approvedResult: { brandName: "Fallow" },
+    brain: { artifactStatus: "ready", approvedVersion: 2 },
+  };
+  const store = {
+    async read() {
+      return stored;
+    },
+    async write(value) {
+      stored = value;
+    },
+  };
+
+  const saved = await synthesizeBrandBrain(
+    {
+      mode: "incremental",
+      baselineVersion: 2,
+      sources: [{ id: "new-note", name: "New note", content: "Later material.", files: [] }],
+    },
+    {
+      store,
+      env: { OPENAI_API_KEY: "test-only" },
+      async synthesize({ baseline, sources }) {
+        assert.deepEqual(baseline, { brandName: "Fallow" });
+        assert.deepEqual(sources.map((source) => source.id), ["new-note"]);
+        return { result: { brandName: "Fallow", note: "candidate" }, responseId: "chatcmpl-inc", model: "gpt-5.6", usage: null };
+      },
+    },
+  );
+
+  assert.equal(saved.kind, "incremental-synthesis");
+  assert.deepEqual(stored.approvedResult, { brandName: "Fallow" });
+  assert.equal(stored.result.note, "candidate");
+  assert.deepEqual(stored.sources.map((source) => source.id), ["approved-note", "new-note"]);
+  assert.equal(stored.brain.revisionPending, true);
+  assert.equal(stored.brain.candidateBaseVersion, 2);
+});

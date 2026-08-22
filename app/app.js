@@ -1430,8 +1430,6 @@ const state = {
     artifactVersion: 1,
     artifactStatus: "not-created",
     revisionPending: false,
-    rebuildRequested: false,
-    rebuildConfirm: false,
     approvedVersion: 0,
     approvedResult: null,
     pendingSourceIds: [],
@@ -1671,7 +1669,7 @@ function brainBuildLabel() {
   const kind = state.brain.synthesisKind;
   if (kind === "incremental-synthesis") {
     const base = state.brain.candidateBaseVersion || state.brain.approvedVersion;
-    return base ? `Update to v${base}. Unchanged guidance was carried forward from the earlier version.` : "Update to an earlier version. Unchanged guidance was carried forward.";
+    return base ? `New sources integrated into v${base}. Unchanged guidance was carried forward from the earlier version.` : "New sources integrated into an earlier version. Unchanged guidance was carried forward.";
   }
   if (kind === "synthesis") return "Full build. Every source was read again from the beginning.";
   if (kind === "sample") return "Sample content. No sources have been processed yet.";
@@ -1733,7 +1731,7 @@ function validateSourceFileSize(file) {
   if (!file) return "Choose one file.";
   if (file.size > MAX_SOURCE_FILE_BYTES) return "Choose a file smaller than 20 MB.";
   const currentBytes = sourceHasApprovedBaseline() ? sourceFileBytes(state.brain.pendingSourceIds) : sourceFileBytes();
-  if (currentBytes + file.size > MAX_SYNTHESIS_FILE_BYTES) return "This build can read up to 40 MB of uploaded files at once. Remove a large file or prepare a smaller update.";
+  if (currentBytes + file.size > MAX_SYNTHESIS_FILE_BYTES) return "This build can read up to 40 MB of uploaded files at once. Remove a large file or integrate fewer sources at once.";
   return "";
 }
 
@@ -2111,16 +2109,6 @@ function renderBrainOverview() {
             <small>Prepared ${escapeHtml(brainCreatedLabel())} from ${brainSourceCount()} source items.</small>
             ${brainCarriesForward() ? `<p class="brain-version-warning">Guidance and artifacts that the new sources did not touch were copied from the earlier version. They were written under the rules in force at that time.</p>` : ""}
           </div>
-          ${state.brain.rebuildConfirm ? `
-            <div class="brain-rebuild-confirm">
-              <strong>Rebuild reads every source again</strong>
-              <p>The current version and every review decision attached to it are replaced by a new draft. Sources stay where they are. This cannot be undone.</p>
-              <div class="brain-rebuild-actions">
-                <button class="button primary" type="button" data-action="confirm-brain-rebuild">Rebuild from all sources</button>
-                <button class="button secondary" type="button" data-action="cancel-brain-rebuild">Keep this version</button>
-              </div>
-            </div>
-          ` : `<button class="button secondary" type="button" data-action="request-brain-rebuild">Rebuild from all sources</button>`}
         </div>`}
       </section>
     `,
@@ -2380,7 +2368,7 @@ function intakeContextStep(kind, stepNumber = 3, slot = null) {
     <div class="intake-step">
       <div class="intake-step-head">
         <strong>${stepNumber}. What should the Brain know?</strong>
-        <small>Your instructions travel with this one source into synthesis and future updates.</small>
+        <small>Your instructions travel with this one source into synthesis and whenever new sources are integrated.</small>
       </div>
 
       ${kind.isAsset || slot ? "" : `
@@ -2490,7 +2478,7 @@ function sourceIntakeScreen() {
             ${summary.content ? `<small>${escapeHtml(summary.content)}</small>` : ""}
           </div>
           <div class="intake-submit">
-            <button class="button primary source-add-button" data-source-add="1" type="button" data-action="${mode === "files" ? "add-file-source" : mode === "url" ? "add-url-source" : "add-text-source"}" ${canAdd ? "" : "disabled"}>${state.brain.sourceFileReading ? "Reading file" : sourceHasApprovedBaseline() ? "Add to proposed update" : "Add source"}</button>
+            <button class="button primary source-add-button" data-source-add="1" type="button" data-action="${mode === "files" ? "add-file-source" : mode === "url" ? "add-url-source" : "add-text-source"}" ${canAdd ? "" : "disabled"}>${state.brain.sourceFileReading ? "Reading file" : sourceHasApprovedBaseline() ? "Add source to integrate" : "Add source"}</button>
             <small>You can edit the details later.</small>
           </div>
         </div>
@@ -2742,8 +2730,8 @@ function slotAction(slot, rows, locked) {
   if (slot.plural) return { action: "open-slot-intake", label: "Add another" };
   if (locked) {
     // A locked source cannot be swapped in place. The action says what it
-    // actually does; the intake and proposed-update callout explain review.
-    return { action: "open-slot-intake", label: "Add update" };
+    // actually does; the intake and new-sources callout explain review.
+    return { action: "open-slot-intake", label: "Add new source" };
   }
   return { action: "open-slot-intake", label: "Add another" };
 }
@@ -3086,7 +3074,7 @@ function renderBrainSources() {
     `
       ${
         hasApproved && pending > 0
-          ? `<section class="brain-source-update-callout"><span class="brain-status governed">${pending} pending</span><span><strong>You have a proposed update ready</strong><p>New material creates a proposed update. Only guidance touched by it is reconsidered, and nothing changes for production until you review and approve the next version.</p></span><button class="button primary" type="button" data-action="start-brain-synthesis">Prepare proposed update</button></section>`
+          ? `<section class="brain-source-update-callout"><span class="brain-status governed">${pending} pending</span><span><strong>You have new sources ready to integrate</strong><p>New material is integrated into the approved brain. Only guidance touched by it is reconsidered, and nothing changes for production until you review and approve the next version.</p></span><button class="button primary" type="button" data-action="start-brain-synthesis">Integrate new sources</button></section>`
           : ""
       }
       ${genericIntakeOpen ? "" : `
@@ -3188,7 +3176,7 @@ function renderBrainProcessing() {
   const activeStep = complete ? synthesisSteps.length : Math.max(state.brain.processingStep, 0);
   const progress = complete ? 100 : Math.round(((activeStep + 1) / synthesisSteps.length) * 100);
   return brainWorkspace(
-    complete ? (incremental ? "Your proposed update is ready for review" : "Your sources are ready for review") : error ? "We could not finish this draft" : incremental ? `Checking new sources against Brand Brain v${state.brain.approvedVersion}` : "Building your Brand Brain",
+    complete ? (incremental ? "Your proposed changes are ready for review" : "Your sources are ready for review") : error ? "We could not finish this draft" : incremental ? `Checking new sources against Brand Brain v${state.brain.approvedVersion}` : "Building your Brand Brain",
     complete
       ? incremental
         ? `Brand Brain v${state.brain.approvedVersion} remains active. Review the candidate changes before a new version can replace it.`
@@ -3205,7 +3193,7 @@ function renderBrainProcessing() {
             <span class="brain-processing-orbit ${complete ? "complete" : error ? "error" : ""}" aria-hidden="true"><i></i><i></i><i></i></span>
             <span>
               <span class="brain-status ${complete ? "success" : error ? "danger" : "governed"}">${complete ? "Ready" : error ? "Needs attention" : "In progress"}</span>
-              <h2>${complete ? (incremental ? "Candidate update prepared" : "Synthesis complete") : error ? "The source batch was not changed" : synthesisSteps[activeStep]?.title ?? synthesisSteps[0].title}</h2>
+              <h2>${complete ? (incremental ? "Proposed changes prepared" : "Synthesis complete") : error ? "The source batch was not changed" : synthesisSteps[activeStep]?.title ?? synthesisSteps[0].title}</h2>
               <p>${complete ? incremental ? `${state.brain.affectedGuidanceIds.length || "No"} guidance ${state.brain.affectedGuidanceIds.length === 1 ? "area has" : "areas have"} a proposed change. ${brainExceptions.length ? `${brainExceptions.length} ${brainExceptions.length === 1 ? "question needs" : "questions need"} your judgment.` : "No additional questions need a decision."}` : `OpenAI prepared six guidance sections and three working artifacts. ${brainExceptions.length ? `It also found ${brainExceptions.length} ${brainExceptions.length === 1 ? "question" : "questions"} that need your judgment.` : "It found no questions that require a decision."}` : error ? escapeHtml(error) : synthesisSteps[activeStep]?.detail ?? synthesisSteps[0].detail}</p>
             </span>
           </div>
@@ -3222,7 +3210,7 @@ function renderBrainProcessing() {
         </section>
 
         <aside class="card brain-processing-summary">
-          <span class="section-label">${incremental ? "Proposed update" : "Source batch"}</span>
+          <span class="section-label">${incremental ? "New sources" : "Source batch"}</span>
           <strong>${incremental ? pendingSourceCount() : brainSourceCount()} ${incremental ? "new" : ""} ${incremental && pendingSourceCount() === 1 ? "source" : "items"}</strong>
           <span>${incremental ? `Compared with active v${state.brain.approvedVersion}` : `${state.brain.sources.length} source groups`}</span>
           <dl>
@@ -3272,7 +3260,7 @@ function guidanceArtifactCard(section, artifact, index) {
       <p>${escapeHtml(artifact.description)}</p>
       ${artifact.readerId ? `<button class="button artifact-open-button" type="button" data-action="open-brain-artifact" data-id="${artifact.readerId}">Open full artifact</button>` : ""}
       <button class="text-button" type="button" data-action="toggle-guidance-artifact" data-id="${id}">${expanded ? "Hide details" : "View artifact details"}</button>
-      ${expanded ? `<div class="guidance-artifact-detail"><span><strong>What it contains</strong>${escapeHtml(artifact.description)}</span><span><strong>How it stays current</strong>Updates to this guidance create a new stored Brand Brain version with the earlier version preserved.</span></div>` : ""}
+      ${expanded ? `<div class="guidance-artifact-detail"><span><strong>What it contains</strong>${escapeHtml(artifact.description)}</span><span><strong>How it stays current</strong>Integrating new sources creates a new stored Brand Brain version with the earlier version preserved.</span></div>` : ""}
     </article>
   `;
 }
@@ -3667,7 +3655,7 @@ function renderBrainHistory() {
         <section class="card brain-history-empty">
           <span class="eyebrow">No history yet</span>
           <h2>Your Brand Brain changes will be recorded here</h2>
-          <p>Source batches, review decisions, feedback, approved versions, and future updates will stay visible instead of silently replacing earlier work.</p>
+          <p>Source batches, review decisions, feedback, approved versions, and sources integrated later will stay visible instead of silently replacing earlier work.</p>
           <button class="button primary" type="button" data-action="navigate-brain" data-screen="brain-sources">Add your first sources</button>
         </section>
       `,
@@ -5664,7 +5652,7 @@ function renderBrandBrain() {
     const ready = state.brain.cleanApproved;
     return brainWorkspace(
       "Needs review",
-      incrementalReview ? `The proposed update introduces no unresolved conflicts. Brand Brain v${state.brain.approvedVersion} remains active until you approve the candidate.` : "OpenAI found no conflicts or uncertain suggestions that require a decision in this source batch.",
+      incrementalReview ? `The proposed changes introduce no unresolved conflicts. Brand Brain v${state.brain.approvedVersion} remains active until you approve the candidate.` : "OpenAI found no conflicts or uncertain suggestions that require a decision in this source batch.",
       `
         ${incrementalReview ? `<section class="brain-source-update-callout"><span class="brain-status governed">Active v${state.brain.approvedVersion}</span><span><strong>${state.brain.affectedGuidanceIds.length || "No"} guidance ${state.brain.affectedGuidanceIds.length === 1 ? "area has" : "areas have"} a proposed change</strong><p>The active version is unchanged. Review the candidate draft before it can become v${state.brain.approvedVersion + 1}.</p></span></section>` : ""}
         <section class="card brain-review-empty brain-review-clear">
@@ -5760,7 +5748,7 @@ function renderBrandBrain() {
     "Needs review",
     "Review the few items that need a decision. Everything else can move forward quickly without changing the brand's core guidance.",
     `
-      ${incrementalReview ? `<section class="brain-source-update-callout"><span class="brain-status governed">Active v${state.brain.approvedVersion}</span><span><strong>Reviewing a proposed update</strong><p>${state.brain.affectedGuidanceIds.length || "No"} guidance ${state.brain.affectedGuidanceIds.length === 1 ? "area has" : "areas have"} candidate changes. The active version stays available to production until the next version is approved.</p></span></section>` : ""}
+      ${incrementalReview ? `<section class="brain-source-update-callout"><span class="brain-status governed">Active v${state.brain.approvedVersion}</span><span><strong>Reviewing proposed changes</strong><p>${state.brain.affectedGuidanceIds.length || "No"} guidance ${state.brain.affectedGuidanceIds.length === 1 ? "area has" : "areas have"} candidate changes. The active version stays available to production until the next version is approved.</p></span></section>` : ""}
       ${brainBatch.cleanCount && !state.brain.cleanApproved ? `
         <section class="brain-fast-path">
           <div class="brain-clean-count">
@@ -5810,7 +5798,7 @@ function renderBrandBrain() {
           <strong>${reviewComplete ? (incrementalReview ? `Candidate v${state.brain.approvedVersion + 1} is ready to read` : "Your Brand Brain draft is ready") : incrementalReview ? "Finish review without changing the active version" : "Finish review to prepare your stored draft"}</strong>
           <span>${state.brain.cleanApproved ? `${brainResolvedCount()} of ${brainExceptions.length} review decisions saved` : `Approve ${brainBatch.cleanCount} clean assets and resolve ${brainExceptions.length - brainResolvedCount()} review items`}</span>
         </span>
-        <button class="button ${reviewComplete ? "secondary" : ""}" type="button" data-action="finish-brain-review" ${reviewComplete ? "" : "disabled"}>${incrementalReview ? "Review candidate update" : "Review Brand Brain draft"}</button>
+        <button class="button ${reviewComplete ? "secondary" : ""}" type="button" data-action="finish-brain-review" ${reviewComplete ? "" : "disabled"}>${incrementalReview ? "Review proposed changes" : "Review Brand Brain draft"}</button>
       </section>
     `,
   );
@@ -7489,11 +7477,9 @@ async function startBrainSynthesis() {
     navigate("brain-processing");
     return;
   }
-  const rebuilding = state.brain.rebuildRequested;
-  state.brain.rebuildRequested = false;
-  const incremental = !rebuilding && sourceHasApprovedBaseline();
+  const incremental = sourceHasApprovedBaseline();
   if (incremental && !state.brain.pendingSourceIds.length) {
-    setToast("Add at least one new source before preparing an update");
+    setToast("Add at least one new source to integrate");
     return;
   }
   if (incremental && !state.brain.approvedResult && currentSynthesisResult) {
@@ -7521,16 +7507,6 @@ async function startBrainSynthesis() {
     return;
   }
   const baseline = incremental ? state.brain.approvedResult : null;
-  if (rebuilding) {
-    // A rebuild replaces the version rather than proposing a change to it, so
-    // nothing from the earlier version stays behind to be compared against.
-    state.brain.approvedResult = null;
-    state.brain.approvedVersion = 0;
-    state.brain.candidateBaseVersion = 0;
-    state.brain.affectedGuidanceIds = [];
-    state.brain.pendingSourceIds = [];
-    state.brain.artifactStatus = "draft";
-  }
   state.brain.revisionPending = incremental;
   state.brain.selectedExceptionId = brainExceptions[0]?.id ?? "";
   state.brain.cleanApproved = false;
@@ -7575,7 +7551,7 @@ async function startBrainSynthesis() {
     state.brain.synthesisRequestId = body.synthesisRequestId || requestId;
     state.brain.savedAt = body.savedAt || "";
     recordBrainHistory(
-      incremental ? `Update to Brand Brain v${state.brain.approvedVersion} prepared` : "Brand Brain synthesis prepared for review",
+      incremental ? `New sources integrated into Brand Brain v${state.brain.approvedVersion}` : "Brand Brain synthesis prepared for review",
       incremental
         ? `${requestSources.length} new ${requestSources.length === 1 ? "source was" : "sources were"} checked against the approved version. ${state.brain.affectedGuidanceIds.length || "No"} guidance ${state.brain.affectedGuidanceIds.length === 1 ? "area was" : "areas were"} changed in the candidate.`
         : `${brainSourceCount()} source items produced six guidance sections, three working artifacts, and ${brainExceptions.length} review ${brainExceptions.length === 1 ? "question" : "questions"}.`,
@@ -7593,7 +7569,7 @@ async function startBrainSynthesis() {
       state.brain.synthesisRequestId = recovered.synthesisRequestId || requestId;
       state.brain.savedAt = recovered.savedAt || "";
       recordBrainHistory(
-        incremental ? `Update to Brand Brain v${state.brain.approvedVersion} recovered` : "Brand Brain synthesis recovered",
+        incremental ? `New sources integrated into Brand Brain v${state.brain.approvedVersion}, recovered` : "Brand Brain synthesis recovered",
         "The browser connection dropped after the work was saved. The completed draft was restored automatically.",
         "complete",
       );
@@ -8043,7 +8019,7 @@ async function startProductionGeneration() {
     }
     else {
       state.production.status = "error";
-      state.production.error = `${error.message || "The image response was lost."} The reviewed package is still saved, so you can try again without rebuilding the Brand Brain.`;
+      state.production.error = `${error.message || "The image response was lost."} The reviewed package is still saved, so you can try again without touching the Brand Brain.`;
     }
   }
   render();
@@ -9479,19 +9455,6 @@ root.addEventListener("click", (event) => {
     state.brain.stage = "intake";
     navigate("brain-sources");
   }
-  if (action === "request-brain-rebuild") {
-    state.brain.rebuildConfirm = true;
-    render();
-  }
-  if (action === "cancel-brain-rebuild") {
-    state.brain.rebuildConfirm = false;
-    render();
-  }
-  if (action === "confirm-brain-rebuild") {
-    state.brain.rebuildConfirm = false;
-    state.brain.rebuildRequested = true;
-    void startBrainSynthesis();
-  }
   if (action === "load-sample-sources") loadSampleSources();
   if (action === "open-grammar-sample") navigate("brain-grammar-sample");
   if (action === "set-source-provenance") {
@@ -9656,7 +9619,7 @@ root.addEventListener("click", (event) => {
       markSourceAdded(sourceId);
       recordBrainHistory("File added", `${file.name} was added as ${material.label.toLowerCase()} with its own usage instruction.`, "complete");
       resetSourceComposer();
-      setToast(sourceHasApprovedBaseline() ? "Source added to the proposed update" : "Source added with its usage instructions");
+      setToast(sourceHasApprovedBaseline() ? "Source added, ready to integrate" : "Source added with its usage instructions");
     }
   }
   if (action === "add-url-source") {
@@ -9682,7 +9645,7 @@ root.addEventListener("click", (event) => {
       markSourceAdded(sourceId);
       recordBrainHistory("URL added", `${state.brain.sourceTitle.trim() || url} was added to the current source batch.`, "complete");
       resetSourceComposer();
-      setToast(sourceHasApprovedBaseline() ? "URL added to the proposed update" : "URL added to the source batch");
+      setToast(sourceHasApprovedBaseline() ? "URL added, ready to integrate" : "URL added to the source batch");
     }
   }
   if (action === "add-text-source") {
@@ -9708,7 +9671,7 @@ root.addEventListener("click", (event) => {
       markSourceAdded(sourceId);
       recordBrainHistory(`${material.label} added`, `${title} was added with its own usage instruction.`, "complete");
       resetSourceComposer();
-      setToast(sourceHasApprovedBaseline() ? "Material added to the proposed update" : "Material added to the source batch");
+      setToast(sourceHasApprovedBaseline() ? "Material added, ready to integrate" : "Material added to the source batch");
     }
   }
   if (action === "remove-brain-source") {
