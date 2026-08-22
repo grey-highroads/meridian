@@ -12,6 +12,7 @@ export default defineConfig({
         landing: resolve(__dirname, "app/landing.html"),
         place: resolve(__dirname, "app/place.html"),
         artist: resolve(__dirname, "app/artist.html"),
+        tour: resolve(__dirname, "app/tour.html"),
       },
     },
   },

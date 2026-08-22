@@ -1511,6 +1511,7 @@ function shell(content) {
 
         <nav class="sidebar-nav" aria-label="Primary navigation">
           <a class="nav-item" href="./artist.html"><span class="nav-glyph" aria-hidden="true"></span><span>Artist</span></a>
+          <a class="nav-item" href="./tour.html"><span class="nav-glyph" aria-hidden="true"></span><span>Tour</span></a>
           ${navItem("Snapshot", state.screen === "workspace", "workspace")}
           ${navItem("Brand Brain", inBrain, "brand-brain")}
           ${navItem("Design Studio", state.screen === "chooser" || state.screen === "studio-setup" || state.screen === "brief" || state.screen === "preflight" || state.screen === "result", "chooser")}

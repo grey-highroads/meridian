@@ -7,7 +7,7 @@
   "functions": {
     "api/**/*.js": {
       "maxDuration": 300,
-      "includeFiles": "artists/**"
+      "includeFiles": "{artists,tours}/**"
     }
   },
   "headers": [
