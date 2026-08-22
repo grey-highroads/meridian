@@ -4,7 +4,7 @@ Artist: dierks-bentley
 Tour id: off-the-map-2026
 Cycle: 2026 amphitheater run
 Playback system: disguise gx 2c, two machines, one spare. Content delivered as ProRes 4444 at the show's canvas size. Notch blocks in use on this tour.
-Status: Assumed. Higher Roads wrote this file on 2026-08-22 as sample content so the loop can be built and read end to end. The tour and its dates are real and come from tier 1 and tier 3 sources in the artist intake. The creative director, her words, and the assignment under them are invented. Nothing here came from the artist's team. Replace this file with the real direction before any of it is shown to anyone outside Higher Roads.
+Status: Assumed. Higher Roads wrote this file on 2026-08-22 as sample content so the loop can be built and read end to end. The tour and its dates are real and come from tier 1 and tier 3 sources in the artist intake. The creative director, her words, the assignment under them, the dates and venues, and the themes are invented. Nothing here came from the artist's team. Replace this file with the real direction before any of it is shown to anyone outside Higher Roads.
 
 ## Direction, version 1
 
@@ -23,6 +23,25 @@ Keep him close. The band plays as a band and the audience is in the room with th
 The bluegrass thread is not a segment. It runs under the whole show. Whatever we build has to hold an acoustic circle at centre stage without looking like the production stopped and something else started.
 
 Three things I do not want. Anything that reads as arena rock. Anything glossy. Anything that would make him look like he takes himself too seriously.
+
+## Dates and venues
+
+Note: Assumed. Higher Roads wrote these rows on 2026-08-22 as sample content so the tour home can be read end to end. The dates and the venues are invented. Replace them with the real routing before anyone outside Higher Roads sees this page.
+
+- 2026-05-29 | River Bend Amphitheater | Ridgeline, Tennessee
+- 2026-06-06 | Copper Field Pavilion | Marbury, Ohio
+- 2026-06-19 | Lakewind Shed | North Harbor, Michigan
+- 2026-07-03 | Silver Creek Amphitheater | Ashford, Colorado
+- 2026-07-18 | Tall Pines Pavilion | Weatherly, Georgia
+- 2026-08-08 | Dust Road Amphitheater | Callan, Texas
+
+## Themes
+
+Note: Assumed. Higher Roads wrote these on 2026-08-22 as sample content. They are Higher Roads' reading of the direction above, not the director's words, and they are invented. Replace them once the real direction arrives.
+
+- Weather coming in over the lawn
+- Warm and worn before anything cold
+- The acoustic circle holds the centre
 
 ## Assignments under this direction
 

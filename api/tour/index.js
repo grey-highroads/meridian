@@ -132,6 +132,16 @@ export async function handleAction(body, options = {}) {
       creativeLatitude: Array.isArray(source.creativeLatitude) ? source.creativeLatitude : [],
       openQuestions: Array.isArray(source.openQuestions) ? source.openQuestions : [],
       cameFrom: source.cameFrom || null,
+      // Which paragraphs of the tour direction bear on this Scene, by position,
+      // and who said so. The brief carries those and the version, never the
+      // whole text. Ruled 2026-08-22.
+      directionParagraphs: Array.isArray(source.directionParagraphs)
+        ? source.directionParagraphs
+            .map((entry) => Number(entry))
+            .filter((entry) => Number.isInteger(entry) && entry >= 0)
+        : [],
+      directionSelectedBy: body.person || "Higher Roads",
+      directionSelectedAt: new Date().toISOString(),
       shapedBy: body.person || "Higher Roads",
       shapedAt: new Date().toISOString(),
     };

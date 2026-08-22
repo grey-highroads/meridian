@@ -1,4 +1,5 @@
 import { FACET_NAMES } from "../artist/parse-intake.js";
+import { directionParagraphs } from "./brief.js";
 import { ownEntry } from "../lookup.js";
 
 // Assemble context, do not dump it.
@@ -47,6 +48,9 @@ export function assembleContext(brain, tour, assignment) {
     directionVersion: tour.direction.version,
     identity,
     direction: tour.direction,
+    // The same split the compiler uses, so a paragraph marked on the page is
+    // the paragraph the brief carries.
+    directionParagraphs: directionParagraphs(tour.direction),
     request: assignment.request,
     counts: { inBrain: all.length, inScope: findings.length },
     findings,

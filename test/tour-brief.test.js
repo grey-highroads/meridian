@@ -4,7 +4,7 @@ import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore, tourPathFor } from "../src/tour/store.js";
-import { findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
+import { directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
 
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";
@@ -99,8 +99,8 @@ test("required elements and the technical target lead, meaning trails", async ()
   assert.ok(at("## Required") < at("## Technical target"));
   assert.ok(at("## Technical target") < at("## The concept"));
   assert.ok(at("## The concept") < at("## The artist behind this"));
-  assert.ok(at("## The artist behind this") < at("## The tour's direction, as the director gave it"));
-  assert.ok(at("## The tour's direction, as the director gave it") < at("## Latitude"));
+  assert.ok(at("## The artist behind this") < at("## The tour's direction, the parts that bear on this Scene"));
+  assert.ok(at("## The tour's direction, the parts that bear on this Scene") < at("## Latitude"));
 });
 
 test("the brief carries the required elements and the playback system as written", async () => {
@@ -115,15 +115,69 @@ test("the brief carries the required elements and the playback system as written
   assert.ok(document.includes(brief.technicalTarget.playbackSystem));
 });
 
-test("the director's words and the manager's words reach the brief as given", async () => {
+test("the manager's words and the marked direction reach the brief as given", async () => {
+  const { options } = await ready();
+  await withConcept(options, { directionParagraphs: [1] });
+  const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
+  const { tour, assignment } = await tourAction({ action: "get-assignment", ...AT }, options);
+  const marked = directionParagraphs(tour.direction)[1];
+  assert.equal(brief.assignment.request, assignment.request);
+  assert.ok(document.includes(assignment.request));
+  // The marked paragraph travels word for word. Nothing paraphrases it.
+  assert.deepEqual(brief.tourDirection.selectedParagraphs, [marked]);
+  assert.ok(document.includes(marked));
+});
+
+test("the brief carries the marked paragraphs of the direction and none of the rest", async () => {
+  const { options } = await ready();
+  await withConcept(options, { directionParagraphs: [1, 4] });
+  const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
+  const { tour } = await tourAction({ action: "get-assignment", ...AT }, options);
+  const all = directionParagraphs(tour.direction);
+  assert.ok(all.length > 2, "the sample direction has several paragraphs");
+
+  assert.deepEqual(brief.tourDirection.selectedParagraphs, [all[1], all[4]]);
+  assert.equal(brief.tourDirection.version, 1);
+  assert.ok(document.includes("Written against direction version: 1"));
+  assert.ok(document.includes("Version 1."));
+  for (const index of [1, 4]) assert.ok(document.includes(all[index]), `paragraph ${index} reaches the brief`);
+  for (const index of [0, 2, 3, 5]) {
+    assert.ok(!document.includes(all[index]), `paragraph ${index} was not marked and stays in Meridian`);
+  }
+  // The whole direction is never carried, in either artifact form.
+  assert.equal(brief.tourDirection.words, undefined);
+  assert.ok(!document.includes(tour.direction.words));
+});
+
+test("a brief with nothing marked carries the direction version and no direction text", async () => {
   const { options } = await ready();
   await withConcept(options);
   const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
-  const { tour, assignment } = await tourAction({ action: "get-assignment", ...AT }, options);
-  assert.equal(brief.tourDirection.words, tour.direction.words);
-  assert.equal(brief.assignment.request, assignment.request);
-  assert.ok(document.includes(tour.direction.words));
-  assert.ok(document.includes(assignment.request));
+  const { tour } = await tourAction({ action: "get-assignment", ...AT }, options);
+  assert.deepEqual(brief.tourDirection.selectedParagraphs, []);
+  assert.equal(brief.tourDirection.version, 1);
+  assert.ok(document.includes("Version 1."));
+  for (const paragraph of directionParagraphs(tour.direction)) {
+    assert.ok(!document.includes(paragraph), "no part of the direction travels unmarked");
+  }
+});
+
+test("an index that names no paragraph is dropped rather than guessed at", async () => {
+  const { options } = await ready();
+  await withConcept(options, { directionParagraphs: [4, 4, 99, -1, "two"] });
+  const { brief } = await tourAction({ action: "compile-brief", ...AT }, options);
+  const { tour } = await tourAction({ action: "get-assignment", ...AT }, options);
+  assert.deepEqual(brief.tourDirection.selectedParagraphs, [directionParagraphs(tour.direction)[4]]);
+});
+
+test("the Scene direction records what was marked and who marked it", async () => {
+  const { options } = await ready();
+  const { concept } = await withConcept(options, { directionParagraphs: [0, 2] });
+  assert.deepEqual(concept.directionParagraphs, [0, 2]);
+  assert.equal(concept.directionSelectedBy, "Grey");
+  assert.ok(concept.directionSelectedAt);
+  const read = await tourAction({ action: "get-concept", ...AT }, options);
+  assert.deepEqual(read.concept.directionParagraphs, [0, 2]);
 });
 
 test("every artist claim in the brief carries what it rests on", async () => {

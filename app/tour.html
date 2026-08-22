@@ -1,16 +1,44 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A tour, its direction, and what the brain brings to an assignment" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="The active tour, its dates, its playback system, and the direction as the director gave it" />
     <title>Tour | Meridian</title>
-    <link rel="stylesheet" href="./bws.css?v=2026-08-03-brain-live" />
-    <link rel="stylesheet" href="./bws-polish.css?v=2026-08-06-system-polish" />
-    <link rel="stylesheet" href="./artist.css?v=2026-08-22-artist" />
+    <link rel="stylesheet" href="./design/index.css" />
   </head>
-  <body>
-    <div id="tour" class="workspace"></div>
-    <script type="module" src="./tour.js?v=2026-08-22-tour"></script>
+  <body class="m-ui">
+    <div class="m-shell">
+      <aside class="m-shell__rail">
+        <div class="m-shell__brand">
+          <a class="m-wordmark" href="./index.html">
+            MERIDIAN
+            <span class="m-wordmark__byline">BY HIGHER ROADS</span>
+          </a>
+        </div>
+        <nav class="m-shell__nav" aria-label="Artist work">
+          <a class="m-shell__nav-link" href="./index.html">
+            <span class="m-shell__nav-label">Scenes</span>
+          </a>
+          <a class="m-shell__nav-link" href="./tour.html" aria-current="page">
+            <span class="m-shell__nav-label">Tour</span>
+          </a>
+          <a class="m-shell__nav-link" href="./artist.html">
+            <span class="m-shell__nav-label">Artist Brain</span>
+          </a>
+        </nav>
+        <div class="m-shell__utility">
+          <a class="m-shell__nav-link" href="./bws.html">
+            <span class="m-shell__nav-label">Old system</span>
+          </a>
+        </div>
+      </aside>
+
+      <main class="m-shell__main">
+        <header class="m-location" id="location"></header>
+        <article class="m-page" id="tour"></article>
+      </main>
+    </div>
+    <script type="module" src="./tour.js?v=2026-08-22-tour-home"></script>
   </body>
 </html>

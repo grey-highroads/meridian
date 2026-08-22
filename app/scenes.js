@@ -17,7 +17,7 @@ function number(index) {
 }
 
 function sceneRow(entry, index) {
-  const link = `./tour.html?tour=${encodeURIComponent(TOUR_ID)}`;
+  const link = `./scene.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(entry.id)}`;
   return `<a class="m-rule-row" href="${escape(link)}">
       <div class="m-stack">
         <span class="m-meta">SCENE ${number(index)}</span>

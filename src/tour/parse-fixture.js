@@ -32,6 +32,32 @@ function section(text, heading) {
   return body.join("\n").trim();
 }
 
+// The bullet rows under a heading. Anything that is not a bullet, a note or a
+// blank line is left alone.
+function rows(text, heading) {
+  const block = section(text, heading);
+  if (!block) return [];
+  return block
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("- "))
+    .map((line) => line.slice(2).trim())
+    .filter(Boolean);
+}
+
+// A date row reads "date | venue | place". A row that carries fewer parts keeps
+// what it has rather than being dropped.
+export function parseDates(text) {
+  return rows(text, "Dates and venues").map((line) => {
+    const parts = line.split("|").map((part) => part.trim());
+    return { date: parts[0] || null, venue: parts[1] || null, place: parts[2] || null };
+  });
+}
+
+export function parseThemes(text) {
+  return rows(text, "Themes");
+}
+
 export function parseTour(text) {
   const title = (String(text).match(/^#\s+(.+)$/m) || [])[1];
   const id = field(text, "Tour id");
@@ -63,6 +89,10 @@ export function parseTour(text) {
     // a brief needs. Venue and screen profiles are Jim's side in V1.
     playbackSystem: field(text, "Playback system"),
     status: field(text, "Status"),
+    // The tour record a tour home reads. Neither of these is direction and
+    // neither is interpretation of it.
+    dates: parseDates(text),
+    themes: parseThemes(text),
     direction: {
       version,
       setBy: field(block, "Set by"),

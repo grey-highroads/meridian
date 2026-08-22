@@ -14,6 +14,7 @@ export default defineConfig({
         place: resolve(__dirname, "app/bws-place.html"),
         artist: resolve(__dirname, "app/artist.html"),
         tour: resolve(__dirname, "app/tour.html"),
+        scene: resolve(__dirname, "app/scene.html"),
       },
     },
   },

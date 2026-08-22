@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="What Meridian knows about an artist, and the evidence behind it" />
-    <title>Artist Brain | Meridian</title>
+    <meta name="description" content="Develop a Scene concept and compile the brief that goes to production" />
+    <title>Scene | Meridian</title>
     <link rel="stylesheet" href="./design/index.css" />
   </head>
   <body class="m-ui">
@@ -17,13 +17,13 @@
           </a>
         </div>
         <nav class="m-shell__nav" aria-label="Artist work">
-          <a class="m-shell__nav-link" href="./index.html">
+          <a class="m-shell__nav-link" href="./index.html" aria-current="page">
             <span class="m-shell__nav-label">Scenes</span>
           </a>
           <a class="m-shell__nav-link" href="./tour.html">
             <span class="m-shell__nav-label">Tour</span>
           </a>
-          <a class="m-shell__nav-link" href="./artist.html" aria-current="page">
+          <a class="m-shell__nav-link" href="./artist.html">
             <span class="m-shell__nav-label">Artist Brain</span>
           </a>
         </nav>
@@ -36,10 +36,10 @@
 
       <main class="m-shell__main">
         <header class="m-location" id="location"></header>
-        <article class="m-page" id="artist"></article>
-        <footer class="m-action-bar" id="operator"></footer>
+        <div class="m-page" id="scene"></div>
+        <footer class="m-action-bar" id="actions"></footer>
       </main>
     </div>
-    <script type="module" src="./artist.js?v=2026-08-22-brain"></script>
+    <script type="module" src="./scene.js?v=2026-08-22-scene"></script>
   </body>
 </html>

@@ -37,7 +37,7 @@ The line is idea versus execution.
 
 Three things travel, all scoped to one assignment. The artist layer and the organization layer never cross.
 
-**Outbound: the chosen concept and its brief.** One assignment's worth of context, assembled and frozen as a version. It says what was asked, what is required, which concept direction was chosen and why, what to avoid, which references apply, which version of the tour direction it was written against, and which technical profile governs. Required elements and the technical target lead. Latitude and meaning follow. Meridian's working assumption, to be confirmed with Jim, is that concrete facts early matter more to his workflow than abstract description anywhere.
+**Outbound: the chosen concept and its brief.** One assignment's worth of context, assembled and frozen as a version. It says what was asked, what is required, which concept direction was chosen and why, what to avoid, which references apply, which technical profile governs, and the parts of the tour direction a person marked as bearing on this Scene together with the version they came from. The whole tour direction never travels. Ruled 2026-08-22. Required elements and the technical target lead. Latitude and meaning follow. Meridian's working assumption, to be confirmed with Jim, is that concrete facts early matter more to his workflow than abstract description anywhere.
 
 **Inbound: the artboard candidate.** The artifact plus enough metadata for Meridian to review it, show it to a client, version it, and trace it: which job, which brief version, which artboard version, a short summary of the concept as built, technical assumptions made, any technical findings or warnings, unresolved questions, and a status.
 
@@ -103,6 +103,7 @@ Placeholders for discovery. Field names and structure will change.
   "technicalTarget": { "profileRef": "..." },
   "chosenConcept": { "summary": "...", "reasoning": "...", "references": [] },
   "avoid": [],
+  "tourDirection": { "version": 2, "setBy": "...", "setOn": "...", "selectedParagraphs": [], "selectedBy": "..." },
   "artistContext": [],
   "tourContext": [],
   "continuity": [],

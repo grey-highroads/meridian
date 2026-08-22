@@ -1,9 +1,9 @@
 // Compiling a brief.
 //
 // A brief is the one thing that leaves Higher Roads. It says what was asked,
-// what is required, which concept was chosen and why, what to avoid, which
-// version of the direction it was written against, and what the tour plays back
-// on. Once frozen it is never rewritten. Feedback makes a new version.
+// what is required, which concept was chosen and why, what to avoid, the parts
+// of the tour direction someone marked as bearing on this Scene with the
+// version they came from, and what the tour plays back on. Once frozen it is never rewritten. Feedback makes a new version.
 //
 // Order is deliberate. Required elements and the technical target lead;
 // latitude and meaning trail. That comes from a BWS render finding that
@@ -11,6 +11,31 @@
 // Reasoned rather than Verified here, because it was a renderer finding and
 // Jim's workflow is a different reader. The compiled brief is the cheapest way
 // to ask him: hand him a real one and let him say what sits in the wrong place.
+
+// The director's words split into the paragraphs a person marks against. The
+// whole direction stays in Meridian. A brief carries the paragraphs someone
+// said bear on this Scene, and the version. Ruled 2026-08-22.
+export function directionParagraphs(direction) {
+  return String((direction && direction.words) || "")
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+}
+
+// Selection is by position in that list. An index that is out of range or
+// repeated is dropped rather than guessed at.
+export function selectedDirectionParagraphs(direction, selection) {
+  const all = directionParagraphs(direction);
+  const seen = new Set();
+  const picked = [];
+  for (const entry of Array.isArray(selection) ? selection : []) {
+    const index = Number(entry);
+    if (!Number.isInteger(index) || index < 0 || index >= all.length || seen.has(index)) continue;
+    seen.add(index);
+    picked.push(all[index]);
+  }
+  return picked;
+}
 
 export function jobIdFor(tourId, assignmentId) {
   return `${tourId}--${assignmentId}`;
@@ -82,8 +107,9 @@ export function compileBrief({ tour, assignment, concept, artistId, briefVersion
       version: tour.direction.version,
       setBy: tour.direction.setBy,
       setOn: tour.direction.setOn,
-      // Stored as given, carried as given.
-      words: tour.direction.words,
+      // The marked paragraphs, carried as given. Never the whole text.
+      selectedParagraphs: selectedDirectionParagraphs(tour.direction, concept.directionParagraphs),
+      selectedBy: concept.directionSelectedBy || null,
     },
     creativeLatitude: concept.creativeLatitude || [],
     openQuestions: concept.openQuestions || [],
@@ -169,11 +195,13 @@ export function renderBriefDocument(brief) {
     "",
     context.length ? context.join("\n") : "- None recorded.",
     "",
-    "## The tour's direction, as the director gave it",
+    "## The tour's direction, the parts that bear on this Scene",
     "",
     `Set by ${brief.tourDirection.setBy} on ${brief.tourDirection.setOn}. Version ${brief.tourDirection.version}.`,
     "",
-    brief.tourDirection.words,
+    brief.tourDirection.selectedParagraphs.length
+      ? brief.tourDirection.selectedParagraphs.join("\n\n")
+      : "No part of the direction was marked for this Scene. The version above is the reference.",
     "",
     "## Latitude",
     "",

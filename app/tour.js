@@ -1,11 +1,13 @@
-// The tour page. The direction as the director gave it, the assignments under
-// it, and what the brain brings to one of them: the findings that apply and
-// why, then two or three concept directions to react to.
+// The tour home. The tour record and the direction as the director gave it.
+// A reference, not a working surface: nothing is authored here and nothing is
+// decided here. Scene work happens on a Scene.
 
 const TOUR_ID = new URLSearchParams(window.location.search).get("tour") || "off-the-map-2026";
 
+const locationBar = document.getElementById("location");
 const root = document.getElementById("tour");
-const view = { assignmentId: null, context: null, proposed: null, concept: null, brief: null, briefs: [], message: "", working: false };
+
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
 async function call(action, extra = {}) {
   const response = await fetch("/api/tour", {
@@ -23,239 +25,137 @@ function escape(value) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+// Dates arrive as written in the tour file. A row that is not a plain date is
+// shown as it came rather than being reformatted into something wrong.
+function readableDate(value) {
+  const parts = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!parts) return value || "";
+  const month = MONTHS[Number(parts[2]) - 1] || parts[2];
+  return `${Number(parts[3])} ${month} ${parts[1]}`;
+}
+
+function run(dates) {
+  if (!dates.length) return "";
+  const first = readableDate(dates[0].date);
+  const last = readableDate(dates[dates.length - 1].date);
+  return first === last ? first : `${first} TO ${last}`;
+}
+
 function paragraphs(text) {
-  return String(text).split(/\n{2,}/).map((block) => `<p>${escape(block.trim())}</p>`).join("");
+  return String(text || "").split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p>${escape(block)}</p>`)
+    .join("");
 }
 
-function findingLine(entry) {
-  const sources = entry.independentSourceCount
-    ? `${entry.independentSourceCount} independent ${entry.independentSourceCount === 1 ? "source" : "sources"}${entry.tiers && entry.tiers.length ? `, from tier ${entry.tiers.join(", ")}` : ""}`
-    : "Source count not recorded";
-  return `<div class="artist-finding">
-      <p>${escape(entry.text.replace(/\*\*/g, ""))}</p>
-      <div class="artist-meta">
-        <span class="artist-tag">${escape(entry.facetName)}</span>
-        <span class="artist-tag">${escape(sources)}</span>
-      </div>
-      ${entry.why ? `<p class="artist-note">${escape(entry.why)}</p>` : ""}
-    </div>`;
-}
-
-function proposalBlock(proposal, index) {
-  return `<div class="artist-finding">
-      <p><strong>${escape(proposal.title)}</strong></p>
-      ${paragraphs(proposal.idea)}
-      ${proposal.whyThisArtist ? `<p class="artist-note">Why this artist: ${escape(proposal.whyThisArtist)}</p>` : ""}
-      ${proposal.asksOfProduction ? `<p class="artist-note">What it asks of production: ${escape(proposal.asksOfProduction)}</p>` : ""}
-      ${proposal.whereItMightMiss ? `<p class="artist-note">Where it might miss: ${escape(proposal.whereItMightMiss)}</p>` : ""}
-      <div class="artist-meta">
-        ${(proposal.rhymesWith || []).map((id) => `<span class="artist-tag">${escape(id)}</span>`).join("")}
-      </div>
-      <div class="artist-controls"><button data-choose="${index}">Use this concept</button></div>
-    </div>`;
-}
-
-function briefSection() {
-  const frozen = view.briefs.length
-    ? `<p class="artist-note">Frozen: ${view.briefs.map((entry) => `version ${escape(entry.briefVersion)} by ${escape(entry.frozenBy)}`).join(", ")}.</p>`
-    : "";
-  if (!view.concept) {
-    return `<section class="artist-group">
-        <h2>The brief</h2>
-        <p class="artist-note">Choose a concept and the brief compiles from it.</p>
-        ${frozen}
-      </section>`;
-  }
-  const controls = view.brief && view.brief.brief.status === "frozen"
-    ? ""
-    : `<button data-compile>${view.brief ? "Compile again" : "Compile the brief"}</button>
-       ${view.brief ? `<button data-freeze>Freeze version ${escape(view.brief.brief.briefVersion)} and send it out</button>` : ""}`;
-  return `<section class="artist-group">
-      <h2>The brief</h2>
-      <p class="artist-note">Concept: ${escape(view.concept.title)}, shaped by ${escape(view.concept.shapedBy)}.</p>
-      ${frozen}
-      <div class="artist-controls">${controls}</div>
-      ${view.brief ? `
-        <div class="artist-meta">
-          <span class="artist-tag">Job ${escape(view.brief.brief.jobId)}</span>
-          <span class="artist-tag">Brief version ${escape(view.brief.brief.briefVersion)}</span>
-          <span class="artist-tag">Direction version ${escape(view.brief.brief.directionVersion)}</span>
-          <span class="artist-tag">${escape(view.brief.brief.status === "frozen" ? `Frozen by ${view.brief.brief.frozenBy}` : "Draft, not yet frozen")}</span>
+function directionSection(tour) {
+  return `<section class="m-reference-section" aria-labelledby="direction-heading">
+      <div class="m-reference-section__label">
+        <span class="m-state m-state--current">Direction V0${escape(tour.direction.version)} / Current</span>
+        <div class="m-stack">
+          <div>
+            <span class="m-label">Set by</span>
+            <p>${escape(tour.direction.setBy)}</p>
+          </div>
+          <div>
+            <span class="m-label">Set on</span>
+            <p class="m-meta">${escape(String(tour.direction.setOn || "").toUpperCase())}</p>
+          </div>
+          <span class="m-meta">STORED AS GIVEN</span>
         </div>
-        <div class="artist-controls">
-          <button data-download="document">Download the document</button>
-          <button data-download="sidecar">Download the machine readable file</button>
-        </div>
-        <pre class="artist-brief">${escape(view.brief.document)}</pre>
-      ` : ""}
-    </section>`;
-}
-
-function download(kind) {
-  const frozen = view.brief.brief.status === "frozen" ? "" : "-draft";
-  const name = `${view.brief.brief.jobId}-v${view.brief.brief.briefVersion}${frozen}`;
-  const body = kind === "sidecar" ? JSON.stringify(view.brief.sidecar, null, 2) : view.brief.document;
-  const url = URL.createObjectURL(new Blob([body], { type: kind === "sidecar" ? "application/json" : "text/markdown" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = kind === "sidecar" ? `${name}.json` : `${name}.md`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function proposalsSection() {
-  if (!view.proposed) return "";
-  const applied = view.proposed.appliedFindings || [];
-  return `<section class="artist-group">
-      <h2>What the brain brings to this assignment</h2>
-      ${applied.length ? applied.map(findingLine).join("") : "<p class=\"artist-note\">The brain found nothing in this artist that bears on the request.</p>"}
-    </section>
-    <section class="artist-group">
-      <h2>Concept directions to react to</h2>
-      ${(view.proposed.proposals || []).map((proposal, index) => proposalBlock(proposal, index)).join("")}
-    </section>
-    ${(view.proposed.avoidNotes || []).length ? `<section class="artist-group">
-      <h2>What this artist avoids, on this request</h2>
-      ${view.proposed.avoidNotes.map((note) => `<p>${escape(note)}</p>`).join("")}
-    </section>` : ""}
-    ${(view.proposed.openQuestions || []).length ? `<section class="artist-group">
-      <h2>Open questions</h2>
-      <ul>${view.proposed.openQuestions.map((note) => `<li>${escape(note)}</li>`).join("")}</ul>
-    </section>` : ""}`;
-}
-
-function contextSection() {
-  if (!view.context) return "";
-  const { assignment, context } = view.context;
-  return `<section class="artist-group">
-      <h2>${escape(assignment.title)}</h2>
-      <p class="artist-note">${escape(assignment.moment || "")}${assignment.requestedBy ? `. Asked for by ${escape(assignment.requestedBy)}` : ""}. Written against direction version ${escape(assignment.directionVersion)}.</p>
-      ${paragraphs(assignment.request)}
-      <div class="artist-meta">
-        <span class="artist-tag">${escape(context.counts.inScope)} of ${escape(context.counts.inBrain)} findings in scope for this identity</span>
-        <span class="artist-tag">${escape(context.avoids.length)} on what the brand avoids</span>
       </div>
-      <div class="artist-controls">
-        <button data-propose ${view.working ? "disabled" : ""}>${view.working ? "Thinking" : "Ask the brain for concept directions"}</button>
+      <div class="m-reference-section__body m-stack">
+        <h2 id="direction-heading" class="m-section-heading">The direction</h2>
+        <div class="m-source-copy">${paragraphs(tour.direction.words)}</div>
       </div>
     </section>`;
 }
 
-function chrome(tour, assignments) {
-  const options = assignments.map((entry) =>
-    `<option value="${escape(entry.id)}"${entry.id === view.assignmentId ? " selected" : ""}>${escape(entry.title)}</option>`).join("");
-  return `<header class="artist-head">
-      <p class="artist-note"><a href="./index.html">Back to the workspace</a> &nbsp; <a href="./artist.html">Artist</a></p>
-      <h1>${escape(tour.name)}</h1>
-      <p class="artist-note">${escape(tour.cycle || "")}. Direction version ${escape(tour.direction.version)}, set by ${escape(tour.direction.setBy)} on ${escape(tour.direction.setOn)}.</p>
-      ${tour.status ? `<p class="artist-note">${escape(tour.status)}</p>` : ""}
-    </header>
-    ${view.message ? `<div class="artist-toast">${escape(view.message)}</div>` : ""}
-    <section class="artist-group">
-      <h2>The direction, as it was given</h2>
-      ${paragraphs(tour.direction.words)}
-    </section>
-    <div class="artist-bar">
-      <select data-assignment>${options}</select>
-    </div>`;
+function datesSection(tour) {
+  const dates = tour.dates || [];
+  const rows = dates.map((entry, index) => `<li class="m-itinerary__row">
+      <time class="m-meta" datetime="${escape(entry.date)}">${escape(readableDate(entry.date))}</time>
+      <div class="m-itinerary__place">
+        <strong>${escape(entry.venue)}</strong>
+        <span class="m-meta">${escape(entry.place)}</span>
+      </div>
+      <span class="m-label">Show ${escape(String(index + 1).padStart(2, "0"))}</span>
+    </li>`).join("");
+  return `<section class="m-reference-section" aria-labelledby="dates-heading">
+      <div class="m-reference-section__label">
+        <span class="m-label">Tour record</span>
+        <h2 id="dates-heading" class="m-section-heading">Dates and venues</h2>
+      </div>
+      <div class="m-reference-section__body">
+        ${dates.length ? `<ol class="m-itinerary">${rows}</ol>` : `<p class="m-copy">No dates are recorded on this tour yet.</p>`}
+      </div>
+    </section>`;
+}
+
+function contextSection(tour) {
+  const themes = (tour.themes || []).map((entry) => `<li>${escape(entry)}</li>`).join("");
+  return `<section class="m-reference-section" aria-labelledby="context-heading">
+      <div class="m-reference-section__label">
+        <span class="m-label">Production reference</span>
+        <h2 id="context-heading" class="m-section-heading">Tour context</h2>
+      </div>
+      <div class="m-reference-section__body m-reference-pair">
+        <section aria-labelledby="playback-heading">
+          <h3 id="playback-heading" class="m-section-heading">Playback system</h3>
+          <p class="m-copy">${escape(tour.playbackSystem || "Not recorded.")}</p>
+        </section>
+        <section aria-labelledby="themes-heading">
+          <h3 id="themes-heading" class="m-section-heading">Themes</h3>
+          ${themes ? `<ul class="m-theme-list">${themes}</ul>` : `<p class="m-copy">None recorded.</p>`}
+        </section>
+      </div>
+    </section>`;
+}
+
+function sceneList(assignments) {
+  const rows = assignments.map((entry) => `<a class="m-rule-row" href="./scene.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(entry.id)}">
+      <div class="m-stack">
+        <span class="m-meta">WRITTEN AGAINST DIRECTION V0${escape(entry.directionVersion)}</span>
+        <span class="m-rule-row__title">${escape(entry.title)}</span>
+      </div>
+      <span class="m-meta">${escape(entry.moment || "")}</span>
+    </a>`).join("");
+  return `<section class="m-reference-section" aria-labelledby="scenes-heading">
+      <div class="m-reference-section__label">
+        <span class="m-label">Under this direction</span>
+        <h2 id="scenes-heading" class="m-section-heading">Scenes</h2>
+      </div>
+      <div class="m-reference-section__body">
+        ${assignments.length ? `<div class="m-rule-list">${rows}</div>` : `<p class="m-copy">No Scenes have been requested on this tour yet.</p>`}
+      </div>
+    </section>`;
 }
 
 async function render() {
   const { tour, assignments } = await call("get-tour");
-  if (!view.assignmentId && assignments.length) view.assignmentId = assignments[0].id;
-  if (view.assignmentId && !view.context) {
-    view.context = await call("assignment-context", { assignmentId: view.assignmentId });
-    view.concept = (await call("get-concept", { assignmentId: view.assignmentId })).concept;
-    view.briefs = (await call("list-briefs", { assignmentId: view.assignmentId })).briefs;
-  }
-  root.innerHTML = chrome(tour, assignments) + contextSection() + proposalsSection() + briefSection();
+  locationBar.innerHTML = `<span class="m-meta">${escape(String(tour.name).toUpperCase())} / TOUR</span>
+    <span class="m-state m-state--current">Active production</span>`;
+  root.innerHTML = `<header class="m-job-header">
+      <div class="m-job-header__copy">
+        <span class="m-label">Active tour</span>
+        <h1 class="m-heading">${escape(tour.name)}</h1>
+        <p class="m-meta">${escape(run(tour.dates || []))}</p>
+        ${tour.cycle ? `<p class="m-copy">${escape(tour.cycle)}</p>` : ""}
+      </div>
+    </header>
+    ${tour.status ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(tour.status)}</p></div>` : ""}
+    ${directionSection(tour)}
+    ${datesSection(tour)}
+    ${contextSection(tour)}
+    ${sceneList(assignments)}
+    <aside class="m-contribution">
+      <span class="m-contribution__source">Scene direction</span>
+      <p class="m-copy">Scene direction is written inside each Scene and names the version of this direction it was written against. The brief to production carries the parts of this direction someone marked as bearing on that Scene.</p>
+    </aside>`;
 }
 
-async function guard(work) {
-  try {
-    await work();
-  } catch (error) {
-    view.working = false;
-    view.message = error.message;
-    try {
-      await render();
-    } catch {
-      root.innerHTML = `<div class="artist-toast">${escape(error.message)}</div>`;
-    }
-  }
-}
-
-root.addEventListener("click", (event) => {
-  const target = event.target.closest("button");
-  if (!target) return;
-
-  if (target.dataset.choose) {
-    guard(async () => {
-      const proposal = view.proposed.proposals[Number(target.dataset.choose)];
-      const applied = view.proposed.appliedFindings || [];
-      const cited = new Set(proposal.rhymesWith || []);
-      view.concept = (await call("choose-concept", {
-        assignmentId: view.assignmentId,
-        concept: {
-          ...proposal,
-          cameFrom: `proposal: ${proposal.title}`,
-          avoid: view.proposed.avoidNotes || [],
-          openQuestions: view.proposed.openQuestions || [],
-          artistContext: applied.filter((entry) => cited.has(entry.findingId)),
-        },
-      })).concept;
-      view.brief = null;
-      view.message = "";
-      await render();
-    });
-    return;
-  }
-  if (target.hasAttribute("data-compile")) {
-    guard(async () => {
-      view.brief = await call("compile-brief", { assignmentId: view.assignmentId });
-      view.message = "";
-      await render();
-    });
-    return;
-  }
-  if (target.hasAttribute("data-freeze")) {
-    guard(async () => {
-      view.brief = await call("freeze-brief", { assignmentId: view.assignmentId });
-      view.briefs = (await call("list-briefs", { assignmentId: view.assignmentId })).briefs;
-      view.message = `Version ${view.brief.brief.briefVersion} is frozen. Download it and send it to Jim.`;
-      await render();
-    });
-    return;
-  }
-  if (target.dataset.download) {
-    download(target.dataset.download);
-    return;
-  }
-  if (!target.hasAttribute("data-propose")) return;
-  guard(async () => {
-    view.working = true;
-    view.message = "";
-    await render();
-    view.proposed = await call("propose-concepts", { assignmentId: view.assignmentId });
-    view.working = false;
-    const dropped = view.proposed.droppedFindings || [];
-    if (dropped.length) view.message = `${dropped.length} citations named findings the brain does not hold and were left out.`;
-    await render();
-  });
+render().catch((error) => {
+  locationBar.innerHTML = "";
+  root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`;
 });
-
-root.addEventListener("change", (event) => {
-  const select = event.target.closest("select");
-  if (!select || !select.hasAttribute("data-assignment")) return;
-  guard(async () => {
-    view.assignmentId = select.value;
-    view.context = null;
-    view.proposed = null;
-    view.concept = null;
-    view.brief = null;
-    view.message = "";
-    await render();
-  });
-});
-
-guard(render);

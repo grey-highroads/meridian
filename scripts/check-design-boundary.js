@@ -6,7 +6,6 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const appRoot = resolve(repositoryRoot, "app");
 
 const legacyStylesheets = new Set([
-  "app/artist.css",
   "app/bws-place.css",
   "app/bws-polish.css",
   "app/bws.css",
