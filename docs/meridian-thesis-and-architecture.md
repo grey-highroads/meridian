@@ -48,6 +48,8 @@ Ruled 2026-08-21, reference works as index. Reference works that aggregate other
 
 Ruled 2026-08-21, what evidence is made of. Evidence on a claim is the source URL plus a locator and a paraphrase sufficient for a Higher Roads reviewer to check it. Verbatim passages are not stored. A quoted fragment is kept only where the exact wording is itself the fact, and never more than one per source.
 
+Ruled 2026-08-21, syndicated copies count once. A press release or wire story republished across many outlets is one source, not many. The origin document is the source and its republications are not counted. Where the origin cannot be identified, the earliest authoritative copy stands in for it and the rest are dropped. A finding's source count reflects independent sources, because a count inflated by republication overstates the confidence behind the finding.
+
 The brain is not allowed to surprise the artist's team. Anything it asserts carries its evidence: how many sources, which ones, what kind. "Across twelve approved treatments and four interviews, these themes recur" is a finding. A preference with no trail is a guess and is not shown.
 
 ### Tour layer: one cycle
