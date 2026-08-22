@@ -10,8 +10,8 @@ Five files, handed to the app for import:
 
 1. `00-prior.md`: the model's unresearched brain, by facet and identity, each claim with the model's own confidence, plus written predictions of what research will change.
 2. `01-sources.md`: the source list in tier order, every URL marked confirmed, index, or constructed.
-3. `02-claims.md`: one line per claim: claim, era, facet, identity, source, locator, paraphrase.
-4. `03-findings.md`: findings per facet and identity, each with its independent source count and tiers, each sorted confirmed, corrected, or new against the prior, with counts at the top.
+3. `02-claims.md`: one line per claim: claim, era, facet, identity, source number from `01-sources.md`, locator, paraphrase. The source is a number, never a name, so the app can join claim to URL; the first run used names and 214 of 261 claims could not be joined.
+4. `03-findings.md`: findings per facet and identity, each listing the claim ids behind it, its independent source count and tiers, and its bin (confirmed, corrected, or new) against the prior, with counts at the top. A finding with no claim ids is not a finding; the app cannot open it to its evidence.
 5. `04-log.md`: every stage, every block, every judgment call, and timings.
 
 The gate is counted from the new bin and called by a person who reads the findings.
@@ -26,7 +26,7 @@ The gate is counted from the new bin and called by a person who reads the findin
 
 **Stage 3: extract in batches.** Read each source cold, without the prior. After each batch, name the thinnest facet and the thinnest identity and aim the next batch there. Collapse syndicated copies to their origin at extraction time, not later, or source counts inflate. Evidence is URL plus locator plus paraphrase; a quoted fragment only where the exact wording is the fact.
 
-**Stage 4: close extraction, then write findings in one pass.** Open the prior. Synthesize per facet and identity, count independent sources and their tiers, sort each finding into its bin, compute the counts from the tags. Writing findings before extraction closes forced four patches on the first run; regenerate rather than patch.
+**Stage 4: close extraction, then write findings in one pass.** Open the prior. Synthesize per facet and identity, list the claim ids under each finding, count independent sources and their tiers from those claims, sort each finding into its bin, compute the counts from the tags. Writing findings before extraction closes forced four patches on the first run; regenerate rather than patch.
 
 **Stage 5: write the log as you go.** Blocks, judgment calls, timings, and what went wrong, at the same weight as results.
 
