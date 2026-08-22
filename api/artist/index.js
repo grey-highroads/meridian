@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseIntake } from "../../src/artist/parse-intake.js";
-import { applyDecisions, createArtistStore } from "../../src/artist/store.js";
+import { applyRulings, createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 
@@ -9,10 +9,14 @@ import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, send
 // rather than as new files, because the hosting tier caps functions and
 // retrofitting dispatch later is more work than starting with it.
 //
-// The actions are: import-intake, get-artist, list-findings, approve-finding,
-// decline-finding, get-evidence. None of them returns the prior. The prior is
-// written at import and read by nothing, because the thesis says it is never
-// shown.
+// The actions are: import-intake, get-artist, list-findings, approve-brain,
+// remove-finding, restore-finding, get-evidence. None of them returns the
+// prior. The prior is written at import and read by nothing, because the
+// thesis says it is never shown.
+//
+// Approval is wholesale. The operator read and sorted every finding during
+// intake, so one person approves the whole brain and then takes out the
+// individual findings that should not be in it.
 
 const INTAKE_FILES = {
   prior: "00-prior.md",
@@ -63,7 +67,7 @@ async function importIntake(store, artistId, reader) {
   };
 }
 
-async function rule(store, artistId, findingId, status, person) {
+async function setRemoved(store, artistId, findingId, entry) {
   const record = await store.readRecord(artistId);
   const findings = Array.isArray(record.findings) ? record.findings : [];
   if (!findings.some((finding) => finding.id === findingId)) {
@@ -71,14 +75,9 @@ async function rule(store, artistId, findingId, status, person) {
     error.status = 404;
     throw error;
   }
-  await store.writeDecision(artistId, findingId, {
-    status,
-    decidedBy: person || "Higher Roads",
-    decidedAt: new Date().toISOString(),
-  });
+  await store.setRemoved(artistId, findingId, entry);
   const decisions = await store.readDecisions(artistId);
-  const decided = applyDecisions(findings, decisions).find((finding) => finding.id === findingId);
-  return { finding: decided };
+  return { finding: applyRulings(findings, decisions).find((finding) => finding.id === findingId) };
 }
 
 export async function handleAction(body, options = {}) {
@@ -105,11 +104,25 @@ export async function handleAction(body, options = {}) {
       groups: listFindings(record, decisions, { facet: body.facet || null, identity: body.identity || null }),
     };
   }
-  if (body.action === "approve-finding") {
-    return await rule(store, artistId, body.findingId, "approved", body.person);
+  if (body.action === "approve-brain") {
+    const record = await store.readRecord(artistId);
+    if (!record.artist) {
+      const error = new Error("Import this artist's intake files before approving the brain.");
+      error.status = 400;
+      throw error;
+    }
+    await store.approveBrain(artistId, body.person);
+    const decisions = await store.readDecisions(artistId);
+    return buildArtistView(record, decisions);
   }
-  if (body.action === "decline-finding") {
-    return await rule(store, artistId, body.findingId, "declined", body.person);
+  if (body.action === "remove-finding") {
+    return await setRemoved(store, artistId, body.findingId, {
+      removedBy: body.person || "Higher Roads",
+      removedAt: new Date().toISOString(),
+    });
+  }
+  if (body.action === "restore-finding") {
+    return await setRemoved(store, artistId, body.findingId, null);
   }
   if (body.action === "get-evidence") {
     const record = await store.readRecord(artistId);

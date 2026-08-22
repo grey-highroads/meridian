@@ -1,9 +1,10 @@
 import { ownEntry } from "../lookup.js";
 import { FACET_CODES, FACET_NAMES, IDENTITIES } from "./parse-intake.js";
-import { applyDecisions } from "./store.js";
+import { applyRulings, brainApproved } from "./store.js";
 
-// The approved findings are the brain. Everything else in the record is the
-// working material behind them.
+// The brain is every finding the operator produced, minus the ones a person
+// has taken out. Everything else in the record is the working material behind
+// those findings.
 
 export function groupFindings(findings) {
   const groups = [];
@@ -24,23 +25,27 @@ export function groupFindings(findings) {
 }
 
 export function buildArtistView(record, decisions) {
-  const findings = applyDecisions(Array.isArray(record.findings) ? record.findings : [], decisions);
-  const approved = findings.filter((finding) => finding.status === "approved");
+  const findings = applyRulings(Array.isArray(record.findings) ? record.findings : [], decisions);
+  const inBrain = findings.filter((finding) => finding.inBrain);
   return {
     artist: record.artist || null,
+    approved: brainApproved(decisions),
+    approvedBy: decisions?.brain?.approvedBy || null,
+    approvedAt: decisions?.brain?.approvedAt || null,
     counts: {
       sources: (record.sources || []).length,
       claims: (record.claims || []).length,
       findings: findings.length,
-      approved: approved.length,
+      inBrain: inBrain.length,
+      removed: findings.length - inBrain.length,
     },
-    // get-artist is the brain, so it carries approved findings and nothing else.
-    groups: groupFindings(approved),
+    // get-artist is the brain, so it carries what is in it and nothing else.
+    groups: groupFindings(inBrain),
   };
 }
 
 export function listFindings(record, decisions, { facet, identity } = {}) {
-  let findings = applyDecisions(Array.isArray(record.findings) ? record.findings : [], decisions);
+  let findings = applyRulings(Array.isArray(record.findings) ? record.findings : [], decisions);
   if (facet) findings = findings.filter((finding) => finding.facet === facet);
   if (identity) findings = findings.filter((finding) => finding.identity === identity);
   return groupFindings(findings);

@@ -9,11 +9,17 @@ import { ownEntry } from "../lookup.js";
 //
 //   record.json     Everything the intake files say. Rewritten byte for byte
 //                   on every import, so a second import changes nothing.
-//   decisions.json  Which findings a person approved or declined, and who and
-//                   when. Import never touches this, so re-importing cannot
-//                   undo a ruling.
+//   decisions.json  The one ruling that put this brain in, and any findings a
+//                   person has since taken out. Import never touches this, so
+//                   re-importing cannot undo a ruling.
 //   prior.json      The unresearched prior. Written once at import. No action
 //                   in the handler reads it back out.
+//
+// The ruling is wholesale. The operator already read every finding during
+// intake, sorted it into a bin and counted its sources, so asking a second
+// person to rule on each one again is the same work twice. One person approves
+// the brain, which is the human ruling the artist layer requires, and takes out
+// the individual findings that should not be there.
 
 const ROOT = "brand-world-system/clients";
 
@@ -76,7 +82,7 @@ export function createArtistStore(options = {}) {
       return await readDocument(artistId, "record", { ...EMPTY_RECORD });
     },
     async readDecisions(artistId) {
-      return await readDocument(artistId, "decisions", { findings: {} });
+      return await readDocument(artistId, "decisions", { brain: null, removed: {} });
     },
     // Import writes the record and the prior and leaves decisions alone.
     // The body is stable text for stable input, which is what makes a second
@@ -93,28 +99,47 @@ export function createArtistStore(options = {}) {
       await backend.write(pathFor(artistId, "prior"), JSON.stringify(parsed.prior, null, 2));
       return record;
     },
-    async writeDecision(artistId, findingId, decision) {
-      const decisions = await readDocument(artistId, "decisions", { findings: {} });
-      const findings = decisions.findings && typeof decisions.findings === "object" ? decisions.findings : {};
-      findings[findingId] = decision;
-      const next = { findings };
+    async approveBrain(artistId, person) {
+      const decisions = await readDocument(artistId, "decisions", { brain: null, removed: {} });
+      const next = {
+        brain: { approvedBy: person || "Higher Roads", approvedAt: new Date().toISOString() },
+        removed: decisions.removed && typeof decisions.removed === "object" ? decisions.removed : {},
+      };
+      await backend.write(pathFor(artistId, "decisions"), JSON.stringify(next, null, 2));
+      return next;
+    },
+    // Taking a finding out and putting it back are both recorded, and neither
+    // touches the record. A finding is never deleted, so a wrong click costs a
+    // click rather than a piece of the artist's history.
+    async setRemoved(artistId, findingId, entry) {
+      const decisions = await readDocument(artistId, "decisions", { brain: null, removed: {} });
+      const removed = decisions.removed && typeof decisions.removed === "object" ? { ...decisions.removed } : {};
+      if (entry) removed[findingId] = entry;
+      else delete removed[findingId];
+      const next = { brain: decisions.brain || null, removed };
       await backend.write(pathFor(artistId, "decisions"), JSON.stringify(next, null, 2));
       return next;
     },
   };
 }
 
-// A finding as a person reads it: what the file said, plus where the ruling on
-// it stands. Status starts at proposed and moves only when someone rules.
-export function applyDecisions(findings, decisions) {
-  const map = decisions && typeof decisions.findings === "object" ? decisions.findings : {};
+export function brainApproved(decisions) {
+  return Boolean(decisions && decisions.brain && decisions.brain.approvedAt);
+}
+
+// A finding as a person reads it: what the intake file said, plus whether it is
+// in the brain. Everything the operator produced is in once the brain is
+// approved, except what someone has taken out by hand.
+export function applyRulings(findings, decisions) {
+  const approved = brainApproved(decisions);
+  const removed = decisions && typeof decisions.removed === "object" ? decisions.removed : {};
   return findings.map((finding) => {
-    const decision = ownEntry(map, finding.id);
+    const entry = ownEntry(removed, finding.id);
     return {
       ...finding,
-      status: decision?.status || "proposed",
-      decidedBy: decision?.decidedBy || null,
-      decidedAt: decision?.decidedAt || null,
+      inBrain: approved && !entry,
+      removedBy: entry?.removedBy || null,
+      removedAt: entry?.removedAt || null,
     };
   });
 }

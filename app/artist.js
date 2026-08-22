@@ -1,6 +1,7 @@
-// The artist page. It shows what Meridian knows about one artist, lets a
-// person approve each finding or turn it down, and shows the evidence behind
-// one when they ask for it. The Brain view is the approved findings only.
+// The artist page. It shows what Meridian knows about one artist and the
+// evidence behind it. Approval is wholesale: the operator already read and
+// sorted every finding during intake, so one person approves the whole brain
+// and then takes out the individual findings that should not be in it.
 
 const ARTIST_ID = new URLSearchParams(window.location.search).get("artist") || "dierks-bentley";
 
@@ -24,7 +25,6 @@ const FACET_LABELS = [
   { id: "AV", name: "What the brand avoids" },
 ];
 
-const RULING_LABELS = { approved: "Approved", declined: "Not this one", proposed: "Needs your approval" };
 
 async function call(action, extra = {}) {
   const response = await fetch("/api/artist", {
@@ -73,12 +73,12 @@ function evidenceBlock(finding) {
 }
 
 function findingBlock(finding) {
-  const ruling = RULING_LABELS[finding.status] || RULING_LABELS.proposed;
   const controls = view.mode === "brain"
-    ? ""
+    ? `<div class="artist-controls"><button data-evidence="${escape(finding.id)}">${view.open[finding.id] ? "Hide evidence" : "Show evidence"}</button></div>`
     : `<div class="artist-controls">
-        <button data-approve="${escape(finding.id)}">Approve</button>
-        <button data-decline="${escape(finding.id)}">Not this one</button>
+        ${finding.inBrain
+          ? `<button data-remove="${escape(finding.id)}">Not this one</button>`
+          : `<button data-restore="${escape(finding.id)}">Put it back</button>`}
         <button data-evidence="${escape(finding.id)}">${view.open[finding.id] ? "Hide evidence" : "Show evidence"}</button>
       </div>`;
   return `<div class="artist-finding">
@@ -86,7 +86,7 @@ function findingBlock(finding) {
       <div class="artist-meta">
         <span class="artist-tag">${escape(finding.bin === "new" ? "New" : finding.bin === "corrected" ? "Corrected" : "Confirmed")}</span>
         <span class="artist-tag">${escape(sourceLine(finding))}</span>
-        <span class="artist-tag" data-mark="${escape(finding.status || "proposed")}">${escape(ruling)}</span>
+        ${finding.inBrain ? "" : `<span class="artist-tag" data-mark="removed">Taken out${finding.removedBy ? ` by ${escape(finding.removedBy)}` : ""}</span>`}
       </div>
       ${controls}
       ${evidenceBlock(finding)}
@@ -100,32 +100,40 @@ function groupBlock(group) {
     </section>`;
 }
 
-function chrome(name, counts) {
+function chrome(brain) {
   const identityOptions = IDENTITY_LABELS.map((entry) =>
     `<option value="${escape(entry.id)}"${entry.id === view.identity ? " selected" : ""}>${escape(entry.name)}</option>`).join("");
   const facetOptions = FACET_LABELS.map((entry) =>
     `<option value="${escape(entry.id)}"${entry.id === view.facet ? " selected" : ""}>${escape(entry.name)}</option>`).join("");
-  const summary = counts
-    ? `${counts.findings} findings, ${counts.approved} approved, from ${counts.claims} claims across ${counts.sources} sources.`
-    : "Nothing has been imported for this artist yet.";
+
+  let summary;
+  if (!brain.artist) summary = "Nothing has been imported for this artist yet.";
+  else if (!brain.approved) summary = `${brain.counts.findings} findings ready, from ${brain.counts.claims} claims across ${brain.counts.sources} sources. Nothing is in the brain until you approve it.`;
+  else summary = `${brain.counts.inBrain} findings in the brain${brain.counts.removed ? `, ${brain.counts.removed} taken out` : ""}, from ${brain.counts.claims} claims across ${brain.counts.sources} sources.`;
+
+  const approval = brain.artist && !brain.approved
+    ? `<button data-approve-brain>Approve this brain</button>`
+    : "";
+
   return `<header class="artist-head">
       <p class="artist-note"><a href="./index.html">Back to the workspace</a></p>
-      <h1>${escape(name)}</h1>
+      <h1>${escape(brain.artist ? brain.artist.name : ARTIST_ID)}</h1>
       <p class="artist-note">${escape(summary)}</p>
+      ${brain.approved && brain.approvedBy ? `<p class="artist-note">Approved by ${escape(brain.approvedBy)}.</p>` : ""}
     </header>
     ${view.message ? `<div class="artist-toast">${escape(view.message)}</div>` : ""}
     <div class="artist-bar">
-      <button data-mode="review" aria-pressed="${view.mode === "review"}">Review</button>
+      <button data-mode="review" aria-pressed="${view.mode === "review"}">All findings</button>
       <button data-mode="brain" aria-pressed="${view.mode === "brain"}">Brain</button>
       <select data-filter="identity">${identityOptions}</select>
       <select data-filter="facet">${facetOptions}</select>
+      ${approval}
       <button data-import>Import intake files</button>
     </div>`;
 }
 
 async function render() {
   const brain = await call("get-artist");
-  const name = brain.artist ? brain.artist.name : ARTIST_ID;
   let groups;
   if (view.mode === "brain") {
     groups = brain.groups.filter((group) =>
@@ -135,9 +143,9 @@ async function render() {
     groups = listed.groups;
   }
   const empty = view.mode === "brain"
-    ? "<p class=\"artist-note\">No findings have been approved yet.</p>"
-    : "<p class=\"artist-note\">Nothing to review here yet.</p>";
-  root.innerHTML = chrome(name, brain.artist ? brain.counts : null) + (groups.length ? groups.map(groupBlock).join("") : empty);
+    ? "<p class=\"artist-note\">Nothing is in the brain yet.</p>"
+    : "<p class=\"artist-note\">Nothing here yet.</p>";
+  root.innerHTML = chrome(brain) + (groups.length ? groups.map(groupBlock).join("") : empty);
 }
 
 async function guard(work) {
@@ -170,14 +178,21 @@ root.addEventListener("click", (event) => {
       await render();
       return;
     }
-    if (target.dataset.approve) {
-      await call("approve-finding", { findingId: target.dataset.approve });
+    if (target.hasAttribute("data-approve-brain")) {
+      target.disabled = true;
+      const result = await call("approve-brain");
+      view.message = `${result.counts.inBrain} findings are in the brain.`;
+      await render();
+      return;
+    }
+    if (target.dataset.remove) {
+      await call("remove-finding", { findingId: target.dataset.remove });
       view.message = "";
       await render();
       return;
     }
-    if (target.dataset.decline) {
-      await call("decline-finding", { findingId: target.dataset.decline });
+    if (target.dataset.restore) {
+      await call("restore-finding", { findingId: target.dataset.restore });
       view.message = "";
       await render();
       return;

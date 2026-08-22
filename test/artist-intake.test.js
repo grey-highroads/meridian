@@ -17,6 +17,17 @@ async function importOnce(store) {
   return await handleAction({ action: "import-intake", artistId: ARTIST }, { store });
 }
 
+async function importedAndApproved() {
+  const { backend, store } = freshStore();
+  await importOnce(store);
+  await handleAction({ action: "approve-brain", artistId: ARTIST, person: "Grey" }, { store });
+  return { backend, store };
+}
+
+function allFindings(listed) {
+  return listed.groups.flatMap((group) => group.findings);
+}
+
 test("the committed intake files parse into the counts they state", async () => {
   const texts = await readIntakeFiles(ARTIST);
   const parsed = parseIntake({ artistId: ARTIST, artistName: "Dierks Bentley", ...texts });
@@ -41,73 +52,95 @@ test("importing twice yields identical stored objects", async () => {
   }
 });
 
-test("importing again does not undo a ruling", async () => {
+test("nothing is in the brain until a person approves it", async () => {
   const { store } = freshStore();
   await importOnce(store);
-  await handleAction({ action: "approve-finding", artistId: ARTIST, findingId: "finding-3" }, { store });
-  await importOnce(store);
-  const view = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
-  const approved = view.groups.flatMap((group) => group.findings).map((finding) => finding.id);
-  assert.deepEqual(approved, ["finding-3"]);
-});
+  const before = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
+  assert.equal(before.approved, false);
+  assert.deepEqual(before.groups, []);
+  assert.equal(before.counts.findings, 80);
+  assert.equal(before.counts.inBrain, 0);
 
-test("approving one finding changes only that finding and leaves every other object byte-identical", async () => {
-  const { backend, store } = freshStore();
-  await importOnce(store);
-  const before = new Map(backend.files);
-  await handleAction({ action: "approve-finding", artistId: ARTIST, findingId: "finding-5", person: "Grey" }, { store });
-
-  // The record and the prior are untouched, byte for byte.
-  assert.equal(backend.files.get(pathFor(ARTIST, "record")), before.get(pathFor(ARTIST, "record")));
-  assert.equal(backend.files.get(pathFor(ARTIST, "prior")), before.get(pathFor(ARTIST, "prior")));
-
-  // Exactly one finding moved, and every other finding still needs a ruling.
+  // The findings exist and are readable before the ruling, they are just not
+  // in the brain, so the ruling is what puts them there rather than the import.
   const listed = await handleAction({ action: "list-findings", artistId: ARTIST }, { store });
-  const findings = listed.groups.flatMap((group) => group.findings);
-  const moved = findings.filter((finding) => finding.status !== "proposed");
-  assert.equal(moved.length, 1);
-  assert.equal(moved[0].id, "finding-5");
-  assert.equal(moved[0].status, "approved");
-  assert.equal(moved[0].decidedBy, "Grey");
+  assert.equal(allFindings(listed).length, 80);
+  assert.ok(allFindings(listed).every((finding) => finding.inBrain === false));
 });
 
-test("declining a finding keeps it out of the brain and leaves the rest proposed", async () => {
-  const { store } = freshStore();
-  await importOnce(store);
-  await handleAction({ action: "decline-finding", artistId: ARTIST, findingId: "finding-7" }, { store });
+test("one approval puts every finding in the brain and records who made it", async () => {
+  const { store } = await importedAndApproved();
   const view = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
-  assert.equal(view.groups.length, 0);
-  const listed = await handleAction({ action: "list-findings", artistId: ARTIST }, { store });
-  const findings = listed.groups.flatMap((group) => group.findings);
-  assert.equal(findings.filter((finding) => finding.status === "declined").length, 1);
-  assert.equal(findings.filter((finding) => finding.status === "proposed").length, findings.length - 1);
-});
-
-test("get-artist contains only approved findings", async () => {
-  const { store } = freshStore();
-  await importOnce(store);
-  const empty = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
-  assert.equal(empty.groups.length, 0, "nothing is in the brain before anyone approves anything");
-  assert.equal(empty.counts.findings, 80);
-
-  for (const id of ["finding-1", "finding-2"]) {
-    await handleAction({ action: "approve-finding", artistId: ARTIST, findingId: id }, { store });
-  }
-  await handleAction({ action: "decline-finding", artistId: ARTIST, findingId: "finding-4" }, { store });
-
-  const view = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
+  assert.equal(view.approved, true);
+  assert.equal(view.approvedBy, "Grey");
+  assert.ok(view.approvedAt);
+  assert.equal(view.counts.inBrain, 80);
+  assert.equal(view.counts.removed, 0);
   const inBrain = view.groups.flatMap((group) => group.findings);
-  assert.deepEqual(inBrain.map((finding) => finding.id).sort(), ["finding-1", "finding-2"]);
-  assert.ok(inBrain.every((finding) => finding.status === "approved"));
-  assert.equal(view.counts.approved, 2);
-  // Grouped by facet and identity, with the evidence count on each finding.
+  assert.equal(inBrain.length, 80);
+  assert.ok(inBrain.every((finding) => finding.inBrain === true));
+  // Grouped by facet and identity, each finding carrying its evidence count.
   assert.ok(view.groups.every((group) => group.facet && group.identity && group.facetName));
   assert.ok(inBrain.every((finding) => Object.prototype.hasOwnProperty.call(finding, "independentSourceCount")));
 });
 
-test("list-findings filters by facet and by identity", async () => {
-  const { store } = freshStore();
+test("approving the brain before importing fails and writes nothing", async () => {
+  const { backend, store } = freshStore();
+  await assert.rejects(
+    () => handleAction({ action: "approve-brain", artistId: ARTIST }, { store }),
+    /Import this artist's intake files before approving the brain/,
+  );
+  assert.equal(backend.files.size, 0);
+});
+
+test("taking out one finding removes only that finding and leaves every other object byte-identical", async () => {
+  const { backend, store } = await importedAndApproved();
+  const before = new Map(backend.files);
+  await handleAction({ action: "remove-finding", artistId: ARTIST, findingId: "finding-5", person: "Grey" }, { store });
+
+  // The record and the prior are untouched, byte for byte. A finding is taken
+  // out of the brain and is never deleted from the artist's history.
+  assert.equal(backend.files.get(pathFor(ARTIST, "record")), before.get(pathFor(ARTIST, "record")));
+  assert.equal(backend.files.get(pathFor(ARTIST, "prior")), before.get(pathFor(ARTIST, "prior")));
+
+  const view = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
+  assert.equal(view.counts.inBrain, 79);
+  assert.equal(view.counts.removed, 1);
+  const ids = view.groups.flatMap((group) => group.findings).map((finding) => finding.id);
+  assert.equal(ids.length, 79);
+  assert.ok(!ids.includes("finding-5"));
+
+  const listed = await handleAction({ action: "list-findings", artistId: ARTIST }, { store });
+  const out = allFindings(listed).filter((finding) => !finding.inBrain);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].id, "finding-5");
+  assert.equal(out[0].removedBy, "Grey");
+});
+
+test("a finding that was taken out can be put back", async () => {
+  const { store } = await importedAndApproved();
+  await handleAction({ action: "remove-finding", artistId: ARTIST, findingId: "finding-7" }, { store });
+  await handleAction({ action: "restore-finding", artistId: ARTIST, findingId: "finding-7" }, { store });
+  const view = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
+  assert.equal(view.counts.inBrain, 80);
+  assert.equal(view.counts.removed, 0);
+  const listed = await handleAction({ action: "list-findings", artistId: ARTIST }, { store });
+  assert.ok(allFindings(listed).every((finding) => finding.removedBy === null));
+});
+
+test("importing again undoes neither the approval nor a removal", async () => {
+  const { store } = await importedAndApproved();
+  await handleAction({ action: "remove-finding", artistId: ARTIST, findingId: "finding-3" }, { store });
   await importOnce(store);
+  const view = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
+  assert.equal(view.approved, true);
+  assert.equal(view.approvedBy, "Grey");
+  assert.equal(view.counts.inBrain, 79);
+  assert.ok(!view.groups.flatMap((group) => group.findings).some((finding) => finding.id === "finding-3"));
+});
+
+test("list-findings filters by facet and by identity", async () => {
+  const { store } = await importedAndApproved();
   const visual = await handleAction({ action: "list-findings", artistId: ARTIST, facet: "VL" }, { store });
   assert.ok(visual.groups.length > 0);
   assert.ok(visual.groups.every((group) => group.facet === "VL"));
@@ -123,8 +156,7 @@ test("list-findings filters by facet and by identity", async () => {
 });
 
 test("the prior is reachable by no action the page calls", async () => {
-  const { store } = freshStore();
-  await importOnce(store);
+  const { store } = await importedAndApproved();
 
   // The prior is stored, so this test is about reach and not about absence.
   const priorText = await readFile(join(intakeDirectory(ARTIST), "00-prior.md"), "utf8");
@@ -135,8 +167,9 @@ test("the prior is reachable by no action the page calls", async () => {
     { action: "get-artist" },
     { action: "list-findings" },
     { action: "get-evidence", findingId: "finding-1" },
-    { action: "approve-finding", findingId: "finding-1" },
-    { action: "decline-finding", findingId: "finding-2" },
+    { action: "approve-brain" },
+    { action: "remove-finding", findingId: "finding-1" },
+    { action: "restore-finding", findingId: "finding-1" },
     { action: "import-intake" },
   ];
   for (const call of calls) {
@@ -150,24 +183,25 @@ test("the prior is reachable by no action the page calls", async () => {
 });
 
 test("a second artist with no import returns an empty record and never the first artist's data", async () => {
-  const { store } = freshStore();
-  await importOnce(store);
-  await handleAction({ action: "approve-finding", artistId: ARTIST, findingId: "finding-1" }, { store });
+  const { store } = await importedAndApproved();
 
   const other = await handleAction({ action: "get-artist", artistId: "kacey-musgraves" }, { store });
   assert.equal(other.artist, null);
+  assert.equal(other.approved, false);
   assert.deepEqual(other.groups, []);
-  assert.deepEqual(other.counts, { sources: 0, claims: 0, findings: 0, approved: 0 });
+  assert.equal(other.counts.findings, 0);
+  assert.equal(other.counts.inBrain, 0);
 
   const listed = await handleAction({ action: "list-findings", artistId: "kacey-musgraves" }, { store });
   assert.deepEqual(listed.groups, []);
   assert.ok(!JSON.stringify(other).includes("Dierks"));
   assert.ok(!JSON.stringify(listed).includes("Dierks"));
 
-  // And the first artist is untouched by the second one being read.
+  // The first artist is untouched by the second one being read, and the second
+  // artist's brain is not approved just because the first one's is.
   const first = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
-  assert.equal(first.counts.findings, 80);
-  assert.equal(first.counts.approved, 1);
+  assert.equal(first.counts.inBrain, 80);
+  assert.equal(first.approved, true);
 });
 
 test("importing an artist with no intake files fails plainly and writes nothing", async () => {
@@ -180,8 +214,7 @@ test("importing an artist with no intake files fails plainly and writes nothing"
 });
 
 test("get-evidence reports what the intake files record behind a finding", async () => {
-  const { store } = freshStore();
-  await importOnce(store);
+  const { store } = await importedAndApproved();
   const evidence = await handleAction({ action: "get-evidence", artistId: ARTIST, findingId: "finding-1" }, { store });
   assert.equal(evidence.findingId, "finding-1");
   assert.equal(typeof evidence.independentSourceCount, "number");

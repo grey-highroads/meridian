@@ -90,12 +90,7 @@
   color: var(--muted);
 }
 
-.artist-tag[data-mark="approved"] {
-  border-color: var(--success);
-  color: var(--success);
-}
-
-.artist-tag[data-mark="declined"] {
+.artist-tag[data-mark="removed"] {
   border-color: var(--danger);
   color: var(--danger);
 }
