@@ -22,6 +22,9 @@ const view = {
   usedSuggestion: null,
   brief: null,
   briefs: [],
+  artboards: [],
+  facts: [],
+  receipt: null,
   draft: { title: "", direction: "", marked: [] },
   message: "",
   working: false,
@@ -231,6 +234,53 @@ function briefSection() {
     </section>`;
 }
 
+// ---------------------------------------------------------------------------
+// What came back from production, and the record of what happened
+// ---------------------------------------------------------------------------
+
+function receiptSection() {
+  if (!view.receipt) return "";
+  return `<div class="m-callout m-callout--current">
+      <span class="m-label">Received by production</span>
+      <p class="m-copy">Job ${escape(view.receipt.jobId)}, brief V0${escape(view.receipt.briefVersion)}, at ${escape(view.receipt.receivedAt)}.</p>
+      <p class="m-meta">${escape(String(view.receipt.label || "").toUpperCase())}</p>
+    </div>`;
+}
+
+function artboardSection() {
+  if (!view.artboards.length) return "";
+  const cards = view.artboards.map((entry) => `<div class="m-version">
+      <span class="m-state m-state--current">V0${escape(entry.artboard.artboardVersion)}</span>
+      <strong>ARTBOARD V0${escape(entry.artboard.artboardVersion)}</strong>
+      <span class="m-meta">AGAINST BRIEF V0${escape(entry.artboard.briefVersion)}</span>
+      <span class="m-meta">${escape(String(entry.artboard.status).toUpperCase())}</span>
+      <p class="m-copy">${escape(entry.artboard.conceptSummary)}</p>
+      <span class="m-meta">${escape(String(entry.artboard.label).toUpperCase())}</span>
+    </div>`).join("");
+  return `<section class="m-work m-stack" aria-labelledby="artboards-heading">
+      <div class="m-cluster">
+        <h2 id="artboards-heading" class="m-section-heading">What came back</h2>
+        <span class="m-meta">${escape(view.artboards.length)} RECEIVED</span>
+      </div>
+      <p class="m-copy">Review opens on these once the review screen lands.</p>
+      ${cards}
+    </section>`;
+}
+
+function recordSection() {
+  if (!view.facts.length) return "";
+  const rows = view.facts.map((fact) => `<div class="m-record-grid__item">
+      <span class="m-label">${escape(fact.action)}</span>
+      <strong>${escape(fact.version || "")}</strong>
+      <span class="m-meta">${escape(String(fact.actor).toUpperCase())} / ${escape(fact.at)}</span>
+    </div>`).join("");
+  return `<section class="m-work m-stack" aria-labelledby="record-heading">
+      <h2 id="record-heading" class="m-section-heading">What happened on this Scene</h2>
+      <p class="m-copy">Every line is written once and stays as written.</p>
+      <div class="m-record-grid">${rows}</div>
+    </section>`;
+}
+
 function download(kind) {
   const brief = view.brief.brief;
   const tail = brief.status === "frozen" ? "" : "-draft";
@@ -286,7 +336,10 @@ function render() {
       ${brainSection()}
     </div>
     ${marksSection()}
-    ${briefSection()}`;
+    ${briefSection()}
+    ${receiptSection()}
+    ${artboardSection()}
+    ${recordSection()}`;
   actionBar();
 }
 
@@ -299,6 +352,8 @@ async function load() {
   view.context = context.context;
   view.concept = (await call("get-concept", { assignmentId: view.sceneId })).concept;
   view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
+  view.artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
+  view.facts = (await call("get-scene-record", { assignmentId: view.sceneId })).facts;
   if (view.concept) {
     view.draft.title = view.concept.title;
     view.draft.direction = view.concept.idea;
@@ -390,7 +445,14 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       view.brief = await call("freeze-brief", { assignmentId: view.sceneId });
       view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
-      view.message = `V0${view.brief.brief.briefVersion} is frozen. Download it and send it to production.`;
+      // Freezing and sending are one action for the person and two facts on the
+      // record, because the record has to show that the version that went out
+      // is the version that was frozen.
+      const sent = await call("send-brief", { assignmentId: view.sceneId, briefVersion: view.brief.brief.briefVersion });
+      view.receipt = sent.receipt;
+      view.artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
+      view.facts = (await call("get-scene-record", { assignmentId: view.sceneId })).facts;
+      view.message = `V0${view.brief.brief.briefVersion} is frozen and production has it.`;
       render();
     });
     return;

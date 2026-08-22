@@ -5,13 +5,17 @@ import { assembleContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
 import { createTourStore } from "../../src/tour/store.js";
 import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
+import { createArtboardStore } from "../../src/seam/artboard-store.js";
+import { receiveBrief, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
+import { createSceneRecord, RECORD_ACTOR } from "../../src/tour/scene-record.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 
 // The tour layer's one function. Actions: get-tour, get-assignment,
 // assignment-context, propose-concepts, choose-concept, get-concept,
-// compile-brief, freeze-brief, list-briefs, get-brief.
+// compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
+// get-artboards, get-scene-record.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -208,6 +212,12 @@ export async function handleAction(body, options = {}) {
     });
     const frozen = freeze(compiled, body.person);
     await tourStore.addBrief(fixture.tour.id, assignment.id, frozen);
+    const record = options.sceneRecord || createSceneRecord();
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      actor: RECORD_ACTOR,
+      action: "Froze the brief",
+      version: `Brief V0${frozen.briefVersion}`,
+    });
     return { brief: frozen, document: renderBriefDocument(frozen), sidecar: renderBriefSidecar(frozen) };
   }
   if (body.action === "list-briefs") {
@@ -239,6 +249,64 @@ export async function handleAction(body, options = {}) {
       throw error;
     }
     return { brief, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
+  }
+
+  // The seam. What goes out is one frozen brief. What comes back is an
+  // artboard version and the receipt that came with it. The stand-in is ours
+  // and its label travels on everything it produces, so its shape never
+  // becomes Jim's obligation.
+  if (body.action === "send-brief") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const record = options.sceneRecord || createSceneRecord();
+
+    const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const wanted = body.briefVersion === undefined || body.briefVersion === null
+      ? null
+      : Number(body.briefVersion);
+    const frozen = versions.filter((entry) => entry.status === "frozen");
+    const brief = wanted === null
+      ? frozen[frozen.length - 1]
+      : frozen.find((entry) => entry.briefVersion === wanted);
+    if (!brief) {
+      const error = new Error("Freeze the brief before sending it out.");
+      error.status = 400;
+      throw error;
+    }
+
+    const already = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    if (already.some((entry) => entry.artboard.briefVersion === brief.briefVersion)) {
+      const error = new Error("That brief version has already gone out. Feedback on the artboard is what goes out next.");
+      error.status = 409;
+      throw error;
+    }
+
+    const produced = receiveBrief(brief, { artboardVersion: 1 });
+    const entry = { receipt: produced.receipt, artboard: produced.artboard };
+    await artboardStore.addArtboard(fixture.tour.id, assignment.id, entry, produced.artifactBody);
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      actor: RECORD_ACTOR,
+      action: "Sent the brief to production",
+      version: `Brief V0${brief.briefVersion}`,
+    });
+    return { receipt: produced.receipt, artboard: produced.artboard, label: STAND_IN_LABEL };
+  }
+  if (body.action === "get-artboards") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const artboardStore = options.artboardStore || createArtboardStore();
+    return {
+      artboards: await artboardStore.readArtboards(fixture.tour.id, assignment.id),
+      label: STAND_IN_LABEL,
+    };
+  }
+  if (body.action === "get-scene-record") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const record = options.sceneRecord || createSceneRecord();
+    return { facts: await record.readFacts(fixture.tour.id, assignment.id) };
   }
 
   const error = new Error("That is not something this route does.");

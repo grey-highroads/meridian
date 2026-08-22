@@ -65,6 +65,10 @@ Discovery works backward from real finished artboards. Five to ten completed pro
 
 **Revision.** How does feedback arrive today and how is it applied? Is prior state preserved? Can the system accept structured instructions against a specific version and report what changed?
 
+**Receipts.** Does Jim's side return a receipt on every inbound payload, saying what it received and when? Meridian's stand-in returns one and the Scene record writes a fact from it, so a person can see that what went out arrived. If Jim's side does not do this today, the question is whether it can, and what the receipt would carry.
+
+**Region anchors.** Can Jim's side read a region anchor on a revision instruction, so feedback about one part of an artboard reaches production as a part rather than as a sentence about the whole? Provisional on our side and not yet built.
+
 **Final production.** How does an approved artboard become media? What carries forward, what is re-entered, where can drift occur? Which production steps could reference an immutable approved artboard?
 
 ## 5. What may need to be hardened on Jim's side
@@ -124,9 +128,12 @@ Placeholders for discovery. Field names and structure will change.
   "technicalAssumptions": [],
   "technicalFindings": [],
   "warnings": [],
-  "unresolvedQuestions": []
+  "unresolvedQuestions": [],
+  "receipt": { "jobId": "...", "briefVersion": 3, "receivedAt": "...", "receivedBy": "..." }
 }
 ```
+
+The receipt is provisional. It says the payload arrived and against which brief version. Meridian's stand-in returns one today and the Scene record writes a fact from it. Whether Jim's side returns one, and what it carries, is a discovery question in section 4.
 
 **Meridian to Jim: revision**
 

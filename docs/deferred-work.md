@@ -18,7 +18,15 @@ This is the only register for missing Meridian UI patterns. Builders use the sys
 
 Each request names the job, the missing state, and where it occurs. Use one of four plain status phrases: requested, being designed, available, or use the existing pattern.
 
-There are no active requests.
+### Region anchor on a feedback note
+
+Status: requested
+
+Job: Higher Roads reviews an artboard version and says which part of it needs to change, so the note reaches production attached to a place rather than as a sentence about the whole picture.
+
+Missing state: The feedback aside in `app/design/samples/review.html` sits inside the artboard frame and reads as a note about the version. There is no way to mark a region on the artboard, no way to show which region a note belongs to, and no way to show several notes on several regions at once.
+
+Where: The Artboard review job, on the review screen built from that sample. The optional anchor is recorded as provisional in section 6 of `docs/meridian-seam-with-jim.md` and whether Jim's side can read one is a discovery question in section 4.
 
 Use this shape when a real job exposes a gap:
 
@@ -308,6 +316,20 @@ A replacement should measure whether every compiled statement is a physical fact
 ## Three model names in the copied code
 
 Recorded 2026-08-21 at the Meridian fork, from the tree at BWS `b11e994`. The code reads three different OpenAI models. Brain synthesis (`src/brand-brain/chat-completions-provider.js`) and products (`src/products/service.js`) default to `gpt-5.6` when `OPENAI_MODEL` is unset. Copy generation (`src/copy/generate.js`, `src/claims/copy-audit.js`, `api/production/generate-copy.js`) is hard-coded to `gpt-4o`. Image rendering (`src/renderers/openai-images.js`, `src/production/composite.js`) is hard-coded to `gpt-image-2`. One environment value does not govern all three. `OPENAI_MODEL` is left unset on the Meridian deployment so the brain uses `gpt-5.6`. Decide in step 2 which of these paths survive before consolidating the setting.
+
+## The Scene record has one actor until people can log in
+
+Every fact on the Scene record carries Higher Roads as the actor. The app has one shared password and one login, so there is no identity to write down, and a fact naming a person the system cannot stand behind would be worse than one that names the company. The record's shape already holds an actor per fact, so nothing has to be rebuilt.
+
+Recorded 2026-08-22 when the Scene record landed. Bring it back when: roadmap step 4 replaces the shared password with real logins for the two user types. At that point the actor comes from the person doing the work, and the facts already written keep saying Higher Roads, because a record that is rewritten to look better answers a different question than the one a tour team needs answered.
+
+## The mechanical check between artboard assumptions and the playback line
+
+The stand-in returns technical assumptions and the review surface shows them as written. Nothing compares them to the tour's playback line.
+
+Recorded 2026-08-22. The comparison was drafted and cut before it was built. The playback line is one prose field, the stand-in is ours, so its assumptions are ours to invent, and a check comparing our invention to our prose would only prove that the check fires on data we wrote. It would be an instrument built before the thing it measures exists.
+
+Bring it back when: Jim's side returns real technical assumptions and we know their shape, or a tour surfaces a technical disagreement that a person caught and the system did not.
 
 ## Findings do not name the claims behind them
 

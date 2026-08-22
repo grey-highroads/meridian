@@ -4,6 +4,7 @@ import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore, tourPathFor } from "../src/tour/store.js";
+import { createSceneRecord } from "../src/tour/scene-record.js";
 import { carriesOurWords, compileBrief, directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
 
 const TOUR = "off-the-map-2026";
@@ -29,7 +30,10 @@ async function ready() {
   const tourStore = createTourStore({ backend: tourBackend });
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
-  return { artistBackend, tourBackend, options: { store, tourStore } };
+  // Freezing writes one fact to the Scene record, so the record shares the
+  // tour's backend here and every effect lands in one place the test can read.
+  const sceneRecord = createSceneRecord({ backend: tourBackend });
+  return { artistBackend, tourBackend, options: { store, tourStore, sceneRecord } };
 }
 
 async function withConcept(options, extra = {}) {
