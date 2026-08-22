@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Meridian reference sample for a client Scene request.">
+  <title>Meridian reference sample | Request a scene</title>
+  <link rel="stylesheet" href="../index.css">
+</head>
+<body class="m-ui">
+  <div class="m-client-shell">
+    <header class="m-client-shell__bar">
+      <a class="m-wordmark" href="index.html">
+        MERIDIAN
+        <span class="m-wordmark__byline">BY HIGHER ROADS</span>
+      </a>
+      <a class="m-button m-button--quiet m-button--small" href="index.html">Scenes</a>
+    </header>
+    <div class="m-client-shell__scope">
+      <span class="m-meta">CLIENT 01 / ARTIST 01 / UPCOMING TOUR</span>
+    </div>
+
+    <form class="m-form-page">
+      <header class="m-form-page__intro">
+        <span class="m-label">Active production</span>
+        <h1 class="m-heading">Request a scene</h1>
+        <p class="m-copy m-copy--large">A short request is enough. Add more context when it is useful to the work.</p>
+      </header>
+
+      <div class="m-form-page__work">
+        <div class="m-field">
+          <label class="m-label" for="scene-title">Working scene title</label>
+          <input class="m-input" id="scene-title" name="scene-title" placeholder="For example, Opening sequence" required>
+        </div>
+
+        <div class="m-field">
+          <label class="m-label" for="scene-purpose">What does this moment need to accomplish?</label>
+          <textarea class="m-textarea" id="scene-purpose" name="scene-purpose" placeholder="Describe what should happen, what the audience should understand, or why this moment matters." required></textarea>
+        </div>
+
+        <details class="m-disclosure">
+          <summary>
+            <span class="m-label">Helpful context</span>
+            <span class="m-meta">Optional</span>
+          </summary>
+          <div class="m-disclosure__body m-stack">
+            <div class="m-field">
+              <label class="m-label" for="placement">Where it occurs</label>
+              <input class="m-input" id="placement" name="placement" placeholder="Song, section, cue, or show position">
+            </div>
+            <div class="m-field">
+              <label class="m-label" for="feeling">Desired feeling</label>
+              <textarea class="m-textarea" id="feeling" name="feeling" placeholder="Describe the emotional register, pace, or atmosphere."></textarea>
+            </div>
+            <div class="m-field">
+              <label class="m-label" for="references">Reference links</label>
+              <input class="m-input" id="references" name="references" placeholder="Paste one or more links">
+              <span class="m-help">Files, links, and inspiration are welcome. They are not required.</span>
+            </div>
+          </div>
+        </details>
+
+        <div class="m-cluster">
+          <a class="m-button m-button--primary" href="intake.html">Send to Higher Roads</a>
+          <button class="m-button" type="button">Save draft</button>
+          <a class="m-button m-button--quiet" href="index.html">Cancel</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

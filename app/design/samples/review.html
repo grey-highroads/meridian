@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Meridian reference sample for Artboard review and version comparison.">
+  <title>Meridian reference sample | Artboard review</title>
+  <link rel="stylesheet" href="../index.css">
+</head>
+<body class="m-ui">
+  <div class="m-shell">
+    <aside class="m-shell__rail">
+      <div class="m-shell__brand">
+        <a class="m-wordmark" href="index.html">MERIDIAN<span class="m-wordmark__byline">BY HIGHER ROADS</span></a>
+      </div>
+      <nav class="m-shell__nav" aria-label="Artist work">
+        <a class="m-shell__nav-link" href="index.html" aria-current="page"><span class="m-shell__nav-label">Scenes</span></a>
+        <a class="m-shell__nav-link" href="#artist-brain"><span class="m-shell__nav-label">Artist Brain</span></a>
+      </nav>
+      <div class="m-shell__utility">
+        <a class="m-shell__nav-link" href="#admin"><span class="m-shell__nav-label">Admin</span></a>
+      </div>
+    </aside>
+
+    <main class="m-shell__main">
+      <header class="m-location">
+        <span class="m-meta">CLIENT 01 / ARTIST 01 / UPCOMING TOUR</span>
+        <span class="m-state m-state--current">Scene 03 / Internal review</span>
+      </header>
+
+      <div class="m-page">
+        <header class="m-job-header">
+          <div class="m-job-header__copy">
+            <span class="m-meta">ARTBOARD V03 / CURRENT / GOVERNED BY BRIEF V01</span>
+            <h1 class="m-heading">Artboard review</h1>
+            <p class="m-copy">Review the work in context. Compare only when the change matters to the decision.</p>
+          </div>
+          <div class="m-segmented" aria-label="Review view">
+            <button class="m-segmented__item" type="button" aria-pressed="false">Fit</button>
+            <button class="m-segmented__item" type="button" aria-pressed="false">100%</button>
+            <button class="m-segmented__item" type="button" aria-pressed="true">Compare</button>
+            <button class="m-segmented__item" type="button" aria-pressed="false">Feedback</button>
+          </div>
+        </header>
+      </div>
+
+      <section class="m-review" aria-label="Artboard and versions">
+        <div class="m-review__stage">
+          <div class="m-artboard" aria-label="Wipe comparison of Artboard V02 and V03">
+            <div class="m-artboard__prior"><span class="m-meta">COMPARED / V02</span><span class="m-artboard__shape"></span></div>
+            <div class="m-artboard__current"><span>CURRENT / V03</span><span class="m-artboard__shape"></span></div>
+            <aside class="m-feedback">
+              <span class="m-label">Feedback 01 / V03</span>
+              <p>Preserve the uninterrupted trace here. The crop now holds through the final cue.</p>
+              <span class="m-meta">HIGHER ROADS / OPEN</span>
+            </aside>
+          </div>
+          <div class="m-callout">
+            <span class="m-label">Technical finding</span>
+            <p class="m-copy">Edge detail enters the processor crop. Keep the trace inside the marked safe area.</p>
+          </div>
+        </div>
+
+        <aside class="m-review__rail" aria-label="Versions">
+          <div class="m-version">
+            <span class="m-label">Versions</span>
+            <span class="m-meta">03 RECEIVED</span>
+          </div>
+          <div class="m-version" aria-current="true">
+            <span class="m-state m-state--current">V03 Current</span>
+            <strong>ARTBOARD V03</strong>
+            <span class="m-meta">18 FEB / 14:32</span>
+            <span class="m-meta">INTERNAL REVIEW</span>
+          </div>
+          <div class="m-version">
+            <span class="m-state">V02 Compared</span>
+            <strong>ARTBOARD V02</strong>
+            <span class="m-meta">16 FEB / 09:10</span>
+            <span class="m-meta">SUPERSEDED</span>
+          </div>
+          <div class="m-version">
+            <span class="m-state">V01 Prior</span>
+            <strong>ARTBOARD V01</strong>
+            <span class="m-meta">13 FEB / 17:44</span>
+            <span class="m-meta">SUPERSEDED</span>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="m-action-bar">
+        <p class="m-action-bar__context">Internal review decides whether this version is ready to become the client review object.</p>
+        <div class="m-cluster">
+          <button class="m-button m-button--change" type="button">Request internal changes</button>
+          <a class="m-button m-button--primary" href="handoff.html">Prepare V03 for client</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

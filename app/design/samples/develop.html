@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Meridian reference sample for developing a Scene concept.">
+  <title>Meridian reference sample | Develop scene concept</title>
+  <link rel="stylesheet" href="../index.css">
+</head>
+<body class="m-ui">
+  <div class="m-shell">
+    <aside class="m-shell__rail">
+      <div class="m-shell__brand">
+        <a class="m-wordmark" href="index.html">MERIDIAN<span class="m-wordmark__byline">BY HIGHER ROADS</span></a>
+      </div>
+      <nav class="m-shell__nav" aria-label="Artist work">
+        <a class="m-shell__nav-link" href="index.html" aria-current="page"><span class="m-shell__nav-label">Scenes</span></a>
+        <a class="m-shell__nav-link" href="#artist-brain"><span class="m-shell__nav-label">Artist Brain</span></a>
+      </nav>
+      <div class="m-shell__utility">
+        <a class="m-shell__nav-link" href="#admin"><span class="m-shell__nav-label">Admin</span></a>
+      </div>
+    </aside>
+
+    <main class="m-shell__main">
+      <header class="m-location">
+        <span class="m-meta">CLIENT 01 / ARTIST 01 / UPCOMING TOUR</span>
+        <span class="m-state m-state--current">Scene 02 / Brief in preparation</span>
+      </header>
+
+      <div class="m-page">
+        <header class="m-job-header">
+          <div class="m-job-header__copy">
+            <span class="m-label">Scene 02</span>
+            <h1 class="m-heading">Develop scene concept</h1>
+            <p class="m-copy m-copy--large">Turn accepted input into clear production direction. Direction may remain empty when the source is sufficient.</p>
+          </div>
+        </header>
+
+        <form class="m-work m-authoring">
+          <details class="m-disclosure">
+            <summary>
+              <span class="m-label">Accepted client direction</span>
+              <span class="m-meta">INPUT V01</span>
+            </summary>
+            <div class="m-disclosure__body m-stack">
+              <h2 class="m-section-heading">Afterimage / Final chorus</h2>
+              <p class="m-copy">Create a visual release at the final chorus that feels like the performance has left an image behind. Keep it large, slow, emotionally direct, and never busy.</p>
+              <div class="m-record-grid">
+                <div class="m-record-grid__item"><span class="m-label">Feeling</span><span>Intimate, then monumental</span></div>
+                <div class="m-record-grid__item"><span class="m-label">Must retain</span><span>Silhouette and negative space</span></div>
+                <div class="m-record-grid__item"><span class="m-label">Must avoid</span><span>Literal flames and readable lyrics</span></div>
+              </div>
+            </div>
+          </details>
+
+          <section class="m-authoring__primary" aria-labelledby="direction-heading">
+            <div class="m-cluster">
+              <h2 id="direction-heading" class="m-section-heading">Scene direction</h2>
+              <span class="m-meta">Higher Roads editable / Optional</span>
+            </div>
+            <textarea class="m-textarea m-authoring__field" name="scene-direction" aria-label="Scene direction" placeholder="Describe the intended scene direction for production.">Build the final chorus as a slow residual image treatment. Let the artist's silhouette expand without becoming a hard cutout. Keep the lower center open for the final lighting cue and hold one sustained frame through the end of the song.</textarea>
+            <span class="m-help">This is the production-facing direction. Keep internal process notes elsewhere.</span>
+          </section>
+
+          <section class="m-authoring__support" aria-labelledby="brain-heading">
+            <div class="m-cluster">
+              <div class="m-stack">
+                <span class="m-label">Contextual contributor</span>
+                <h2 id="brain-heading" class="m-section-heading">Artist Brain</h2>
+              </div>
+              <button class="m-button m-button--small" type="button">Ask Artist Brain</button>
+            </div>
+            <p class="m-copy">Suggestions do not enter the brief until Higher Roads chooses and edits them.</p>
+            <div class="m-suggestion-list">
+              <article class="m-suggestion">
+                <div class="m-contribution">
+                  <span class="m-contribution__source">Visual language / Relevant note</span>
+                  <p>Let the silhouette persist as a soft residual image rather than a sharp cutout.</p>
+                </div>
+                <button class="m-button m-button--small" type="button">Add to direction</button>
+              </article>
+              <article class="m-suggestion">
+                <div class="m-contribution">
+                  <span class="m-contribution__source">Stage history / Relevant note</span>
+                  <p>Keep the lower center visually quiet so the final physical lighting cue remains dominant.</p>
+                </div>
+                <button class="m-button m-button--small" type="button">Add to direction</button>
+              </article>
+            </div>
+          </section>
+
+          <details class="m-disclosure">
+            <summary>
+              <span class="m-label">Supporting production detail</span>
+              <span class="m-meta">Screens, placement, internal notes</span>
+            </summary>
+            <div class="m-disclosure__body m-definition-list">
+              <div class="m-definition-row"><span class="m-label">Screens</span><span>MAIN LED 3840 × 2160 / PORTRAIT IMAG 1080 × 1920</span></div>
+              <div class="m-definition-row"><span class="m-label">Placement</span><span>SONG 11 / 03:18 TO END</span></div>
+              <div class="m-definition-row"><span class="m-label">Internal note</span><span>Confirm the silhouette capture source before production begins.</span></div>
+            </div>
+          </details>
+        </form>
+      </div>
+
+      <footer class="m-action-bar">
+        <p class="m-action-bar__context">Issuing the brief moves the Scene into development. The accepted input remains preserved.</p>
+        <div class="m-cluster">
+          <button class="m-button" type="button">Issue without direction</button>
+          <a class="m-button m-button--primary" href="handoff.html">Issue brief with direction</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

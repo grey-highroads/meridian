@@ -35,6 +35,7 @@
     font-size: var(--m-type-copy);
     font-weight: var(--m-weight-regular);
     line-height: var(--m-leading-copy);
+    margin: 0;
     text-rendering: optimizeLegibility;
   }
 

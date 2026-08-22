@@ -1,6 +1,6 @@
 # Meridian design system
 
-Status: Foundation. Sample screens land in the next design commit.
+Status: Foundation and reference samples available.
 
 ## Purpose
 
@@ -47,6 +47,7 @@ Class names use the `m-` prefix. Do not copy classes from `app/styles.css` or `a
 - `components.css` holds controls, fields, labels, states, disclosures, and dialogs.
 - `patterns.css` holds the shell, page rhythm, work surface, action bar, contextual contribution, and work frame.
 - `index.css` is the only stylesheet a Meridian screen imports.
+- `samples/` holds static reference screens that show how the system composes around a job.
 
 ## Page rules
 
@@ -146,4 +147,13 @@ npm run check:design
 
 ## Samples
 
-The next design commit adds focused sample screens. They will show Scene Direction, a contextual Brain contribution, Artboard Review, and the approved state. Samples demonstrate composition and behavior. They do not define backend mechanics.
+Use the static screens in `app/design/samples/` as composition references:
+
+- `index.html` for a quiet active Scenes directory;
+- `request.html` for a client request with a short valid path;
+- `intake.html` for vertical source review;
+- `develop.html` for Scene Direction and contextual Brain contribution;
+- `review.html` for Artboard feedback and version comparison;
+- `handoff.html` for the issued record and approved Production Intent.
+
+Samples demonstrate hierarchy, disclosure, states, and component structure. They do not define backend mechanics, permissions, or data contracts. Read `docs/meridian-experience.md` for the product and experience reasoning behind them.
