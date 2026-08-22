@@ -3,6 +3,7 @@
 Artist: dierks-bentley
 Tour id: off-the-map-2026
 Cycle: 2026 amphitheater run
+Playback system: disguise gx 2c, two machines, one spare. Content delivered as ProRes 4444 at the show's canvas size. Notch blocks in use on this tour.
 Status: Assumed. Higher Roads wrote this file on 2026-08-22 as sample content so the loop can be built and read end to end. The tour and its dates are real and come from tier 1 and tier 3 sources in the artist intake. The creative director, her words, and the assignment under them are invented. Nothing here came from the artist's team. Replace this file with the real direction before any of it is shown to anyone outside Higher Roads.
 
 ## Direction, version 1

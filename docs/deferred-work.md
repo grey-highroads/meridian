@@ -304,3 +304,19 @@ Recorded 2026-08-22, same import. `02-claims.md` names a claim's source as text,
 The parser resolves a claim to a source id only when exactly one source row carries that host, which covers 47 of 261 claims. The other 214 keep the prose and carry no id. Two reasons for the miss. Outlets with several rows, PLSN and Chauvet among them, are ambiguous by host alone. And 17 hosts named in claims are not in the source list at all, because batches 2 through 8 read articles the original list never held: `wwd.com`, `mr-mag.com`, `bluegrasstoday.com`, `cmt.com`, `songfacts.com`, `tribedesign.net` and others. The first run's own handoff already asks for two URL corrections and four additions to that file.
 
 Bring it back when: the claims file carries a source number rather than a source name, and the source list holds every source a claim cites. Both are cheap and both belong in the playbook rather than in the parser.
+
+## Venue and screen intelligence
+
+Recorded 2026-08-22 when the brief's technical target was scoped. Grey ruled that in V1 the technical fact a brief needs is the tour's playback system, because most tours carry their own hardware and configure it per venue, and Jim has the technical side dialled on his render side. So `technicalTarget` carries the playback system from the tour and a `venueProfile` that is always null.
+
+What is deferred is the ambition behind the thesis line about technical intelligence: knowing enough about a venue to make rigging recommendations or raise warnings before anyone builds. That needs venue and screen data we do not hold and a source for it we have not found. The intake's own thin list already names the gap on the artist side: trade coverage of his shows is strong from 2016 forward and thin before it, and no source in tiers 1 to 6 gives screen inventories per venue.
+
+Bring it back when: a tour is running in Meridian and someone asks a question the playback line cannot answer, or Jim says a venue detail belongs on our side of the seam rather than his. Either way it is a change to the seam document first, agreed with him, and not a field we add on our own.
+
+## The brief's field order is Reasoned, not agreed
+
+Recorded 2026-08-22. The compiled brief leads with required elements and the technical target and trails with latitude, the direction, and meaning. That order comes from a BWS render finding that concrete facts placed early beat abstract description placed anywhere. It was a renderer finding and Jim's workflow is a different reader, so it is Reasoned here rather than Verified.
+
+The compiled brief is the cheapest way to test it. Hand Jim a real one and let him say what sits in the wrong place. The sidecar labels itself provisional in its own `contractStatus` field for the same reason: its shape is our guess and it is not an obligation on his system until the seam document says both sides agreed to it.
+
+Bring it back when: Jim has read a real brief and said what he would move.

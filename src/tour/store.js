@@ -1,0 +1,64 @@
+import { get, put } from "@vercel/blob";
+import { createBlobBackend, createMemoryBackend } from "../artist/store.js";
+
+// Tour-layer storage, scoped by tour id, in the same blob namespace pattern the
+// artist layer uses.
+//
+// Two documents per assignment:
+//
+//   concept.json  The concept a person chose or wrote, with what it came from
+//                 and who shaped it. Overwritten when someone changes their
+//                 mind before a brief is frozen.
+//   briefs.json   Every brief version for this assignment, in order. A frozen
+//                 version is never rewritten. Feedback produces a new version.
+
+const ROOT = "brand-world-system/clients";
+
+export function tourPathFor(tourId, assignmentId, document) {
+  return `${ROOT}/${tourId}/tour/${assignmentId}/${document}.json`;
+}
+
+export { createBlobBackend, createMemoryBackend };
+
+export function createTourStore(options = {}) {
+  const backend = options.backend || createBlobBackend(options);
+
+  async function read(tourId, assignmentId, name, fallback) {
+    const body = await backend.read(tourPathFor(tourId, assignmentId, name));
+    if (body === null || body === undefined) return fallback;
+    return JSON.parse(body);
+  }
+
+  async function write(tourId, assignmentId, name, value) {
+    await backend.write(tourPathFor(tourId, assignmentId, name), JSON.stringify(value, null, 2));
+    return value;
+  }
+
+  return {
+    async readConcept(tourId, assignmentId) {
+      return await read(tourId, assignmentId, "concept", null);
+    },
+    async writeConcept(tourId, assignmentId, concept) {
+      return await write(tourId, assignmentId, "concept", concept);
+    },
+    async readBriefs(tourId, assignmentId) {
+      const stored = await read(tourId, assignmentId, "briefs", { versions: [] });
+      return Array.isArray(stored.versions) ? stored.versions : [];
+    },
+    // A frozen version is never touched again. Anything that would change a
+    // frozen brief is a new version instead, which is what makes the brief a
+    // thing a person can be held to.
+    async addBrief(tourId, assignmentId, brief) {
+      const versions = await this.readBriefs(tourId, assignmentId);
+      if (versions.some((entry) => entry.briefVersion === brief.briefVersion)) {
+        const error = new Error("That brief version already exists.");
+        error.status = 409;
+        throw error;
+      }
+      versions.push(brief);
+      versions.sort((left, right) => left.briefVersion - right.briefVersion);
+      await write(tourId, assignmentId, "briefs", { versions });
+      return brief;
+    },
+  };
+}

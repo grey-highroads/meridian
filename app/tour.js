@@ -5,7 +5,7 @@
 const TOUR_ID = new URLSearchParams(window.location.search).get("tour") || "off-the-map-2026";
 
 const root = document.getElementById("tour");
-const view = { assignmentId: null, context: null, proposed: null, message: "", working: false };
+const view = { assignmentId: null, context: null, proposed: null, concept: null, brief: null, briefs: [], message: "", working: false };
 
 async function call(action, extra = {}) {
   const response = await fetch("/api/tour", {
@@ -41,7 +41,7 @@ function findingLine(entry) {
     </div>`;
 }
 
-function proposalBlock(proposal) {
+function proposalBlock(proposal, index) {
   return `<div class="artist-finding">
       <p><strong>${escape(proposal.title)}</strong></p>
       ${paragraphs(proposal.idea)}
@@ -51,7 +51,56 @@ function proposalBlock(proposal) {
       <div class="artist-meta">
         ${(proposal.rhymesWith || []).map((id) => `<span class="artist-tag">${escape(id)}</span>`).join("")}
       </div>
+      <div class="artist-controls"><button data-choose="${index}">Use this concept</button></div>
     </div>`;
+}
+
+function briefSection() {
+  const frozen = view.briefs.length
+    ? `<p class="artist-note">Frozen: ${view.briefs.map((entry) => `version ${escape(entry.briefVersion)} by ${escape(entry.frozenBy)}`).join(", ")}.</p>`
+    : "";
+  if (!view.concept) {
+    return `<section class="artist-group">
+        <h2>The brief</h2>
+        <p class="artist-note">Choose a concept and the brief compiles from it.</p>
+        ${frozen}
+      </section>`;
+  }
+  const controls = view.brief && view.brief.brief.status === "frozen"
+    ? ""
+    : `<button data-compile>${view.brief ? "Compile again" : "Compile the brief"}</button>
+       ${view.brief ? `<button data-freeze>Freeze version ${escape(view.brief.brief.briefVersion)} and send it out</button>` : ""}`;
+  return `<section class="artist-group">
+      <h2>The brief</h2>
+      <p class="artist-note">Concept: ${escape(view.concept.title)}, shaped by ${escape(view.concept.shapedBy)}.</p>
+      ${frozen}
+      <div class="artist-controls">${controls}</div>
+      ${view.brief ? `
+        <div class="artist-meta">
+          <span class="artist-tag">Job ${escape(view.brief.brief.jobId)}</span>
+          <span class="artist-tag">Brief version ${escape(view.brief.brief.briefVersion)}</span>
+          <span class="artist-tag">Direction version ${escape(view.brief.brief.directionVersion)}</span>
+          <span class="artist-tag">${escape(view.brief.brief.status === "frozen" ? `Frozen by ${view.brief.brief.frozenBy}` : "Draft, not yet frozen")}</span>
+        </div>
+        <div class="artist-controls">
+          <button data-download="document">Download the document</button>
+          <button data-download="sidecar">Download the machine readable file</button>
+        </div>
+        <pre class="artist-brief">${escape(view.brief.document)}</pre>
+      ` : ""}
+    </section>`;
+}
+
+function download(kind) {
+  const frozen = view.brief.brief.status === "frozen" ? "" : "-draft";
+  const name = `${view.brief.brief.jobId}-v${view.brief.brief.briefVersion}${frozen}`;
+  const body = kind === "sidecar" ? JSON.stringify(view.brief.sidecar, null, 2) : view.brief.document;
+  const url = URL.createObjectURL(new Blob([body], { type: kind === "sidecar" ? "application/json" : "text/markdown" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = kind === "sidecar" ? `${name}.json` : `${name}.md`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function proposalsSection() {
@@ -63,7 +112,7 @@ function proposalsSection() {
     </section>
     <section class="artist-group">
       <h2>Concept directions to react to</h2>
-      ${(view.proposed.proposals || []).map(proposalBlock).join("")}
+      ${(view.proposed.proposals || []).map((proposal, index) => proposalBlock(proposal, index)).join("")}
     </section>
     ${(view.proposed.avoidNotes || []).length ? `<section class="artist-group">
       <h2>What this artist avoids, on this request</h2>
@@ -116,8 +165,10 @@ async function render() {
   if (!view.assignmentId && assignments.length) view.assignmentId = assignments[0].id;
   if (view.assignmentId && !view.context) {
     view.context = await call("assignment-context", { assignmentId: view.assignmentId });
+    view.concept = (await call("get-concept", { assignmentId: view.assignmentId })).concept;
+    view.briefs = (await call("list-briefs", { assignmentId: view.assignmentId })).briefs;
   }
-  root.innerHTML = chrome(tour, assignments) + contextSection() + proposalsSection();
+  root.innerHTML = chrome(tour, assignments) + contextSection() + proposalsSection() + briefSection();
 }
 
 async function guard(work) {
@@ -136,7 +187,51 @@ async function guard(work) {
 
 root.addEventListener("click", (event) => {
   const target = event.target.closest("button");
-  if (!target || !target.hasAttribute("data-propose")) return;
+  if (!target) return;
+
+  if (target.dataset.choose) {
+    guard(async () => {
+      const proposal = view.proposed.proposals[Number(target.dataset.choose)];
+      const applied = view.proposed.appliedFindings || [];
+      const cited = new Set(proposal.rhymesWith || []);
+      view.concept = (await call("choose-concept", {
+        assignmentId: view.assignmentId,
+        concept: {
+          ...proposal,
+          cameFrom: `proposal: ${proposal.title}`,
+          avoid: view.proposed.avoidNotes || [],
+          openQuestions: view.proposed.openQuestions || [],
+          artistContext: applied.filter((entry) => cited.has(entry.findingId)),
+        },
+      })).concept;
+      view.brief = null;
+      view.message = "";
+      await render();
+    });
+    return;
+  }
+  if (target.hasAttribute("data-compile")) {
+    guard(async () => {
+      view.brief = await call("compile-brief", { assignmentId: view.assignmentId });
+      view.message = "";
+      await render();
+    });
+    return;
+  }
+  if (target.hasAttribute("data-freeze")) {
+    guard(async () => {
+      view.brief = await call("freeze-brief", { assignmentId: view.assignmentId });
+      view.briefs = (await call("list-briefs", { assignmentId: view.assignmentId })).briefs;
+      view.message = `Version ${view.brief.brief.briefVersion} is frozen. Download it and send it to Jim.`;
+      await render();
+    });
+    return;
+  }
+  if (target.dataset.download) {
+    download(target.dataset.download);
+    return;
+  }
+  if (!target.hasAttribute("data-propose")) return;
   guard(async () => {
     view.working = true;
     view.message = "";
@@ -156,6 +251,8 @@ root.addEventListener("change", (event) => {
     view.assignmentId = select.value;
     view.context = null;
     view.proposed = null;
+    view.concept = null;
+    view.brief = null;
     view.message = "";
     await render();
   });

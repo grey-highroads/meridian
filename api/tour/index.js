@@ -3,12 +3,15 @@ import { join } from "node:path";
 import { parseTourFixture } from "../../src/tour/parse-fixture.js";
 import { assembleContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
+import { createTourStore } from "../../src/tour/store.js";
+import { compileBrief, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 
 // The tour layer's one function. Actions: get-tour, get-assignment,
-// assignment-context, propose-concepts.
+// assignment-context, propose-concepts, choose-concept, get-concept,
+// compile-brief, freeze-brief, list-briefs, get-brief.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -98,6 +101,111 @@ export async function handleAction(body, options = {}) {
     const { fixture, assignment, context } = await contextFor(body, options);
     const proposed = await proposeConcepts(context, options);
     return { tour: fixture.tour, assignment, context, ...proposed };
+  }
+
+  if (body.action === "choose-concept") {
+    const { fixture, assignment } = await contextFor(body, options);
+    const tourStore = options.tourStore || createTourStore();
+    const source = body.concept || {};
+    if (!String(source.title || "").trim() || !String(source.idea || "").trim()) {
+      const error = new Error("A concept needs a title and an idea.");
+      error.status = 400;
+      throw error;
+    }
+    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    if (briefs.some((entry) => entry.status === "frozen")) {
+      const error = new Error("A brief is already frozen for this assignment. Changing the concept now means a new brief version.");
+      error.status = 409;
+      throw error;
+    }
+    // Intent, interpretation, and decision stay three separate things. What the
+    // brain proposed is kept next to what the person made of it.
+    const concept = {
+      title: String(source.title).trim(),
+      idea: String(source.idea).trim(),
+      whyThisArtist: String(source.whyThisArtist || "").trim(),
+      asksOfProduction: String(source.asksOfProduction || "").trim(),
+      whereItMightMiss: String(source.whereItMightMiss || "").trim(),
+      rhymesWith: Array.isArray(source.rhymesWith) ? source.rhymesWith : [],
+      avoid: Array.isArray(source.avoid) ? source.avoid : [],
+      artistContext: Array.isArray(source.artistContext) ? source.artistContext : [],
+      creativeLatitude: Array.isArray(source.creativeLatitude) ? source.creativeLatitude : [],
+      openQuestions: Array.isArray(source.openQuestions) ? source.openQuestions : [],
+      cameFrom: source.cameFrom || null,
+      shapedBy: body.person || "Higher Roads",
+      shapedAt: new Date().toISOString(),
+    };
+    return { concept: await tourStore.writeConcept(fixture.tour.id, assignment.id, concept) };
+  }
+  if (body.action === "get-concept") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    return { concept: await tourStore.readConcept(fixture.tour.id, assignment.id) };
+  }
+  if (body.action === "compile-brief") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const concept = await tourStore.readConcept(fixture.tour.id, assignment.id);
+    const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const brief = compileBrief({
+      tour: fixture.tour,
+      assignment,
+      concept,
+      artistId: fixture.tour.artistId,
+      briefVersion: nextBriefVersion(versions),
+    });
+    // A draft is not stored. It is compiled on demand from the concept and the
+    // fixture, so nothing half made sits in storage pretending to be a brief.
+    return { brief, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
+  }
+  if (body.action === "freeze-brief") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const concept = await tourStore.readConcept(fixture.tour.id, assignment.id);
+    const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const compiled = compileBrief({
+      tour: fixture.tour,
+      assignment,
+      concept,
+      artistId: fixture.tour.artistId,
+      briefVersion: nextBriefVersion(versions),
+    });
+    const frozen = freeze(compiled, body.person);
+    await tourStore.addBrief(fixture.tour.id, assignment.id, frozen);
+    return { brief: frozen, document: renderBriefDocument(frozen), sidecar: renderBriefSidecar(frozen) };
+  }
+  if (body.action === "list-briefs") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    return {
+      briefs: versions.map((entry) => ({
+        jobId: entry.jobId,
+        briefVersion: entry.briefVersion,
+        directionVersion: entry.directionVersion,
+        status: entry.status,
+        frozenBy: entry.frozenBy,
+        frozenAt: entry.frozenAt,
+        title: entry.chosenConcept.title,
+      })),
+    };
+  }
+  if (body.action === "get-brief") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const brief = versions.find((entry) => entry.briefVersion === Number(body.briefVersion));
+    if (!brief) {
+      const error = new Error("That brief version was not found.");
+      error.status = 404;
+      throw error;
+    }
+    return { brief, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
   }
 
   const error = new Error("That is not something this route does.");

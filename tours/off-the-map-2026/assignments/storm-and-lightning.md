@@ -18,3 +18,11 @@ The song is about a family tree that has taken damage and is still standing, so 
 It has to work at a shed, outdoors, at dusk, with real sky behind the stage. It also has to work on the four arena dates where there is no sky at all.
 
 Give us two or three ways to do this before anyone builds anything.
+
+## Required elements
+
+- The storm arrives, breaks, and passes inside the song. It does not sit there for the whole number.
+- It reads at a shed with real sky behind the stage, and on the four indoor dates without one.
+- Nothing blocks sightlines to the band from the lawn.
+- The acoustic circle at centre stage stays usable through the whole cue.
+- The song ends quieter than it started.

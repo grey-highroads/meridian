@@ -58,6 +58,10 @@ export function parseTour(text) {
     artistId,
     name: title.trim(),
     cycle: field(text, "Cycle"),
+    // What the tour plays content back on. Most tours carry their own hardware
+    // and configure it per venue, so the playback system is the technical fact
+    // a brief needs. Venue and screen profiles are Jim's side in V1.
+    playbackSystem: field(text, "Playback system"),
     status: field(text, "Status"),
     direction: {
       version,
@@ -85,6 +89,12 @@ export function parseAssignment(text) {
   const request = section(text, "What we are asking for");
   if (!request) fail(`Assignment ${id} carries no request.`);
 
+  // Required elements are the binding part of the ask. They lead the brief.
+  const required = (section(text, "Required elements") || "")
+    .split("\n")
+    .map((line) => line.replace(/^[-*]\s+/, "").trim())
+    .filter(Boolean);
+
   return {
     id,
     version: 1,
@@ -98,6 +108,7 @@ export function parseAssignment(text) {
     status: field(text, "Status"),
     // The tour manager's words, kept as they arrived.
     request,
+    requiredElements: required,
   };
 }
 
