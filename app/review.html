@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Develop a Scene concept and compile the brief that goes to production" />
-    <title>Scene | Meridian</title>
+    <meta name="description" content="Review what came back from production against the brief it was built from" />
+    <title>Artboard review | Meridian</title>
     <link rel="stylesheet" href="./design/index.css" />
   </head>
   <body class="m-ui">
@@ -17,7 +17,7 @@
           </a>
         </div>
         <nav class="m-shell__nav" aria-label="Artist work">
-          <a class="m-shell__nav-link" href="./index.html" aria-current="page">
+          <a class="m-shell__nav-link" href="./index.html">
             <span class="m-shell__nav-label">Scenes</span>
           </a>
           <a class="m-shell__nav-link" href="./tour.html">
@@ -36,10 +36,12 @@
 
       <main class="m-shell__main">
         <header class="m-location" id="location"></header>
-        <div class="m-page" id="scene"></div>
+        <div class="m-page" id="page"></div>
+        <section class="m-review" id="review" aria-label="Artboard and versions"></section>
+        <div class="m-page" id="detail"></div>
         <footer class="m-action-bar" id="actions"></footer>
       </main>
     </div>
-    <script type="module" src="./scene.js?v=2026-08-22-review"></script>
+    <script type="module" src="./review.js?v=2026-08-22-review"></script>
   </body>
 </html>

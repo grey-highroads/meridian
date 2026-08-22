@@ -6,7 +6,7 @@ import { proposeConcepts } from "../../src/tour/propose.js";
 import { createTourStore } from "../../src/tour/store.js";
 import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
-import { receiveBrief, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
+import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
 import { createSceneRecord, RECORD_ACTOR } from "../../src/tour/scene-record.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView } from "../../src/artist/service.js";
@@ -15,7 +15,8 @@ import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, send
 // The tour layer's one function. Actions: get-tour, get-assignment,
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
-// get-artboards, get-scene-record.
+// get-artboards, get-artboard-artifact, save-review, send-revision,
+// get-scene-record.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -99,6 +100,35 @@ export function avoidFor(context, notes) {
     attached.push(entry);
   }
   return attached;
+}
+
+// The nine places a person can point at on an artboard. The control that uses
+// this is provisional: the register carries a pattern request for a real region
+// anchor, and this list is the nearest thing the design system supports today.
+export const REGIONS = [
+  "Top left", "Top centre", "Top right",
+  "Middle left", "Centre", "Middle right",
+  "Bottom left", "Bottom centre", "Bottom right",
+];
+
+function textList(value) {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => String(entry === null || entry === undefined ? "" : entry).trim())
+    .filter(Boolean);
+}
+
+// An instruction carries what to change and, when someone marked one, where.
+// The anchor is stored as given so it round trips to production unchanged, and
+// an anchor that is not one of ours is dropped rather than passed on.
+function instructionList(value) {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => {
+      const source = entry && typeof entry === "object" ? entry : { text: entry };
+      const text = String(source.text === null || source.text === undefined ? "" : source.text).trim();
+      const anchor = String(source.regionAnchor === null || source.regionAnchor === undefined ? "" : source.regionAnchor).trim();
+      return { text, regionAnchor: REGIONS.includes(anchor) ? anchor : null };
+    })
+    .filter((entry) => entry.text);
 }
 
 export async function handleAction(body, options = {}) {
@@ -300,6 +330,151 @@ export async function handleAction(body, options = {}) {
     return {
       artboards: await artboardStore.readArtboards(fixture.tour.id, assignment.id),
       label: STAND_IN_LABEL,
+    };
+  }
+  // The stored artifact is a file in private storage, so the review screen asks
+  // for it by the location the artboard names rather than reaching for a path
+  // of its own.
+  if (body.action === "get-artboard-artifact") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    const wanted = Number(body.artboardVersion);
+    const entry = versions.find((stored) => stored.artboard.artboardVersion === wanted);
+    if (!entry) {
+      const error = new Error("That artboard version was not found.");
+      error.status = 404;
+      throw error;
+    }
+    const svg = await artboardStore.readArtifact(entry.artboard.artifact.location);
+    if (!svg) {
+      const error = new Error("That artboard file could not be read.");
+      error.status = 404;
+      throw error;
+    }
+    return { artboardVersion: wanted, svg, label: STAND_IN_LABEL };
+  }
+  // Where one artboard version departs from the brief, and the technical items
+  // a person has to decide about. Higher Roads' words. The client never reads
+  // this. Nothing here scores or judges the work.
+  if (body.action === "save-review") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const record = options.sceneRecord || createSceneRecord();
+
+    const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    const wanted = Number(body.artboardVersion);
+    const entry = versions.find((stored) => stored.artboard.artboardVersion === wanted);
+    if (!entry) {
+      const error = new Error("That artboard version was not found.");
+      error.status = 404;
+      throw error;
+    }
+    const departures = textList(body.departures);
+    const technicalItems = textList(body.technicalItems);
+    if (!departures.length && !technicalItems.length) {
+      const error = new Error("A review needs at least one note.");
+      error.status = 400;
+      throw error;
+    }
+    const review = {
+      artboardVersion: wanted,
+      briefVersion: entry.artboard.briefVersion,
+      departures,
+      technicalItems,
+      writtenBy: RECORD_ACTOR,
+      writtenAt: new Date().toISOString(),
+    };
+    await artboardStore.addReview(fixture.tour.id, assignment.id, review);
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      actor: RECORD_ACTOR,
+      action: "Wrote the review",
+      version: `Artboard V0${wanted}`,
+    });
+    return { review };
+  }
+  // Feedback goes back against a named version and comes back as the next one.
+  // A revision against a version that has already been revised is refused, so
+  // two people cannot send different feedback on the same picture and both
+  // believe theirs is what production is building.
+  if (body.action === "send-revision") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const record = options.sceneRecord || createSceneRecord();
+
+    const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    const source = Number(body.sourceArtboardVersion);
+    const entry = versions.find((stored) => stored.artboard.artboardVersion === source);
+    if (!entry) {
+      const error = new Error("That artboard version was not found.");
+      error.status = 404;
+      throw error;
+    }
+    const later = versions.filter((stored) => stored.artboard.artboardVersion > source);
+    if (later.length) {
+      const error = new Error("A newer version of this artboard already came back. Send your feedback against that one.");
+      error.status = 409;
+      throw error;
+    }
+    const revisionId = String(body.revisionId || "").trim();
+    if (!revisionId) {
+      const error = new Error("A revision needs an identifier.");
+      error.status = 400;
+      throw error;
+    }
+    const instructions = instructionList(body.instructions);
+    if (!instructions.length) {
+      const error = new Error("Say what should change before you send it back.");
+      error.status = 400;
+      throw error;
+    }
+    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const brief = briefs.find((stored) => stored.briefVersion === entry.artboard.briefVersion);
+    if (!brief) {
+      const error = new Error("The brief this artboard was built against was not found.");
+      error.status = 404;
+      throw error;
+    }
+
+    const revision = {
+      revisionId,
+      jobId: entry.artboard.jobId,
+      sourceArtboardVersion: source,
+      instructions,
+      preserve: textList(body.preserve),
+      sentBy: RECORD_ACTOR,
+      sentAt: new Date().toISOString(),
+    };
+    const produced = receiveRevision(brief, revision, { artboardVersion: source + 1 });
+    await artboardStore.addArtboard(
+      fixture.tour.id,
+      assignment.id,
+      { receipt: produced.receipt, artboard: produced.artboard },
+      produced.artifactBody,
+    );
+    await artboardStore.addRevision(fixture.tour.id, assignment.id, {
+      ...revision,
+      receipt: produced.receipt,
+      producedArtboardVersion: produced.artboard.artboardVersion,
+    });
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      actor: RECORD_ACTOR,
+      action: "Requested internal changes",
+      version: `Artboard V0${source}`,
+    });
+    return { revision, receipt: produced.receipt, artboard: produced.artboard, label: STAND_IN_LABEL };
+  }
+  if (body.action === "get-reviews") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const artboardStore = options.artboardStore || createArtboardStore();
+    return {
+      reviews: await artboardStore.readReviews(fixture.tour.id, assignment.id),
+      revisions: await artboardStore.readRevisions(fixture.tour.id, assignment.id),
     };
   }
   if (body.action === "get-scene-record") {

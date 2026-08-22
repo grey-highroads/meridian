@@ -154,3 +154,54 @@ export function receiveBrief(brief, options = {}) {
     }),
   };
 }
+
+// The same trip in the other direction. A revision against a named artboard
+// version comes back as the next version. What changed is visible on the card,
+// because a comparison between two versions that look the same tells a person
+// nothing about whether their feedback landed.
+export function receiveRevision(brief, revision, options = {}) {
+  const artboardVersion = options.artboardVersion;
+  if (!artboardVersion) {
+    const error = new Error("A revision needs to know which version it is making.");
+    error.status = 400;
+    throw error;
+  }
+  const receivedAt = options.receivedAt || new Date().toISOString();
+  const path = artifactPathFor(brief.tourId, brief.assignmentId, artboardVersion);
+  const base = artboardFor(brief, {
+    artboardVersion,
+    artifact: { type: "artboard", format: "svg", location: path, label: STAND_IN_LABEL },
+    receivedAt,
+  });
+  const changes = (revision.instructions || [])
+    .map((entry) => (entry.regionAnchor ? `${entry.regionAnchor}: ${entry.text}` : entry.text))
+    .filter(Boolean);
+  const kept = (revision.preserve || []).filter(Boolean);
+  const artboard = {
+    ...base,
+    conceptSummary: [
+      base.conceptSummary,
+      changes.length ? `Changed: ${changes.join(" ")}` : "",
+      kept.length ? `Kept: ${kept.join(" ")}` : "",
+    ].filter(Boolean).join(" "),
+    builtFrom: {
+      revisionId: revision.revisionId,
+      sourceArtboardVersion: revision.sourceArtboardVersion,
+    },
+  };
+  return {
+    receipt: {
+      ...receiptFor(brief, receivedAt),
+      revisionId: revision.revisionId,
+      sourceArtboardVersion: revision.sourceArtboardVersion,
+    },
+    artboard,
+    artifactPath: path,
+    artifactBody: renderArtboardCard({
+      jobId: brief.jobId,
+      briefVersion: brief.briefVersion,
+      artboardVersion,
+      conceptSummary: artboard.conceptSummary,
+    }),
+  };
+}

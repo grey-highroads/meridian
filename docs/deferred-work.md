@@ -28,6 +28,18 @@ Missing state: The feedback aside in `app/design/samples/review.html` sits insid
 
 Where: The Artboard review job, on the review screen built from that sample. The optional anchor is recorded as provisional in section 6 of `docs/meridian-seam-with-jim.md` and whether Jim's side can read one is a discovery question in section 4.
 
+Standing in for it: the review screen offers a list of nine named places on the picture. It is a list of words, not a mark on the artboard, and it cannot show which note belongs to which place while a person reads the work. Marked provisional in a comment in `app/review.js` rather than on screen.
+
+### Showing a real artboard file in the artboard frame
+
+Status: requested
+
+Job: Higher Roads looks at the work that came back and compares one version against another.
+
+Missing state: `m-artboard` and its two halves are built around a placeholder shape, so there is no pattern for putting a real file in the frame at the right size, and no pattern for wiping one version over another. The review screen uses the two halves side by side with the file at a fixed width, which clips on a narrow window.
+
+Where: The Artboard review job, on `app/review.html`.
+
 Use this shape when a real job exposes a gap:
 
 ### Pattern name

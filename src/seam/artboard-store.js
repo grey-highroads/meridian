@@ -12,6 +12,10 @@ import { tourPathFor } from "../tour/store.js";
 //                           with it, in order. Written once per version and
 //                           never rewritten. A revision makes a new version.
 //   artboards/v{n}.svg      The artifact for that version. Written once.
+//   reviews.json            Higher Roads' review of one artboard version.
+//                           One per version, written once.
+//   revisions.json          What went back across the seam against a named
+//                           version. Written once per revision.
 
 export { createBlobBackend, createMemoryBackend };
 
@@ -56,6 +60,47 @@ export function createArtboardStore(options = {}) {
 
     async readArtifact(pathname) {
       return await artifacts.read(pathname);
+    },
+
+    async readReviews(tourId, assignmentId) {
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "reviews"));
+      if (body === null || body === undefined) return [];
+      const stored = JSON.parse(body);
+      return Array.isArray(stored.reviews) ? stored.reviews : [];
+    },
+
+    // One review per artboard version. Changing a review after the fact would
+    // let the record say something other than what the revision was sent on.
+    async addReview(tourId, assignmentId, review) {
+      const reviews = await this.readReviews(tourId, assignmentId);
+      if (reviews.some((entry) => entry.artboardVersion === review.artboardVersion)) {
+        const error = new Error("A review of that version is already written. Feedback on it makes a new version.");
+        error.status = 409;
+        throw error;
+      }
+      reviews.push(review);
+      reviews.sort((left, right) => left.artboardVersion - right.artboardVersion);
+      await backend.write(tourPathFor(tourId, assignmentId, "reviews"), JSON.stringify({ reviews }, null, 2));
+      return review;
+    },
+
+    async readRevisions(tourId, assignmentId) {
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "revisions"));
+      if (body === null || body === undefined) return [];
+      const stored = JSON.parse(body);
+      return Array.isArray(stored.revisions) ? stored.revisions : [];
+    },
+
+    async addRevision(tourId, assignmentId, revision) {
+      const revisions = await this.readRevisions(tourId, assignmentId);
+      if (revisions.some((entry) => entry.revisionId === revision.revisionId)) {
+        const error = new Error("That revision has already been sent.");
+        error.status = 409;
+        throw error;
+      }
+      revisions.push(revision);
+      await backend.write(tourPathFor(tourId, assignmentId, "revisions"), JSON.stringify({ revisions }, null, 2));
+      return revision;
     },
 
     // Written once. A version that already exists is never touched again,

@@ -22,8 +22,6 @@ const view = {
   usedSuggestion: null,
   brief: null,
   briefs: [],
-  artboards: [],
-  facts: [],
   receipt: null,
   draft: { title: "", direction: "", marked: [] },
   message: "",
@@ -235,7 +233,7 @@ function briefSection() {
 }
 
 // ---------------------------------------------------------------------------
-// What came back from production, and the record of what happened
+// The receipt. What came back and the record of what happened live on review.
 // ---------------------------------------------------------------------------
 
 function receiptSection() {
@@ -245,40 +243,6 @@ function receiptSection() {
       <p class="m-copy">Job ${escape(view.receipt.jobId)}, brief V0${escape(view.receipt.briefVersion)}, at ${escape(view.receipt.receivedAt)}.</p>
       <p class="m-meta">${escape(String(view.receipt.label || "").toUpperCase())}</p>
     </div>`;
-}
-
-function artboardSection() {
-  if (!view.artboards.length) return "";
-  const cards = view.artboards.map((entry) => `<div class="m-version">
-      <span class="m-state m-state--current">V0${escape(entry.artboard.artboardVersion)}</span>
-      <strong>ARTBOARD V0${escape(entry.artboard.artboardVersion)}</strong>
-      <span class="m-meta">AGAINST BRIEF V0${escape(entry.artboard.briefVersion)}</span>
-      <span class="m-meta">${escape(String(entry.artboard.status).toUpperCase())}</span>
-      <p class="m-copy">${escape(entry.artboard.conceptSummary)}</p>
-      <span class="m-meta">${escape(String(entry.artboard.label).toUpperCase())}</span>
-    </div>`).join("");
-  return `<section class="m-work m-stack" aria-labelledby="artboards-heading">
-      <div class="m-cluster">
-        <h2 id="artboards-heading" class="m-section-heading">What came back</h2>
-        <span class="m-meta">${escape(view.artboards.length)} RECEIVED</span>
-      </div>
-      <p class="m-copy">Review opens on these once the review screen lands.</p>
-      ${cards}
-    </section>`;
-}
-
-function recordSection() {
-  if (!view.facts.length) return "";
-  const rows = view.facts.map((fact) => `<div class="m-record-grid__item">
-      <span class="m-label">${escape(fact.action)}</span>
-      <strong>${escape(fact.version || "")}</strong>
-      <span class="m-meta">${escape(String(fact.actor).toUpperCase())} / ${escape(fact.at)}</span>
-    </div>`).join("");
-  return `<section class="m-work m-stack" aria-labelledby="record-heading">
-      <h2 id="record-heading" class="m-section-heading">What happened on this Scene</h2>
-      <p class="m-copy">Every line is written once and stays as written.</p>
-      <div class="m-record-grid">${rows}</div>
-    </section>`;
 }
 
 function download(kind) {
@@ -310,11 +274,15 @@ function actionBar() {
   const context = frozen
     ? "That version is frozen. Feedback makes a new version rather than an edit."
     : "Saving records the Scene direction and what you marked. Freezing is what production builds against.";
+  const review = view.briefs.length
+    ? `<a class="m-button" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open review</a>`
+    : "";
   actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
     <div class="m-cluster">
       <button class="m-button" type="button" data-save>Save the Scene direction</button>
       ${compile}
       ${freeze}
+      ${review}
     </div>`;
 }
 
@@ -337,9 +305,7 @@ function render() {
     </div>
     ${marksSection()}
     ${briefSection()}
-    ${receiptSection()}
-    ${artboardSection()}
-    ${recordSection()}`;
+    ${receiptSection()}`;
   actionBar();
 }
 
@@ -352,8 +318,6 @@ async function load() {
   view.context = context.context;
   view.concept = (await call("get-concept", { assignmentId: view.sceneId })).concept;
   view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
-  view.artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
-  view.facts = (await call("get-scene-record", { assignmentId: view.sceneId })).facts;
   if (view.concept) {
     view.draft.title = view.concept.title;
     view.draft.direction = view.concept.idea;
@@ -450,8 +414,6 @@ document.addEventListener("click", (event) => {
       // is the version that was frozen.
       const sent = await call("send-brief", { assignmentId: view.sceneId, briefVersion: view.brief.brief.briefVersion });
       view.receipt = sent.receipt;
-      view.artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
-      view.facts = (await call("get-scene-record", { assignmentId: view.sceneId })).facts;
       view.message = `V0${view.brief.brief.briefVersion} is frozen and production has it.`;
       render();
     });
