@@ -50,6 +50,8 @@ Ruled 2026-08-21, what evidence is made of. Evidence on a claim is the source UR
 
 Ruled 2026-08-21, syndicated copies count once. A press release or wire story republished across many outlets is one source, not many. The origin document is the source and its republications are not counted. Where the origin cannot be identified, the earliest authoritative copy stands in for it and the rest are dropped. A finding's source count reflects independent sources, because a count inflated by republication overstates the confidence behind the finding.
 
+Ruled 2026-08-21, album packaging credits are a source. Liner notes and physical release credits are the artist's own output and are admitted to the tier list. They are tier 1 when read from the release itself and tier 2 when read from a label page. Retail and discography aggregators that republish those credits remain index only under the reference works ruling. Raised because a full intake pass found no art director, designer, or packaging photographer in any admitted tier, leaving a real hole in visual language, which is the facet the production side asks about first.
+
 The brain is not allowed to surprise the artist's team. Anything it asserts carries its evidence: how many sources, which ones, what kind. "Across twelve approved treatments and four interviews, these themes recur" is a finding. A preference with no trail is a guess and is not shown.
 
 ### Tour layer: one cycle
