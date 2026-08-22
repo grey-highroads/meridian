@@ -39,6 +39,7 @@ The gate is counted from the new bin and called by a person who reads the findin
 - A label press release syndicated to eight radio sites is one source at origin; on the first run one of the eight misspelled a director's name.
 - When the artist speaks about the second identity as himself, tag the claim shared, not second identity.
 - Conflicts between sources are recorded as conflicts with both readings, never picked.
+- An entry in the avoid part states something the artist avoids and nothing else. Notes about the intake itself, what the prior guessed or what was dropped, go in the log. The brief carries the avoid part to production by default, so anything else in it leaves Higher Roads.
 - Container paths and tool names belong in the log, never in an instruction to a person.
 
 ## Source tiers, with what the first run learned about each
