@@ -203,6 +203,8 @@ The Meridian column is taken from `docs/meridian-thesis-and-architecture.md` at 
 
 Words Meridian needs that have no BWS ancestor at all: tour direction, assignment, artboard version, production intent, technical profile, venue, screen, permission, actor. Verified by grep at head: `tour`, `artboard`, and `artistId` appear nowhere in `api/`, `src/`, `app/`, `scripts/`, `test/`, `schemas/`, or `specs/` as an entity. The four hits for the word assignment are comments and one section title inside the prompt compiler. Verified.
 
+Added 2026-08-22: Scene is the interface word for what the code and storage call an assignment. Every user-facing string says Scene; the identifier stays assignment until a rename earns its own commit. Neither is corrected to the other.
+
 ---
 
 ## 5. Decisions

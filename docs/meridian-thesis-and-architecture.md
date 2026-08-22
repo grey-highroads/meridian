@@ -96,6 +96,7 @@ Meridian never produces the production artifact and never pretends to replace pr
 - Nothing moves from tour to artist without a human ruling.
 - Governance never decides. People decide. The client never sees a finding, a score, or a verdict; they see the work, a version, a rationale, and controls.
 - Direction is stored as given. Interpretation is kept separate and labeled. Every brief says which version of direction it was written against.
+- Tour direction and Scene direction are two objects. Tour direction is the director's words for the whole tour, stored as given, versioned, kept in the tour's own home with dates, venues, and playback system. Scene direction is Higher Roads' words for one Scene, written against a named version of the tour direction. A brief to Jim carries the parts of the tour direction a person selected as bearing on that Scene, and the version, never the whole text. Ruled 2026-08-22.
 - Intent, interpretation, and decision are three recorded things and are never collapsed into one. When a client says the work does not feel like the artist, the record shows which of the four moved: the request, the direction, the artist evidence, or Jim's interpretation. No one owns the gap; the record makes it diagnosable.
 - Permissions come from the organization layer. Tours read them. Nothing grants permission inside a tour.
 - Anything that does not belong to one of the three layers, or to the seam, is not in this product.
