@@ -1,19 +1,55 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Interactive Brand World System product prototype"
-    />
-    <title>Brand World System | SLAKE</title>
-    <link rel="stylesheet" href="./styles.css?v=2026-08-03-brain-live" />
-    <link rel="stylesheet" href="./polish.css?v=2026-08-06-system-polish" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="The tour in front of you and the Scenes under it" />
+    <title>Scenes | Meridian</title>
+    <link rel="stylesheet" href="./design/index.css" />
   </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="./upload-client.js?v=2026-08-04-vercel"></script>
-    <script type="module" src="./app.js?v=2026-08-03-brain-live"></script>
+  <body class="m-ui">
+    <div class="m-shell">
+      <aside class="m-shell__rail">
+        <div class="m-shell__brand">
+          <a class="m-wordmark" href="./index.html">
+            MERIDIAN
+            <span class="m-wordmark__byline">BY HIGHER ROADS</span>
+          </a>
+        </div>
+        <nav class="m-shell__nav" aria-label="Artist work">
+          <a class="m-shell__nav-link" href="./index.html" aria-current="page">
+            <span class="m-shell__nav-label">Scenes</span>
+          </a>
+          <a class="m-shell__nav-link" href="./artist.html">
+            <span class="m-shell__nav-label">Artist Brain</span>
+          </a>
+        </nav>
+        <div class="m-shell__utility">
+          <a class="m-shell__nav-link" href="./bws.html">
+            <span class="m-shell__nav-label">Old system</span>
+          </a>
+        </div>
+      </aside>
+
+      <main class="m-shell__main">
+        <header class="m-location" id="location"></header>
+
+        <div class="m-page">
+          <header class="m-job-header">
+            <div class="m-job-header__copy">
+              <span class="m-label">Current work</span>
+              <h1 class="m-heading">Scenes</h1>
+              <p class="m-copy">Open the moment that needs work.</p>
+            </div>
+          </header>
+
+          <section class="m-work" aria-labelledby="scene-list-heading">
+            <h2 id="scene-list-heading" class="m-visually-hidden">Scenes on this tour</h2>
+            <div id="scenes"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="./scenes.js?v=2026-08-22-shell"></script>
   </body>
 </html>

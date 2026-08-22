@@ -26,8 +26,8 @@ test("the hosted installation uses one shared access password without roles", ()
 });
 
 test("the browser build includes direct private source uploads", () => {
-  const index = fs.readFileSync(path.join(rootPath, "app", "index.html"), "utf8");
-  const uploadClient = fs.readFileSync(path.join(rootPath, "app", "upload-client.js"), "utf8");
+  const index = fs.readFileSync(path.join(rootPath, "app", "bws.html"), "utf8");
+  const uploadClient = fs.readFileSync(path.join(rootPath, "app", "bws-upload-client.js"), "utf8");
   const uploadApi = fs.readFileSync(path.join(rootPath, "api", "blob", "upload.js"), "utf8");
   assert.match(index, /upload-client\.js/);
   assert.match(uploadClient, /credentials: "same-origin"/);

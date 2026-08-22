@@ -43,7 +43,7 @@ export default function middleware(request) {
   if (authorized(request, password)) return next();
 
   // Unauthenticated visitors hitting the root get the landing page.
-  if (pathname === "/" || pathname === "/index.html") {
+  if (pathname === "/" || pathname === "/index.html" || pathname === "/bws.html") {
     return Response.redirect(new URL("/landing.html", request.url), 302);
   }
 

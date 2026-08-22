@@ -9,7 +9,7 @@
  *
  * This page is deliberately separate from app.js. It shares the stylesheets
  * and the server, and it shares no code, no state, and no screen. Deleting
- * this file, place.html, place.css, and one line of vite.config.js removes the
+ * this file, bws-place.html, bws-place.css, and one line of vite.config.js removes the
  * whole surface.
  *
  * Which client this belongs to is read from the same cookie the app writes, so

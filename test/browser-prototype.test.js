@@ -301,9 +301,9 @@ test("Brand Brain prototype connects empty onboarding to a production-ready stor
 });
 
 test("shared visual polish layer centralizes spacing, surfaces, and semantic states", () => {
-  const index = fs.readFileSync(path.join(rootPath, "app/index.html"), "utf8");
-  const styles = fs.readFileSync(path.join(rootPath, "app/styles.css"), "utf8");
-  const polish = fs.readFileSync(path.join(rootPath, "app/polish.css"), "utf8");
+  const index = fs.readFileSync(path.join(rootPath, "app/bws.html"), "utf8");
+  const styles = fs.readFileSync(path.join(rootPath, "app/bws.css"), "utf8");
+  const polish = fs.readFileSync(path.join(rootPath, "app/bws-polish.css"), "utf8");
   const app = fs.readFileSync(path.join(rootPath, "app/app.js"), "utf8");
 
   assert.match(index, /polish\.css/);

@@ -7,17 +7,17 @@ const appRoot = resolve(repositoryRoot, "app");
 
 const legacyStylesheets = new Set([
   "app/artist.css",
-  "app/place.css",
-  "app/polish.css",
-  "app/styles.css",
+  "app/bws-place.css",
+  "app/bws-polish.css",
+  "app/bws.css",
 ]);
 
 const legacyHexBaseline = new Map([
   ["app/app.js", 53],
   ["app/landing.html", 13],
-  ["app/place.js", 1],
-  ["app/polish.css", 4],
-  ["app/styles.css", 107],
+  ["app/bws-place.js", 1],
+  ["app/bws-polish.css", 4],
+  ["app/bws.css", 107],
 ]);
 
 const legacyInlineStyleBaseline = new Map([
