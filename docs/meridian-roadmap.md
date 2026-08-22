@@ -39,7 +39,7 @@ Done when: the four maps and the blockers list exist and both architects agree o
 
 What: pick one real artist with a tour coming that Higher Roads wants to pitch. Point the intake at the public record: interviews, past show footage and reviews, setlists, stage history, album eras, visual language, known prohibitions. The intake reads and synthesizes; it does not reproduce. Then build one tour on top of it. The tour's visual direction is likely inherited from a creative director the artist hired, so the fixture treats it that way: the director's words stored as given, versioned, and kept apart from anything the brain suggests. One request under that tour shaped like the storm-and-lightning treatment. Every object the workflow needs: artist, tour, assignment, creative brief, artboard, review, revision, approval, production record. The ownership shape is built in now so nothing has to be rebuilt later: Higher Roads owns the app, accounts belong to the artist's organization, users belong to accounts, users carry permissions, and a tour reads those permissions to decide who may approve, reject, or comment on what. Higher Roads' role will differ from tour to tour; that is just different users with different permissions, not a special case. No login work yet.
 
-Before intake runs: the rebuild path is fixed so a rebuild produces a candidate for approval instead of overwriting the approved brain. BWS never built this and a timestamped backup is recovery, not protection. The brain will hold weeks of work and must not be one click from gone.
+Before intake runs: the rebuild path is removed, not fixed. The first synthesis is the only full one; after approval the brain changes only by integrating sources under ruling. The server refuses a full synthesis over an approved brain. Ruled 2026-08-21, replacing the earlier plan to make rebuild produce a candidate.
 
 Memory in this step is facts only: who approved what, what changed, which version replaced which. The brain does not learn preferences from the tour.
 
@@ -49,11 +49,11 @@ Done when: you read the brain and find at least three things in it you did not k
 
 This is a hard gate. It tests the thesis, not the software. If the brain does not surprise experienced creative people, nothing after this step starts.
 
-### 4. Replace the things a paying client cannot see (organization layer mechanics, plus the artist-layer rebuild fix)
+### 4. Replace the things a paying client cannot see (organization layer mechanics)
 
 What: real login for the two user types already shaped in step 3. Anything else from the blockers list.
 
-Why: the current system has one shared password and a rebuild button that wipes the approved brain behind one confirm. Login matters only when a client needs to see something, which is step 5, so it lands here and not earlier. Nothing here carries forward from the BWS single-password model; replace rather than extend.
+Why: the current system has one shared password. The rebuild button is removed in step 3. Login matters only when a client needs to see something, which is step 5, so it lands here and not earlier. Nothing here carries forward from the BWS single-password model; replace rather than extend.
 
 Done when: two people can log in as different roles and see different things.
 

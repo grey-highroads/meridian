@@ -34,6 +34,8 @@ It outlives every tour. It is built first because the tour cannot be helped by a
 
 It is the Brand Brain from BWS, kept nearly unchanged: storage, versioning, approval. One thing BWS planned and never built is required here before the first real brain exists: a rebuild that produces a candidate for approval instead of overwriting the approved brain. (Corrected 2026-08-21 against the committed tree; the earlier text described this as inherited.)
 
+Corrected 2026-08-21. The paragraph above called for a rebuild that produces a candidate for approval. Ruled instead: after the first approval there is no rebuild. The brain changes only by integrating new or re-read sources, with every change ruled by a person. A brain wrong at its foundation is retired and a new artist record started, explicitly. Re-synthesis is not a concept in Meridian.
+
 Nothing writes into this layer without a human ruling. A tour can propose candidate guidance when it closes. A person promotes it or does not.
 
 Memory is built in three stages and the first is the only one in the pilot. First, facts: who approved what, what changed, which version replaced which, when direction moved. Later, pattern extraction from those facts. Much later, recommendations. "This artist prefers dark cinematic visuals" is an interpretation and is never recorded as a fact by the system.
