@@ -9,6 +9,8 @@
 // them. Nothing here compares them to anything, scores them, or draws a
 // conclusion. A person reads them and decides.
 
+import { resolveViewer, viewerSwitch } from "./viewing-as.js";
+
 const PARAMS = new URLSearchParams(window.location.search);
 const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 
@@ -17,6 +19,7 @@ const page = document.getElementById("page");
 const reviewPane = document.getElementById("review");
 const detail = document.getElementById("detail");
 const actions = document.getElementById("actions");
+const utility = document.querySelector(".m-shell__utility");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
@@ -27,6 +30,10 @@ const view = {
   revisions: [],
   facts: [],
   artifacts: {},
+  readyForClient: [],
+  clientApprovals: [],
+  clientComments: [],
+  intents: [],
   compareTo: null,
   draft: { departure: "", technical: "", feedback: "", anchor: "", preserve: "" },
   message: "",
@@ -243,6 +250,77 @@ function sentSection() {
     </section>`;
 }
 
+// ---------------------------------------------------------------------------
+// The end of the loop
+// ---------------------------------------------------------------------------
+
+function readyFor(artboardVersion) {
+  return view.readyForClient.find((entry) => entry.artboardVersion === artboardVersion) || null;
+}
+
+function approvedFor(artboardVersion) {
+  return view.clientApprovals.find((entry) => entry.artboardVersion === artboardVersion) || null;
+}
+
+function clientSection() {
+  const current = latest();
+  if (!current) return "";
+  const version = current.artboard.artboardVersion;
+  const ready = readyFor(version);
+  const approved = approvedFor(version);
+  const said = view.clientComments.length
+    ? `<div class="m-stack"><span class="m-label">What the client said</span>${view.clientComments.map((entry) => `<div class="m-contribution">
+        <span class="m-contribution__source">V0${escape(entry.artboardVersion)} / ${escape(entry.writtenAt)}</span>
+        <p class="m-copy">${escape(entry.text)}</p>
+      </div>`).join("")}</div>`
+    : "";
+  const state = approved
+    ? `<span class="m-state m-state--approved">Approved by the client on ${escape(approved.approvedAt)}</span>`
+    : ready
+      ? `<span class="m-state m-state--current">With the client since ${escape(ready.approvedAt)}</span>`
+      : `<span class="m-state">Not with the client yet</span>`;
+  return `<section class="m-work m-stack" aria-labelledby="client-heading">
+      <div class="m-cluster">
+        <h2 id="client-heading" class="m-section-heading">The client on V0${escape(version)}</h2>
+        ${state}
+      </div>
+      <p class="m-copy">Clearing a version for the client and the client approving it are two decisions by two people. Neither is the other.</p>
+      ${said}
+    </section>`;
+}
+
+// Built from app/design/samples/handoff.html. Frozen at the moment the client
+// approved, and never edited. A later approval writes a new record beside it.
+function handoffSection() {
+  if (!view.intents.length) return "";
+  const rows = view.intents.slice().reverse().map((intent) => `<div class="m-stack">
+      <div class="m-cluster">
+        <div class="m-stack">
+          <span class="m-label">Frozen production record</span>
+          <h3 class="m-section-heading">Production intent, artboard V0${escape(intent.artboardVersion)}</h3>
+        </div>
+        <span class="m-state m-state--approved">Frozen</span>
+      </div>
+      <div class="m-record-grid">
+        <div class="m-record-grid__item"><span class="m-label">Job</span><strong>${escape(intent.jobId)}</strong></div>
+        <div class="m-record-grid__item"><span class="m-label">Brief version</span><strong>V0${escape(intent.briefVersion)}</strong></div>
+        <div class="m-record-grid__item"><span class="m-label">Approved work</span><strong>ARTBOARD V0${escape(intent.artboardVersion)}</strong></div>
+        <div class="m-record-grid__item"><span class="m-label">Playback</span><strong>${escape(intent.technicalProfileRef || "Not recorded")}</strong></div>
+        <div class="m-record-grid__item"><span class="m-label">Approved by</span><strong>${escape(String(intent.approvedBy).toUpperCase())}</strong></div>
+        <div class="m-record-grid__item"><span class="m-label">Approved at</span><strong>${escape(intent.approvedAt)}</strong></div>
+      </div>
+      <div class="m-callout m-callout--approved">
+        <span class="m-state m-state--approved">Ready to build</span>
+        <p class="m-copy">Production builds artboard V0${escape(intent.artboardVersion)} against brief V0${escape(intent.briefVersion)} on job ${escape(intent.jobId)}.</p>
+      </div>
+    </div>`).join("");
+  return `<section class="m-work m-stack" aria-labelledby="handoff-heading">
+      <h2 id="handoff-heading" class="m-section-heading">Production handoff</h2>
+      <p class="m-copy">A later change needs a new version and a new approval. What is here is never quietly replaced.</p>
+      ${rows}
+    </section>`;
+}
+
 function recordSection() {
   if (!view.facts.length) return "";
   const rows = view.facts.map((fact) => `<div class="m-record-grid__item">
@@ -276,11 +354,16 @@ function actionBar() {
   const save = written
     ? ""
     : `<button class="m-button" type="button" data-save>Save the review</button>`;
+  const ready = readyFor(version);
+  const send = ready
+    ? ""
+    : `<button class="m-button m-button--primary" type="button" data-send-client>Send V0${escape(version)} to the client</button>`;
   actions.innerHTML = `<p class="m-action-bar__context">Feedback makes a new version rather than an edit.</p>
     <div class="m-cluster">
       <a class="m-button" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Back to the Scene</a>
       ${save}
       <button class="m-button m-button--change" type="button" data-revise>Request internal changes</button>
+      ${send}
     </div>`;
 }
 
@@ -296,7 +379,11 @@ function render() {
     </header>
     ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}`;
   reviewPane.innerHTML = view.artboards.length ? `${stage()}${rail()}` : "";
-  detail.innerHTML = `${fromProduction()}${reviewSection()}${feedbackSection()}${sentSection()}${recordSection()}`;
+  utility.innerHTML = viewerSwitch(resolveViewer(PARAMS.get("as")), {
+    workHref: `./review.html?tour=${TOUR_ID}&scene=${view.sceneId}`,
+    clientHref: `./client-review.html?tour=${TOUR_ID}&scene=${view.sceneId}`,
+  });
+  detail.innerHTML = `${fromProduction()}${reviewSection()}${feedbackSection()}${sentSection()}${clientSection()}${handoffSection()}${recordSection()}`;
   actionBar();
 }
 
@@ -319,6 +406,11 @@ async function refresh() {
   view.reviews = written.reviews;
   view.revisions = written.revisions;
   view.facts = (await call("get-scene-record", { assignmentId: view.sceneId })).facts;
+  const end = await call("get-production-intent", { assignmentId: view.sceneId });
+  view.readyForClient = end.readyForClient;
+  view.clientApprovals = end.clientApprovals;
+  view.clientComments = end.comments;
+  view.intents = end.intents;
   await loadArtifacts();
 }
 
@@ -365,6 +457,19 @@ document.addEventListener("click", (event) => {
       view.draft.departure = "";
       view.draft.technical = "";
       view.message = "The review is saved.";
+      await refresh();
+      render();
+    });
+    return;
+  }
+  if (target.hasAttribute("data-send-client")) {
+    guard(async () => {
+      const current = latest();
+      await call("approve-for-client", {
+        assignmentId: view.sceneId,
+        artboardVersion: current.artboard.artboardVersion,
+      });
+      view.message = `V0${current.artboard.artboardVersion} is with the client.`;
       await refresh();
       render();
     });

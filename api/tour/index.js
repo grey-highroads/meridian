@@ -7,7 +7,7 @@ import { createTourStore } from "../../src/tour/store.js";
 import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
-import { createSceneRecord, RECORD_ACTOR } from "../../src/tour/scene-record.js";
+import { createSceneRecord, CLIENT_ACTOR, RECORD_ACTOR } from "../../src/tour/scene-record.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
@@ -16,7 +16,8 @@ import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, send
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
 // get-artboards, get-artboard-artifact, save-review, send-revision,
-// get-scene-record.
+// get-reviews, approve-for-client, client-approve, client-comment,
+// get-production-intent, get-scene-record.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -129,6 +130,26 @@ function instructionList(value) {
       return { text, regionAnchor: REGIONS.includes(anchor) ? anchor : null };
     })
     .filter((entry) => entry.text);
+}
+
+// Everything at the end of the loop is about one artboard version, so they all
+// resolve the same way. Nothing here reads an actor from the request. The
+// viewing switch on the pages is a stand-in and never reaches storage.
+async function atArtboard(body, options) {
+  const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+  const assignment = findAssignment(fixture, body.assignmentId);
+  const tourStore = options.tourStore || createTourStore();
+  const artboardStore = options.artboardStore || createArtboardStore();
+  const record = options.sceneRecord || createSceneRecord();
+  const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+  const wanted = Number(body.artboardVersion);
+  const entry = versions.find((stored) => stored.artboard.artboardVersion === wanted);
+  if (!entry) {
+    const error = new Error("That artboard version was not found.");
+    error.status = 404;
+    throw error;
+  }
+  return { fixture, assignment, tourStore, artboardStore, record, entry, wanted };
 }
 
 export async function handleAction(body, options = {}) {
@@ -476,6 +497,112 @@ export async function handleAction(body, options = {}) {
       reviews: await artboardStore.readReviews(fixture.tour.id, assignment.id),
       revisions: await artboardStore.readRevisions(fixture.tour.id, assignment.id),
     };
+  }
+  // Four distinct authorities, kept apart on purpose. Higher Roads clears a
+  // version for the client to see. The client approves the work. Neither is
+  // the other, and neither moves anything into the artist layer.
+  if (body.action === "approve-for-client") {
+    const { fixture, assignment, artboardStore, record, entry, wanted } = await atArtboard(body, options);
+    const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+    if (approvals.readyForClient.some((stored) => stored.artboardVersion === wanted)) {
+      const error = new Error("That version is already ready for the client.");
+      error.status = 409;
+      throw error;
+    }
+    const cleared = {
+      artboardVersion: wanted,
+      briefVersion: entry.artboard.briefVersion,
+      approvedBy: RECORD_ACTOR,
+      approvedAt: new Date().toISOString(),
+    };
+    await artboardStore.writeApprovals(fixture.tour.id, assignment.id, {
+      ...approvals,
+      readyForClient: [...approvals.readyForClient, cleared],
+    });
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      actor: RECORD_ACTOR,
+      action: "Approved for the client to see",
+      version: `Artboard V0${wanted}`,
+    });
+    return { readyForClient: cleared };
+  }
+  if (body.action === "client-approve") {
+    const { fixture, assignment, tourStore, artboardStore, record, entry, wanted } = await atArtboard(body, options);
+    const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+    if (!approvals.readyForClient.some((stored) => stored.artboardVersion === wanted)) {
+      const error = new Error("That version has not been sent to the client yet.");
+      error.status = 409;
+      throw error;
+    }
+    if (approvals.clientApprovals.some((stored) => stored.artboardVersion === wanted)) {
+      const error = new Error("That version is already approved.");
+      error.status = 409;
+      throw error;
+    }
+    const approval = {
+      artboardVersion: wanted,
+      approvedBy: CLIENT_ACTOR,
+      approvedAt: new Date().toISOString(),
+    };
+    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const brief = briefs.find((stored) => stored.briefVersion === entry.artboard.briefVersion);
+    if (!brief) {
+      const error = new Error("The brief this work was built against was not found.");
+      error.status = 404;
+      throw error;
+    }
+    // What production builds against. Frozen at this moment and never edited.
+    await artboardStore.addIntent(fixture.tour.id, assignment.id, {
+      jobId: entry.artboard.jobId,
+      briefVersion: entry.artboard.briefVersion,
+      artboardVersion: wanted,
+      technicalProfileRef: (brief.technicalTarget || {}).playbackSystem || null,
+      approvedBy: CLIENT_ACTOR,
+      approvedAt: approval.approvedAt,
+    });
+    await artboardStore.writeApprovals(fixture.tour.id, assignment.id, {
+      ...approvals,
+      clientApprovals: [...approvals.clientApprovals, approval],
+    });
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      actor: CLIENT_ACTOR,
+      action: "Approved the work",
+      version: `Artboard V0${wanted}`,
+    });
+    return { approval };
+  }
+  if (body.action === "client-comment") {
+    const { fixture, assignment, artboardStore, record, wanted } = await atArtboard(body, options);
+    const text = String(body.text || "").trim();
+    if (!text) {
+      const error = new Error("Write something before you send it.");
+      error.status = 400;
+      throw error;
+    }
+    const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+    if (!approvals.readyForClient.some((stored) => stored.artboardVersion === wanted)) {
+      const error = new Error("That version has not been sent to the client yet.");
+      error.status = 409;
+      throw error;
+    }
+    const comment = { artboardVersion: wanted, text, writtenBy: CLIENT_ACTOR, writtenAt: new Date().toISOString() };
+    await artboardStore.writeApprovals(fixture.tour.id, assignment.id, {
+      ...approvals,
+      comments: [...approvals.comments, comment],
+    });
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      actor: CLIENT_ACTOR,
+      action: "Left a comment",
+      version: `Artboard V0${wanted}`,
+    });
+    return { comment };
+  }
+  if (body.action === "get-production-intent") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+    return { ...approvals, intents: await artboardStore.readIntents(fixture.tour.id, assignment.id) };
   }
   if (body.action === "get-scene-record") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);

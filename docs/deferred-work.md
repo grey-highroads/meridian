@@ -329,6 +329,12 @@ A replacement should measure whether every compiled statement is a physical fact
 
 Recorded 2026-08-21 at the Meridian fork, from the tree at BWS `b11e994`. The code reads three different OpenAI models. Brain synthesis (`src/brand-brain/chat-completions-provider.js`) and products (`src/products/service.js`) default to `gpt-5.6` when `OPENAI_MODEL` is unset. Copy generation (`src/copy/generate.js`, `src/claims/copy-audit.js`, `api/production/generate-copy.js`) is hard-coded to `gpt-4o`. Image rendering (`src/renderers/openai-images.js`, `src/production/composite.js`) is hard-coded to `gpt-image-2`. One environment value does not govern all three. `OPENAI_MODEL` is left unset on the Meridian deployment so the brain uses `gpt-5.6`. Decide in step 2 which of these paths survive before consolidating the setting.
 
+## The viewing switch stands in for signing in
+
+The shell on the review screen carries a switch reading Higher Roads and Client reviewer. There is no login, so this is how a person moves between the two sides of the work. It changes what a page shows and nothing that is stored: no action reads an actor from the request, and both approvals write a constant.
+
+Recorded 2026-08-22. Deleted at roadmap step 4, when login supplies the actor and the two sides are two people rather than one person with a toggle. Delete the switch, `app/viewing-as.js`, and the `as` parameter on the review screen at the same time.
+
 ## The Scene record has one actor until people can log in
 
 Every fact on the Scene record carries Higher Roads as the actor. The app has one shared password and one login, so there is no identity to write down, and a fact naming a person the system cannot stand behind would be worse than one that names the company. The record's shape already holds an actor per fact, so nothing has to be rebuilt.

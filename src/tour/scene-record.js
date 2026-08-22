@@ -15,6 +15,11 @@ import { tourPathFor } from "./store.js";
 
 export const RECORD_ACTOR = "Higher Roads";
 
+// The client's side of the record. Also a stand-in until step 4, and also a
+// constant rather than anything the request can set, so the viewing switch on
+// the pages cannot put a different name on an approval.
+export const CLIENT_ACTOR = "Client reviewer";
+
 export { createBlobBackend, createMemoryBackend };
 
 export function createSceneRecord(options = {}) {

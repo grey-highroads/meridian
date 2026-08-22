@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const PAGES = ["app/index.html", "app/artist.html", "app/tour.html", "app/scene.html", "app/review.html"];
-const SCRIPTS = ["app/scenes.js", "app/artist.js", "app/tour.js", "app/scene.js", "app/review.js"];
+const PAGES = ["app/index.html", "app/artist.html", "app/tour.html", "app/scene.html", "app/review.html", "app/client-review.html"];
+const SCRIPTS = ["app/scenes.js", "app/artist.js", "app/tour.js", "app/scene.js", "app/review.js", "app/client-review.js", "app/viewing-as.js"];
 
 function read(name) {
   return fs.readFileSync(path.join(rootPath, name), "utf8");

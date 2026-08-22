@@ -16,6 +16,11 @@ import { tourPathFor } from "../tour/store.js";
 //                           One per version, written once.
 //   revisions.json          What went back across the seam against a named
 //                           version. Written once per revision.
+//   approvals.json          Who cleared which version for the client to see,
+//                           which version the client approved, and what the
+//                           client said. Three separate authorities.
+//   production-intent.json  What production builds against. One record per
+//                           client approval, appended, never replaced.
 
 export { createBlobBackend, createMemoryBackend };
 
@@ -51,6 +56,45 @@ export function createArtboardStore(options = {}) {
   const artifacts = options.artifactBackend || (options.backend ? options.backend : createArtifactBackend(options));
 
   return {
+    async readApprovals(tourId, assignmentId) {
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "approvals"));
+      const empty = { readyForClient: [], clientApprovals: [], comments: [] };
+      if (body === null || body === undefined) return empty;
+      const stored = JSON.parse(body);
+      return {
+        readyForClient: Array.isArray(stored.readyForClient) ? stored.readyForClient : [],
+        clientApprovals: Array.isArray(stored.clientApprovals) ? stored.clientApprovals : [],
+        comments: Array.isArray(stored.comments) ? stored.comments : [],
+      };
+    },
+
+    async writeApprovals(tourId, assignmentId, approvals) {
+      await backend.write(tourPathFor(tourId, assignmentId, "approvals"), JSON.stringify(approvals, null, 2));
+      return approvals;
+    },
+
+    async readIntents(tourId, assignmentId) {
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "production-intent"));
+      if (body === null || body === undefined) return [];
+      const stored = JSON.parse(body);
+      return Array.isArray(stored.intents) ? stored.intents : [];
+    },
+
+    // Appended. A later approval on a later version writes a new record and
+    // the earlier one stays exactly as it was, because production may already
+    // have built against it.
+    async addIntent(tourId, assignmentId, intent) {
+      const intents = await this.readIntents(tourId, assignmentId);
+      if (intents.some((entry) => entry.artboardVersion === intent.artboardVersion)) {
+        const error = new Error("That version is already the approved version.");
+        error.status = 409;
+        throw error;
+      }
+      intents.push(intent);
+      await backend.write(tourPathFor(tourId, assignmentId, "production-intent"), JSON.stringify({ intents }, null, 2));
+      return intent;
+    },
+
     async readArtboards(tourId, assignmentId) {
       const body = await backend.read(tourPathFor(tourId, assignmentId, "artboards"));
       if (body === null || body === undefined) return [];
