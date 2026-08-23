@@ -3,7 +3,8 @@ import { createVercelBlobClaimsStore } from "../../src/claims/store.js";
 import { createVercelBlobRefusalsStore } from "../../src/refusals/store.js";
 import { resolveBootstrapSlate } from "../../src/refusals/bootstrap.js";
 import { auditCopyAgainstClaims } from "../../src/claims/copy-audit.js";
-import { readJsonBody, requireBrandWorldAccess, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { readJsonBody, requireUser, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { OPERATOR_ROLE } from "../../src/org/store.js";
 
 // Dispatching handler for the Brand Brain and claims document.
 //
@@ -18,7 +19,8 @@ import { readJsonBody, requireBrandWorldAccess, resolveClientId, sendJson, sendP
 // POST { action: "seed_refusals" }   -> bootstrap an initial slate, ADR 0017 step 3
 
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response, { role: OPERATOR_ROLE });
+  if (!user) return;
   try {
     const clientId = resolveClientId(request);
 

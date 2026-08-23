@@ -155,9 +155,11 @@ Consequence, Verified: any authenticated caller can set `x-client-id` to any val
 | Firecrawl page scrape | `https://api.firecrawl.dev/v1/scrape` | `FIRECRAWL_API_KEY`, and the call returns null when it is unset | `src/brand-brain/source-reader.js` | Verified |
 | Arbitrary remote pages | whatever URL a source names, guarded by `assertSafeRemoteUrl` and a DNS check | none | `src/brand-brain/source-reader.js` | Verified |
 | Vercel Blob | the `@vercel/blob` client | `BLOB_READ_WRITE_TOKEN` when present, otherwise Vercel OIDC | `src/brand-brain/store.js`, `src/claims/store.js`, `src/clients/store.js`, `src/production/store.js`, `src/products/store.js`, `src/refusals/store.js`, `api/blob/upload.js` | Verified |
-| Vercel edge middleware | `@vercel/functions` | `BRAND_WORLD_ACCESS_PASSWORD` | `middleware.js` | Verified |
+| Vercel edge middleware | `@vercel/functions` | `MERIDIAN_OPERATOR` and `MERIDIAN_CLIENT`, read through `src/org/session.js` to verify the session cookie | `middleware.js` | Verified |
 
-Other env values read in code: `VERCEL` (platform flag, `api/auth/login.js` and `src/server/http.js`), `BRAND_BRAIN_STORE_PATH` and `PORT` (`scripts/dev-server.js` only). Verified.
+Other env values read in code: `VERCEL` (platform flag, `api/auth/login.js`), `BRAND_BRAIN_STORE_PATH` and `PORT` (`scripts/dev-server.js` only). Verified.
+
+Corrected 2026-08-23 in the commit that replaced the shared password with two logins. `BRAND_WORLD_ACCESS_PASSWORD` is gone from the code. The two seed values above are read in `src/org/store.js` to create the account's users on first read, and in `src/org/session.js` to sign and verify the session cookie.
 
 `FIRECRAWL_API_KEY` is read by the code and is absent from `.env.example`. Verified.
 
@@ -285,4 +287,4 @@ All five assert exact strings against output from `src/production/prompt-craft.j
 
 23. **Two-commit deploy, unsettled.** Two observations point opposite ways. Commit `e773ca7` at the fork produced no deployment in 150 seconds and the trigger commit on the same tree deployed, which is what `docs/deferred-work.md` records. Content commit `4e28e1b` on 2026-08-21 fired its own production deployment three seconds ahead of its trigger commit. Assumed until one deliberate test settles it. The rule stands meanwhile.
 24. **Function count is at twelve.** Twelve files under `api/` means twelve serverless functions. Verified by count. The Vercel project is on Pro, Verified by owner statement on 2026-08-21, so the twelve-function Hobby ceiling recorded in `docs/deferred-work.md` is not the limit here.
-25. **The repo still calls itself Brand World System.** `package.json` name, the `brand-world-system` Blob prefix on every stored path, and `BRAND_WORLD_ACCESS_PASSWORD`. None of it blocks the loop mechanically. Recorded because a client reviewer in step 12 reaches a page behind a password named for another product. Reasoned.
+25. **The repo still calls itself Brand World System.** `package.json` name and the `brand-world-system` Blob prefix on every stored path. None of it blocks the loop mechanically. Reasoned. Corrected 2026-08-23 in the commit that replaced the shared password with two logins: the third item in this list, `BRAND_WORLD_ACCESS_PASSWORD`, no longer exists, and the client reviewer now signs in through a page that says Meridian.

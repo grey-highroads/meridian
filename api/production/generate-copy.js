@@ -5,11 +5,13 @@ import { assembleClaimsSet, listSegments } from "../../src/claims/assembly.js";
 import { buildJobScope } from "../../src/scope/resolver.js";
 import { auditCopyAgainstClaims, checkDisclosurePresence } from "../../src/claims/copy-audit.js";
 import { produceCopy, auditProducedCopy } from "../../src/copy/generate.js";
-import { readJsonBody, requireBrandWorldAccess, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { readJsonBody, requireUser, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { OPERATOR_ROLE } from "../../src/org/store.js";
 import { resolveLook } from "../../src/production/looks.js";
 
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response, { role: OPERATOR_ROLE });
+  if (!user) return;
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
     sendJson(response, 405, { error: "This route only generates post copy." });

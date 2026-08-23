@@ -1,8 +1,10 @@
 import { createVercelBlobClientStore } from "../../src/clients/store.js";
-import { readJsonBody, requireBrandWorldAccess, sendJson, sendPublicError } from "../../src/server/http.js";
+import { readJsonBody, requireUser, sendJson, sendPublicError } from "../../src/server/http.js";
+import { OPERATOR_ROLE } from "../../src/org/store.js";
 
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response, { role: OPERATOR_ROLE });
+  if (!user) return;
   try {
     const store = createVercelBlobClientStore();
     if (request.method === "GET") {

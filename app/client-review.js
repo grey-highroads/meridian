@@ -51,8 +51,8 @@ function frame() {
 }
 
 function render() {
-  utility.innerHTML = `<a class="m-shell__nav-link" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">
-      <span class="m-shell__nav-label">Leave this view</span>
+  utility.innerHTML = `<a class="m-shell__nav-link" href="/api/auth/login?signout=1">
+      <span class="m-shell__nav-label">Sign out</span>
     </a>`;
   locationBar.innerHTML = `<span class="m-meta">${escape(String(view.tour.name).toUpperCase())}</span>
     <span class="m-state ${view.approved ? "m-state--approved" : "m-state--current"}">${escape(view.approved ? "Approved" : "Waiting on you")}</span>`;

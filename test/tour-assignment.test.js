@@ -7,6 +7,8 @@ import { parseTour, parseAssignment, parseTourFixture } from "../src/tour/parse-
 import { readTourFixture } from "../api/tour/index.js";
 import { buildProposalRequest, checkProposals } from "../src/tour/propose.js";
 
+const OPERATOR = { id: "operator", login: "ray", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
+
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";
 
@@ -62,7 +64,7 @@ test("a tour with no direction is refused", () => {
 
 test("the assignment context carries the identity's findings and never the other identity's", async () => {
   const { store } = await brainReady();
-  const result = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store });
+  const result = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   const context = result.context;
   assert.equal(context.identity, "main-stage");
   assert.equal(context.counts.inBrain, 80);
@@ -78,7 +80,7 @@ test("the assignment context carries the identity's findings and never the other
 
 test("the context names the direction version it was assembled against", async () => {
   const { store } = await brainReady();
-  const result = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store });
+  const result = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   assert.equal(result.context.directionVersion, result.tour.direction.version);
   assert.equal(result.assignment.directionVersion, result.tour.direction.version);
 });
@@ -87,7 +89,7 @@ test("the tour refuses to work against a brain nobody has approved", async () =>
   const store = createArtistStore({ backend: createMemoryBackend() });
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await assert.rejects(
-    () => tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store }),
+    () => tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR }),
     /Approve this artist's brain before asking it to work on an assignment/,
   );
 });
@@ -95,18 +97,18 @@ test("the tour refuses to work against a brain nobody has approved", async () =>
 test("a tour that does not exist and an assignment that does not exist both fail plainly", async () => {
   const { store } = await brainReady();
   await assert.rejects(
-    () => tourAction({ action: "get-tour", tourId: "no-such-tour" }, { store }),
+    () => tourAction({ action: "get-tour", tourId: "no-such-tour" }, { store, user: OPERATOR }),
     /No tour is stored under that name/,
   );
   await assert.rejects(
-    () => tourAction({ action: "get-assignment", tourId: TOUR, assignmentId: "no-such-assignment" }, { store }),
+    () => tourAction({ action: "get-assignment", tourId: TOUR, assignmentId: "no-such-assignment" }, { store, user: OPERATOR }),
     /That assignment was not found on this tour/,
   );
 });
 
 test("the model is asked for the direction as given, the request as given, and the findings with their ids", async () => {
   const { store } = await brainReady();
-  const { context } = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store });
+  const { context } = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   const request = buildProposalRequest(context);
   const sent = request.messages.map((message) => message.content).join("\n");
   assert.ok(sent.includes(context.direction.words), "the director's words go as given");
@@ -119,7 +121,7 @@ test("the model is asked for the direction as given, the request as given, and t
 
 test("a proposal citing a finding the brain does not hold has that citation dropped", async () => {
   const { store } = await brainReady();
-  const { context } = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store });
+  const { context } = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   const checked = checkProposals({
     appliedFindings: [{ id: "finding-1", why: "It bears on the request." }, { id: "finding-9999", why: "Invented." }],
     proposals: [{
@@ -144,7 +146,7 @@ test("a proposal citing a finding the brain does not hold has that citation drop
 
 test("a reply with no proposals is refused rather than shown", async () => {
   const { store } = await brainReady();
-  const { context } = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store });
+  const { context } = await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   assert.throws(() => checkProposals({ proposals: [] }, context), /returned no concept directions/);
 });
 
@@ -154,7 +156,7 @@ test("proposing concepts with no key configured says so instead of failing obscu
   delete process.env.OPENAI_API_KEY;
   try {
     await assert.rejects(
-      () => tourAction({ action: "propose-concepts", tourId: TOUR, assignmentId: ASSIGNMENT }, { store }),
+      () => tourAction({ action: "propose-concepts", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR }),
       /OPENAI_API_KEY is set on this deployment/,
     );
   } finally {
@@ -165,9 +167,9 @@ test("proposing concepts with no key configured says so instead of failing obscu
 test("nothing the tour does writes to the artist layer", async () => {
   const { backend, store } = await brainReady();
   const before = new Map(backend.files);
-  await tourAction({ action: "get-tour", tourId: TOUR }, { store });
-  await tourAction({ action: "get-assignment", tourId: TOUR, assignmentId: ASSIGNMENT }, { store });
-  await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store });
+  await tourAction({ action: "get-tour", tourId: TOUR }, { store, user: OPERATOR });
+  await tourAction({ action: "get-assignment", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
+  await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   assert.deepEqual([...backend.files.keys()].sort(), [...before.keys()].sort());
   for (const [pathname, body] of backend.files) assert.equal(body, before.get(pathname), `${pathname} changed`);
 });

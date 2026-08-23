@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { parseIntake } from "../../src/artist/parse-intake.js";
 import { applyRulings, createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
-import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { OPERATOR_ROLE } from "../../src/org/store.js";
 
 // The artist layer's one function. New operations arrive as actions here
 // rather than as new files, because the hosting tier caps functions and
@@ -135,7 +136,8 @@ export async function handleAction(body, options = {}) {
 }
 
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response, { role: OPERATOR_ROLE });
+  if (!user) return;
   try {
     if (request.method !== "POST") {
       response.setHeader("Allow", "POST");

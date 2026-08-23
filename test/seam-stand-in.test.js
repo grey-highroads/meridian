@@ -13,6 +13,12 @@ import { artifactPathFor, STAND_IN_LABEL } from "../src/seam/stand-in.js";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+
+// Two people, the way the account holds them. The actor on every fact comes
+// from here and never from a request body.
+const OPERATOR = { id: "operator", login: "ray", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
+const REVIEWER = { id: "client", login: "dana", displayName: "Dana Whitlock", role: "client-reviewer", roleLabel: "Client reviewer" };
+
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";
 const AT = { tourId: TOUR, assignmentId: ASSIGNMENT };
@@ -37,7 +43,8 @@ async function ready() {
   const sceneRecord = createSceneRecord({ backend: tourBackend });
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
-  return { tourBackend, options: { store, tourStore, artboardStore, sceneRecord } };
+  const options = { store, tourStore, artboardStore, sceneRecord, user: OPERATOR };
+  return { tourBackend, options, asClient: { ...options, user: REVIEWER } };
 }
 
 async function frozenBrief(options, at = AT) {
@@ -142,7 +149,7 @@ test("freezing and sending append exactly two facts to the Scene record, in orde
   assert.equal(facts[0].version, "Brief V01");
   assert.equal(facts[1].version, "Brief V01");
   for (const fact of facts) {
-    assert.equal(fact.actor, "Higher Roads");
+    assert.equal(fact.actor, OPERATOR.displayName);
     assert.ok(fact.at, "a fact has no time on it");
   }
 });

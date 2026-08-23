@@ -9,8 +9,6 @@
 // them. Nothing here compares them to anything, scores them, or draws a
 // conclusion. A person reads them and decides.
 
-import { resolveViewer, viewerSwitch } from "./viewing-as.js";
-
 const PARAMS = new URLSearchParams(window.location.search);
 const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 
@@ -326,7 +324,7 @@ function recordSection() {
   const rows = view.facts.map((fact) => `<div class="m-record-grid__item">
       <span class="m-label">${escape(fact.action)}</span>
       <strong>${escape(fact.version || "")}</strong>
-      <span class="m-meta">${escape(String(fact.actor).toUpperCase())} / ${escape(fact.at)}</span>
+      <span class="m-meta">${escape(String(fact.actor).toUpperCase())}${fact.role ? `, ${escape(String(fact.role).toUpperCase())}` : ""} / ${escape(fact.at)}</span>
     </div>`).join("");
   return `<section class="m-work m-stack" aria-labelledby="record-heading">
       <h2 id="record-heading" class="m-section-heading">What happened on this Scene</h2>
@@ -379,10 +377,9 @@ function render() {
     </header>
     ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}`;
   reviewPane.innerHTML = view.artboards.length ? `${stage()}${rail()}` : "";
-  utility.innerHTML = viewerSwitch(resolveViewer(PARAMS.get("as")), {
-    workHref: `./review.html?tour=${TOUR_ID}&scene=${view.sceneId}`,
-    clientHref: `./client-review.html?tour=${TOUR_ID}&scene=${view.sceneId}`,
-  });
+  utility.innerHTML = `<a class="m-shell__nav-link" href="/api/auth/login?signout=1">
+      <span class="m-shell__nav-label">Sign out</span>
+    </a>`;
   detail.innerHTML = `${fromProduction()}${reviewSection()}${feedbackSection()}${sentSection()}${clientSection()}${handoffSection()}${recordSection()}`;
   actionBar();
 }

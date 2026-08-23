@@ -3,10 +3,12 @@ import { createVercelBlobProductStore } from "../../src/products/store.js";
 import { createVercelBlobClaimsStore } from "../../src/claims/store.js";
 import { createVercelBlobRefusalsStore } from "../../src/refusals/store.js";
 import { prepareProductionPackage } from "../../src/production/service.js";
-import { readJsonBody, requireBrandWorldAccess, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { readJsonBody, requireUser, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { OPERATOR_ROLE } from "../../src/org/store.js";
 
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response, { role: OPERATOR_ROLE });
+  if (!user) return;
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
     sendJson(response, 405, { error: "This route only prepares a production package." });

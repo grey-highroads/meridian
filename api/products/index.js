@@ -13,11 +13,12 @@ import {
 } from "../../src/products/service.js";
 import {
   readJsonBody,
-  requireBrandWorldAccess,
+  requireUser,
   resolveClientId,
   sendJson,
   sendPublicError,
 } from "../../src/server/http.js";
+import { OPERATOR_ROLE } from "../../src/org/store.js";
 
 // Single dispatching handler for product records (ADR 0012 step 2). Replaces
 // the throwaway prototype endpoint. Stays at one serverless function to remain
@@ -28,7 +29,8 @@ import {
 // POST { action: "read" }       -> read one full product record
 // POST { action: "approve" }    -> approve a candidate product record
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response, { role: OPERATOR_ROLE });
+  if (!user) return;
   try {
     const clientId = resolveClientId(request);
     const productStore = createVercelBlobProductStore({ clientId });

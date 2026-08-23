@@ -10,7 +10,7 @@ Brand World System is configured to run as one Vercel project while keeping the 
 - Each browser upload uses a short-lived URL limited to that file and the 20 MB application cap. New Vercel projects authorize these URLs with OIDC, while older projects may use `BLOB_READ_WRITE_TOKEN`.
 - The latest Brand Brain is stored in the same private Blob store and read without CDN caching.
 - OpenAI is called only from the server. `OPENAI_API_KEY` is never included in the browser build.
-- One shared installation password protects the hosted workspace. This is an access gate, not a user, role, or permissions system.
+- Two people sign in with their own login and password. Each carries a role, Higher Roads or client reviewer, and the role decides which pages load and which actions run.
 - Synthesis functions can run for up to 300 seconds, the current Hobby-plan maximum with Fluid compute.
 
 ## One-time Vercel setup
@@ -21,9 +21,10 @@ Brand World System is configured to run as one Vercel project while keeping the 
 4. Open **Settings → Environment Variables** and add:
    - `OPENAI_API_KEY`: the OpenAI project key for this installation
    - `OPENAI_MODEL`: `gpt-5.6` (optional because this is already the application default)
-   - `BRAND_WORLD_ACCESS_PASSWORD`: a strong password for this installation
+   - `MERIDIAN_OPERATOR`: the Higher Roads person, as `login:password:display name`
+   - `MERIDIAN_CLIENT`: the client reviewer, as `login:password:display name`
 5. Apply the variables to Production and Preview, then redeploy if Vercel asks.
-6. Open the deployment. The browser sign-in uses username `brandworld` and the password set above.
+6. Open the deployment. Sign in with one of the two logins set above. The two people are written into storage the first time anyone signs in, and changing either value afterwards changes the environment value and not the stored person.
 
 Do not add real values to `.env.example`, Git, client-side code, or Vite variables beginning with `VITE_`.
 
@@ -60,7 +61,7 @@ The file is ignored by Git.
 
 ## Failure guide
 
-- **“This Brand World installation still needs its access password configured.”** Add `BRAND_WORLD_ACCESS_PASSWORD` and redeploy.
+- **“Meridian needs both of its sign in values set before anyone can sign in.”** Add `MERIDIAN_OPERATOR` and `MERIDIAN_CLIENT` and redeploy.
 - **Blob authentication or upload error.** Confirm the private Blob store is connected to this project, then redeploy. New connections use automatic OIDC authentication and do not need a manually created `BLOB_READ_WRITE_TOKEN`; older connections may still use that variable.
 - **Upload fails before synthesis.** Confirm the Blob store is private and connected to the same Vercel project and environment.
 - **Synthesis reports that OpenAI is not configured.** Add `OPENAI_API_KEY` to that deployment environment and redeploy.

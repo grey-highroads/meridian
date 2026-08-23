@@ -1,59 +1,53 @@
 import { next } from "@vercel/functions";
+import { readCookie, readSession, SESSION_COOKIE, sessionSecret } from "./src/org/session.js";
+import { CLIENT_ROLE } from "./src/org/roles.js";
 
-const SESSION_COOKIE = "bws_session";
+// The front door. It decides which pages load for whoever is at the browser.
+// What a person may change is decided in the route handlers, by the role read
+// from storage, because a page that hides a button is a page.
+//
+// A client reviewer lands on their review and reaches nothing else. Everything
+// else in Meridian is Higher Roads work and says so in plain words rather than
+// pretending the page is missing.
 
-function authorized(request, password) {
-  const header = request.headers.get("authorization") || "";
-  if (header.startsWith("Basic ")) {
-    try {
-      const decoded = atob(header.slice(6));
-      const separator = decoded.indexOf(":");
-      if (separator !== -1 && decoded.slice(0, separator) === "brandworld" && decoded.slice(separator + 1) === password) {
-        return true;
-      }
-    } catch {}
-  }
-  const cookies = request.headers.get("cookie") || "";
-  const match = cookies.split(";").map(c => c.trim()).find(c => c.startsWith(SESSION_COOKIE + "="));
-  if (match) {
-    const token = match.slice(SESSION_COOKIE.length + 1);
-    try {
-      const decoded = atob(token);
-      return decoded === "brandworld:" + password;
-    } catch {}
-  }
-  return false;
-}
-
-// Paths that load without any authentication.
 const PUBLIC_PATHS = new Set(["/landing.html", "/api/blob/upload", "/api/auth/login"]);
 
-export default function middleware(request) {
+const CLIENT_PATHS = new Set(["/client-review.html", "/client-review.js", "/api/tour"]);
+
+const CLIENT_HOME = "/client-review.html";
+
+function isPage(pathname) {
+  return pathname === "/" || pathname.endsWith(".html");
+}
+
+function clientMayLoad(pathname) {
+  if (CLIENT_PATHS.has(pathname)) return true;
+  return pathname.startsWith("/design/") || pathname.startsWith("/assets/");
+}
+
+function plain(message, status) {
+  return new Response(message, {
+    status,
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
+
+export default async function middleware(request) {
   const pathname = new URL(request.url).pathname;
   if (PUBLIC_PATHS.has(pathname)) return next();
 
-  const password = process.env.BRAND_WORLD_ACCESS_PASSWORD;
-  if (!password) {
-    return new Response("This Brand World installation still needs its access password configured.", {
-      status: 503,
-      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
-    });
+  const claim = await readSession(readCookie(request.headers.get("cookie") || "", SESSION_COOKIE), sessionSecret());
+  if (!claim) {
+    if (isPage(pathname)) return Response.redirect(new URL("/landing.html", request.url), 302);
+    return plain("Sign in to Meridian to continue.", 401);
   }
 
-  if (authorized(request, password)) return next();
-
-  // Unauthenticated visitors hitting the root get the landing page.
-  if (pathname === "/" || pathname === "/index.html" || pathname === "/bws.html") {
-    return Response.redirect(new URL("/landing.html", request.url), 302);
+  if (claim.role === CLIENT_ROLE && !clientMayLoad(pathname)) {
+    if (pathname === "/" || pathname === "/index.html") {
+      return Response.redirect(new URL(CLIENT_HOME, request.url), 302);
+    }
+    return plain("That part of Meridian is for the Higher Roads team. Your review is at " + CLIENT_HOME + ".", 403);
   }
 
-  // Everything else gets a 401 with Basic Auth challenge (preserves API/CLI access).
-  return new Response("Enter the Brand World installation password to continue.", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="Brand World System", charset="UTF-8"',
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
-  });
+  return next();
 }

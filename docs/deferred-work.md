@@ -279,7 +279,7 @@ The larger design answer is ADR 0016: declared influences reach every render aut
 
 Recorded for completeness. These are not this workstream's to fix.
 
-- **`resolveClientId` is a security placeholder.** Every API route resolves the client from a cookie with no session validation. ADR 0011 names the shared-password gate as a known deficiency with a planned replacement. Jim's authentication slice.
+- **`resolveClientId` still takes the client from the request.** The inherited Brand World routes resolve which client's data to load from a header or cookie, and the session is not consulted. As of 2026-08-23 those routes are reachable only by a Higher Roads session, so no client reviewer passes through here, and the pilot has one account. Closing it means the session deciding which accounts a caller may load, and it belongs with the Brand World routes that read it.
 - **Deterministic composition is specified and not implemented.** The glossary states that a locked asset should never be regenerated when it can be composed deterministically. The live path sends protected assets through the OpenAI edits endpoint, which is model-based placement. This one matters commercially, because "your logo is placed, never redrawn" is the natural thing to say and the implementation does not currently guarantee it.
 - **The 12-function Vercel Hobby ceiling.** Held so far by dispatching new operations through existing handlers. A new serverless function requires freeing a slot or moving to Pro.
 
@@ -329,17 +329,21 @@ A replacement should measure whether every compiled statement is a physical fact
 
 Recorded 2026-08-21 at the Meridian fork, from the tree at BWS `b11e994`. The code reads three different OpenAI models. Brain synthesis (`src/brand-brain/chat-completions-provider.js`) and products (`src/products/service.js`) default to `gpt-5.6` when `OPENAI_MODEL` is unset. Copy generation (`src/copy/generate.js`, `src/claims/copy-audit.js`, `api/production/generate-copy.js`) is hard-coded to `gpt-4o`. Image rendering (`src/renderers/openai-images.js`, `src/production/composite.js`) is hard-coded to `gpt-image-2`. One environment value does not govern all three. `OPENAI_MODEL` is left unset on the Meridian deployment so the brain uses `gpt-5.6`. Decide in step 2 which of these paths survive before consolidating the setting.
 
-## The viewing switch stands in for signing in
+## The session key comes from the two sign in values
 
-The shell on the review screen carries a switch reading Higher Roads and Client reviewer. There is no login, so this is how a person moves between the two sides of the work. It changes what a page shows and nothing that is stored: no action reads an actor from the request, and both approvals write a constant.
+Recorded 2026-08-23 when the shared password was replaced. The session cookie is signed with a key derived from `MERIDIAN_OPERATOR` and `MERIDIAN_CLIENT`, which is what the deployment already holds. Nothing extra to set, nothing extra to keep in step, and changing a password ends every session signed under the old one.
 
-Recorded 2026-08-22. Deleted at roadmap step 4, when login supplies the actor and the two sides are two people rather than one person with a toggle. Delete the switch, `app/viewing-as.js`, and the `as` parameter on the review screen at the same time.
+What it costs: a session cannot be ended without changing a password, and the key is only as good as the two passwords behind it.
 
-## The Scene record has one actor until people can log in
+Bring it back when: a client organization signs in rather than the one reviewer in the pilot, or someone needs to sign every session out without changing a password. At that point the key is its own value on the deployment and this file is one line different.
 
-Every fact on the Scene record carries Higher Roads as the actor. The app has one shared password and one login, so there is no identity to write down, and a fact naming a person the system cannot stand behind would be worse than one that names the company. The record's shape already holds an actor per fact, so nothing has to be rebuilt.
+## People are changed by changing the deployment
 
-Recorded 2026-08-22 when the Scene record landed. Bring it back when: roadmap step 4 replaces the shared password with real logins for the two user types. At that point the actor comes from the person doing the work, and the facts already written keep saying Higher Roads, because a record that is rewritten to look better answers a different question than the one a tour team needs answered.
+Recorded 2026-08-23. Two people exist, seeded once from two environment values. There is no signup, no invite, no password change, no third person, and no screen that adds one. Higher Roads operates Meridian for the client and the pilot has one reviewer.
+
+Changing a seed value after the first sign in changes the environment and not the stored person, because the users are written once and read after that. Replacing a person today means writing the users document.
+
+Bring it back when: a second reviewer needs access, or a person has to change their own password. The account and user shape already holds both, so this is a screen and a write rather than a rebuild.
 
 ## The mechanical check between artboard assumptions and the playback line
 

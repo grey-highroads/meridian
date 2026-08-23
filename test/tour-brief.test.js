@@ -7,6 +7,12 @@ import { createTourStore, tourPathFor } from "../src/tour/store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { carriesOurWords, compileBrief, directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
 
+
+// Two people, the way the account holds them. The actor on every fact comes
+// from here and never from a request body.
+const OPERATOR = { id: "operator", login: "ray", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
+const REVIEWER = { id: "client", login: "dana", displayName: "Dana Whitlock", role: "client-reviewer", roleLabel: "Client reviewer" };
+
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";
 const AT = { tourId: TOUR, assignmentId: ASSIGNMENT };
@@ -33,7 +39,8 @@ async function ready() {
   // Freezing writes one fact to the Scene record, so the record shares the
   // tour's backend here and every effect lands in one place the test can read.
   const sceneRecord = createSceneRecord({ backend: tourBackend });
-  return { artistBackend, tourBackend, options: { store, tourStore, sceneRecord } };
+  const options = { store, tourStore, sceneRecord, user: OPERATOR };
+  return { artistBackend, tourBackend, options, asClient: { ...options, user: REVIEWER } };
 }
 
 async function withConcept(options, extra = {}) {
@@ -55,7 +62,9 @@ test("a concept needs a title and an idea", async () => {
 test("a chosen concept records who shaped it and what it came from", async () => {
   const { options } = await ready();
   const { concept } = await withConcept(options);
-  assert.equal(concept.shapedBy, "Grey");
+  // The request body names Grey. The session names the operator, and the
+  // session is what reaches storage.
+  assert.equal(concept.shapedBy, OPERATOR.displayName);
   assert.ok(concept.shapedAt);
   // Intent, interpretation, and decision stay separate: what the brain proposed
   // is kept next to what the person made of it.
@@ -178,7 +187,7 @@ test("the Scene direction records what was marked and who marked it", async () =
   const { options } = await ready();
   const { concept } = await withConcept(options, { directionParagraphs: [0, 2] });
   assert.deepEqual(concept.directionParagraphs, [0, 2]);
-  assert.equal(concept.directionSelectedBy, "Grey");
+  assert.equal(concept.directionSelectedBy, OPERATOR.displayName);
   assert.ok(concept.directionSelectedAt);
   const read = await tourAction({ action: "get-concept", ...AT }, options);
   assert.deepEqual(read.concept.directionParagraphs, [0, 2]);
@@ -220,7 +229,7 @@ test("freezing stores the version, and a frozen version is never rewritten", asy
   await withConcept(options);
   const frozen = await tourAction({ action: "freeze-brief", ...AT, person: "Grey" }, options);
   assert.equal(frozen.brief.status, "frozen");
-  assert.equal(frozen.brief.frozenBy, "Grey");
+  assert.equal(frozen.brief.frozenBy, OPERATOR.displayName);
   assert.ok(frozen.brief.frozenAt);
 
   const stored = new Map(tourBackend.files);

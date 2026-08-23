@@ -9,16 +9,13 @@ import { tourPathFor } from "./store.js";
 // team needs answered. Memory in the pilot is facts and nothing else. Nothing
 // in this file interprets, scores, or draws a conclusion.
 //
-// Until step 4 supplies real identities the actor on every fact is Higher
-// Roads, since the app has one shared login and a name it cannot stand behind
-// would be worse than a name it can. Recorded in docs/deferred-work.md.
+// The actor comes from the signed session and carries the person's name and
+// the role they were carrying at the time. Facts written before people could
+// sign in name Higher Roads and keep naming it, because a record rewritten to
+// look better answers a different question than the one a tour team needs
+// answered.
 
 export const RECORD_ACTOR = "Higher Roads";
-
-// The client's side of the record. Also a stand-in until step 4, and also a
-// constant rather than anything the request can set, so the viewing switch on
-// the pages cannot put a different name on an approval.
-export const CLIENT_ACTOR = "Client reviewer";
 
 export { createBlobBackend, createMemoryBackend };
 
@@ -43,6 +40,7 @@ export function createSceneRecord(options = {}) {
       const facts = await readAll(tourId, assignmentId);
       const entry = {
         actor: fact.actor || RECORD_ACTOR,
+        role: fact.role || null,
         action: String(fact.action || "").trim(),
         version: fact.version || null,
         at: fact.at || new Date().toISOString(),

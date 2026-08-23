@@ -1,4 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
+import { readCookie, readSession, SESSION_COOKIE, sessionSecret } from "../org/session.js";
+import { createOrgStore } from "../org/store.js";
 
 export function sendJson(response, status, body) {
   response.statusCode = status;
@@ -44,46 +45,37 @@ export async function readJsonBody(request, limit = 4 * 1024 * 1024) {
   }
 }
 
-function sameValue(left, right) {
-  const leftBytes = Buffer.from(left);
-  const rightBytes = Buffer.from(right);
-  return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
+// Who is making this request. The cookie is verified first, then the user is
+// read from storage by the id it carries. The stored role is the one that
+// decides anything, so a cookie that survived a signature check still cannot
+// name a role its user does not have.
+export async function readSessionUser(request, options = {}) {
+  const secret = options.secret || sessionSecret();
+  const claim = await readSession(readCookie(request.headers.cookie || "", SESSION_COOKIE), secret);
+  if (!claim) return null;
+  const store = options.orgStore || createOrgStore(options);
+  return await store.findUser(claim.userId);
 }
 
-const SESSION_COOKIE = "bws_session";
-
-export function hasBrandWorldAccess(request, password = process.env.BRAND_WORLD_ACCESS_PASSWORD) {
-  if (!password) return !process.env.VERCEL;
-  const authorization = request.headers.authorization || "";
-  if (authorization.startsWith("Basic ")) {
-    try {
-      const decoded = Buffer.from(authorization.slice(6), "base64").toString("utf8");
-      const separator = decoded.indexOf(":");
-      if (separator !== -1 && sameValue(decoded.slice(0, separator), "brandworld") && sameValue(decoded.slice(separator + 1), password)) {
-        return true;
-      }
-    } catch {}
+// The gate on every route. No session and a session that does not resolve to a
+// person both stop here.
+export async function requireUser(request, response, options = {}) {
+  let user = null;
+  try {
+    user = await readSessionUser(request, options);
+  } catch (error) {
+    sendPublicError(response, error);
+    return null;
   }
-  const cookies = request.headers.cookie || "";
-  const match = cookies.split(";").map(c => c.trim()).find(c => c.startsWith(SESSION_COOKIE + "="));
-  if (match) {
-    try {
-      const decoded = Buffer.from(match.slice(SESSION_COOKIE.length + 1), "base64").toString("utf8");
-      if (decoded === "brandworld:" + password) return true;
-    } catch {}
+  if (!user) {
+    sendJson(response, 401, { error: "Sign in to Meridian to continue." });
+    return null;
   }
-  return false;
-}
-
-export function requireBrandWorldAccess(request, response) {
-  if (!process.env.BRAND_WORLD_ACCESS_PASSWORD && process.env.VERCEL) {
-    sendJson(response, 503, { error: "This Brand World installation still needs its access password configured." });
-    return false;
+  if (options.role && user.role !== options.role) {
+    sendJson(response, 403, { error: "That part of Meridian is for the Higher Roads team." });
+    return null;
   }
-  if (hasBrandWorldAccess(request)) return true;
-  response.setHeader("WWW-Authenticate", 'Basic realm="Brand World System", charset="UTF-8"');
-  sendJson(response, 401, { error: "Enter the Brand World installation password to continue." });
-  return false;
+  return user;
 }
 
 export function sendPublicError(response, error) {
@@ -93,13 +85,13 @@ export function sendPublicError(response, error) {
   sendJson(response, status, { error: message });
 }
 
-// PROTOTYPE ONLY. The active client id is taken from the request and is NOT
-// validated against the caller's identity, because the shared-password gate
-// cannot express per-user client access (ADR 0011). When real authentication
-// lands, the session must determine which clients a caller may load and this
-// function must reject any id outside that set. Do not ship real auth without
-// closing this seam. The id becomes a Blob path segment, so it is sanitized to
-// a safe character set to prevent path traversal.
+// PROTOTYPE ONLY. The active client id is taken from the request and is not
+// checked against the caller's account. It is read by the inherited Brand World
+// routes, which only a Higher Roads session can reach, so no client reviewer
+// passes through here. Closing it means the session deciding which accounts a
+// caller may load. Recorded in docs/deferred-work.md. The id becomes a Blob
+// path segment, so it is sanitized to a safe character set to prevent path
+// traversal.
 export function resolveClientId(request) {
   const header = request.headers["x-client-id"];
   if (typeof header === "string" && header.trim()) return sanitizeClientId(header);

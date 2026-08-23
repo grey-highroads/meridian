@@ -9,9 +9,14 @@ import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore } from "../src/tour/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
-import { resolveViewer, viewerLabel, viewerSwitch } from "../app/viewing-as.js";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+
+// Two people, the way the account holds them. The actor on every fact comes
+// from here and never from a request body.
+const OPERATOR = { id: "operator", login: "ray", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
+const REVIEWER = { id: "client", login: "dana", displayName: "Dana Whitlock", role: "client-reviewer", roleLabel: "Client reviewer" };
 
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";
@@ -34,7 +39,8 @@ async function ready() {
   const sceneRecord = createSceneRecord({ backend: tourBackend });
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
-  return { tourBackend, options: { store, tourStore, artboardStore, sceneRecord } };
+  const options = { store, tourStore, artboardStore, sceneRecord, user: OPERATOR };
+  return { tourBackend, options, asClient: { ...options, user: REVIEWER } };
 }
 
 // Up to version 2, which is where phase two starts.
@@ -71,11 +77,11 @@ test("the client cannot approve a version that was never sent to them, and nothi
 });
 
 test("clearing version 2 then a client approval writes one intent carrying version 2 and the playback line", async () => {
-  const { options } = await ready();
+  const { options, asClient } = await ready();
   await atVersionTwo(options);
 
   await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 2 }, options);
-  await tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, options);
+  await tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, asClient);
 
   const state = await tourAction({ action: "get-production-intent", ...AT }, options);
   assert.equal(state.intents.length, 1);
@@ -83,7 +89,7 @@ test("clearing version 2 then a client approval writes one intent carrying versi
   assert.equal(intent.artboardVersion, 2);
   assert.equal(intent.briefVersion, 1);
   assert.equal(intent.jobId, `${TOUR}--${ASSIGNMENT}`);
-  assert.equal(intent.approvedBy, "Client reviewer");
+  assert.equal(intent.approvedBy, REVIEWER.displayName);
   assert.ok(intent.approvedAt);
 
   const tour = await tourAction({ action: "get-tour", ...AT }, options);
@@ -91,8 +97,8 @@ test("clearing version 2 then a client approval writes one intent carrying versi
   assert.ok(intent.technicalProfileRef, "the playback line did not reach the intent");
 
   // Two authorities, recorded apart.
-  assert.equal(state.readyForClient[0].approvedBy, "Higher Roads");
-  assert.equal(state.clientApprovals[0].approvedBy, "Client reviewer");
+  assert.equal(state.readyForClient[0].approvedBy, OPERATOR.displayName);
+  assert.equal(state.clientApprovals[0].approvedBy, REVIEWER.displayName);
 });
 
 test("a second client approval on the same version is refused", async () => {
@@ -168,36 +174,47 @@ test("the client review page says nothing internal to the person reading it", ()
   assert.ok(!copy.includes("\u2014"), "the client page carries an em dash");
 });
 
-test("the viewing switch changes the page and never reaches storage", async () => {
-  assert.equal(resolveViewer("client"), "client");
-  assert.equal(resolveViewer("anything else"), "higherRoads");
-  assert.equal(viewerLabel("client"), "Client reviewer");
+test("a client session is refused everywhere but their own review, and stores nothing", async () => {
+  const { tourBackend, options, asClient } = await ready();
+  await atVersionTwo(options);
+  const before = tourBackend.files.get(APPROVALS_PATH);
 
-  const hrefs = { workHref: "./review.html", clientHref: "./client-review.html" };
-  const asWork = viewerSwitch("higherRoads", hrefs);
-  const asClient = viewerSwitch("client", hrefs);
-  assert.notEqual(asWork, asClient, "the switch renders the same either way");
-  assert.match(asWork, /aria-pressed="true">Higher Roads/);
-  assert.match(asClient, /aria-pressed="true">Client reviewer/);
+  for (const action of ["save-review", "send-revision", "approve-for-client", "send-brief", "freeze-brief", "choose-concept"]) {
+    await assert.rejects(
+      () => tourAction({ action, ...AT, artboardVersion: 2, sourceArtboardVersion: 2, revisionId: "r-1" }, asClient),
+      (error) => error.status === 403,
+      `a client session reached ${action}`,
+    );
+  }
+  assert.equal(tourBackend.files.get(APPROVALS_PATH), before, "a refused client session changed storage");
 
-  // No action takes an actor from the request. A body that tries to name one
-  // stores the constant anyway, so the switch cannot rewrite an approval.
-  const { tourBackend, options } = await ready();
+  // No session at all is refused the same way, including on a read.
+  for (const action of ["get-tour", "approve-for-client"]) {
+    await assert.rejects(
+      () => tourAction({ action, ...AT, artboardVersion: 2 }, { ...options, user: null }),
+      (error) => error.status === 401,
+      `an unsigned request reached ${action}`,
+    );
+  }
+});
+
+test("the actor on an approval comes from the session and never from the request", async () => {
+  const { tourBackend, options, asClient } = await ready();
   await atVersionTwo(options);
   await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 2, person: "Someone else" }, options);
   const cleared = tourBackend.files.get(APPROVALS_PATH);
-  await tourAction({ action: "client-approve", ...AT, artboardVersion: 2, person: "Someone else", actor: "Someone else" }, options);
+  await tourAction({ action: "client-approve", ...AT, artboardVersion: 2, person: "Someone else", actor: "Someone else" }, asClient);
 
   const state = await tourAction({ action: "get-production-intent", ...AT }, options);
-  assert.equal(state.readyForClient[0].approvedBy, "Higher Roads");
-  assert.equal(state.clientApprovals[0].approvedBy, "Client reviewer");
-  assert.equal(state.intents[0].approvedBy, "Client reviewer");
-  assert.ok(cleared.includes("Higher Roads"));
+  assert.equal(state.readyForClient[0].approvedBy, OPERATOR.displayName);
+  assert.equal(state.clientApprovals[0].approvedBy, REVIEWER.displayName);
+  assert.equal(state.intents[0].approvedBy, REVIEWER.displayName);
+  assert.ok(cleared.includes(OPERATOR.displayName));
   assert.ok(!cleared.includes("Someone else"), "a name from the request reached storage");
 });
 
 test("each end of loop action appends exactly one fact", async () => {
-  const { options } = await ready();
+  const { options, asClient } = await ready();
   await atVersionTwo(options);
   const start = (await tourAction({ action: "get-scene-record", ...AT }, options)).facts.length;
 
@@ -205,19 +222,21 @@ test("each end of loop action appends exactly one fact", async () => {
   let facts = (await tourAction({ action: "get-scene-record", ...AT }, options)).facts;
   assert.equal(facts.length, start + 1);
   assert.equal(facts[facts.length - 1].action, "Approved for the client to see");
-  assert.equal(facts[facts.length - 1].actor, "Higher Roads");
+  assert.equal(facts[facts.length - 1].actor, OPERATOR.displayName);
+  assert.equal(facts[facts.length - 1].role, "Higher Roads");
 
-  await tourAction({ action: "client-comment", ...AT, artboardVersion: 2, text: "The break reads well." }, options);
+  await tourAction({ action: "client-comment", ...AT, artboardVersion: 2, text: "The break reads well." }, asClient);
   facts = (await tourAction({ action: "get-scene-record", ...AT }, options)).facts;
   assert.equal(facts.length, start + 2);
   assert.equal(facts[facts.length - 1].action, "Left a comment");
-  assert.equal(facts[facts.length - 1].actor, "Client reviewer");
+  assert.equal(facts[facts.length - 1].actor, REVIEWER.displayName);
+  assert.equal(facts[facts.length - 1].role, "Client reviewer");
 
-  await tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, options);
+  await tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, asClient);
   facts = (await tourAction({ action: "get-scene-record", ...AT }, options)).facts;
   assert.equal(facts.length, start + 3);
   assert.equal(facts[facts.length - 1].action, "Approved the work");
-  assert.equal(facts[facts.length - 1].actor, "Client reviewer");
+  assert.equal(facts[facts.length - 1].actor, REVIEWER.displayName);
   assert.equal(facts[facts.length - 1].version, "Artboard V02");
   for (const fact of facts) assert.ok(fact.at);
 });

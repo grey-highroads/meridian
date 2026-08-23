@@ -7,10 +7,11 @@ import { createTourStore } from "../../src/tour/store.js";
 import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
-import { createSceneRecord, CLIENT_ACTOR, RECORD_ACTOR } from "../../src/tour/scene-record.js";
+import { createSceneRecord } from "../../src/tour/scene-record.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView } from "../../src/artist/service.js";
-import { readJsonBody, requireBrandWorldAccess, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { CLIENT_ROLE } from "../../src/org/store.js";
 
 // The tour layer's one function. Actions: get-tour, get-assignment,
 // assignment-context, propose-concepts, choose-concept, get-concept,
@@ -133,8 +134,7 @@ function instructionList(value) {
 }
 
 // Everything at the end of the loop is about one artboard version, so they all
-// resolve the same way. Nothing here reads an actor from the request. The
-// viewing switch on the pages is a stand-in and never reaches storage.
+// resolve the same way.
 async function atArtboard(body, options) {
   const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
   const assignment = findAssignment(fixture, body.assignmentId);
@@ -152,7 +152,45 @@ async function atArtboard(body, options) {
   return { fixture, assignment, tourStore, artboardStore, record, entry, wanted };
 }
 
+// What a client reviewer may do. Their page shows the work, the version, the
+// line saying what it is going for, and two controls, so these are the reads
+// behind that page and the two things they can send. Everything else on this
+// route is Higher Roads work.
+//
+// The check is here rather than on the page, because a page that hides a
+// button is a page, and this route is what storage listens to.
+const CLIENT_ACTIONS = new Set([
+  "get-tour",
+  "get-assignment",
+  "get-artboards",
+  "get-artboard-artifact",
+  "get-brief",
+  "get-production-intent",
+  "client-approve",
+  "client-comment",
+]);
+
+// Who is doing this. It comes from the signed session and never from the
+// request body, so a name in a payload cannot put itself on an approval.
+function signedIn(options) {
+  const user = options.user;
+  if (!user || !user.displayName || !user.role) {
+    const error = new Error("Sign in to Meridian to continue.");
+    error.status = 401;
+    throw error;
+  }
+  if (user.role === CLIENT_ROLE && !CLIENT_ACTIONS.has(String(options.action || ""))) {
+    const error = new Error("That part of Meridian is for the Higher Roads team.");
+    error.status = 403;
+    throw error;
+  }
+  return user;
+}
+
 export async function handleAction(body, options = {}) {
+  const user = signedIn({ ...options, action: body.action });
+  const actor = { actor: user.displayName, role: user.roleLabel };
+
   if (body.action === "get-tour") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     return {
@@ -218,9 +256,9 @@ export async function handleAction(body, options = {}) {
             .map((entry) => Number(entry))
             .filter((entry) => Number.isInteger(entry) && entry >= 0)
         : [],
-      directionSelectedBy: body.person || "Higher Roads",
+      directionSelectedBy: user.displayName,
       directionSelectedAt: new Date().toISOString(),
-      shapedBy: body.person || "Higher Roads",
+      shapedBy: user.displayName,
       shapedAt: new Date().toISOString(),
     };
     return { concept: await tourStore.writeConcept(fixture.tour.id, assignment.id, concept) };
@@ -261,11 +299,11 @@ export async function handleAction(body, options = {}) {
       artistId: fixture.tour.artistId,
       briefVersion: nextBriefVersion(versions),
     });
-    const frozen = freeze(compiled, body.person);
+    const frozen = freeze(compiled, user.displayName);
     await tourStore.addBrief(fixture.tour.id, assignment.id, frozen);
     const record = options.sceneRecord || createSceneRecord();
     await record.appendFact(fixture.tour.id, assignment.id, {
-      actor: RECORD_ACTOR,
+      ...actor,
       action: "Froze the brief",
       version: `Brief V0${frozen.briefVersion}`,
     });
@@ -338,7 +376,7 @@ export async function handleAction(body, options = {}) {
     const entry = { receipt: produced.receipt, artboard: produced.artboard };
     await artboardStore.addArtboard(fixture.tour.id, assignment.id, entry, produced.artifactBody);
     await record.appendFact(fixture.tour.id, assignment.id, {
-      actor: RECORD_ACTOR,
+      ...actor,
       action: "Sent the brief to production",
       version: `Brief V0${brief.briefVersion}`,
     });
@@ -405,12 +443,12 @@ export async function handleAction(body, options = {}) {
       briefVersion: entry.artboard.briefVersion,
       departures,
       technicalItems,
-      writtenBy: RECORD_ACTOR,
+      writtenBy: user.displayName,
       writtenAt: new Date().toISOString(),
     };
     await artboardStore.addReview(fixture.tour.id, assignment.id, review);
     await record.appendFact(fixture.tour.id, assignment.id, {
-      actor: RECORD_ACTOR,
+      ...actor,
       action: "Wrote the review",
       version: `Artboard V0${wanted}`,
     });
@@ -467,7 +505,7 @@ export async function handleAction(body, options = {}) {
       sourceArtboardVersion: source,
       instructions,
       preserve: textList(body.preserve),
-      sentBy: RECORD_ACTOR,
+      sentBy: user.displayName,
       sentAt: new Date().toISOString(),
     };
     const produced = receiveRevision(brief, revision, { artboardVersion: source + 1 });
@@ -483,7 +521,7 @@ export async function handleAction(body, options = {}) {
       producedArtboardVersion: produced.artboard.artboardVersion,
     });
     await record.appendFact(fixture.tour.id, assignment.id, {
-      actor: RECORD_ACTOR,
+      ...actor,
       action: "Requested internal changes",
       version: `Artboard V0${source}`,
     });
@@ -512,7 +550,7 @@ export async function handleAction(body, options = {}) {
     const cleared = {
       artboardVersion: wanted,
       briefVersion: entry.artboard.briefVersion,
-      approvedBy: RECORD_ACTOR,
+      approvedBy: user.displayName,
       approvedAt: new Date().toISOString(),
     };
     await artboardStore.writeApprovals(fixture.tour.id, assignment.id, {
@@ -520,7 +558,7 @@ export async function handleAction(body, options = {}) {
       readyForClient: [...approvals.readyForClient, cleared],
     });
     await record.appendFact(fixture.tour.id, assignment.id, {
-      actor: RECORD_ACTOR,
+      ...actor,
       action: "Approved for the client to see",
       version: `Artboard V0${wanted}`,
     });
@@ -541,7 +579,7 @@ export async function handleAction(body, options = {}) {
     }
     const approval = {
       artboardVersion: wanted,
-      approvedBy: CLIENT_ACTOR,
+      approvedBy: user.displayName,
       approvedAt: new Date().toISOString(),
     };
     const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
@@ -557,7 +595,7 @@ export async function handleAction(body, options = {}) {
       briefVersion: entry.artboard.briefVersion,
       artboardVersion: wanted,
       technicalProfileRef: (brief.technicalTarget || {}).playbackSystem || null,
-      approvedBy: CLIENT_ACTOR,
+      approvedBy: user.displayName,
       approvedAt: approval.approvedAt,
     });
     await artboardStore.writeApprovals(fixture.tour.id, assignment.id, {
@@ -565,7 +603,7 @@ export async function handleAction(body, options = {}) {
       clientApprovals: [...approvals.clientApprovals, approval],
     });
     await record.appendFact(fixture.tour.id, assignment.id, {
-      actor: CLIENT_ACTOR,
+      ...actor,
       action: "Approved the work",
       version: `Artboard V0${wanted}`,
     });
@@ -585,13 +623,13 @@ export async function handleAction(body, options = {}) {
       error.status = 409;
       throw error;
     }
-    const comment = { artboardVersion: wanted, text, writtenBy: CLIENT_ACTOR, writtenAt: new Date().toISOString() };
+    const comment = { artboardVersion: wanted, text, writtenBy: user.displayName, writtenAt: new Date().toISOString() };
     await artboardStore.writeApprovals(fixture.tour.id, assignment.id, {
       ...approvals,
       comments: [...approvals.comments, comment],
     });
     await record.appendFact(fixture.tour.id, assignment.id, {
-      actor: CLIENT_ACTOR,
+      ...actor,
       action: "Left a comment",
       version: `Artboard V0${wanted}`,
     });
@@ -617,7 +655,8 @@ export async function handleAction(body, options = {}) {
 }
 
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response);
+  if (!user) return;
   try {
     if (request.method !== "POST") {
       response.setHeader("Allow", "POST");
@@ -625,7 +664,7 @@ export default async function handler(request, response) {
       return;
     }
     const body = await readJsonBody(request);
-    sendJson(response, 200, await handleAction(body));
+    sendJson(response, 200, await handleAction(body, { user }));
   } catch (error) {
     sendPublicError(response, error);
   }

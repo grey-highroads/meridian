@@ -1,5 +1,6 @@
 import { createVercelBlobProductionStore } from "../../src/production/store.js";
-import { readJsonBody, requireBrandWorldAccess, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { readJsonBody, requireUser, resolveClientId, sendJson, sendPublicError } from "../../src/server/http.js";
+import { OPERATOR_ROLE } from "../../src/org/store.js";
 
 const MAX_OUTPUTS = 200;
 // Signing is per-image work. Only the most recent outputs are ever shown as
@@ -7,7 +8,8 @@ const MAX_OUTPUTS = 200;
 const MAX_SIGNED_IMAGES = 60;
 
 export default async function handler(request, response) {
-  if (!requireBrandWorldAccess(request, response)) return;
+  const user = await requireUser(request, response, { role: OPERATOR_ROLE });
+  if (!user) return;
   const clientId = resolveClientId(request);
   const store = createVercelBlobProductionStore({ clientId });
 

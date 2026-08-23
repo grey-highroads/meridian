@@ -1,40 +1,50 @@
-import { readJsonBody, sendJson } from "../../src/server/http.js";
+import { createOrgStore } from "../../src/org/store.js";
+import { sessionCookie, sessionSecret, signSession } from "../../src/org/session.js";
+import { readJsonBody, sendJson, sendPublicError } from "../../src/server/http.js";
 
-const SESSION_COOKIE = "bws_session";
+// Signing in and signing out. Two ends of the same thing, so they sit on one
+// route rather than adding a second function to the deployment.
+//
+// A POST with a login and a password sets the session cookie. A GET with
+// signout on it clears the cookie and sends the person back to the front door.
 
 export default async function handler(request, response) {
-  if (request.method !== "POST") {
-    response.setHeader("Allow", "POST");
-    sendJson(response, 405, { ok: false, error: "method_not_allowed" });
-    return;
-  }
-
-  const expected = process.env.BRAND_WORLD_ACCESS_PASSWORD;
-  if (!expected) {
-    sendJson(response, 503, { ok: false, error: "not_configured" });
-    return;
-  }
-
   try {
-    const { username, password } = await readJsonBody(request);
+    const store = createOrgStore();
+    const secure = Boolean(process.env.VERCEL);
 
-    if (username === "brandworld" && password === expected) {
-      const token = Buffer.from("brandworld:" + expected).toString("base64");
-      const parts = [
-        `${SESSION_COOKIE}=${token}`,
-        "Path=/",
-        "HttpOnly",
-        "SameSite=Lax",
-        "Max-Age=86400",
-      ];
-      if (process.env.VERCEL) parts.push("Secure");
-      response.setHeader("Set-Cookie", parts.join("; "));
-      sendJson(response, 200, { ok: true });
+    if (request.method === "GET") {
+      const url = new URL(request.url, "http://meridian.local");
+      if (url.searchParams.has("signout")) {
+        response.statusCode = 302;
+        response.setHeader("Set-Cookie", sessionCookie("", { secure }));
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Location", "/landing.html");
+        response.end();
+        return;
+      }
+      response.setHeader("Allow", "POST");
+      sendJson(response, 405, { error: "This route signs a person in." });
       return;
     }
 
-    sendJson(response, 401, { ok: false, error: "invalid" });
-  } catch (err) {
-    sendJson(response, 400, { ok: false, error: "bad_request" });
+    if (request.method !== "POST") {
+      response.setHeader("Allow", "POST");
+      sendJson(response, 405, { error: "This route signs a person in." });
+      return;
+    }
+
+    const body = await readJsonBody(request);
+    const user = await store.signIn(body.login || body.username, body.password);
+    if (!user) {
+      sendJson(response, 401, { ok: false, error: "That login and password did not match." });
+      return;
+    }
+
+    const token = await signSession({ userId: user.id, role: user.role }, sessionSecret());
+    response.setHeader("Set-Cookie", sessionCookie(token, { secure }));
+    sendJson(response, 200, { ok: true, user });
+  } catch (error) {
+    sendPublicError(response, error);
   }
 }
