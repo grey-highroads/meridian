@@ -15,6 +15,8 @@ export default defineConfig({
         artist: resolve(__dirname, "app/artist.html"),
         tour: resolve(__dirname, "app/tour.html"),
         scene: resolve(__dirname, "app/scene.html"),
+        review: resolve(__dirname, "app/review.html"),
+        clientReview: resolve(__dirname, "app/client-review.html"),
       },
     },
   },
