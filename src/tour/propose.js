@@ -11,6 +11,15 @@
 
 export const DEFAULT_MODEL = process.env.OPENAI_MODEL || "gpt-5.6";
 
+// A ceiling on what the model may write back. Two or three concepts plus the
+// applied findings list measures around 1500 tokens of readable answer at the
+// top of its range. The default model reasons before it writes and those
+// tokens are counted against this same ceiling, so a number sized for the
+// answer alone would cut the reply off during the thinking every time. This
+// covers both and still ends the long tail that runs past the minute the
+// connection allows.
+export const PROPOSAL_TOKEN_CAP = 6000;
+
 const SYSTEM = [
   "You help a live production team explore what is possible inside one artist's world.",
   "You are given a tour's creative direction in the director's own words, one request from the tour manager in theirs, and every finding the artist brain holds for this identity, each with an id and the sources behind it.",
@@ -66,6 +75,7 @@ export function buildProposalRequest(context, options = {}) {
       { role: "user", content: user },
     ],
     response_format: { type: "json_object" },
+    max_completion_tokens: options.maxCompletionTokens || PROPOSAL_TOKEN_CAP,
   };
 }
 
@@ -111,6 +121,7 @@ export async function proposeConcepts(context, options = {}) {
     throw error;
   }
   const fetchImpl = options.fetchImpl || fetch;
+  const startedAt = Date.now();
   const response = await fetchImpl("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -127,7 +138,27 @@ export async function proposeConcepts(context, options = {}) {
     throw error;
   }
   const body = await response.json();
-  const content = body?.choices?.[0]?.message?.content;
+  const choice = body?.choices?.[0];
+  // One line per completed call, so the next look at this reads numbers rather
+  // than a couriered log export. It is written before the checks below, which
+  // means a call that was cut off is measured too.
+  const logger = options.logger || console.log;
+  logger([
+    "propose-concepts model call",
+    `${Date.now() - startedAt}ms`,
+    `${body?.usage?.completion_tokens ?? "unknown"} completion tokens`,
+    `cap ${options.maxCompletionTokens || PROPOSAL_TOKEN_CAP}`,
+    `finish ${choice?.finish_reason || "unknown"}`,
+  ].join(", "));
+  // A reply that hit the ceiling is half a JSON document. Handing it to the
+  // parser puts "Unexpected token" in front of a person, which tells them
+  // nothing they can act on.
+  if (choice?.finish_reason === "length") {
+    const error = new Error("The answer ran too long and stopped before it finished. Ask again, or narrow what you are asking for.");
+    error.status = 502;
+    throw error;
+  }
+  const content = choice?.message?.content;
   if (!content) throw new Error("The model returned nothing to read.");
   return checkProposals(JSON.parse(content), context);
 }

@@ -25,15 +25,30 @@ const view = {
   receipt: null,
   draft: { title: "", direction: "", marked: [], markedVenues: [] },
   message: "",
+  // Which part of the page the message belongs beside. Empty means the top of
+  // the page. A message about the brain belongs next to the button that asked
+  // it, where the person is looking.
+  messageAt: "",
   working: false,
 };
 
 async function call(action, extra = {}) {
-  const response = await fetch("/api/tour", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, tourId: TOUR_ID, ...extra }),
-  });
+  let response;
+  try {
+    response = await fetch("/api/tour", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, tourId: TOUR_ID, ...extra }),
+    });
+  } catch (error) {
+    // The browser reports a cut connection as a TypeError with no detail. The
+    // long call is the one that reaches the limit and drops, so this is what a
+    // person sees when the brain was still thinking.
+    if (error instanceof TypeError) {
+      throw new Error("The connection dropped while Artist Brain was thinking. Ask again.");
+    }
+    throw error;
+  }
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");
   return body;
@@ -136,6 +151,9 @@ function brainSection() {
         </div>
         <button class="m-button m-button--small" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Thinking" : "Ask Artist Brain"}</button>
       </div>
+      ${view.messageAt === "brain" && view.message
+        ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>`
+        : ""}
       <p class="m-copy">Suggestions reach the brief only when you use one and leave it in. Ignoring them changes nothing.</p>
       ${list ? `<div class="m-suggestion-list">${list}</div>` : ""}
       ${notes}
@@ -316,7 +334,7 @@ function render() {
         <p class="m-copy m-copy--large">Turn the request into direction production can build to.</p>
       </div>
     </header>
-    ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
+    ${view.message && !view.messageAt ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
     ${requestSection()}
     <div class="m-work m-authoring">
       ${directionSection()}
@@ -347,12 +365,13 @@ async function load() {
   render();
 }
 
-async function guard(work) {
+async function guard(work, where = "") {
   try {
     await work();
   } catch (error) {
     view.working = false;
     view.message = error.message;
+    view.messageAt = where;
     try {
       render();
     } catch {
@@ -385,6 +404,7 @@ async function save() {
   view.concept = (await call("choose-concept", { assignmentId: view.sceneId, concept })).concept;
   view.brief = null;
   view.message = "Saved.";
+  view.messageAt = "";
   render();
 }
 
@@ -395,13 +415,14 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       view.working = true;
       view.message = "";
+      view.messageAt = "brain";
       render();
       view.suggestions = await call("propose-concepts", { assignmentId: view.sceneId });
       view.working = false;
       const dropped = view.suggestions.droppedFindings || [];
       if (dropped.length) view.message = `${dropped.length} citations named entries the brain does not hold and were left out.`;
       render();
-    });
+    }, "brain");
     return;
   }
   if (target.dataset.use) {
@@ -411,6 +432,7 @@ document.addEventListener("click", (event) => {
       view.draft.title = used.title;
       view.draft.direction = used.idea;
       view.message = "Used. Edit it into your words before you save.";
+      view.messageAt = "";
       render();
     });
     return;
@@ -423,6 +445,7 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       view.brief = await call("compile-brief", { assignmentId: view.sceneId });
       view.message = "";
+      view.messageAt = "";
       render();
     });
     return;
@@ -437,6 +460,7 @@ document.addEventListener("click", (event) => {
       const sent = await call("send-brief", { assignmentId: view.sceneId, briefVersion: view.brief.brief.briefVersion });
       view.receipt = sent.receipt;
       view.message = `V0${view.brief.brief.briefVersion} is frozen and production has it.`;
+      view.messageAt = "";
       render();
     });
     return;
