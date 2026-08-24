@@ -43,6 +43,10 @@ test("the tour carries its production setup with a version and who supplied it",
   const { tour } = await tourAction({ action: "get-tour", ...AT }, options);
   const setup = tour.productionSetup;
   assert.equal(setup.version, 1);
+  // The four rooms with no sky are the ones the request already named, and
+  // every exception points at a date the tour actually plays.
+  const routed = new Set(tour.dates.map((entry) => entry.venue));
+  assert.ok(setup.venueExceptions.every((entry) => routed.has(entry.venue)), "every exception names a routed venue");
   assert.equal(setup.suppliedBy, "Marcus Vail, Production Designer");
   assert.ok(setup.suppliedOn);
   // The rig reads as production wrote it.
@@ -70,7 +74,7 @@ test("the surfaces and the wording that ties a concept to them sit ahead of the 
   assert.ok(prompt.includes("Never describe an effect the listed surfaces cannot produce."));
   assert.ok(prompt.includes("One main wall upstage behind the band"), "the surfaces reach the prompt");
   assert.ok(prompt.includes("Two side screens flank the stage"));
-  assert.ok(prompt.includes("Copper Field Pavilion"), "the dates that differ reach the prompt");
+  assert.ok(prompt.includes("Northgate Arena"), "the dates that differ reach the prompt");
 
   const findings = prompt.indexOf("Every finding the brain holds");
   assert.ok(findings > -1);

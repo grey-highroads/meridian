@@ -40,20 +40,24 @@ Staging is band forward. The band plays across the front of the stage with the w
 
 ### Venue exceptions
 
-- 2026-06-06 | Copper Field Pavilion | The wall hangs two panels shorter here. Anything reading across the full height loses its top and bottom rows.
-- 2026-06-19 | Lakewind Shed | No side screens on this date. Camera of the band goes to the wall as a cut-in, so the wall carries picture and camera at once.
-- 2026-07-03 | Silver Creek Amphitheater | Altitude and a hard load in. The wall runs at reduced brightness, so a look that rests on a bright picture sits flatter here.
-- 2026-08-08 | Dust Road Amphitheater | Dust and wind on this site. Haze does not hold, so anything that depends on beams in air does not read.
+- 2026-06-12 | Northgate Arena | Indoor room with no sky behind the stage. Anything that leans on real weather over the lawn is carried by the wall alone here.
+- 2026-06-26 | Harbor Center Arena | Low steel and a tight upstage. The wall hangs two panels shorter, so anything reading across the full height loses its top and bottom rows.
+- 2026-07-10 | Prairie Ridge Arena | House light spills onto the stage and the wall runs at reduced brightness against it, so a look that rests on a bright picture sits flatter here.
+- 2026-07-25 | Cedar Hill Arena | No side screens on this date. Camera of the band goes to the wall as a cut-in, so the wall carries picture and camera at once.
 
 ## Dates and venues
 
-Note: Assumed. Higher Roads wrote these rows on 2026-08-22 as sample content so the tour home can be read end to end. The dates and the venues are invented. Replace them with the real routing before anyone outside Higher Roads sees this page.
+Note: Assumed. Higher Roads wrote these rows on 2026-08-22 as sample content so the tour home can be read end to end. The dates and the venues are invented. Corrected 2026-08-24: the four arena dates the storm and lightning request already named were missing from this list, so the list and the request disagreed with each other. Replace them with the real routing before anyone outside Higher Roads sees this page.
 
 - 2026-05-29 | River Bend Amphitheater | Ridgeline, Tennessee
 - 2026-06-06 | Copper Field Pavilion | Marbury, Ohio
+- 2026-06-12 | Northgate Arena | Sterling, Indiana
 - 2026-06-19 | Lakewind Shed | North Harbor, Michigan
+- 2026-06-26 | Harbor Center Arena | Fair Cove, Wisconsin
 - 2026-07-03 | Silver Creek Amphitheater | Ashford, Colorado
+- 2026-07-10 | Prairie Ridge Arena | Elkins, Kansas
 - 2026-07-18 | Tall Pines Pavilion | Weatherly, Georgia
+- 2026-07-25 | Cedar Hill Arena | Torrance Falls, Missouri
 - 2026-08-08 | Dust Road Amphitheater | Callan, Texas
 
 ## Themes

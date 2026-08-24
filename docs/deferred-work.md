@@ -371,13 +371,15 @@ The parser resolves a claim to a source id only when exactly one source row carr
 
 Bring it back when: the claims file carries a source number rather than a source name, and the source list holds every source a claim cites. Both are cheap and both belong in the playbook rather than in the parser.
 
-## The tour's venue exceptions sit on outdoor dates
+## The tour fixture's date list and its request disagreed
 
-Recorded 2026-08-24 while the production setup landed. The instruction that added it asked for exceptions on the four indoor dates already in the fixture. The fixture holds six dates and none of them is indoor: every venue is an amphitheater, a pavilion, or a shed, and the stored direction says the whole night sits outdoors. Adding indoor dates would have invented routing that argues with the director's words.
+Recorded 2026-08-24 while the production setup landed. The storm and lightning request names four arena dates with no sky at all, and repeats it as a required element. The tour's date list held six dates and every one of them was an amphitheater, a pavilion, or a shed. The two halves of the same fixture asserted different routing, and nothing in the app could have caught it, because a required element is the tour manager's prose and the date rows are a separate list.
 
-So the four exceptions sit on four of the six existing dates and describe the rig differing rather than the room differing: a shorter wall, a date with no side screens, a date at reduced brightness, and a site where haze does not hold. That exercises the same marking and compile path the instruction asked for.
+Fixed in the same commit as the production setup: the four arena dates are in the routing, and the four venue exceptions sit on them. A first pass wrote the exceptions onto four of the outdoor dates instead, on the mistaken proof that no indoor date existed anywhere in the fixture. The request had named them all along.
 
-Bring it back when: the real routing arrives and replaces the sample dates. The exceptions are rewritten against it at the same time, and the setup version goes to 2.
+The standing check this leaves: a claim in an assignment's prose about the tour's routing is only as good as the tour file agreeing with it. Nothing joins the two today.
+
+Bring it back when: the real routing arrives and replaces the sample dates. The exceptions are rewritten against it at the same time and the setup version goes to 2. A check that every venue an exception names is a venue the tour plays is one line in the fixture validator, worth adding when a second tour exists.
 
 ## Venue and screen intelligence
 
