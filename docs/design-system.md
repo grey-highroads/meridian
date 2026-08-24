@@ -114,6 +114,10 @@ The Inspector is not a summary column. Request, Brain, Direction, and Setup appe
 
 Compiled output stays behind a disclosure until a person asks to inspect or download it. Do not keep an output strip visible while the current job is authoring.
 
+Work planes fill the available shell. Do not center a narrow page container inside a workstation. Constrain paragraph measure inside the work plane, not the width of the work plane itself.
+
+Use `.m-page--fluid` for primary left-nav destinations and `.m-page--workstation` for canvas and Inspector compositions. The default `.m-page` remains available for genuinely reading-sized documents.
+
 ## Type and language
 
 Use `.m-heading` for the page job, `.m-section-heading` for a real section, `.m-copy` for explanation, `.m-label` for a compact label, and `.m-meta` for exact identifiers and time.
