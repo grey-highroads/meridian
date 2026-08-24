@@ -2,28 +2,32 @@
   color-scheme: dark;
 
   /* Core color */
-  --m-color-stage: #050505;
-  --m-color-shell: #0b0b0b;
-  --m-color-work: #111110;
-  --m-color-raised: #171716;
-  --m-color-active: #222220;
+  --m-color-stage: #08090a;
+  --m-color-shell: #0d0f12;
+  --m-color-work: #14171b;
+  --m-color-raised: #1c2026;
+  --m-color-sidecar: #232830;
+  --m-color-active: #2b313a;
   --m-color-chalk: #f1f0ea;
-  --m-color-chalk-muted: #cbcac3;
-  --m-color-fog: #a3a29b;
-  --m-color-dim: #696862;
-  --m-color-current: #d79a45;
-  --m-color-approved: #7e9b78;
-  --m-color-change: #a56f5c;
+  --m-color-chalk-muted: #d1d2cf;
+  --m-color-fog: #9da2a7;
+  --m-color-dim: #6d737a;
+  --m-color-instrument: #6f8fac;
+  --m-color-instrument-strong: #88abc8;
+  --m-color-current: #d39a4a;
+  --m-color-approved: #7f9d78;
+  --m-color-change: #a66d59;
   --m-color-system: #82909b;
-  --m-color-rule-soft: #1a1a19;
-  --m-color-rule: #292927;
-  --m-color-rule-strong: #464641;
+  --m-color-rule-soft: #1b1e23;
+  --m-color-rule: #30353d;
+  --m-color-rule-strong: #4a515c;
 
   /* Semantic color */
   --m-surface-page: var(--m-color-stage);
   --m-surface-shell: var(--m-color-shell);
   --m-surface-work: var(--m-color-work);
   --m-surface-raised: var(--m-color-raised);
+  --m-surface-sidecar: var(--m-color-sidecar);
   --m-surface-active: var(--m-color-active);
   --m-text-primary: var(--m-color-chalk);
   --m-text-secondary: var(--m-color-chalk-muted);
@@ -33,6 +37,8 @@
   --m-signal-approved: var(--m-color-approved);
   --m-signal-change: var(--m-color-change);
   --m-signal-system: var(--m-color-system);
+  --m-signal-instrument: var(--m-color-instrument);
+  --m-signal-instrument-strong: var(--m-color-instrument-strong);
   --m-border-soft: var(--m-color-rule-soft);
   --m-border-default: var(--m-color-rule);
   --m-border-strong: var(--m-color-rule-strong);
@@ -74,7 +80,9 @@
   --m-control-default: 2.5rem;
   --m-control-large: 3rem;
   --m-target-minimum: 2.75rem;
-  --m-rail-width: 12rem;
+  --m-rail-width: 10rem;
+  --m-inspector-width: 21rem;
+  --m-work-width: 58rem;
   --m-page-width: 76rem;
   --m-copy-width: 44rem;
   --m-rule-width: 0.0625rem;

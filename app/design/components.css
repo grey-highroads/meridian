@@ -38,6 +38,28 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .m-breadcrumb {
+    align-items: center;
+    color: var(--m-text-quiet);
+    display: flex;
+    flex-wrap: wrap;
+    font-family: var(--m-font-mono);
+    font-size: var(--m-type-label);
+    gap: var(--m-space-3);
+    letter-spacing: var(--m-tracking-label);
+    text-transform: uppercase;
+  }
+
+  .m-breadcrumb a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .m-breadcrumb a:hover,
+  .m-breadcrumb__current {
+    color: var(--m-text-secondary);
+  }
+
   .m-heading {
     font-size: var(--m-type-page);
     font-weight: var(--m-weight-strong);
@@ -105,6 +127,17 @@
 
   .m-button--change {
     border-color: var(--m-signal-change);
+  }
+
+  .m-button--instrument {
+    background: var(--m-surface-active);
+    border-color: var(--m-signal-instrument);
+    color: var(--m-signal-instrument-strong);
+  }
+
+  .m-button--instrument:hover {
+    background: var(--m-signal-instrument);
+    color: var(--m-surface-page);
   }
 
   .m-button--small {
@@ -176,6 +209,10 @@
   .m-input::placeholder,
   .m-textarea::placeholder {
     color: var(--m-text-quiet);
+  }
+
+  .m-ui :where(input[type="checkbox"], input[type="radio"]) {
+    accent-color: var(--m-signal-instrument);
   }
 
   .m-help {

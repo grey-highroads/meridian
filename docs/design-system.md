@@ -1,6 +1,6 @@
 # Meridian design system
 
-Status: Foundation and reference samples available.
+Status: Foundation and living reference screens available.
 
 ## Purpose
 
@@ -49,6 +49,18 @@ Class names use the `m-` prefix. Do not copy classes from `app/styles.css` or `a
 - `index.css` is the only stylesheet a Meridian screen imports.
 - `samples/` holds static reference screens that show how the system composes around a job.
 
+## Living reference screens
+
+The real Meridian screens are the primary composition references. They use live application behavior and the isolated design foundation at the same time.
+
+- `app/tour.html` and `app/tour.js` define the quiet reference page.
+- `app/scene.html` and `app/scene.js` define the focused Workstation.
+- `app/review.html` and `app/review.js` define the review and decision surface.
+
+Builders should copy visual structure and classes from these screens. They should not copy their data loading or workflow logic into another feature.
+
+The files in `app/design/samples/` are controlled state fixtures. They show states that may be difficult to reach with current data. When a fixture and a real screen differ, the real screen is the composition source of truth and the fixture must be brought back into alignment.
+
 ## Page rules
 
 Every page starts with the job, not the data model.
@@ -60,6 +72,10 @@ Every page starts with the job, not the data model.
 5. Do not repeat project details, state, or instructions in several regions.
 6. Use empty space to show priority.
 7. Attach feedback and decisions to the object they govern.
+
+Orient a person once with a quiet breadcrumb. Do not repeat the current object, location, version, or state in the rail, header, workspace, Inspector, and action bar.
+
+Metadata earns space only when it changes the work or the decision in front of the person.
 
 If a page needs a long explanation, simplify the page before adding help text.
 
@@ -84,6 +100,19 @@ The everyday navigation has three destinations:
 Admin work is a quiet utility. Concept development, review, and handoff are states inside a Scene. They are not top-level navigation.
 
 Use `.m-location` once for the client, artist, active production, and current Scene. Do not restate the same scope in the page body.
+
+## Workstation
+
+Use `.m-workstation` when one authored or reviewed object needs supporting context.
+
+- `.m-workstation__stage` holds the dominant work object.
+- `.m-workstation__inspector` holds context that can affect the work.
+- `.m-workstation__tabs` switches between context families. Only one panel is visible at a time.
+- `.m-action-bar` names the consequence and presents one primary next action.
+
+The Inspector is not a summary column. Request, Brain, Direction, and Setup appear there because each can contribute to the Scene Direction. Do not add a panel merely because the backend has another record.
+
+Compiled output stays behind a disclosure until a person asks to inspect or download it. Do not keep an output strip visible while the current job is authoring.
 
 ## Type and language
 
@@ -146,7 +175,7 @@ Run the guard directly with:
 npm run check:design
 ```
 
-## Samples
+## Fixture samples
 
 Use the static screens in `app/design/samples/` as composition references:
 
@@ -158,4 +187,4 @@ Use the static screens in `app/design/samples/` as composition references:
 - `review.html` for Artboard feedback and version comparison;
 - `handoff.html` for the issued record and approved Production Intent.
 
-Samples demonstrate hierarchy, disclosure, states, and component structure. They do not define backend mechanics, permissions, or data contracts. Read `docs/meridian-experience.md` for the product and experience reasoning behind them.
+Fixtures demonstrate hierarchy, disclosure, states, and component structure. They do not define backend mechanics, permissions, or data contracts. Read `docs/meridian-experience.md` for the product and experience reasoning behind them.
