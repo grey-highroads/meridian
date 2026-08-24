@@ -8,9 +8,9 @@ import { readJsonBody, sendJson, sendPublicError } from "../../src/server/http.j
 // A POST with a login and a password sets the session cookie. A GET with
 // signout on it clears the cookie and sends the person back to the front door.
 
-export default async function handler(request, response) {
+export default async function handler(request, response, options = {}) {
   try {
-    const store = createOrgStore();
+    const store = options.orgStore || createOrgStore(options);
     const secure = Boolean(process.env.VERCEL);
 
     if (request.method === "GET") {
@@ -35,9 +35,22 @@ export default async function handler(request, response) {
     }
 
     const body = await readJsonBody(request);
-    const user = await store.signIn(body.login || body.username, body.password);
+
+    // Two different failures, two different sentences. The store throws when
+    // the deployment has no sign in values set, and that sentence goes to the
+    // screen as it is, because a person hunting a typo will not find one. The
+    // mismatch line below is only for a login and password that were both read
+    // and did not match.
+    let user;
+    try {
+      user = await store.signIn(body.login || body.username, body.password);
+    } catch (error) {
+      sendPublicError(response, error);
+      return;
+    }
+
     if (!user) {
-      sendJson(response, 401, { ok: false, error: "That login and password did not match." });
+      sendJson(response, 401, { ok: false, error: "That login and password did not match. Try again." });
       return;
     }
 

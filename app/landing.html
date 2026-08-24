@@ -395,7 +395,7 @@
           if (data.ok) {
             window.location.href = '/';
           } else {
-            error.textContent = 'That login and password did not match. Try again.';
+            error.textContent = data.error || 'That login and password did not match. Try again.';
             error.classList.remove('hidden');
           }
         } catch (requestError) {
