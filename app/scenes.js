@@ -46,7 +46,12 @@ async function load() {
 
   const tour = body.tour;
   const assignments = body.assignments || [];
-  locationBar.innerHTML = `<span class="m-meta">${escape(tour.name)}${tour.cycle ? ` / ${escape(tour.cycle)}` : ""}</span>`;
+  const tourLink = `./tour.html?tour=${encodeURIComponent(TOUR_ID)}`;
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
+      <a href="${escape(tourLink)}">${escape(tour.name)}</a>
+      <span aria-hidden="true">/</span>
+      <span class="m-breadcrumb__current">Scenes</span>
+    </nav>`;
   scenes.innerHTML = assignments.length
     ? `<div class="m-rule-list">${assignments.map(sceneRow).join("")}</div>`
     : `<p class="m-copy">No Scenes have been requested on this tour yet.</p>`;

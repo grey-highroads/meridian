@@ -105,7 +105,7 @@ function findingBlock(finding) {
 
 function groupBlock(group) {
   const count = group.findings.length;
-  return `<section class="m-work m-stack">
+  return `<section class="m-work m-stack m-brain-group">
       <div class="m-cluster">
         <h2 class="m-section-heading">${escape(group.facetName)}, ${escape(group.identityName.toLowerCase())}</h2>
         <span class="m-meta">${escape(count)} ${count === 1 ? "ENTRY" : "ENTRIES"}</span>
@@ -132,7 +132,9 @@ function head(brain) {
   const name = brain.artist ? brain.artist.name : ARTIST_ID;
   const state = brain.approved ? "m-state m-state--approved" : "m-state m-state--current";
   const stateText = brain.approved ? "Approved" : "Not approved yet";
-  locationBar.innerHTML = `<span class="m-meta">${escape(name.toUpperCase())} / ARTIST BRAIN</span>
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
+      <span class="m-breadcrumb__current">Artist Brain</span>
+    </nav>
     <span class="${state}">${escape(stateText)}</span>`;
 
   const switches = brain.approved
@@ -151,7 +153,7 @@ function head(brain) {
       </div>
     </header>
     ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-    <div class="m-cluster">
+    <div class="m-brain-controls">
       ${switches}
       <select class="m-select" data-filter="identity" aria-label="Which identity">${options(IDENTITY_LABELS, view.identity)}</select>
       <select class="m-select" data-filter="part" aria-label="Which part of the artist">${options(PART_LABELS, view.part)}</select>
