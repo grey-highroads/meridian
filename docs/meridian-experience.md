@@ -121,16 +121,21 @@ The approved set becomes Production Intent. Later changes require a new governed
 
 The reference screens do not settle these questions. They give builders a stable visual and interaction pattern while the functional shape is resolved.
 
-## Reference samples
+## Reference implementations
 
-The coded samples in `app/design/samples/` are the source of truth for structure and component use.
+Real Meridian screens carry working behavior and the design system together. They are the primary source of truth for composition and component use.
 
-- `index.html` shows the active Scenes directory.
-- `tour.html` shows the active tour record and governed Tour Direction.
+- `app/index.html` shows the active Scenes directory.
+- `app/tour.html` and `app/tour.js` show the active tour record and governed Tour Direction.
+- `app/scene.html` and `app/scene.js` show the focused Scene Workstation.
+- `app/review.html` and `app/review.js` show Artboard feedback and version comparison.
+
+The coded files in `app/design/samples/` are controlled state fixtures:
+
 - `request.html` shows the client request surface.
 - `intake.html` shows preserved source review.
-- `develop.html` shows brief authoring and contextual Brain suggestions.
-- `review.html` shows Artboard feedback and version comparison.
+- `develop.html` shows a Scene authoring fixture.
+- `review.html` shows an Artboard review fixture.
 - `handoff.html` shows the issued record and Production Intent.
 
 The anonymized Superdesign drafts remain useful as visual process references:
@@ -139,7 +144,7 @@ The anonymized Superdesign drafts remain useful as visual process references:
 - [Tour Home](https://p.superdesign.dev/draft/6864b35b-b407-45a8-8894-e47bb970fe30)
 - [Client Scene request](https://p.superdesign.dev/draft/099f74be-17c5-409b-aa57-942020c38106)
 - [Higher Roads intake](https://p.superdesign.dev/draft/6219f7d6-69c5-4768-8fbf-6facdf65e89e)
-- [Develop Scene concept](https://p.superdesign.dev/draft/2f24bb1f-bdc5-489c-bfac-caafcabf103e)
+- [Scene Workstation](https://p.superdesign.dev/draft/f927438d-0f94-4d0e-b538-62c6a5732983)
 - [Artboard review](https://p.superdesign.dev/draft/82e14a80-0d5b-4b43-b71c-841c5c207266)
 - [Production handoff](https://p.superdesign.dev/draft/90106322-1964-4300-a659-8de24dc64071)
 

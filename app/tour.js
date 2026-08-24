@@ -167,26 +167,23 @@ function sceneList(assignments) {
 
 async function render() {
   const { tour, assignments } = await call("get-tour");
-  locationBar.innerHTML = `<span class="m-meta">${escape(String(tour.name).toUpperCase())} / TOUR</span>
-    <span class="m-state m-state--current">Active production</span>`;
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
+      <a href="./tour.html?tour=${escape(TOUR_ID)}">Tour</a>
+      <span aria-hidden="true">/</span>
+      <span class="m-breadcrumb__current">${escape(tour.name)}</span>
+    </nav>`;
   root.innerHTML = `<header class="m-job-header">
       <div class="m-job-header__copy">
-        <span class="m-label">Active tour</span>
         <h1 class="m-heading">${escape(tour.name)}</h1>
         <p class="m-meta">${escape(run(tour.dates || []))}</p>
         ${tour.cycle ? `<p class="m-copy">${escape(tour.cycle)}</p>` : ""}
       </div>
     </header>
-    ${tour.status ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(tour.status)}</p></div>` : ""}
     ${directionSection(tour)}
     ${setupSection(tour)}
     ${datesSection(tour)}
     ${contextSection(tour)}
-    ${sceneList(assignments)}
-    <aside class="m-contribution">
-      <span class="m-contribution__source">Scene direction</span>
-      <p class="m-copy">Scene direction is written inside each Scene and names the version of this direction it was written against. The brief to production carries the parts of this direction someone marked as bearing on that Scene.</p>
-    </aside>`;
+    ${sceneList(assignments)}`;
 }
 
 render().catch((error) => {

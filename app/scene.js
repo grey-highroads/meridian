@@ -24,6 +24,7 @@ const view = {
   briefs: [],
   receipt: null,
   draft: { title: "", direction: "", marked: [], markedVenues: [] },
+  inspector: "request",
   message: "",
   // Which part of the page the message belongs beside. Empty means the top of
   // the page. A message about the brain belongs next to the button that asked
@@ -87,18 +88,19 @@ function requestSection() {
   const assignment = view.assignment;
   const required = (assignment.requiredElements || [])
     .map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
-  return `<details class="m-disclosure" open>
-      <summary>
-        <span class="m-label">What was asked for</span>
-        <span class="m-meta">${escape(String(assignment.requestedBy || "").toUpperCase())}</span>
-      </summary>
-      <div class="m-disclosure__body m-stack">
-        <h2 class="m-section-heading">${escape(assignment.title)}</h2>
+  return `<section class="m-workstation__panel" id="request-panel" role="tabpanel" aria-labelledby="request-tab" ${view.inspector === "request" ? "" : "hidden"}>
+      <div class="m-inspector-group">
+        <span class="m-label">Client request</span>
+        <h2 class="m-inspector-heading">${escape(assignment.title)}</h2>
         ${assignment.moment ? `<p class="m-meta">${escape(assignment.moment.toUpperCase())}</p>` : ""}
         ${paragraphs(assignment.request)}
-        ${required ? `<div class="m-stack"><span class="m-label">Required</span><ul>${required}</ul></div>` : ""}
       </div>
-    </details>`;
+      ${required ? `<div class="m-inspector-group"><span class="m-label">Required</span><ul>${required}</ul></div>` : ""}
+      <div class="m-inspector-group">
+        <span class="m-label">Source</span>
+        <p class="m-copy">${escape(assignment.requestedBy || "Client team")}</p>
+      </div>
+    </section>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -143,18 +145,16 @@ function brainSection() {
         </div>
       </details>`
     : "";
-  return `<section class="m-authoring__support" aria-labelledby="brain-heading">
-      <div class="m-cluster">
-        <div class="m-stack">
-          <span class="m-label">Asked for, never automatic</span>
-          <h2 id="brain-heading" class="m-section-heading">Artist Brain</h2>
-        </div>
-        <button class="m-button m-button--small" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Thinking" : "Ask Artist Brain"}</button>
+  return `<section class="m-workstation__panel" id="brain-panel" role="tabpanel" aria-labelledby="brain-heading" ${view.inspector === "brain" ? "" : "hidden"}>
+      <div class="m-inspector-group">
+        <span class="m-label">Asked for, never automatic</span>
+        <h2 id="brain-heading" class="m-inspector-heading">Artist Brain</h2>
+        <p class="m-copy">Suggestions enter the direction only when you choose and edit one.</p>
       </div>
+      <button class="m-button m-button--instrument m-button--small" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Thinking" : "Ask Artist Brain"}</button>
       ${view.messageAt === "brain" && view.message
         ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>`
         : ""}
-      <p class="m-copy">Suggestions reach the brief only when you use one and leave it in. Ignoring them changes nothing.</p>
       ${list ? `<div class="m-suggestion-list">${list}</div>` : ""}
       ${notes}
       ${context}
@@ -163,17 +163,22 @@ function brainSection() {
 
 function directionSection() {
   const version = view.assignment.directionVersion;
-  return `<section class="m-authoring__primary" aria-labelledby="scene-direction-heading">
-      <div class="m-cluster">
-        <h2 id="scene-direction-heading" class="m-section-heading">Scene direction</h2>
-        <span class="m-meta">WRITTEN AGAINST TOUR DIRECTION V0${escape(version)}</span>
+  return `<section class="m-direction-editor" aria-labelledby="scene-direction-heading">
+      <div class="m-direction-editor__header">
+        <span id="scene-direction-heading" class="m-label m-direction-editor__label">Scene direction</span>
+        <input class="m-direction-editor__title" id="scene-title" data-draft="title" value="${escape(view.draft.title)}" aria-label="Scene direction name" placeholder="Name this direction" />
       </div>
-      <div class="m-field">
-        <label class="m-label" for="scene-title">Name it</label>
-        <input class="m-input" id="scene-title" data-draft="title" value="${escape(view.draft.title)}" placeholder="A short name for this direction" />
+      <div class="m-direction-editor__body">
+        ${view.message && !view.messageAt ? `<div class="m-callout m-callout--current m-direction-editor__notice"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
+        <label class="m-label" for="scene-direction">Production-facing direction</label>
+        <textarea class="m-direction-editor__textarea" id="scene-direction" data-draft="direction" placeholder="Describe the direction production should build to.">${escape(view.draft.direction)}</textarea>
+        <div class="m-direction-editor__meta">
+          <span>Written by Higher Roads</span>
+          <span>Against Tour Direction V0${escape(version)}</span>
+        </div>
+        ${briefSection()}
+        ${receiptSection()}
       </div>
-      <textarea class="m-textarea m-authoring__field" data-draft="direction" aria-label="Scene direction" placeholder="Describe the direction production should build to.">${escape(view.draft.direction)}</textarea>
-      <span class="m-help">This is the production facing direction. It is your words, not the director's and not the brain's.</span>
     </section>`;
 }
 
@@ -183,17 +188,17 @@ function directionSection() {
 
 function marksSection() {
   const all = view.context.directionParagraphs || [];
-  const rows = all.map((text, index) => `<label class="m-cluster">
+  const rows = all.map((text, index) => `<label class="m-inspector-choice">
       <input type="checkbox" data-paragraph="${escape(index)}" ${view.draft.marked.includes(index) ? "checked" : ""} />
       <span class="m-copy">${escape(text)}</span>
     </label>`).join("");
-  return `<section class="m-work m-stack" aria-labelledby="marks-heading">
-      <div class="m-cluster">
-        <h2 id="marks-heading" class="m-section-heading">The parts of the tour direction that bear on this Scene</h2>
-        <span class="m-meta">DIRECTION V0${escape(view.context.directionVersion)}</span>
+  return `<section class="m-workstation__panel" id="direction-panel" role="tabpanel" aria-labelledby="marks-heading" ${view.inspector === "direction" ? "" : "hidden"}>
+      <div class="m-inspector-group">
+        <span class="m-label">Tour Direction V0${escape(view.context.directionVersion)}</span>
+        <h2 id="marks-heading" class="m-inspector-heading">Applied to this Scene</h2>
+        <p class="m-copy">Mark only the parts production needs with this Scene.</p>
       </div>
-      <p class="m-copy">The whole direction stays in Meridian and the brain reads all of it. The brief to production carries what you mark here, and the version.</p>
-      <div class="m-stack">${rows}</div>
+      <div>${rows}</div>
     </section>`;
 }
 
@@ -201,18 +206,18 @@ function marksSection() {
 // leaves the rest on the tour home.
 function venueSection() {
   const all = view.context.venueExceptions || [];
-  if (!all.length) return "";
-  const rows = all.map((entry, index) => `<label class="m-cluster">
+  const setup = view.context.productionSetup;
+  const rows = all.map((entry, index) => `<label class="m-inspector-choice">
       <input type="checkbox" data-venue="${escape(index)}" ${view.draft.markedVenues.includes(index) ? "checked" : ""} />
       <span class="m-copy"><strong>${escape(entry.venue)}</strong>, ${escape(entry.date)}. ${escape(entry.text)}</span>
     </label>`).join("");
-  return `<section class="m-work m-stack" aria-labelledby="venues-heading">
-      <div class="m-cluster">
-        <h2 id="venues-heading" class="m-section-heading">Dates where the rig differs</h2>
-        <span class="m-meta">SETUP V0${escape(view.context.setupVersion)}</span>
+  return `<section class="m-workstation__panel" id="setup-panel" role="tabpanel" aria-labelledby="setup-tab" ${view.inspector === "setup" ? "" : "hidden"}>
+      <div class="m-inspector-group">
+        <span class="m-label">Production setup${view.context.setupVersion ? ` V0${escape(view.context.setupVersion)}` : ""}</span>
+        <h2 id="venues-heading" class="m-inspector-heading">Dates where the rig differs</h2>
+        ${setup && setup.words ? paragraphs(setup.words) : `<p class="m-copy">No production setup has been recorded.</p>`}
       </div>
-      <p class="m-copy">The brief always carries the standard setup. Mark a date here when this Scene has to work on it.</p>
-      <div class="m-stack">${rows}</div>
+      ${rows ? `<div>${rows}</div>` : `<p class="m-copy">Every date uses the standard setup.</p>`}
     </section>`;
 }
 
@@ -221,52 +226,23 @@ function venueSection() {
 // ---------------------------------------------------------------------------
 
 function briefSection() {
-  const frozen = view.briefs.length
-    ? `<p class="m-meta">FROZEN: ${escape(view.briefs.map((entry) => `V0${entry.briefVersion} BY ${String(entry.frozenBy).toUpperCase()}`).join(" / "))}</p>`
-    : "";
-  if (!view.concept) {
-    return `<section class="m-work m-stack" aria-labelledby="brief-heading">
-        <h2 id="brief-heading" class="m-section-heading">The brief</h2>
-        <p class="m-copy">Save the Scene direction and the brief compiles from it.</p>
-        ${frozen}
-      </section>`;
-  }
-  if (!view.brief) {
-    return `<section class="m-work m-stack" aria-labelledby="brief-heading">
-        <h2 id="brief-heading" class="m-section-heading">The brief</h2>
-        <p class="m-copy">Saved: ${escape(view.concept.title)}, by ${escape(view.concept.shapedBy)}.</p>
-        ${frozen}
-      </section>`;
-  }
+  if (!view.brief) return "";
   const brief = view.brief.brief;
   const state = brief.status === "frozen" ? "m-state m-state--approved" : "m-state m-state--current";
-  const stateText = brief.status === "frozen" ? `Frozen by ${brief.frozenBy}` : "Draft, not yet frozen";
-  return `<section class="m-work m-stack" aria-labelledby="brief-heading">
-      <div class="m-cluster">
-        <h2 id="brief-heading" class="m-section-heading">The brief</h2>
+  const stateText = brief.status === "frozen" ? `Brief V0${brief.briefVersion} frozen` : `Brief V0${brief.briefVersion} draft`;
+  return `<details class="m-disclosure m-brief-disclosure">
+      <summary>
+        <span class="m-label">View compiled brief</span>
         <span class="${state}">${escape(stateText)}</span>
-      </div>
-      ${frozen}
-      <div class="m-record-grid">
-        <div class="m-record-grid__item">
-          <span class="m-label">Job</span>
-          <strong>${escape(brief.jobId)}</strong>
+      </summary>
+      <div class="m-disclosure__body m-stack">
+        <div class="m-cluster">
+          <button class="m-button m-button--small" type="button" data-download="document">Download document</button>
+          <button class="m-button m-button--small" type="button" data-download="sidecar">Download machine readable file</button>
         </div>
-        <div class="m-record-grid__item">
-          <span class="m-label">Brief version</span>
-          <strong>V0${escape(brief.briefVersion)}</strong>
-        </div>
-        <div class="m-record-grid__item">
-          <span class="m-label">Written against direction</span>
-          <strong>V0${escape(brief.directionVersion)}</strong>
-        </div>
+        <pre>${escape(view.brief.document)}</pre>
       </div>
-      <div class="m-cluster">
-        <button class="m-button m-button--small" type="button" data-download="document">Download the document</button>
-        <button class="m-button m-button--small" type="button" data-download="sidecar">Download the machine readable file</button>
-      </div>
-      <pre>${escape(view.brief.document)}</pre>
-    </section>`;
+    </details>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -302,48 +278,59 @@ function download(kind) {
 
 function actionBar() {
   const frozen = view.brief && view.brief.brief.status === "frozen";
-  const compile = view.concept
-    ? `<button class="m-button" type="button" data-compile>${view.brief ? "Compile again" : "Compile the brief"}</button>`
-    : "";
-  const freeze = view.brief && !frozen
-    ? `<button class="m-button m-button--primary" type="button" data-freeze>Freeze V0${escape(view.brief.brief.briefVersion)} and send it out</button>`
-    : "";
-  const context = frozen
-    ? "That version is frozen. Feedback makes a new version rather than an edit."
-    : "Saving records the Scene direction and what you marked. Freezing is what production builds against.";
-  const review = view.briefs.length
-    ? `<a class="m-button" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open review</a>`
-    : "";
+  const hasIssuedBrief = view.briefs.length > 0;
+  let context = "Save the direction before compiling the brief production will receive.";
+  let controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
+  if (view.concept && !view.brief && !hasIssuedBrief) {
+    context = "Compile the saved direction and accepted context into a production brief.";
+    controls = `<button class="m-button" type="button" data-save>Save direction</button>
+      <button class="m-button m-button--primary" type="button" data-compile>Compile brief</button>`;
+  }
+  if (view.brief && !frozen) {
+    context = "Freeze the exact brief production will build against.";
+    controls = `<button class="m-button" type="button" data-save>Save direction</button>
+      <button class="m-button m-button--primary" type="button" data-freeze>Freeze V0${escape(view.brief.brief.briefVersion)} and send</button>`;
+  }
+  if (frozen || hasIssuedBrief) {
+    context = "The issued brief is locked. Review the work that came back against it.";
+    controls = `<a class="m-button m-button--primary" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open review</a>`;
+  }
   actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
-    <div class="m-cluster">
-      <button class="m-button" type="button" data-save>Save the Scene direction</button>
-      ${compile}
-      ${freeze}
-      ${review}
-    </div>`;
+    <div class="m-action-bar__actions">${controls}</div>`;
 }
 
 function render() {
   const assignment = view.assignment;
-  locationBar.innerHTML = `<span class="m-meta">${escape(String(view.tour.name).toUpperCase())} / SCENE</span>
-    <span class="m-state m-state--current">${escape(view.briefs.length ? "Brief issued" : "Brief in preparation")}</span>`;
-  root.innerHTML = `<header class="m-job-header">
-      <div class="m-job-header__copy">
-        <span class="m-label">${escape(assignment.title)}</span>
-        <h1 class="m-heading">Develop scene concept</h1>
-        <p class="m-copy m-copy--large">Turn the request into direction production can build to.</p>
-      </div>
-    </header>
-    ${view.message && !view.messageAt ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-    ${requestSection()}
-    <div class="m-work m-authoring">
-      ${directionSection()}
-      ${brainSection()}
-    </div>
-    ${marksSection()}
-    ${venueSection()}
-    ${briefSection()}
-    ${receiptSection()}`;
+  const tab = (name, label) => `<button class="m-workstation__tab" id="${escape(name)}-tab" type="button" role="tab" aria-selected="${view.inspector === name}" aria-controls="${escape(name)}-panel" data-inspector="${escape(name)}">${escape(label)}</button>`;
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
+      <a href="./index.html?tour=${escape(TOUR_ID)}">Scenes</a>
+      <span aria-hidden="true">/</span>
+      <span class="m-breadcrumb__current">${escape(assignment.title)}</span>
+    </nav>`;
+  root.innerHTML = `<div class="m-workstation">
+      <section class="m-workstation__stage" aria-label="Scene direction workspace">
+        <div class="m-workstation__canvas">
+          ${directionSection()}
+        </div>
+      </section>
+      <aside class="m-workstation__inspector" aria-label="Scene context">
+        <div class="m-workstation__inspector-head">
+          <span class="m-label">Inspector</span>
+        </div>
+        <div class="m-workstation__tabs" role="tablist" aria-label="Scene context">
+          ${tab("request", "Request")}
+          ${tab("brain", "Brain")}
+          ${tab("direction", "Direction")}
+          ${tab("setup", "Setup")}
+        </div>
+        <div class="m-workstation__panels">
+          ${requestSection()}
+          ${brainSection()}
+          ${marksSection()}
+          ${venueSection()}
+        </div>
+      </aside>
+    </div>`;
   actionBar();
 }
 
@@ -411,6 +398,11 @@ async function save() {
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
+  if (target.dataset.inspector) {
+    view.inspector = target.dataset.inspector;
+    render();
+    return;
+  }
   if (target.hasAttribute("data-ask")) {
     guard(async () => {
       view.working = true;
@@ -425,7 +417,7 @@ document.addEventListener("click", (event) => {
     }, "brain");
     return;
   }
-  if (target.dataset.use) {
+  if (target.dataset.use !== undefined) {
     guard(async () => {
       const used = view.suggestions.proposals[Number(target.dataset.use)];
       view.usedSuggestion = used;
