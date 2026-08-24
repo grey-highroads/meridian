@@ -93,22 +93,55 @@ function datesSection(tour) {
     </section>`;
 }
 
+// What the show plays on. Supplied by production, stored as given and
+// versioned the same way the direction is. The playback line lives here now
+// rather than beside the themes, because it is part of the same setup.
+function setupSection(tour) {
+  const setup = tour.productionSetup;
+  if (!setup) return "";
+  const rows = (setup.venueExceptions || []).map((entry) => `<li class="m-itinerary__row">
+      <time class="m-meta" datetime="${escape(entry.date)}">${escape(readableDate(entry.date))}</time>
+      <div class="m-itinerary__place">
+        <strong>${escape(entry.venue)}</strong>
+        <span class="m-copy">${escape(entry.text)}</span>
+      </div>
+      <span class="m-label">Differs</span>
+    </li>`).join("");
+  return `<section class="m-reference-section" aria-labelledby="setup-heading">
+      <div class="m-reference-section__label">
+        <span class="m-state m-state--current">Setup V0${escape(setup.version)} / Current</span>
+        <div class="m-stack">
+          <div>
+            <span class="m-label">Supplied by</span>
+            <p>${escape(setup.suppliedBy)}</p>
+          </div>
+          <div>
+            <span class="m-label">Supplied on</span>
+            <p class="m-meta">${escape(String(setup.suppliedOn || "").toUpperCase())}</p>
+          </div>
+          <span class="m-meta">STORED AS GIVEN</span>
+        </div>
+      </div>
+      <div class="m-reference-section__body m-stack">
+        <h2 id="setup-heading" class="m-section-heading">Production setup</h2>
+        <div class="m-source-copy">${paragraphs(setup.words)}</div>
+        <h3 class="m-section-heading">Playback</h3>
+        <p class="m-copy">${escape(tour.playbackSystem || "Not recorded.")}</p>
+        <h3 class="m-section-heading">Dates where the rig differs</h3>
+        ${rows ? `<ol class="m-itinerary">${rows}</ol>` : `<p class="m-copy">Every date on this tour runs the setup above.</p>`}
+      </div>
+    </section>`;
+}
+
 function contextSection(tour) {
   const themes = (tour.themes || []).map((entry) => `<li>${escape(entry)}</li>`).join("");
   return `<section class="m-reference-section" aria-labelledby="context-heading">
       <div class="m-reference-section__label">
         <span class="m-label">Production reference</span>
-        <h2 id="context-heading" class="m-section-heading">Tour context</h2>
+        <h2 id="context-heading" class="m-section-heading">Themes</h2>
       </div>
-      <div class="m-reference-section__body m-reference-pair">
-        <section aria-labelledby="playback-heading">
-          <h3 id="playback-heading" class="m-section-heading">Playback system</h3>
-          <p class="m-copy">${escape(tour.playbackSystem || "Not recorded.")}</p>
-        </section>
-        <section aria-labelledby="themes-heading">
-          <h3 id="themes-heading" class="m-section-heading">Themes</h3>
-          ${themes ? `<ul class="m-theme-list">${themes}</ul>` : `<p class="m-copy">None recorded.</p>`}
-        </section>
+      <div class="m-reference-section__body">
+        ${themes ? `<ul class="m-theme-list">${themes}</ul>` : `<p class="m-copy">None recorded.</p>`}
       </div>
     </section>`;
 }
@@ -146,6 +179,7 @@ async function render() {
     </header>
     ${tour.status ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(tour.status)}</p></div>` : ""}
     ${directionSection(tour)}
+    ${setupSection(tour)}
     ${datesSection(tour)}
     ${contextSection(tour)}
     ${sceneList(assignments)}

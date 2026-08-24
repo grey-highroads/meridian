@@ -58,6 +58,47 @@ export function parseThemes(text) {
   return rows(text, "Themes");
 }
 
+// An exception row reads "date | venue | what differs there".
+function parseVenueExceptions(block) {
+  return rows(block, "Venue exceptions").map((line) => {
+    const parts = line.split("|").map((part) => part.trim());
+    return {
+      date: parts[0] || null,
+      venue: parts[1] || null,
+      text: parts.slice(2).join(" | ").trim() || null,
+    };
+  });
+}
+
+// The production setup: what the show's content plays on, and where a date
+// differs from it. It arrives from the production designer, so it is stored as
+// given and versioned the same way the direction is, and nothing in the app
+// rewrites it. A tour file without this section reads as it always did.
+export function parseProductionSetup(text) {
+  const heading = String(text).match(/^##\s+Production setup,\s+version\s+(\d+)\s*$/im);
+  if (!heading) return null;
+  const version = Number(heading[1]);
+  const block = section(text, `Production setup, version ${version}`);
+  if (!block) return null;
+  // The exceptions sit in their own subsection, so the setup's words stop
+  // where that subsection starts.
+  const words = block
+    .split(/^###\s+/m)[0]
+    .split("\n")
+    .filter((line) => !/^(Supplied by|Supplied on|Stored as given|Playback system)\b/i.test(line))
+    .join("\n")
+    .trim();
+  if (!words) fail("The production setup carries no words.");
+  return {
+    version,
+    suppliedBy: field(block, "Supplied by"),
+    suppliedOn: field(block, "Supplied on"),
+    // Stored as given.
+    words,
+    venueExceptions: parseVenueExceptions(block),
+  };
+}
+
 export function parseTour(text) {
   const title = (String(text).match(/^#\s+(.+)$/m) || [])[1];
   const id = field(text, "Tour id");
@@ -88,6 +129,9 @@ export function parseTour(text) {
     // and configure it per venue, so the playback system is the technical fact
     // a brief needs. Venue and screen profiles are Jim's side in V1.
     playbackSystem: field(text, "Playback system"),
+    // What the content plays on, versioned and stored as given beside the
+    // direction. Null on a tour whose file predates this section.
+    productionSetup: parseProductionSetup(text),
     status: field(text, "Status"),
     // The tour record a tour home reads. Neither of these is direction and
     // neither is interpretation of it.

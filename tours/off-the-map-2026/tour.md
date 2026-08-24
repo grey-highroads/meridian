@@ -3,8 +3,7 @@
 Artist: dierks-bentley
 Tour id: off-the-map-2026
 Cycle: 2026 amphitheater run
-Playback system: disguise gx 2c, two machines, one spare. Content delivered as ProRes 4444 at the show's canvas size. Notch blocks in use on this tour.
-Status: Assumed. Higher Roads wrote this file on 2026-08-22 as sample content so the loop can be built and read end to end. The tour and its dates are real and come from tier 1 and tier 3 sources in the artist intake. The creative director, her words, the assignment under them, the dates and venues, and the themes are invented. Nothing here came from the artist's team. Replace this file with the real direction before any of it is shown to anyone outside Higher Roads.
+Status: Assumed. Higher Roads wrote this file on 2026-08-22 as sample content so the loop can be built and read end to end. The tour and its dates are real and come from tier 1 and tier 3 sources in the artist intake. The creative director, her words, the assignment under them, the dates and venues, and the themes are invented. Nothing here came from the artist's team. The production setup was added on 2026-08-24 and is invented in the same way. Replace this file with the real direction and the real setup before any of it is shown to anyone outside Higher Roads.
 
 ## Direction, version 1
 
@@ -23,6 +22,28 @@ Keep him close. The band plays as a band and the audience is in the room with th
 The bluegrass thread is not a segment. It runs under the whole show. Whatever we build has to hold an acoustic circle at centre stage without looking like the production stopped and something else started.
 
 Three things I do not want. Anything that reads as arena rock. Anything glossy. Anything that would make him look like he takes himself too seriously.
+
+## Production setup, version 1
+
+Supplied by: Marcus Vail, Production Designer
+Supplied on: 2026-02-03
+Stored as given. This is the rig as production described it, kept whole and kept apart from anything the brain suggests.
+Playback system: disguise gx 2c, two machines, one spare. Content delivered as ProRes 4444 at the show's canvas size. Notch blocks in use on this tour.
+
+One main wall upstage behind the band, roughly four times as wide as it is tall, filling the back of the stage. It is the only surface that carries a full picture, so anything that has to read as an image reads there.
+
+Two side screens flank the stage and carry camera of the band. They stay on camera for most of the night and take content only when the wall is doing something the sides can extend.
+
+Lighting works as weather rather than as an effect. Warm front light on the band, haze in the air, and back light that can push through the wall's picture without washing it out.
+
+Staging is band forward. The band plays across the front of the stage with the wall behind them, and an acoustic circle sets up centre stage without anything rolling on or off.
+
+### Venue exceptions
+
+- 2026-06-06 | Copper Field Pavilion | The wall hangs two panels shorter here. Anything reading across the full height loses its top and bottom rows.
+- 2026-06-19 | Lakewind Shed | No side screens on this date. Camera of the band goes to the wall as a cut-in, so the wall carries picture and camera at once.
+- 2026-07-03 | Silver Creek Amphitheater | Altitude and a hard load in. The wall runs at reduced brightness, so a look that rests on a bright picture sits flatter here.
+- 2026-08-08 | Dust Road Amphitheater | Dust and wind on this site. Haze does not hold, so anything that depends on beams in air does not read.
 
 ## Dates and venues
 

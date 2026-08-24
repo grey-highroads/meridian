@@ -37,7 +37,7 @@ The line is idea versus execution.
 
 Three things travel, all scoped to one assignment. The artist layer and the organization layer never cross.
 
-**Outbound: the chosen concept and its brief.** One assignment's worth of context, assembled and frozen as a version. It says what was asked, what is required, which concept direction was chosen and why, what to avoid, which references apply, which technical profile governs, and the parts of the tour direction a person marked as bearing on this Scene together with the version they came from. The whole tour direction never travels. Ruled 2026-08-22. Required elements and the technical target lead. Latitude and meaning follow. Meridian's working assumption, to be confirmed with Jim, is that concrete facts early matter more to his workflow than abstract description anywhere.
+**Outbound: the chosen concept and its brief.** One assignment's worth of context, assembled and frozen as a version. It says what was asked, what is required, which concept direction was chosen and why, what to avoid, which references apply, which technical profile governs, and the parts of the tour direction a person marked as bearing on this Scene together with the version they came from. The whole tour direction never travels. Ruled 2026-08-22. The technical target carries what the show plays on: the standard rig as the tour's production designer supplied it, the version that setup came from, the playback line, and the dates a person marked as differing from the rig. The dates nobody marked stay in Meridian. Provisional, added 2026-08-24. Required elements and the technical target lead. Latitude and meaning follow. Meridian's working assumption, to be confirmed with Jim, is that concrete facts early matter more to his workflow than abstract description anywhere.
 
 **Inbound: the artboard candidate.** The artifact plus enough metadata for Meridian to review it, show it to a client, version it, and trace it: which job, which brief version, which artboard version, a short summary of the concept as built, technical assumptions made, any technical findings or warnings, unresolved questions, and a status.
 
@@ -104,7 +104,7 @@ Placeholders for discovery. Field names and structure will change.
   "briefVersion": 3,
   "assignment": { "title": "...", "objective": "..." },
   "requiredElements": [],
-  "technicalTarget": { "profileRef": "..." },
+  "technicalTarget": { "playbackSystem": "...", "setupVersion": 1, "suppliedBy": "...", "standardRig": "...", "venueExceptions": [], "venueProfile": null },
   "chosenConcept": { "summary": "...", "reasoning": "...", "references": [] },
   "avoid": [],
   "tourDirection": { "version": 2, "setBy": "...", "setOn": "...", "selectedParagraphs": [], "selectedBy": "..." },

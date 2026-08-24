@@ -256,6 +256,13 @@ export async function handleAction(body, options = {}) {
             .map((entry) => Number(entry))
             .filter((entry) => Number.isInteger(entry) && entry >= 0)
         : [],
+      // Which dates the rig differs on that bear on this Scene, by position in
+      // the tour's setup. Same marking pattern as the direction paragraphs.
+      venueExceptions: Array.isArray(source.venueExceptions)
+        ? source.venueExceptions
+            .map((entry) => Number(entry))
+            .filter((entry) => Number.isInteger(entry) && entry >= 0)
+        : [],
       directionSelectedBy: user.displayName,
       directionSelectedAt: new Date().toISOString(),
       shapedBy: user.displayName,

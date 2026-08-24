@@ -371,9 +371,17 @@ The parser resolves a claim to a source id only when exactly one source row carr
 
 Bring it back when: the claims file carries a source number rather than a source name, and the source list holds every source a claim cites. Both are cheap and both belong in the playbook rather than in the parser.
 
+## The tour's venue exceptions sit on outdoor dates
+
+Recorded 2026-08-24 while the production setup landed. The instruction that added it asked for exceptions on the four indoor dates already in the fixture. The fixture holds six dates and none of them is indoor: every venue is an amphitheater, a pavilion, or a shed, and the stored direction says the whole night sits outdoors. Adding indoor dates would have invented routing that argues with the director's words.
+
+So the four exceptions sit on four of the six existing dates and describe the rig differing rather than the room differing: a shorter wall, a date with no side screens, a date at reduced brightness, and a site where haze does not hold. That exercises the same marking and compile path the instruction asked for.
+
+Bring it back when: the real routing arrives and replaces the sample dates. The exceptions are rewritten against it at the same time, and the setup version goes to 2.
+
 ## Venue and screen intelligence
 
-Recorded 2026-08-22 when the brief's technical target was scoped. Grey ruled that in V1 the technical fact a brief needs is the tour's playback system, because most tours carry their own hardware and configure it per venue, and Jim has the technical side dialled on his render side. So `technicalTarget` carries the playback system from the tour and a `venueProfile` that is always null.
+Recorded 2026-08-22 when the brief's technical target was scoped. Grey ruled that in V1 the technical fact a brief needs is the tour's playback system, because most tours carry their own hardware and configure it per venue, and Jim has the technical side dialled on his render side. So `technicalTarget` carried the playback system from the tour and a `venueProfile` that is always null. Corrected 2026-08-24: the target now also carries the tour's production setup, its version, and the dates a person marked as differing from it, all supplied by the tour's production designer and stored as given. What is still deferred is venue and screen data we do not hold.
 
 What is deferred is the ambition behind the thesis line about technical intelligence: knowing enough about a venue to make rigging recommendations or raise warnings before anyone builds. That needs venue and screen data we do not hold and a source for it we have not found. The intake's own thin list already names the gap on the artist side: trade coverage of his shows is strong from 2016 forward and thin before it, and no source in tiers 1 to 6 gives screen inventories per venue.
 

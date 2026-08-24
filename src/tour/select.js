@@ -1,5 +1,5 @@
 import { FACET_NAMES } from "../artist/parse-intake.js";
-import { directionParagraphs } from "./brief.js";
+import { directionParagraphs, venueExceptions } from "./brief.js";
 import { ownEntry } from "../lookup.js";
 
 // Assemble context, do not dump it.
@@ -51,6 +51,11 @@ export function assembleContext(brain, tour, assignment) {
     // The same split the compiler uses, so a paragraph marked on the page is
     // the paragraph the brief carries.
     directionParagraphs: directionParagraphs(tour.direction),
+    // What the show plays on. A concept is for these surfaces, so the setup
+    // travels with the context rather than waiting for the brief.
+    productionSetup: tour.productionSetup || null,
+    setupVersion: tour.productionSetup ? tour.productionSetup.version : null,
+    venueExceptions: venueExceptions(tour.productionSetup),
     request: assignment.request,
     counts: { inBrain: all.length, inScope: findings.length },
     findings,

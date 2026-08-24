@@ -23,9 +23,9 @@ export function directionParagraphs(direction) {
 }
 
 // Selection is by position in that list. An index that is out of range or
-// repeated is dropped rather than guessed at.
-export function selectedDirectionParagraphs(direction, selection) {
-  const all = directionParagraphs(direction);
+// repeated is dropped rather than guessed at. Venue exceptions are marked the
+// same way, so both go through one picker.
+function pickByIndex(all, selection) {
   const seen = new Set();
   const picked = [];
   for (const entry of Array.isArray(selection) ? selection : []) {
@@ -35,6 +35,23 @@ export function selectedDirectionParagraphs(direction, selection) {
     picked.push(all[index]);
   }
   return picked;
+}
+
+export function selectedDirectionParagraphs(direction, selection) {
+  return pickByIndex(directionParagraphs(direction), selection);
+}
+
+// The dates where the rig differs from the standard setup, in the order the
+// tour file lists them.
+export function venueExceptions(setup) {
+  return setup && Array.isArray(setup.venueExceptions) ? setup.venueExceptions : [];
+}
+
+// A brief carries the exceptions someone said bear on this Scene. The rest
+// stay on the tour home. A Scene saved before the setup existed marked none of
+// them, and that reads as an empty list rather than as an error.
+export function selectedVenueExceptions(setup, selection) {
+  return pickByIndex(venueExceptions(setup), selection);
 }
 
 export function jobIdFor(tourId, assignmentId) {
@@ -51,6 +68,7 @@ export function compileBrief({ tour, assignment, concept, artistId, briefVersion
     error.status = 400;
     throw error;
   }
+  const setup = tour.productionSetup || null;
   return {
     jobId: jobIdFor(tour.id, assignment.id),
     briefVersion,
@@ -69,12 +87,18 @@ export function compileBrief({ tour, assignment, concept, artistId, briefVersion
       request: assignment.request,
     },
 
-    // Binding first.
+    // Binding first. The technical target is what the show plays on: the
+    // standard rig as production supplied it, the version it came from, the
+    // playback line, and the dates someone marked as differing from it.
     requiredElements: assignment.requiredElements || [],
     technicalTarget: {
       playbackSystem: tour.playbackSystem || null,
-      // Venue and screen detail sits with Jim in this version. See
-      // docs/deferred-work.md for what would bring it here.
+      setupVersion: setup ? setup.version : null,
+      suppliedBy: setup ? setup.suppliedBy : null,
+      standardRig: setup ? setup.words : null,
+      venueExceptions: selectedVenueExceptions(setup, concept.venueExceptions),
+      // Venue and screen profiles past what the tour supplied sit with Jim in
+      // this version. See docs/deferred-work.md for what would bring them here.
       venueProfile: null,
     },
 
@@ -166,6 +190,22 @@ export function avoidText(entries) {
     .filter((text) => text && !carriesOurWords(text));
 }
 
+// What the show plays on, in the order a reader needs it: the rig first, the
+// playback line, the version it came from, then the dates that differ.
+export function technicalTargetText(target) {
+  const parts = [];
+  if (target.standardRig) parts.push(target.standardRig);
+  parts.push(target.playbackSystem || "Not recorded.");
+  if (target.setupVersion) {
+    parts.push(`Production setup version ${target.setupVersion}${target.suppliedBy ? `, supplied by ${target.suppliedBy}` : ""}.`);
+  }
+  const marked = target.venueExceptions || [];
+  parts.push(marked.length
+    ? ["On these dates the rig differs:", ...marked.map((entry) => `- ${entry.date}, ${entry.venue}. ${entry.text}`)].join("\n")
+    : "No date on this tour was marked as differing from the rig above.");
+  return parts.join("\n\n");
+}
+
 function bullets(items) {
   return items.length ? items.map((item) => `- ${item}`).join("\n") : "- None recorded.";
 }
@@ -186,6 +226,7 @@ export function renderBriefDocument(brief) {
     `Job: ${brief.jobId}`,
     `Brief version: ${brief.briefVersion}`,
     `Written against direction version: ${brief.directionVersion}`,
+    brief.technicalTarget.setupVersion ? `Production setup version: ${brief.technicalTarget.setupVersion}` : null,
     `Status: ${brief.status === "frozen" ? `Frozen by ${brief.frozenBy} on ${brief.frozenAt}` : "Draft, not yet frozen"}`,
     brief.assignment.moment ? `Moment: ${brief.assignment.moment}` : null,
     brief.assignment.requestedBy ? `Asked for by: ${brief.assignment.requestedBy}` : null,
@@ -196,7 +237,7 @@ export function renderBriefDocument(brief) {
     "",
     "## Technical target",
     "",
-    brief.technicalTarget.playbackSystem || "Not recorded.",
+    technicalTargetText(brief.technicalTarget),
     "",
     "## The concept",
     "",

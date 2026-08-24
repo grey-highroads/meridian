@@ -23,7 +23,7 @@ const view = {
   brief: null,
   briefs: [],
   receipt: null,
-  draft: { title: "", direction: "", marked: [] },
+  draft: { title: "", direction: "", marked: [], markedVenues: [] },
   message: "",
   working: false,
 };
@@ -179,6 +179,25 @@ function marksSection() {
     </section>`;
 }
 
+// The dates where the rig differs. The brief carries the ones marked here and
+// leaves the rest on the tour home.
+function venueSection() {
+  const all = view.context.venueExceptions || [];
+  if (!all.length) return "";
+  const rows = all.map((entry, index) => `<label class="m-cluster">
+      <input type="checkbox" data-venue="${escape(index)}" ${view.draft.markedVenues.includes(index) ? "checked" : ""} />
+      <span class="m-copy"><strong>${escape(entry.venue)}</strong>, ${escape(entry.date)}. ${escape(entry.text)}</span>
+    </label>`).join("");
+  return `<section class="m-work m-stack" aria-labelledby="venues-heading">
+      <div class="m-cluster">
+        <h2 id="venues-heading" class="m-section-heading">Dates where the rig differs</h2>
+        <span class="m-meta">SETUP V0${escape(view.context.setupVersion)}</span>
+      </div>
+      <p class="m-copy">The brief always carries the standard setup. Mark a date here when this Scene has to work on it.</p>
+      <div class="m-stack">${rows}</div>
+    </section>`;
+}
+
 // ---------------------------------------------------------------------------
 // The brief
 // ---------------------------------------------------------------------------
@@ -304,6 +323,7 @@ function render() {
       ${brainSection()}
     </div>
     ${marksSection()}
+    ${venueSection()}
     ${briefSection()}
     ${receiptSection()}`;
   actionBar();
@@ -322,6 +342,7 @@ async function load() {
     view.draft.title = view.concept.title;
     view.draft.direction = view.concept.idea;
     view.draft.marked = (view.concept.directionParagraphs || []).slice();
+    view.draft.markedVenues = (view.concept.venueExceptions || []).slice();
   }
   render();
 }
@@ -358,6 +379,7 @@ async function save() {
     openQuestions: view.suggestions ? view.suggestions.openQuestions || [] : [],
     artistContext: applied.filter((entry) => cited.has(entry.findingId)),
     directionParagraphs: view.draft.marked.slice().sort((first, second) => first - second),
+    venueExceptions: view.draft.markedVenues.slice().sort((first, second) => first - second),
     cameFrom: used ? `suggestion: ${used.title}` : "written by Higher Roads",
   };
   view.concept = (await call("choose-concept", { assignmentId: view.sceneId, concept })).concept;
@@ -431,13 +453,21 @@ document.addEventListener("input", (event) => {
   if (field.dataset.draft === "direction") view.draft.direction = field.value;
 });
 
+function toggle(list, index, on) {
+  const kept = list.filter((entry) => entry !== index);
+  if (on) kept.push(index);
+  return kept;
+}
+
 document.addEventListener("change", (event) => {
   const box = event.target;
-  if (!box.dataset || box.dataset.paragraph === undefined) return;
-  const index = Number(box.dataset.paragraph);
-  const marked = view.draft.marked.filter((entry) => entry !== index);
-  if (box.checked) marked.push(index);
-  view.draft.marked = marked;
+  if (!box.dataset) return;
+  if (box.dataset.paragraph !== undefined) {
+    view.draft.marked = toggle(view.draft.marked, Number(box.dataset.paragraph), box.checked);
+  }
+  if (box.dataset.venue !== undefined) {
+    view.draft.markedVenues = toggle(view.draft.markedVenues, Number(box.dataset.venue), box.checked);
+  }
 });
 
 guard(load);

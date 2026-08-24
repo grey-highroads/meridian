@@ -17,6 +17,8 @@ const SYSTEM = [
   "Do two things.",
   "First, pick the findings that actually bear on this request. Expect a handful, not most of them. For each one say in one plain sentence why it belongs here. Leaving a finding out is a real answer; a long list is worse than a short one.",
   "Second, propose two or three concept directions for the request. Each one is an idea a creative person can react to, not a plan and not instructions for how to build anything.",
+  "A concept describes what appears on the tour's surfaces and how it develops across the song. It sits with lighting and IMAG around a live band, so say what the audience sees on the surfaces and what the band is doing while it happens.",
+  "Write concepts a video content team could brief from. Never describe an effect the listed surfaces cannot produce.",
   "Every proposal names the finding ids it rhymes with, by id, and only ids you were given. Never state a fact about the artist that no finding supports. If something would help and nothing supports it, put it in openQuestions instead of asserting it.",
   "Say what each proposal would ask of the production, and where it might miss the direction.",
   "Say what the brand avoids that bears on this request, in avoidNotes, drawing on the findings for it.",
@@ -33,6 +35,8 @@ export function buildProposalRequest(context, options = {}) {
     sources: entry.independentSourceCount,
     tiers: entry.tiers,
   }));
+  const setup = context.productionSetup;
+  const exceptions = setup && setup.venueExceptions ? setup.venueExceptions : [];
   const user = [
     "Tour direction, version " + context.directionVersion + ", stored as the director gave it:",
     context.direction.words,
@@ -40,6 +44,18 @@ export function buildProposalRequest(context, options = {}) {
     "What the tour manager is asking for:",
     context.request,
     "",
+    // The surfaces come before the findings, because a concept that the rig
+    // cannot show is not a concept for this tour.
+    ...(setup ? [
+      `What the show plays on, production setup version ${setup.version}, stored as production gave it:`,
+      setup.words,
+      "",
+    ] : []),
+    ...(exceptions.length ? [
+      "Dates where the rig differs:",
+      exceptions.map((entry) => `- ${entry.date}, ${entry.venue}. ${entry.text}`).join("\n"),
+      "",
+    ] : []),
     `Every finding the brain holds for the ${context.identity} identity, ${findings.length} of them:`,
     JSON.stringify(findings, null, 2),
   ].join("\n");
