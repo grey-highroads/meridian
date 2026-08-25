@@ -60,12 +60,18 @@ function render() {
     <span class="m-state ${view.approved || !view.version ? "m-state--approved" : "m-state--current"}">${escape(locationState)}</span>`;
 
   if (!view.version) {
-    page.innerHTML = `<header class="m-job-header">
-        <div class="m-job-header__copy">
-          <h1 class="m-heading">Nothing to look at yet</h1>
-          <p class="m-copy m-copy--large">There is nothing waiting for you on this one.</p>
+    page.innerHTML = `<section class="m-empty-state" aria-labelledby="client-waiting-heading">
+        <div class="m-empty-state__visual" aria-hidden="true">
+          <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><rect x="12" y="15" width="40" height="34" rx="2"></rect><path d="M20 24h24M20 32h16M20 40h10"></path></svg>
+          <span class="m-empty-state__calibration">Client review / Standing by</span>
         </div>
-      </header>`;
+        <div class="m-empty-state__body">
+          <span class="m-label">Nothing for you to review</span>
+          <h1 id="client-waiting-heading" class="m-section-heading">No Artboard has been sent yet</h1>
+          <p class="m-copy m-copy--large">Higher Roads will bring the exact version here when it is ready. You do not need to do anything yet.</p>
+          <div class="m-empty-state__actions"><a class="m-button" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open the Scene</a></div>
+        </div>
+      </section>`;
     return;
   }
 

@@ -181,6 +181,23 @@ function render() {
   root.innerHTML = `${intro()}<div class="m-form-page__work">${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${revisionBlock()}${briefBlock()}${issueBlock()}${submitBlock()}</div>`;
 }
 
+function renderNoBrief() {
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(SCENE_ID)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Production handoff</span></nav>`;
+  root.className = "m-page";
+  root.innerHTML = `<section class="m-empty-state m-empty-state--waiting" aria-labelledby="handoff-not-ready-heading">
+      <div class="m-empty-state__visual" aria-hidden="true">
+        <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><path d="M11 32h34"></path><path d="m37 24 8 8-8 8"></path><rect x="8" y="16" width="44" height="32" rx="2"></rect></svg>
+        <span class="m-empty-state__calibration">Production handoff / Not ready</span>
+      </div>
+      <div class="m-empty-state__body">
+        <span class="m-label">One step comes first</span>
+        <h1 id="handoff-not-ready-heading" class="m-section-heading">Freeze the brief before handoff</h1>
+        <p class="m-copy m-copy--large">Production needs one exact Scene direction, its required elements, and the Tour Direction version behind it. Finish that work in the Scene, then issue it here.</p>
+        <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(SCENE_ID)}">Finish the Scene brief</a></div>
+      </div>
+    </section>`;
+}
+
 async function load() {
   const [{ tour, assignment }, briefList, handoffList, reviewList, artboardList] = await Promise.all([
     call("get-assignment"),
@@ -194,7 +211,10 @@ async function load() {
   view.artboards = artboardList.artboards || [];
   view.revision = REVISION_ID ? (reviewList.revisions || []).find((entry) => entry.revisionId === REVISION_ID) || null : null;
   const briefVersion = BRIEF_VERSION || (view.revision && view.artboards.find((entry) => entry.artboard.artboardVersion === view.revision.sourceArtboardVersion)?.artboard.briefVersion) || briefList.briefs.at(-1)?.briefVersion;
-  if (!briefVersion) throw new Error("No frozen brief is ready for this handoff.");
+  if (!briefVersion) {
+    renderNoBrief();
+    return;
+  }
   const full = await call("get-brief", { briefVersion });
   view.brief = full.brief;
   view.document = full.document;

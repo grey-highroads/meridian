@@ -96,7 +96,18 @@ function workFrame(entry, label) {
 
 function workSurface() {
   const current = latest();
-  if (!current) return `<div class="m-callout"><p class="m-copy">Nothing has come back from production yet.</p></div>`;
+  if (!current) return `<section class="m-empty-state m-empty-state--waiting" aria-labelledby="waiting-artboard-heading">
+      <div class="m-empty-state__visual" aria-hidden="true">
+        <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><rect x="12" y="14" width="40" height="36" rx="2"></rect><path d="m19 41 9-10 7 7 5-6 6 9"></path><path d="M24 8h16M24 56h16"></path></svg>
+        <span class="m-empty-state__calibration">Production return / Waiting</span>
+      </div>
+      <div class="m-empty-state__body">
+        <span class="m-label">With production</span>
+        <h1 id="waiting-artboard-heading" class="m-section-heading">Waiting for the first Artboard</h1>
+        <p class="m-copy m-copy--large">Production has the frozen brief for ${escape(view.assignment.title)}. The exact version will appear here when the work comes back.</p>
+        <div class="m-empty-state__actions"><a class="m-button" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open the Scene</a></div>
+      </div>
+    </section>`;
   const prior = view.compareTo ? view.artboards.find((entry) => entry.artboard.artboardVersion === view.compareTo) : null;
   const frames = prior
     ? `<div class="m-reference-pair">${workFrame(prior, `Earlier V${version(prior.artboard.artboardVersion)}`)}${workFrame(current, `Current V${version(current.artboard.artboardVersion)}`)}</div>`
@@ -145,7 +156,7 @@ function versionsPanel() {
 
 function productionPanel() {
   const current = latest();
-  if (!current) return `<section class="m-workstation__panel"><p class="m-copy">Nothing has come back yet.</p></section>`;
+  if (!current) return `<section class="m-workstation__panel"><div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Waiting on production</span><p class="m-copy">Technical notes arrive with the first Artboard.</p></div></section>`;
   const value = current.artboard.artboardVersion;
   const state = approvedFor(value) ? "Approved by the client" : readyFor(value) ? "With the client" : "Internal review";
   return `<section class="m-workstation__panel" role="tabpanel"><div class="m-inspector-group"><span class="m-label">Current state</span><h2 class="m-inspector-heading">${escape(state)}</h2><p class="m-copy">${escape(current.artboard.conceptSummary)}</p></div><div class="m-inspector-group"><span class="m-label">Production assumed</span><ul>${list(current.artboard.technicalAssumptions)}</ul></div><div class="m-inspector-group"><span class="m-label">Technical items</span><ul>${list(current.artboard.technicalFindings)}</ul></div></section>`;
@@ -153,7 +164,7 @@ function productionPanel() {
 
 function recordPanel() {
   const rows = view.facts.slice().reverse().map((fact) => `<div class="m-activity-row"><span class="m-activity-row__marker"></span><div><p class="m-activity-row__copy">${escape(fact.action)} ${escape(fact.version || "")}</p><span class="m-meta">${escape(String(fact.actor).toUpperCase())} / ${escape(fact.at)}</span></div></div>`).join("");
-  return `<section class="m-workstation__panel" role="tabpanel"><div class="m-inspector-group"><span class="m-label">Scene record</span><h2 class="m-inspector-heading">What happened</h2></div><div class="m-activity-list">${rows || `<p class="m-copy">No recorded actions yet.</p>`}</div></section>`;
+  return `<section class="m-workstation__panel" role="tabpanel"><div class="m-inspector-group"><span class="m-label">Scene record</span><h2 class="m-inspector-heading">What happened</h2></div><div class="m-activity-list">${rows || `<div class="m-empty-inline"><span class="m-label">The record starts here</span><p class="m-copy">The first submission, decision, or handoff will appear with its person, time, and version.</p></div>`}</div></section>`;
 }
 
 function inspectorPanel() {
@@ -169,9 +180,7 @@ function tab(name, label) {
 
 function decisionToolbar() {
   const current = latest();
-  if (!current) {
-    return `<section class="m-workstation-notice"><div class="m-stack"><h1 class="m-scene-work-heading">Waiting for the first Artboard</h1><p class="m-copy">Production has not submitted work for this Scene yet.</p></div></section>`;
-  }
+  if (!current) return "";
   const value = current.artboard.artboardVersion;
   const pending = view.handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value);
   const ready = readyFor(value);
@@ -207,7 +216,8 @@ function currentState(current) {
 function render() {
   const current = latest();
   const state = currentState(current);
-  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scenes.html?tour=${escape(TOUR_ID)}">Scenes</a><span aria-hidden="true">/</span><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Review V${version(current?.artboard.artboardVersion)}</span></nav><span class="${escape(state.className)}">${escape(state.label)}</span>`;
+  const reviewLabel = current ? `Review V${version(current.artboard.artboardVersion)}` : "Review";
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scenes.html?tour=${escape(TOUR_ID)}">Scenes</a><span aria-hidden="true">/</span><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">${escape(reviewLabel)}</span></nav><span class="${escape(state.className)}">${escape(state.label)}</span>`;
   workspace.innerHTML = `${decisionToolbar()}${view.message ? `<div class="m-workstation-message"><div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div></div>` : ""}<div class="m-workstation"><section class="m-workstation__stage" aria-label="Work under review"><div class="m-workstation__canvas"><section class="m-direction-editor m-review-surface"><div class="m-direction-editor__body m-stack">${workSurface()}</div></section></div></section><aside class="m-workstation__inspector" aria-label="Review context"><div class="m-workstation__inspector-head"><span class="m-label">Inspector</span></div><div class="m-workstation__tabs" role="tablist">${tab("brief", "Brief")}${tab("versions", "Versions")}${tab("production", "Production")}${tab("record", "Record")}</div><div class="m-workstation__panels">${inspectorPanel()}</div></aside></div>`;
 }
 

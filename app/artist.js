@@ -183,7 +183,7 @@ function reader(groups) {
     </details>` : "";
   const principles = entries.length
     ? `<div class="m-intelligence-principles">${visible.map(principleBlock).join("")}</div>${remainder}`
-    : `<p class="m-copy">Nothing in this category matches the current identity.</p>`;
+    : `<div class="m-empty-inline"><span class="m-label">No approved guidance here</span><p class="m-copy">This Brain has no ${escape(title.toLowerCase())} guidance for ${escape(scope.toLowerCase())}. Try another category or identity.</p></div>`;
   const provenance = entries.length ? `<details class="m-intelligence-provenance" data-provenance${view.provenance ? " open" : ""}>
       <summary>
         <span class="m-label">Evidence and provenance</span>
@@ -265,8 +265,29 @@ function actionBar(brain) {
     </div>`;
 }
 
+function firstBrain() {
+  return `<section class="m-empty-state m-empty-state--waiting" aria-labelledby="first-brain-heading">
+      <div class="m-empty-state__visual" aria-hidden="true">
+        <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><path d="M20 49h24M24 55h16"></path><path d="M18 28a14 14 0 1 1 28 0c0 7-5 9-7 15H25c-2-6-7-8-7-15Z"></path><path d="M25 28h14M32 21v14"></path></svg>
+        <span class="m-empty-state__calibration">Artist research / Not approved</span>
+      </div>
+      <div class="m-empty-state__body">
+        <span class="m-label">Higher Roads research</span>
+        <h2 id="first-brain-heading" class="m-section-heading">Build the Brain from real research</h2>
+        <p class="m-copy m-copy--large">Start with the intake files the team already trusts. Higher Roads reviews and approves the research before it can contribute to a Scene.</p>
+        <div class="m-empty-state__actions"><button class="m-button m-button--primary" type="button" data-import>Import intake files</button><span class="m-meta">NOTHING ENTERS AUTOMATICALLY</span></div>
+      </div>
+    </section>`;
+}
+
 async function render() {
   const brain = await call("get-artist");
+  if (!brain.artist) {
+    locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><span class="m-breadcrumb__current">Artist Brain</span></nav><span class="m-state m-state--current">Research not started</span>`;
+    root.innerHTML = `<header class="m-job-header m-intelligence-header"><div class="m-job-header__copy"><span class="m-label">What Meridian knows</span><h1 class="m-heading">Artist Brain</h1></div></header>${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${firstBrain()}`;
+    operator.innerHTML = "";
+    return;
+  }
   if (!brain.approved) view.mode = "review";
   let groups = [];
   if (view.mode === "brain") {

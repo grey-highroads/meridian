@@ -205,7 +205,7 @@ function tourDirectionWork() {
         </div>
         <span class="m-meta">DIRECTION V0${escape(view.context.directionVersion)}</span>
       </div>
-      <div class="m-scene-direction-options">${rows}</div>
+      ${rows ? `<div class="m-scene-direction-options">${rows}</div>` : `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Tour Direction not added</span><p class="m-copy">You can shape this Scene from the request. Add the tour's direction before the brief goes to production.</p></div>`}
     </section>`;
 }
 
@@ -218,13 +218,21 @@ function venueSection() {
       <input type="checkbox" data-venue="${escape(index)}" ${view.draft.markedVenues.includes(index) ? "checked" : ""} />
       <span class="m-copy"><strong>${escape(entry.venue)}</strong>, ${escape(entry.date)}. ${escape(entry.text)}</span>
     </label>`).join("");
+  const setupCopy = setup && setup.words
+    ? paragraphs(setup.words)
+    : `<div class="m-empty-inline"><span class="m-label">No tour setup yet</span><p class="m-copy">You can keep writing the Scene. Add confirmed playback and screen details before production receives the brief.</p></div>`;
+  const exceptionCopy = rows
+    ? `<div>${rows}</div>`
+    : setup && setup.words
+      ? `<div class="m-empty-inline m-empty-inline--clear"><span class="m-label">Standard setup</span><p class="m-copy">This Scene uses the tour setup on every date.</p></div>`
+      : "";
   return `<section class="m-workstation__panel" id="setup-panel" role="tabpanel" aria-labelledby="setup-tab" ${view.inspector === "setup" ? "" : "hidden"}>
       <div class="m-inspector-group">
         <span class="m-label">Production setup${view.context.setupVersion ? ` V0${escape(view.context.setupVersion)}` : ""}</span>
         <h2 id="venues-heading" class="m-inspector-heading">Dates where the rig differs</h2>
-        ${setup && setup.words ? paragraphs(setup.words) : `<p class="m-copy">No production setup has been recorded.</p>`}
+        ${setupCopy}
       </div>
-      ${rows ? `<div>${rows}</div>` : `<p class="m-copy">Every date uses the standard setup.</p>`}
+      ${exceptionCopy}
     </section>`;
 }
 

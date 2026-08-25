@@ -158,6 +158,44 @@ test("an empty decision queue does not hide completed sample reviews", () => {
   assert.match(review, /read only/, "completed review still presents itself as an active decision");
 });
 
+test("empty states name the job and use the shared visual family", () => {
+  const patterns = read("app/design/patterns.css");
+  const docs = read("docs/design-system.md");
+  for (const pattern of ["m-empty-state", "m-empty-state--action", "m-empty-state--waiting", "m-empty-state--clear", "m-empty-inline"]) {
+    assert.match(patterns, new RegExp(`\\.${pattern}`), `design system is missing ${pattern}`);
+  }
+  assert.match(docs, /answers the question a person brought to the page/, "empty-state guidance starts with storage instead of the person's job");
+  assert.match(docs, /colors clarify the kind of moment/, "empty-state color has no semantic restraint");
+  assert.doesNotMatch(patterns, /#[0-9a-f]{3,8}/i, "empty-state patterns bypass the token palette");
+});
+
+test("empty screens speak to the person holding the work", () => {
+  const home = read("app/home.js");
+  assert.match(home, /You are clear for now/, "Home does not reassure a person with no assigned work");
+  assert.match(home, /Give the tour its first Scene/, "Home does not open the first creative job");
+
+  const scenes = read("app/scenes.js");
+  assert.match(scenes, /song, an intro, a transition/, "Scenes does not explain what a Scene can be");
+  assert.match(scenes, /One sentence is enough/, "Scenes makes a first request feel heavier than it is");
+
+  const tour = read("app/tour.js");
+  assert.match(tour, /Store the director's words as given/, "Tour Direction empty state does not explain why the direction matters");
+  assert.match(tour, /Scenes can still be requested and developed/, "optional themes read like a blocker");
+
+  const scene = read("app/scene.js");
+  assert.match(scene, /You can shape this Scene from the request/, "Scene does not explain work before Tour Direction arrives");
+  assert.match(scene, /You can keep writing the Scene/, "missing setup blocks creative work");
+
+  const review = read("app/review.js");
+  assert.match(review, /The exact version will appear here when the work comes back/, "internal review does not explain the production handoff");
+  const client = read("app/client-review.js");
+  assert.match(client, /You do not need to do anything yet/, "client review does not release the client from an empty queue");
+  const handoff = read("app/handoff.js");
+  assert.match(handoff, /Freeze the brief before handoff/, "handoff does not name the required first step");
+  const artist = read("app/artist.js");
+  assert.match(artist, /Build the Brain from real research/, "Artist Brain does not start with the manual research job");
+});
+
 test("review decisions lead instead of hiding in a footer", () => {
   const operatorMarkup = read("app/review.html");
   const operator = read("app/review.js");
