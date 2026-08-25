@@ -82,7 +82,11 @@ async function setRemoved(store, artistId, findingId, entry) {
 }
 
 export async function handleAction(body, options = {}) {
-  const store = options.store || createArtistStore();
+  // The artist store is bound to the session's account; the demo account maps
+  // to the legacy paths. A session from another account reading this account's
+  // artist finds absence by construction, never an acknowledgment.
+  const accountId = options.user ? (options.user.accountId || "dierks-bentley") : null;
+  const store = options.store || createArtistStore({ accountId });
   const reader = options.reader;
   const artistId = sanitizeClientId(body.artistId || "");
   if (!artistId || artistId === "default") {
@@ -145,7 +149,7 @@ export default async function handler(request, response) {
       return;
     }
     const body = await readJsonBody(request);
-    sendJson(response, 200, await handleAction(body));
+    sendJson(response, 200, await handleAction(body, { user }));
   } catch (error) {
     sendPublicError(response, error);
   }

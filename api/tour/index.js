@@ -46,13 +46,21 @@ async function loadTour(tourId, options) {
   // when nothing is stored under the id, which in production is true only for
   // the demo tour. A test that injects its own reader reads what it supplied,
   // exactly as before.
-  const tourStoreForRead = options.tourStore || (!options.store && !options.reader && !options.lister ? createTourStore() : null);
+  const tourStoreForRead = options.tourStore || (!options.store && !options.reader && !options.lister ? createTourStore({ accountId: options.actingAccount || null }) : null);
   let fixture = null;
   if (tourStoreForRead) {
     const stored = await tourStoreForRead.readTour(tourId);
     if (stored) fixture = stored;
   }
   if (!fixture) {
+    // The committed fixture is the demo account's seed. Another account asking
+    // for any unstored id gets absence, never the demo tour, and never an
+    // acknowledgment that the id exists elsewhere.
+    if (!options.reader && !options.lister && options.actingAccount && options.actingAccount !== "dierks-bentley") {
+      const error = new Error("No tour is stored under that name.");
+      error.status = 404;
+      throw error;
+    }
     let texts;
     try {
       texts = await readTourFixture(tourId, options);
@@ -217,9 +225,9 @@ function submissionArtifact(value, tourId, assignmentId) {
 async function atArtboard(body, options) {
   const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
   const assignment = findAssignment(fixture, body.assignmentId);
-  const tourStore = options.tourStore || createTourStore();
-  const artboardStore = options.artboardStore || createArtboardStore();
-  const record = options.sceneRecord || createSceneRecord();
+  const tourStore = options.tourStore || createTourStore({ accountId: options.actingAccount || null });
+  const artboardStore = options.artboardStore || createArtboardStore({ accountId: options.actingAccount || null });
+  const record = options.sceneRecord || createSceneRecord({ accountId: options.actingAccount || null });
   const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
   const wanted = Number(body.artboardVersion);
   const entry = versions.find((stored) => stored.artboard.artboardVersion === wanted);
@@ -278,15 +286,22 @@ function signedIn(options) {
 
 export async function handleAction(body, options = {}) {
   const user = signedIn({ ...options, action: body.action });
-  const actor = { actor: user.displayName, role: user.roleLabel };
+  // The acting account. Everyone acts inside their own account; a Higher
+  // Roads session may name another account and that choice is recorded on the
+  // facts it writes. Brief 2 of docs/spec-accounts-artists-tours.md.
+  const actingAccount = user.role === CLIENT_ROLE
+    ? (user.accountId || "dierks-bentley")
+    : sanitizeClientId(body.accountId || user.accountId || "dierks-bentley");
+  const actor = { actor: user.displayName, role: user.roleLabel, account: actingAccount };
+  options = { ...options, actingAccount };
 
   if (body.action === "get-me") return { user };
 
   if (body.action === "get-tour") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
-    const tourStore = options.tourStore || createTourStore();
-    const artboardStore = options.artboardStore || createArtboardStore();
-    const record = options.sceneRecord || createSceneRecord();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     const assignments = [];
     // Where each Scene has got to, read from what is stored for it. Nothing
     // here compiles a brief, because a draft that exists for the length of one
@@ -335,7 +350,7 @@ export async function handleAction(body, options = {}) {
       error.status = 409;
       throw error;
     }
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const direction = {
       version: fixture.tour.direction.version + 1,
       setBy: optionalText(body.onBehalfOf) || user.displayName,
@@ -377,7 +392,7 @@ export async function handleAction(body, options = {}) {
       error.status = 409;
       throw error;
     }
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const createdAt = new Date().toISOString();
     // The artist id is stored as given and not validated against the artist
     // constant, because artists become stored objects in brief 3 of
@@ -425,7 +440,7 @@ export async function handleAction(body, options = {}) {
       throw error;
     }
     const moment = optionalText(body.moment);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const requestedAt = new Date().toISOString();
     const assignment = {
       id: requestId(title, fixture.assignments, options.now ? options.now() : Date.now()),
@@ -444,7 +459,7 @@ export async function handleAction(body, options = {}) {
       references: textList(body.references),
     };
     await tourStore.addRequest(fixture.tour.id, assignment);
-    const record = options.sceneRecord || createSceneRecord();
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     await record.appendFact(fixture.tour.id, assignment.id, {
       ...actor,
       action: "Requested the Scene",
@@ -460,7 +475,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-scene-workspace") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const stored = await tourStore.readConcept(fixture.tour.id, assignment.id);
     const concept = stored ? {
       title: stored.title,
@@ -488,7 +503,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "save-scene-direction") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const source = body.concept || {};
     if (!String(source.title || "").trim() || !String(source.idea || "").trim()) {
       const error = new Error("A Scene direction needs a name and some direction.");
@@ -535,7 +550,7 @@ export async function handleAction(body, options = {}) {
 
   if (body.action === "choose-concept") {
     const { fixture, assignment, context } = await contextFor(body, options);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const source = body.concept || {};
     if (!String(source.title || "").trim() || !String(source.idea || "").trim()) {
       const error = new Error("A concept needs a title and an idea.");
@@ -587,13 +602,13 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-concept") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     return { concept: await tourStore.readConcept(fixture.tour.id, assignment.id) };
   }
   if (body.action === "compile-brief") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const concept = await tourStore.readConcept(fixture.tour.id, assignment.id);
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     const brief = compileBrief({
@@ -610,7 +625,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "freeze-brief") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const concept = await tourStore.readConcept(fixture.tour.id, assignment.id);
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     const compiled = compileBrief({
@@ -622,7 +637,7 @@ export async function handleAction(body, options = {}) {
     });
     const frozen = freeze(compiled, user.displayName);
     await tourStore.addBrief(fixture.tour.id, assignment.id, frozen);
-    const record = options.sceneRecord || createSceneRecord();
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     await record.appendFact(fixture.tour.id, assignment.id, {
       ...actor,
       action: "Froze the brief",
@@ -634,7 +649,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "list-briefs") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     return {
       briefs: versions.map((entry) => ({
@@ -651,7 +666,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-brief") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     const brief = versions.find((entry) => entry.briefVersion === Number(body.briefVersion));
     if (!brief) {
@@ -668,9 +683,9 @@ export async function handleAction(body, options = {}) {
   if (body.action === "issue-brief") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
-    const artboardStore = options.artboardStore || createArtboardStore();
-    const record = options.sceneRecord || createSceneRecord();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     const wanted = body.briefVersion === undefined || body.briefVersion === null
       ? null
@@ -710,7 +725,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-handoffs") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const artboardStore = options.artboardStore || createArtboardStore();
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     return { handoffs: await artboardStore.readHandoffs(fixture.tour.id, assignment.id) };
   }
 
@@ -721,9 +736,9 @@ export async function handleAction(body, options = {}) {
   if (body.action === "send-brief") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
-    const artboardStore = options.artboardStore || createArtboardStore();
-    const record = options.sceneRecord || createSceneRecord();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
 
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     const wanted = body.briefVersion === undefined || body.briefVersion === null
@@ -765,7 +780,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-artboards") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const artboardStore = options.artboardStore || createArtboardStore();
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     return {
       artboards: await artboardStore.readArtboards(fixture.tour.id, assignment.id),
       label: STAND_IN_LABEL,
@@ -778,9 +793,9 @@ export async function handleAction(body, options = {}) {
   if (body.action === "submit-artboard") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
-    const artboardStore = options.artboardStore || createArtboardStore();
-    const record = options.sceneRecord || createSceneRecord();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     const briefVersion = Number(body.briefVersion);
     const brief = briefs.find((entry) => entry.briefVersion === briefVersion && entry.status === "frozen");
@@ -868,7 +883,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-artboard-artifact") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const artboardStore = options.artboardStore || createArtboardStore();
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
     const wanted = Number(body.artboardVersion);
     const entry = versions.find((stored) => stored.artboard.artboardVersion === wanted);
@@ -902,8 +917,8 @@ export async function handleAction(body, options = {}) {
   if (body.action === "save-review") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const artboardStore = options.artboardStore || createArtboardStore();
-    const record = options.sceneRecord || createSceneRecord();
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
 
     const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
     const wanted = Number(body.artboardVersion);
@@ -943,8 +958,8 @@ export async function handleAction(body, options = {}) {
   if (body.action === "issue-revision") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const artboardStore = options.artboardStore || createArtboardStore();
-    const record = options.sceneRecord || createSceneRecord();
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
     const source = Number(body.sourceArtboardVersion);
     const entry = versions.find((stored) => stored.artboard.artboardVersion === source);
@@ -1022,9 +1037,9 @@ export async function handleAction(body, options = {}) {
   if (body.action === "send-revision") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const tourStore = options.tourStore || createTourStore();
-    const artboardStore = options.artboardStore || createArtboardStore();
-    const record = options.sceneRecord || createSceneRecord();
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
 
     const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
     const source = Number(body.sourceArtboardVersion);
@@ -1103,7 +1118,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-reviews") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const artboardStore = options.artboardStore || createArtboardStore();
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     return {
       reviews: await artboardStore.readReviews(fixture.tour.id, assignment.id),
       revisions: await artboardStore.readRevisions(fixture.tour.id, assignment.id),
@@ -1211,14 +1226,14 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-production-intent") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const artboardStore = options.artboardStore || createArtboardStore();
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
     return { ...approvals, intents: await artboardStore.readIntents(fixture.tour.id, assignment.id) };
   }
   if (body.action === "get-scene-activity") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const record = options.sceneRecord || createSceneRecord();
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     const facts = await record.readFacts(fixture.tour.id, assignment.id);
     const clientVisible = new Set([
       "Requested the Scene",
@@ -1238,7 +1253,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "get-scene-record") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
-    const record = options.sceneRecord || createSceneRecord();
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     return { facts: await record.readFacts(fixture.tour.id, assignment.id) };
   }
 

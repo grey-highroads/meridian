@@ -53,13 +53,14 @@ export function createArtifactBackend(options = {}) {
 
 export function createArtboardStore(options = {}) {
   const backend = options.backend || createBlobBackend(options);
+  const accountId = options.accountId || null;
   // Tests hand one backend and get one place to look. On the deployment the
   // artifact goes through a write that sets the file's content type.
   const artifacts = options.artifactBackend || (options.backend ? options.backend : createArtifactBackend(options));
 
   return {
     async readApprovals(tourId, assignmentId) {
-      const body = await backend.read(tourPathFor(tourId, assignmentId, "approvals"));
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "approvals", accountId));
       const empty = { readyForClient: [], clientApprovals: [], comments: [] };
       if (body === null || body === undefined) return empty;
       const stored = JSON.parse(body);
@@ -71,12 +72,12 @@ export function createArtboardStore(options = {}) {
     },
 
     async writeApprovals(tourId, assignmentId, approvals) {
-      await backend.write(tourPathFor(tourId, assignmentId, "approvals"), JSON.stringify(approvals, null, 2));
+      await backend.write(tourPathFor(tourId, assignmentId, "approvals", accountId), JSON.stringify(approvals, null, 2));
       return approvals;
     },
 
     async readIntents(tourId, assignmentId) {
-      const body = await backend.read(tourPathFor(tourId, assignmentId, "production-intent"));
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "production-intent", accountId));
       if (body === null || body === undefined) return [];
       const stored = JSON.parse(body);
       return Array.isArray(stored.intents) ? stored.intents : [];
@@ -93,12 +94,12 @@ export function createArtboardStore(options = {}) {
         throw error;
       }
       intents.push(intent);
-      await backend.write(tourPathFor(tourId, assignmentId, "production-intent"), JSON.stringify({ intents }, null, 2));
+      await backend.write(tourPathFor(tourId, assignmentId, "production-intent", accountId), JSON.stringify({ intents }, null, 2));
       return intent;
     },
 
     async readArtboards(tourId, assignmentId) {
-      const body = await backend.read(tourPathFor(tourId, assignmentId, "artboards"));
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "artboards", accountId));
       if (body === null || body === undefined) return [];
       const stored = JSON.parse(body);
       return Array.isArray(stored.versions) ? stored.versions : [];
@@ -109,7 +110,7 @@ export function createArtboardStore(options = {}) {
     },
 
     async readReviews(tourId, assignmentId) {
-      const body = await backend.read(tourPathFor(tourId, assignmentId, "reviews"));
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "reviews", accountId));
       if (body === null || body === undefined) return [];
       const stored = JSON.parse(body);
       return Array.isArray(stored.reviews) ? stored.reviews : [];
@@ -126,19 +127,19 @@ export function createArtboardStore(options = {}) {
       }
       reviews.push(review);
       reviews.sort((left, right) => left.artboardVersion - right.artboardVersion);
-      await backend.write(tourPathFor(tourId, assignmentId, "reviews"), JSON.stringify({ reviews }, null, 2));
+      await backend.write(tourPathFor(tourId, assignmentId, "reviews", accountId), JSON.stringify({ reviews }, null, 2));
       return review;
     },
 
     async readRevisions(tourId, assignmentId) {
-      const body = await backend.read(tourPathFor(tourId, assignmentId, "revisions"));
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "revisions", accountId));
       if (body === null || body === undefined) return [];
       const stored = JSON.parse(body);
       return Array.isArray(stored.revisions) ? stored.revisions : [];
     },
 
     async readHandoffs(tourId, assignmentId) {
-      const body = await backend.read(tourPathFor(tourId, assignmentId, "handoffs"));
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "handoffs", accountId));
       if (body === null || body === undefined) return [];
       const stored = JSON.parse(body);
       return Array.isArray(stored.handoffs) ? stored.handoffs : [];
@@ -152,7 +153,7 @@ export function createArtboardStore(options = {}) {
         throw error;
       }
       handoffs.push(handoff);
-      await backend.write(tourPathFor(tourId, assignmentId, "handoffs"), JSON.stringify({ handoffs }, null, 2));
+      await backend.write(tourPathFor(tourId, assignmentId, "handoffs", accountId), JSON.stringify({ handoffs }, null, 2));
       return handoff;
     },
 
@@ -164,7 +165,7 @@ export function createArtboardStore(options = {}) {
         throw error;
       }
       revisions.push(revision);
-      await backend.write(tourPathFor(tourId, assignmentId, "revisions"), JSON.stringify({ revisions }, null, 2));
+      await backend.write(tourPathFor(tourId, assignmentId, "revisions", accountId), JSON.stringify({ revisions }, null, 2));
       return revision;
     },
 
@@ -181,7 +182,7 @@ export function createArtboardStore(options = {}) {
       versions.push(entry);
       versions.sort((left, right) => left.artboard.artboardVersion - right.artboard.artboardVersion);
       await backend.write(
-        tourPathFor(tourId, assignmentId, "artboards"),
+        tourPathFor(tourId, assignmentId, "artboards", accountId),
         JSON.stringify({ versions }, null, 2),
       );
       return entry;
@@ -199,7 +200,7 @@ export function createArtboardStore(options = {}) {
       versions.push(entry);
       versions.sort((left, right) => left.artboard.artboardVersion - right.artboard.artboardVersion);
       await backend.write(
-        tourPathFor(tourId, assignmentId, "artboards"),
+        tourPathFor(tourId, assignmentId, "artboards", accountId),
         JSON.stringify({ versions }, null, 2),
       );
       return entry;

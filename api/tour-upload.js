@@ -20,8 +20,11 @@ function safeFilename(value) {
   return cleaned || "submitted-work";
 }
 
-export function uploadPrefix(tourId, assignmentId) {
-  return `brand-world-system/clients/${sanitizeClientId(tourId)}/tour/${sanitizeClientId(assignmentId)}/uploads/`;
+export function uploadPrefix(tourId, assignmentId, accountId) {
+  // Demo data stays at its legacy path; other accounts get their own
+  // namespace. Brief 2 of docs/spec-accounts-artists-tours.md.
+  if (!accountId || accountId === "dierks-bentley") return `brand-world-system/clients/${sanitizeClientId(tourId)}/tour/${sanitizeClientId(assignmentId)}/uploads/`;
+  return `brand-world-system/clients/${sanitizeClientId(accountId)}/tours/${sanitizeClientId(tourId)}/${sanitizeClientId(assignmentId)}/uploads/`;
 }
 
 export function uploadPathFor(tourId, assignmentId, filename, id = randomUUID()) {

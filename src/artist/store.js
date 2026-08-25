@@ -23,8 +23,13 @@ import { ownEntry } from "../lookup.js";
 
 const ROOT = "brand-world-system/clients";
 
-export function pathFor(artistId, document) {
-  return `${ROOT}/${artistId}/artist/${document}.json`;
+// Demo-account data stays at its legacy paths; other accounts get their own
+// namespace. Brief 2 of docs/spec-accounts-artists-tours.md.
+const DEMO_ACCOUNT_ID = "dierks-bentley";
+
+export function pathFor(artistId, document, accountId) {
+  if (!accountId || accountId === DEMO_ACCOUNT_ID) return `${ROOT}/${artistId}/artist/${document}.json`;
+  return `${ROOT}/${accountId}/artists/${artistId}/${document}.json`;
 }
 
 // Reads and writes as plain documents. The Vercel blob backend is the default.
@@ -70,9 +75,10 @@ const EMPTY_RECORD = { artist: null, sources: [], claims: [], findings: [] };
 
 export function createArtistStore(options = {}) {
   const backend = options.backend || createBlobBackend(options);
+  const accountId = options.accountId || null;
 
   async function readDocument(artistId, name, fallback) {
-    const body = await backend.read(pathFor(artistId, name));
+    const body = await backend.read(pathFor(artistId, name, accountId));
     if (body === null || body === undefined) return fallback;
     return JSON.parse(body);
   }
@@ -95,8 +101,8 @@ export function createArtistStore(options = {}) {
         findings: parsed.findings,
         log: parsed.log,
       };
-      await backend.write(pathFor(artistId, "record"), JSON.stringify(record, null, 2));
-      await backend.write(pathFor(artistId, "prior"), JSON.stringify(parsed.prior, null, 2));
+      await backend.write(pathFor(artistId, "record", accountId), JSON.stringify(record, null, 2));
+      await backend.write(pathFor(artistId, "prior", accountId), JSON.stringify(parsed.prior, null, 2));
       return record;
     },
     async approveBrain(artistId, person) {
@@ -105,7 +111,7 @@ export function createArtistStore(options = {}) {
         brain: { approvedBy: person || "Higher Roads", approvedAt: new Date().toISOString() },
         removed: decisions.removed && typeof decisions.removed === "object" ? decisions.removed : {},
       };
-      await backend.write(pathFor(artistId, "decisions"), JSON.stringify(next, null, 2));
+      await backend.write(pathFor(artistId, "decisions", accountId), JSON.stringify(next, null, 2));
       return next;
     },
     // Taking a finding out and putting it back are both recorded, and neither
@@ -117,7 +123,7 @@ export function createArtistStore(options = {}) {
       if (entry) removed[findingId] = entry;
       else delete removed[findingId];
       const next = { brain: decisions.brain || null, removed };
-      await backend.write(pathFor(artistId, "decisions"), JSON.stringify(next, null, 2));
+      await backend.write(pathFor(artistId, "decisions", accountId), JSON.stringify(next, null, 2));
       return next;
     },
   };

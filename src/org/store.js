@@ -20,6 +20,17 @@ export { CLIENT_ROLE, OPERATOR_ROLE };
 
 export const ACCOUNT = { id: "dierks-bentley", name: "Dierks Bentley" };
 
+// Accounts are rows. Brief 2 of docs/spec-accounts-artists-tours.md. The demo
+// account above is seeded into the list on first read; its stored data stays
+// at the legacy paths it has always used, and new accounts get their own
+// namespace. No delete; retirement is a later ruling.
+export const ACCOUNTS_PATH = "brand-world-system/org/accounts.json";
+
+export function sanitizeAccountId(value) {
+  const cleaned = String(value).toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
+  return cleaned || "default";
+}
+
 
 const ROLE_LABELS = {
   "higher-roads": "Higher Roads",
@@ -121,6 +132,36 @@ export function createOrgStore(options = {}) {
       const users = seeded();
       await backend.write(usersPath(account.id), JSON.stringify({ account, users }, null, 2));
       return users;
+    },
+
+    async readAccounts() {
+      const body = await backend.read(ACCOUNTS_PATH);
+      if (body === null || body === undefined) return [{ ...ACCOUNT, createdAt: null, seeded: true }];
+      return JSON.parse(body).accounts;
+    },
+
+    async createAccount(name) {
+      const cleaned = String(name || "").trim();
+      if (!cleaned) {
+        const error = new Error("Name the account before creating it.");
+        error.status = 400;
+        throw error;
+      }
+      const id = sanitizeAccountId(cleaned);
+      if (id === "default") {
+        const error = new Error("That name does not make a usable account id. Use letters or numbers.");
+        error.status = 400;
+        throw error;
+      }
+      const accounts = await this.readAccounts();
+      if (accounts.some((entry) => entry.id === id)) {
+        const error = new Error("An account already exists under that name.");
+        error.status = 409;
+        throw error;
+      }
+      const created = { id, name: cleaned, createdAt: new Date().toISOString() };
+      await backend.write(ACCOUNTS_PATH, JSON.stringify({ accounts: [...accounts, created] }, null, 2));
+      return created;
     },
 
     async findUser(userId) {

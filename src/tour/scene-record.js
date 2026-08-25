@@ -21,9 +21,10 @@ export { createBlobBackend, createMemoryBackend };
 
 export function createSceneRecord(options = {}) {
   const backend = options.backend || createBlobBackend(options);
+  const accountId = options.accountId || null;
 
   async function readAll(tourId, assignmentId) {
-    const body = await backend.read(tourPathFor(tourId, assignmentId, "scene-record"));
+    const body = await backend.read(tourPathFor(tourId, assignmentId, "scene-record", accountId));
     if (body === null || body === undefined) return [];
     const stored = JSON.parse(body);
     return Array.isArray(stored.facts) ? stored.facts : [];
@@ -57,7 +58,7 @@ export function createSceneRecord(options = {}) {
       }
       facts.push(entry);
       await backend.write(
-        tourPathFor(tourId, assignmentId, "scene-record"),
+        tourPathFor(tourId, assignmentId, "scene-record", accountId),
         JSON.stringify({ facts }, null, 2),
       );
       return entry;
