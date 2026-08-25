@@ -3,39 +3,31 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="What Meridian knows about an artist, and the evidence behind it" />
-    <title>Artist Brain | Meridian</title>
+    <meta name="description" content="Receive a frozen Scene brief or revision and submit the next version" />
+    <title>Production handoff | Meridian</title>
     <link rel="stylesheet" href="./design/index.css" />
   </head>
   <body class="m-ui">
     <div class="m-shell">
       <aside class="m-shell__rail">
         <div class="m-shell__brand">
-          <a class="m-wordmark" href="./index.html">
-            MERIDIAN
-            <span class="m-wordmark__byline">BY HIGHER ROADS</span>
-          </a>
+          <a class="m-wordmark" href="./index.html">MERIDIAN<span class="m-wordmark__byline">BY HIGHER ROADS</span></a>
         </div>
-        <nav class="m-shell__nav" aria-label="Artist work">
+        <nav class="m-shell__nav" aria-label="Active tour">
           <a class="m-shell__nav-link" href="./index.html"><span class="m-shell__nav-label">Home</span></a>
           <a class="m-shell__nav-link" href="./scenes.html"><span class="m-shell__nav-label">Scenes</span></a>
           <a class="m-shell__nav-link" href="./reviews.html"><span class="m-shell__nav-label">Reviews</span></a>
           <a class="m-shell__nav-link" href="./tour.html"><span class="m-shell__nav-label">Tour details</span></a>
         </nav>
         <div class="m-shell__utility">
-          <a class="m-shell__nav-link" href="./artist.html" aria-current="page"><span class="m-shell__nav-label">Artist Brain</span></a>
-          <a class="m-shell__nav-link" href="/api/auth/login?signout=1">
-            <span class="m-shell__nav-label">Sign out</span>
-          </a>
+          <a class="m-shell__nav-link" href="/api/auth/login?signout=1"><span class="m-shell__nav-label">Sign out</span></a>
         </div>
       </aside>
-
       <main class="m-shell__main">
         <header class="m-location" id="location"></header>
-        <article class="m-page m-page--fluid m-intelligence-page" id="artist"></article>
-        <footer class="m-action-bar" id="operator"></footer>
+        <article id="handoff"></article>
       </main>
     </div>
-    <script type="module" src="./shell.js"></script><script type="module" src="./artist.js?v=2026-08-24-intelligence-browser"></script>
+    <script type="module" src="./shell.js"></script><script type="module" src="./handoff.js"></script>
   </body>
 </html>

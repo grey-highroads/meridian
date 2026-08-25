@@ -3,59 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="The tour in front of you and the Scenes under it" />
-    <title>Scenes | Meridian</title>
+    <meta name="description" content="The current condition of the tour and what needs attention" />
+    <title>Home | Meridian</title>
     <link rel="stylesheet" href="./design/index.css" />
   </head>
   <body class="m-ui">
     <div class="m-shell">
       <aside class="m-shell__rail">
-        <div class="m-shell__brand">
-          <a class="m-wordmark" href="./index.html">
-            MERIDIAN
-            <span class="m-wordmark__byline">BY HIGHER ROADS</span>
-          </a>
-        </div>
-        <nav class="m-shell__nav" aria-label="Artist work">
-          <a class="m-shell__nav-link" href="./index.html" aria-current="page">
-            <span class="m-shell__nav-label">Scenes</span>
-          </a>
-          <a class="m-shell__nav-link" href="./tour.html">
-            <span class="m-shell__nav-label">Tour</span>
-          </a>
-          <a class="m-shell__nav-link" href="./artist.html">
-            <span class="m-shell__nav-label">Artist Brain</span>
-          </a>
+        <div class="m-shell__brand"><a class="m-wordmark" href="./index.html">MERIDIAN<span class="m-wordmark__byline">BY HIGHER ROADS</span></a></div>
+        <nav class="m-shell__nav" aria-label="Active tour">
+          <a class="m-shell__nav-link" href="./index.html" aria-current="page"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3Z"/></svg><span class="m-shell__nav-label">Home</span></a>
+          <a class="m-shell__nav-link" href="./scenes.html"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="m-shell__nav-label">Scenes</span></a>
+          <a class="m-shell__nav-link" href="./reviews.html"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM9 10h6M9 14h4"/></svg><span class="m-shell__nav-label">Reviews</span><span class="m-shell__nav-count" id="review-count"></span></a>
+          <a class="m-shell__nav-link" href="./tour.html"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg><span class="m-shell__nav-label">Tour details</span></a>
         </nav>
-        <div class="m-shell__utility">
-          <a class="m-shell__nav-link" href="./bws.html">
-            <span class="m-shell__nav-label">Old system</span>
-          </a>
-          <a class="m-shell__nav-link" href="/api/auth/login?signout=1">
-            <span class="m-shell__nav-label">Sign out</span>
-          </a>
-        </div>
+        <div class="m-shell__utility"><a class="m-shell__nav-link" href="./artist.html" data-operator-utility><span class="m-shell__nav-label">Artist Brain</span></a><a class="m-shell__nav-link" href="/api/auth/login?signout=1"><span class="m-shell__nav-label">Sign out</span></a></div>
       </aside>
-
       <main class="m-shell__main">
         <header class="m-location" id="location"></header>
-
-        <div class="m-page m-page--fluid m-directory">
-          <header class="m-job-header">
-            <div class="m-job-header__copy">
-              <span class="m-label">Current work</span>
-              <h1 class="m-heading">Scenes</h1>
-              <p class="m-copy">Open the moment that needs work.</p>
-            </div>
-          </header>
-
-          <section class="m-work" aria-labelledby="scene-list-heading">
-            <h2 id="scene-list-heading" class="m-visually-hidden">Scenes on this tour</h2>
-            <div id="scenes"></div>
-          </section>
-        </div>
+        <article class="m-page m-page--fluid m-home" id="home"></article>
       </main>
     </div>
-    <script type="module" src="./scenes.js?v=2026-08-25-lifecycle"></script>
+    <script type="module" src="./shell.js"></script><script type="module" src="./home.js"></script>
   </body>
 </html>

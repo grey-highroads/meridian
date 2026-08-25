@@ -14,6 +14,7 @@ const actions = document.getElementById("actions");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
+  user: null,
   tour: null,
   assignment: null,
   context: null,
@@ -22,6 +23,8 @@ const view = {
   usedSuggestion: null,
   brief: null,
   briefs: [],
+  handoffs: [],
+  artboards: [],
   receipt: null,
   draft: { title: "", direction: "", marked: [], markedVenues: [] },
   inspector: "request",
@@ -221,6 +224,13 @@ function venueSection() {
     </section>`;
 }
 
+function versionsSection() {
+  const rows = view.briefs.length
+    ? view.briefs.slice().reverse().map((brief) => `<div class="m-version"><span class="m-state ${brief.status === "frozen" ? "m-state--approved" : "m-state--current"}">Brief V0${escape(brief.briefVersion)}</span><span class="m-meta">${escape(String(brief.status).toUpperCase())}</span></div>`).join("")
+    : `<p class="m-copy">No production brief has been issued yet.</p>`;
+  return `<section class="m-workstation__panel" id="versions-panel" role="tabpanel" aria-labelledby="versions-tab" ${view.inspector === "versions" ? "" : "hidden"}><div class="m-inspector-group"><span class="m-label">Scene versions</span><h2 class="m-inspector-heading">What is current</h2></div>${rows}</section>`;
+}
+
 // ---------------------------------------------------------------------------
 // The brief
 // ---------------------------------------------------------------------------
@@ -282,9 +292,14 @@ function actionBar() {
   let context = "Save the direction before compiling the brief production will receive.";
   let controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
   if (view.concept && !view.brief && !hasIssuedBrief) {
-    context = "Compile the saved direction and accepted context into a production brief.";
-    controls = `<button class="m-button" type="button" data-save>Save direction</button>
-      <button class="m-button m-button--primary" type="button" data-compile>Compile brief</button>`;
+    if (view.user && view.user.role !== "higher-roads") {
+      context = "The Scene direction is saved. Higher Roads prepares the production brief next.";
+      controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
+    } else {
+      context = "Compile the saved direction and accepted context into a production brief.";
+      controls = `<button class="m-button" type="button" data-save>Save direction</button>
+        <button class="m-button m-button--primary" type="button" data-compile>Compile brief</button>`;
+    }
   }
   if (view.brief && !frozen) {
     context = "Freeze the exact brief production will build against.";
@@ -292,8 +307,18 @@ function actionBar() {
       <button class="m-button m-button--primary" type="button" data-freeze>Freeze V0${escape(view.brief.brief.briefVersion)} and send</button>`;
   }
   if (frozen || hasIssuedBrief) {
-    context = "The issued brief is locked. Review the work that came back against it.";
-    controls = `<a class="m-button m-button--primary" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open review</a>`;
+    const latestBrief = view.briefs.at(-1);
+    const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
+    const work = view.artboards.length > 0;
+    if (work) {
+      context = "Work is back. Review the latest version against the brief.";
+      controls = `<a class="m-button m-button--primary" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open review</a>`;
+    } else {
+      context = handoff
+        ? `Brief V0${escape(latestBrief.briefVersion)} is issued. Production returns the work through the same handoff.`
+        : `Brief V0${escape(latestBrief.briefVersion)} is frozen. Name who receives it and issue the handoff.`;
+      controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">${handoff ? "Open handoff" : "Issue to production"}</a>`;
+    }
   }
   actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
     <div class="m-action-bar__actions">${controls}</div>`;
@@ -303,7 +328,7 @@ function render() {
   const assignment = view.assignment;
   const tab = (name, label) => `<button class="m-workstation__tab" id="${escape(name)}-tab" type="button" role="tab" aria-selected="${view.inspector === name}" aria-controls="${escape(name)}-panel" data-inspector="${escape(name)}">${escape(label)}</button>`;
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
-      <a href="./index.html?tour=${escape(TOUR_ID)}">Scenes</a>
+      <a href="./scenes.html?tour=${escape(TOUR_ID)}">Scenes</a>
       <span aria-hidden="true">/</span>
       <span class="m-breadcrumb__current">${escape(assignment.title)}</span>
     </nav>`;
@@ -319,15 +344,17 @@ function render() {
         </div>
         <div class="m-workstation__tabs" role="tablist" aria-label="Scene context">
           ${tab("request", "Request")}
-          ${tab("brain", "Brain")}
+          ${view.user && view.user.role === "higher-roads" ? tab("brain", "Brain") : ""}
           ${tab("direction", "Direction")}
           ${tab("setup", "Setup")}
+          ${view.user && view.user.role !== "higher-roads" ? tab("versions", "Versions") : ""}
         </div>
         <div class="m-workstation__panels">
           ${requestSection()}
-          ${brainSection()}
+          ${view.user && view.user.role === "higher-roads" ? brainSection() : ""}
           ${marksSection()}
           ${venueSection()}
+          ${view.user && view.user.role !== "higher-roads" ? versionsSection() : ""}
         </div>
       </aside>
     </div>`;
@@ -335,14 +362,33 @@ function render() {
 }
 
 async function load() {
+  try {
+    view.user = (await call("get-me")).user;
+  } catch {
+    view.user = { role: "higher-roads", displayName: "Higher Roads" };
+  }
   const { tour, assignments } = await call("get-tour");
   view.tour = tour;
   if (!view.sceneId && assignments.length) view.sceneId = assignments[0].id;
-  const context = await call("assignment-context", { assignmentId: view.sceneId });
+  const context = view.user.role === "higher-roads"
+    ? await call("assignment-context", { assignmentId: view.sceneId })
+    : await call("get-scene-workspace", { assignmentId: view.sceneId });
   view.assignment = context.assignment;
   view.context = context.context;
-  view.concept = (await call("get-concept", { assignmentId: view.sceneId })).concept;
+  view.concept = view.user.role === "higher-roads"
+    ? (await call("get-concept", { assignmentId: view.sceneId })).concept
+    : context.concept;
   view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
+  try {
+    view.handoffs = (await call("get-handoffs", { assignmentId: view.sceneId })).handoffs;
+  } catch {
+    view.handoffs = [];
+  }
+  try {
+    view.artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
+  } catch {
+    view.artboards = [];
+  }
   if (view.concept) {
     view.draft.title = view.concept.title;
     view.draft.direction = view.concept.idea;
@@ -388,7 +434,8 @@ async function save() {
     venueExceptions: view.draft.markedVenues.slice().sort((first, second) => first - second),
     cameFrom: used ? `suggestion: ${used.title}` : "written by Higher Roads",
   };
-  view.concept = (await call("choose-concept", { assignmentId: view.sceneId, concept })).concept;
+  const action = view.user && view.user.role === "higher-roads" ? "choose-concept" : "save-scene-direction";
+  view.concept = (await call(action, { assignmentId: view.sceneId, concept })).concept;
   view.brief = null;
   view.message = "Saved.";
   view.messageAt = "";
@@ -446,12 +493,7 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       view.brief = await call("freeze-brief", { assignmentId: view.sceneId });
       view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
-      // Freezing and sending are one action for the person and two facts on the
-      // record, because the record has to show that the version that went out
-      // is the version that was frozen.
-      const sent = await call("send-brief", { assignmentId: view.sceneId, briefVersion: view.brief.brief.briefVersion });
-      view.receipt = sent.receipt;
-      view.message = `V0${view.brief.brief.briefVersion} is frozen and production has it.`;
+      view.message = `V0${view.brief.brief.briefVersion} is frozen. Issue it to the media artist when the recipient is named.`;
       view.messageAt = "";
       render();
     });

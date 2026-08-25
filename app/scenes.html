@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="What Meridian knows about an artist, and the evidence behind it" />
-    <title>Artist Brain | Meridian</title>
+    <meta name="description" content="The tour in front of you and the Scenes under it" />
+    <title>Scenes | Meridian</title>
     <link rel="stylesheet" href="./design/index.css" />
   </head>
   <body class="m-ui">
@@ -18,12 +18,12 @@
         </div>
         <nav class="m-shell__nav" aria-label="Artist work">
           <a class="m-shell__nav-link" href="./index.html"><span class="m-shell__nav-label">Home</span></a>
-          <a class="m-shell__nav-link" href="./scenes.html"><span class="m-shell__nav-label">Scenes</span></a>
+          <a class="m-shell__nav-link" href="./scenes.html" aria-current="page"><span class="m-shell__nav-label">Scenes</span></a>
           <a class="m-shell__nav-link" href="./reviews.html"><span class="m-shell__nav-label">Reviews</span></a>
           <a class="m-shell__nav-link" href="./tour.html"><span class="m-shell__nav-label">Tour details</span></a>
         </nav>
         <div class="m-shell__utility">
-          <a class="m-shell__nav-link" href="./artist.html" aria-current="page"><span class="m-shell__nav-label">Artist Brain</span></a>
+          <a class="m-shell__nav-link" href="./artist.html" data-operator-utility><span class="m-shell__nav-label">Artist Brain</span></a>
           <a class="m-shell__nav-link" href="/api/auth/login?signout=1">
             <span class="m-shell__nav-label">Sign out</span>
           </a>
@@ -32,10 +32,24 @@
 
       <main class="m-shell__main">
         <header class="m-location" id="location"></header>
-        <article class="m-page m-page--fluid m-intelligence-page" id="artist"></article>
-        <footer class="m-action-bar" id="operator"></footer>
+
+        <div class="m-page m-page--fluid m-directory">
+          <header class="m-job-header">
+            <div class="m-job-header__copy">
+              <span class="m-label">Current work</span>
+              <h1 class="m-heading">Scenes</h1>
+              <p class="m-copy">Open the moment that needs work.</p>
+            </div>
+            <a class="m-button m-button--primary" id="request-scene" href="./request.html">Request a Scene</a>
+          </header>
+
+          <section class="m-work" aria-labelledby="scene-list-heading">
+            <h2 id="scene-list-heading" class="m-visually-hidden">Scenes on this tour</h2>
+            <div id="scenes"></div>
+          </section>
+        </div>
       </main>
     </div>
-    <script type="module" src="./shell.js"></script><script type="module" src="./artist.js?v=2026-08-24-intelligence-browser"></script>
+    <script type="module" src="./shell.js"></script><script type="module" src="./scenes.js?v=2026-08-25-lifecycle"></script>
   </body>
 </html>

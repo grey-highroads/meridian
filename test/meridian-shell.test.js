@@ -6,8 +6,16 @@ import { fileURLToPath } from "node:url";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const PAGES = ["app/index.html", "app/artist.html", "app/tour.html", "app/scene.html", "app/review.html", "app/client-review.html"];
-const SCRIPTS = ["app/scenes.js", "app/artist.js", "app/tour.js", "app/scene.js", "app/review.js", "app/client-review.js"];
+const PAGES = [
+  "app/index.html", "app/scenes.html", "app/reviews.html", "app/artist.html",
+  "app/tour.html", "app/scene.html", "app/review.html", "app/client-review.html",
+  "app/request.html", "app/direction.html", "app/handoff.html",
+];
+const SCRIPTS = [
+  "app/home.js", "app/scenes.js", "app/reviews.js", "app/artist.js",
+  "app/tour.js", "app/scene.js", "app/review.js", "app/client-review.js",
+  "app/request.js", "app/direction.js", "app/handoff.js", "app/shell.js",
+];
 
 function read(name) {
   return fs.readFileSync(path.join(rootPath, name), "utf8");
@@ -72,4 +80,17 @@ test("the phase-two Home fixture is the shell composition reference", () => {
   assert.match(source, /class="m-lifecycle-list"/, "Home fixture does not show Scene lifecycle");
   assert.match(source, /class="m-home__sidecar m-inspector"/, "Home fixture does not use the readiness Inspector");
   assert.doesNotMatch(source, /style=/, "Home fixture uses an inline style");
+});
+
+test("the live shell has the four destinations and Home uses the approved patterns", () => {
+  const source = read("app/index.html");
+  const primaryNav = source.match(/<nav class="m-shell__nav"[\s\S]*?<\/nav>/)?.[0] || "";
+  for (const label of ["Home", "Scenes", "Reviews", "Tour details"]) {
+    assert.match(primaryNav, new RegExp(`>${label}<`), `live Home is missing ${label}`);
+  }
+  assert.doesNotMatch(primaryNav, />Artist Brain</, "Artist Brain appears in live primary navigation");
+  const script = read("app/home.js");
+  for (const pattern of ["m-home__layout", "m-attention-list", "m-lifecycle-list", "m-home__sidecar m-inspector"]) {
+    assert.match(script, new RegExp(pattern), `live Home is missing ${pattern}`);
+  }
 });

@@ -114,7 +114,7 @@ test("the cookie is not readable by scripts and clears on the way out", () => {
   assert.equal(readCookie("other=1", SESSION_COOKIE), null);
 });
 
-test("the front door turns away anyone without a session and holds a client reviewer to their review", async () => {
+test("the front door turns away anyone without a session and keeps internal surfaces on the Higher Roads side", async () => {
   const secret = `meridian-session:${ENV.MERIDIAN_OPERATOR}:${ENV.MERIDIAN_CLIENT}`;
   const saved = { operator: process.env.MERIDIAN_OPERATOR, client: process.env.MERIDIAN_CLIENT };
   process.env.MERIDIAN_OPERATOR = ENV.MERIDIAN_OPERATOR;
@@ -139,9 +139,13 @@ test("the front door turns away anyone without a session and holds a client revi
     assert.equal((await middleware(at("/api/artist", client))).status, 403);
     assert.equal((await middleware(at("/bws.html", client))).status, 403);
 
-    const sent = await middleware(at("/", client));
-    assert.equal(sent.status, 302);
-    assert.equal(new URL(sent.headers.get("location")).pathname, "/client-review.html");
+    assert.equal((await middleware(at("/", client))).status, 200);
+    assert.equal((await middleware(at("/scenes.html", client))).status, 200);
+    assert.equal((await middleware(at("/scene.html", client))).status, 200);
+    assert.equal((await middleware(at("/request.html", client))).status, 200);
+    assert.equal((await middleware(at("/direction.html", client))).status, 200);
+    assert.equal((await middleware(at("/handoff.html", client))).status, 200);
+    assert.equal((await middleware(at("/api/tour-upload", client))).status, 200);
   } finally {
     process.env.MERIDIAN_OPERATOR = saved.operator;
     process.env.MERIDIAN_CLIENT = saved.client;

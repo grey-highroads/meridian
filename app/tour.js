@@ -71,6 +71,7 @@ function directionSection(tour) {
         <div><span class="m-label">Set on</span><p class="m-meta">${escape(String(direction.setOn || "").toUpperCase())}</p></div>
         <span class="m-meta">STORED AS GIVEN</span>
       </footer>
+      <a class="m-button" href="./direction.html?tour=${escape(TOUR_ID)}">Revise Tour Direction</a>
     </section>`;
 }
 

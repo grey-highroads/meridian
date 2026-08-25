@@ -6,15 +6,21 @@ import { CLIENT_ROLE } from "./src/org/roles.js";
 // What a person may change is decided in the route handlers, by the role read
 // from storage, because a page that hides a button is a page.
 //
-// A client reviewer lands on their review and reaches nothing else. Everything
-// else in Meridian is Higher Roads work and says so in plain words rather than
-// pretending the page is missing.
+// An invited client lands on Home and can use the Tour and Scene workflow.
+// Internal review and Artist Brain stay on the Higher Roads side of the glass.
 
 const PUBLIC_PATHS = new Set(["/landing.html", "/api/blob/upload", "/api/auth/login"]);
 
-const CLIENT_PATHS = new Set(["/client-review.html", "/client-review.js", "/api/tour"]);
+const CLIENT_PATHS = new Set([
+  "/", "/index.html", "/home.js", "/shell.js",
+  "/scenes.html", "/scenes.js", "/reviews.html", "/reviews.js",
+  "/tour.html", "/tour.js", "/scene.html", "/scene.js",
+  "/request.html", "/request.js", "/direction.html", "/direction.js",
+  "/handoff.html", "/handoff.js", "/client-review.html", "/client-review.js",
+  "/api/tour", "/api/tour-upload", "/api/auth/login",
+]);
 
-const CLIENT_HOME = "/client-review.html";
+const CLIENT_HOME = "/";
 
 function isPage(pathname) {
   return pathname === "/" || pathname.endsWith(".html");
@@ -43,10 +49,7 @@ export default async function middleware(request) {
   }
 
   if (claim.role === CLIENT_ROLE && !clientMayLoad(pathname)) {
-    if (pathname === "/" || pathname === "/index.html") {
-      return Response.redirect(new URL(CLIENT_HOME, request.url), 302);
-    }
-    return plain("That part of Meridian is for the Higher Roads team. Your review is at " + CLIENT_HOME + ".", 403);
+    return plain("That part of Meridian is for the Higher Roads team. Your tour is at " + CLIENT_HOME + ".", 403);
   }
 
   return next();

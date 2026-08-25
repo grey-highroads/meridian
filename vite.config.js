@@ -9,6 +9,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "app/index.html"),
+        scenes: resolve(__dirname, "app/scenes.html"),
+        reviews: resolve(__dirname, "app/reviews.html"),
         bws: resolve(__dirname, "app/bws.html"),
         landing: resolve(__dirname, "app/landing.html"),
         place: resolve(__dirname, "app/bws-place.html"),
@@ -17,6 +19,9 @@ export default defineConfig({
         scene: resolve(__dirname, "app/scene.html"),
         review: resolve(__dirname, "app/review.html"),
         clientReview: resolve(__dirname, "app/client-review.html"),
+        handoff: resolve(__dirname, "app/handoff.html"),
+        direction: resolve(__dirname, "app/direction.html"),
+        request: resolve(__dirname, "app/request.html"),
       },
     },
   },

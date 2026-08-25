@@ -18,6 +18,10 @@ export function tourPathFor(tourId, assignmentId, document) {
   return `${ROOT}/${tourId}/tour/${assignmentId}/${document}.json`;
 }
 
+export function tourDocumentPathFor(tourId, document) {
+  return `${ROOT}/${tourId}/tour/${document}.json`;
+}
+
 export { createBlobBackend, createMemoryBackend };
 
 export function createTourStore(options = {}) {
@@ -31,6 +35,17 @@ export function createTourStore(options = {}) {
 
   async function write(tourId, assignmentId, name, value) {
     await backend.write(tourPathFor(tourId, assignmentId, name), JSON.stringify(value, null, 2));
+    return value;
+  }
+
+  async function readTourDocument(tourId, name, fallback) {
+    const body = await backend.read(tourDocumentPathFor(tourId, name));
+    if (body === null || body === undefined) return fallback;
+    return JSON.parse(body);
+  }
+
+  async function writeTourDocument(tourId, name, value) {
+    await backend.write(tourDocumentPathFor(tourId, name), JSON.stringify(value, null, 2));
     return value;
   }
 
@@ -59,6 +74,41 @@ export function createTourStore(options = {}) {
       versions.sort((left, right) => left.briefVersion - right.briefVersion);
       await write(tourId, assignmentId, "briefs", { versions });
       return brief;
+    },
+
+    async readDirections(tourId) {
+      const stored = await readTourDocument(tourId, "directions", { versions: [] });
+      return Array.isArray(stored.versions) ? stored.versions : [];
+    },
+
+    async addDirection(tourId, direction) {
+      const versions = await this.readDirections(tourId);
+      if (versions.some((entry) => entry.version === direction.version)) {
+        const error = new Error("That Tour Direction version already exists.");
+        error.status = 409;
+        throw error;
+      }
+      versions.push(direction);
+      versions.sort((left, right) => left.version - right.version);
+      await writeTourDocument(tourId, "directions", { versions });
+      return direction;
+    },
+
+    async readRequests(tourId) {
+      const stored = await readTourDocument(tourId, "requests", { scenes: [] });
+      return Array.isArray(stored.scenes) ? stored.scenes : [];
+    },
+
+    async addRequest(tourId, request) {
+      const scenes = await this.readRequests(tourId);
+      if (scenes.some((entry) => entry.id === request.id)) {
+        const error = new Error("That Scene request already exists.");
+        error.status = 409;
+        throw error;
+      }
+      scenes.push(request);
+      await writeTourDocument(tourId, "requests", { scenes });
+      return request;
     },
   };
 }

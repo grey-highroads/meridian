@@ -16,6 +16,8 @@ import { tourPathFor } from "../tour/store.js";
 //                           One per version, written once.
 //   revisions.json          What went back across the seam against a named
 //                           version. Written once per revision.
+//   handoffs.json           Briefs and revisions issued to a named recipient.
+//                           A handoff is the durable outbound half of the seam.
 //   approvals.json          Who cleared which version for the client to see,
 //                           which version the client approved, and what the
 //                           client said. Three separate authorities.
@@ -135,6 +137,25 @@ export function createArtboardStore(options = {}) {
       return Array.isArray(stored.revisions) ? stored.revisions : [];
     },
 
+    async readHandoffs(tourId, assignmentId) {
+      const body = await backend.read(tourPathFor(tourId, assignmentId, "handoffs"));
+      if (body === null || body === undefined) return [];
+      const stored = JSON.parse(body);
+      return Array.isArray(stored.handoffs) ? stored.handoffs : [];
+    },
+
+    async addHandoff(tourId, assignmentId, handoff) {
+      const handoffs = await this.readHandoffs(tourId, assignmentId);
+      if (handoffs.some((entry) => entry.handoffId === handoff.handoffId)) {
+        const error = new Error("That handoff has already been issued.");
+        error.status = 409;
+        throw error;
+      }
+      handoffs.push(handoff);
+      await backend.write(tourPathFor(tourId, assignmentId, "handoffs"), JSON.stringify({ handoffs }, null, 2));
+      return handoff;
+    },
+
     async addRevision(tourId, assignmentId, revision) {
       const revisions = await this.readRevisions(tourId, assignmentId);
       if (revisions.some((entry) => entry.revisionId === revision.revisionId)) {
@@ -157,6 +178,24 @@ export function createArtboardStore(options = {}) {
         throw error;
       }
       await artifacts.write(entry.artboard.artifact.location, artifactBody);
+      versions.push(entry);
+      versions.sort((left, right) => left.artboard.artboardVersion - right.artboard.artboardVersion);
+      await backend.write(
+        tourPathFor(tourId, assignmentId, "artboards"),
+        JSON.stringify({ versions }, null, 2),
+      );
+      return entry;
+    },
+
+    // A human submission already put its artifact in private storage. Meridian
+    // appends the version and receipt without copying or rewriting the file.
+    async addSubmittedArtboard(tourId, assignmentId, entry) {
+      const versions = await this.readArtboards(tourId, assignmentId);
+      if (versions.some((stored) => stored.artboard.artboardVersion === entry.artboard.artboardVersion)) {
+        const error = new Error("That artboard version already exists.");
+        error.status = 409;
+        throw error;
+      }
       versions.push(entry);
       versions.sort((left, right) => left.artboard.artboardVersion - right.artboard.artboardVersion);
       await backend.write(

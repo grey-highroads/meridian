@@ -10,6 +10,8 @@ const TOUR_ID = new URLSearchParams(window.location.search).get("tour") || "off-
 
 const locationBar = document.getElementById("location");
 const scenes = document.getElementById("scenes");
+const requestScene = document.getElementById("request-scene");
+if (requestScene) requestScene.href = `./request.html?tour=${encodeURIComponent(TOUR_ID)}`;
 
 function escape(value) {
   return String(value === null || value === undefined ? "" : value)

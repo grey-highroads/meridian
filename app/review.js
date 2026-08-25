@@ -1,46 +1,32 @@
-// Artboard review. What came back from production, against the brief it was
-// built from, with the review Higher Roads writes and the feedback that goes
-// back as a revision.
-//
-// Everything on this page carries the stand-in label, because the artboard is
-// ours until step 7 and nobody should read it as Jim's work.
-//
-// The technical assumptions and technical items are shown as production wrote
-// them. Nothing here compares them to anything, scores them, or draws a
-// conclusion. A person reads them and decides.
-
 const PARAMS = new URLSearchParams(window.location.search);
 const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 
 const locationBar = document.getElementById("location");
-const page = document.getElementById("page");
-const reviewPane = document.getElementById("review");
-const detail = document.getElementById("detail");
+const workspace = document.getElementById("workspace");
 const actions = document.getElementById("actions");
-const utility = document.querySelector(".m-shell__utility");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
   tour: null,
   assignment: null,
   artboards: [],
+  artifacts: {},
   reviews: [],
   revisions: [],
+  handoffs: [],
   facts: [],
-  artifacts: {},
   readyForClient: [],
   clientApprovals: [],
   clientComments: [],
   intents: [],
+  brief: null,
+  inspector: "brief",
   compareTo: null,
-  draft: { departure: "", technical: "", feedback: "", anchor: "", preserve: "" },
+  draft: { feedback: "", preserve: "", technical: "", anchor: "" },
   message: "",
+  working: false,
 };
 
-// The nine places a person can point at. This control is provisional and uses
-// the nearest pattern the design system has, because the register carries a
-// request for a real region anchor and no pattern exists yet. The list matches
-// REGIONS in api/tour/index.js.
 const REGIONS = [
   "Top left", "Top centre", "Top right",
   "Middle left", "Centre", "Middle right",
@@ -63,352 +49,193 @@ function escape(value) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function own(map, key) {
-  if (!map || key === null || key === undefined) return null;
-  return Object.prototype.hasOwnProperty.call(map, String(key)) ? map[String(key)] : null;
+function lines(value) {
+  return String(value || "").split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
+function version(value) {
+  return String(value || 0).padStart(2, "0");
 }
 
 function latest() {
-  return view.artboards.length ? view.artboards[view.artboards.length - 1] : null;
+  return view.artboards.at(-1) || null;
 }
 
-function reviewFor(artboardVersion) {
-  return view.reviews.find((entry) => entry.artboardVersion === artboardVersion) || null;
+function reviewFor(value) {
+  return view.reviews.find((entry) => entry.artboardVersion === value) || null;
 }
 
-// The artboard file comes back as text and is shown through a data address, so
-// nothing from production is executed by this page.
-function frame(artboardVersion) {
-  const svg = own(view.artifacts, artboardVersion);
-  if (!svg) return `<span class="m-artboard__shape"></span>`;
-  const address = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-  return `<img src="${escape(address)}" width="640" alt="Artboard version ${escape(artboardVersion)}" />`;
+function readyFor(value) {
+  return view.readyForClient.find((entry) => entry.artboardVersion === value) || null;
 }
 
-// ---------------------------------------------------------------------------
-// The artboard and its versions
-// ---------------------------------------------------------------------------
+function approvedFor(value) {
+  return view.clientApprovals.find((entry) => entry.artboardVersion === value) || null;
+}
 
-function stage() {
-  const current = latest();
-  if (!current) return "";
-  const prior = view.compareTo
-    ? view.artboards.find((entry) => entry.artboard.artboardVersion === view.compareTo)
-    : null;
-  const priorHalf = prior
-    ? `<div class="m-artboard__prior">
-        <span class="m-meta">COMPARED / V0${escape(prior.artboard.artboardVersion)}</span>
-        ${frame(prior.artboard.artboardVersion)}
-      </div>`
-    : "";
-  return `<div class="m-review__stage">
-      <div class="m-artboard" aria-label="Artboard version ${escape(current.artboard.artboardVersion)}">
-        ${priorHalf}
-        <div class="m-artboard__current">
-          <span>CURRENT / V0${escape(current.artboard.artboardVersion)}</span>
-          ${frame(current.artboard.artboardVersion)}
-        </div>
-      </div>
-      <div class="m-callout">
-        <span class="m-label">Where this came from</span>
-        <p class="m-copy">${escape(String(current.artboard.label).toUpperCase())}</p>
-      </div>
+function list(items, empty = "Nothing recorded.") {
+  const rows = (items || []).map((entry) => `<li class="m-copy">${escape(typeof entry === "string" ? entry : entry.text)}</li>`).join("");
+  return rows || `<li class="m-copy">${escape(empty)}</li>`;
+}
+
+function artifact(versionNumber, label) {
+  const entry = view.artifacts[String(versionNumber)];
+  if (!entry || !entry.src) return `<span class="m-artboard__shape"></span>`;
+  if (entry.contentType === "application/pdf") {
+    return `<a class="m-button" href="${escape(entry.src)}" target="_blank" rel="noopener">Open ${escape(entry.name || "submitted PDF")}</a>`;
+  }
+  return `<img src="${escape(entry.src)}" width="1280" alt="${escape(label)}" />`;
+}
+
+function workFrame(entry, label) {
+  const artboardVersion = entry.artboard.artboardVersion;
+  return `<div class="m-stack">
+      <div class="m-work-frame">${artifact(artboardVersion, label)}<span class="m-work-frame__label">${escape(label)}</span></div>
+      <span class="m-meta">AGAINST BRIEF V${version(entry.artboard.briefVersion)} / ${escape(String(entry.artboard.label || "SUBMITTED WORK").toUpperCase())}</span>
     </div>`;
 }
 
-function rail() {
+function workSurface() {
+  const current = latest();
+  if (!current) return `<div class="m-callout"><p class="m-copy">Nothing has come back from production yet.</p></div>`;
+  const prior = view.compareTo ? view.artboards.find((entry) => entry.artboard.artboardVersion === view.compareTo) : null;
+  const frames = prior
+    ? `<div class="m-reference-pair">${workFrame(prior, `Earlier V${version(prior.artboard.artboardVersion)}`)}${workFrame(current, `Current V${version(current.artboard.artboardVersion)}`)}</div>`
+    : workFrame(current, `Current V${version(current.artboard.artboardVersion)}`);
+  return `<div class="m-stack">${frames}${decisionComposer(current)}</div>`;
+}
+
+function decisionComposer(current) {
+  const artboardVersion = current.artboard.artboardVersion;
+  const written = reviewFor(artboardVersion);
+  const pending = view.handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === artboardVersion);
+  if (pending) {
+    return `<div class="m-callout m-callout--change"><span class="m-state m-state--change">Changes issued</span><p class="m-copy">Production is working from feedback against V${version(artboardVersion)}.</p><a class="m-button m-button--small" href="${escape(pending.directPath)}">Open revision handoff</a></div>`;
+  }
+  if (readyFor(artboardVersion)) {
+    return `<div class="m-callout m-callout--current"><span class="m-state m-state--current">With the client</span><p class="m-copy">This exact version is waiting for the client's decision.</p></div>`;
+  }
+  if (written) {
+    return `<details class="m-disclosure"><summary><span class="m-label">Internal review saved</span><span class="m-meta">V${version(artboardVersion)}</span></summary><div class="m-disclosure__body m-stack"><div><span class="m-label">Changes</span><ul>${list(written.departures)}</ul></div><div><span class="m-label">Technical notes</span><ul>${list(written.technicalItems)}</ul></div></div></details>`;
+  }
+  const options = REGIONS.map((name) => `<option value="${escape(name)}" ${view.draft.anchor === name ? "selected" : ""}>${escape(name)}</option>`).join("");
+  return `<section class="m-stack" aria-labelledby="decision-heading">
+      <div class="m-stack"><span class="m-label">Your decision</span><h2 id="decision-heading" class="m-section-heading">What, if anything, needs to change?</h2></div>
+      <div class="m-field"><label class="m-label" for="anchor">Where, optional</label><select class="m-select" id="anchor" data-draft="anchor"><option value="">The whole picture</option>${options}</select></div>
+      <div class="m-field"><label class="m-label" for="feedback">Change</label><textarea class="m-textarea" id="feedback" data-draft="feedback" placeholder="Say what should change. One note per line.">${escape(view.draft.feedback)}</textarea></div>
+      <details class="m-disclosure"><summary><span class="m-label">Preserve or add a technical note</span><span class="m-meta">Optional</span></summary><div class="m-disclosure__body m-stack"><div class="m-field"><label class="m-label" for="preserve">Preserve</label><textarea class="m-textarea" id="preserve" data-draft="preserve" placeholder="What should stay as it is.">${escape(view.draft.preserve)}</textarea></div><div class="m-field"><label class="m-label" for="technical">Technical note</label><textarea class="m-textarea" id="technical" data-draft="technical" placeholder="One note per line.">${escape(view.draft.technical)}</textarea></div></div></details>
+    </section>`;
+}
+
+function briefPanel() {
+  if (!view.brief) return `<p class="m-copy">The governing brief could not be found.</p>`;
+  const brief = view.brief.brief;
+  return `<section class="m-workstation__panel" role="tabpanel">
+      <div class="m-inspector-group"><span class="m-label">Brief V${version(brief.briefVersion)}</span><h2 class="m-inspector-heading">${escape(brief.chosenConcept.title)}</h2><p class="m-copy">${escape(brief.chosenConcept.idea)}</p></div>
+      <div class="m-inspector-group"><span class="m-label">Required</span><ul>${list(brief.requiredElements, "No required elements were named.")}</ul></div>
+      <details class="m-disclosure"><summary><span class="m-label">Full brief</span><span class="m-meta">Frozen</span></summary><div class="m-disclosure__body"><pre>${escape(view.brief.document)}</pre></div></details>
+    </section>`;
+}
+
+function versionsPanel() {
   const current = latest();
   const rows = view.artboards.slice().reverse().map((entry) => {
-    const version = entry.artboard.artboardVersion;
-    const isCurrent = current && version === current.artboard.artboardVersion;
-    const state = isCurrent
-      ? `<span class="m-state m-state--current">V0${escape(version)} Current</span>`
-      : `<span class="m-state">V0${escape(version)} Earlier</span>`;
-    const compare = isCurrent || view.artboards.length < 2
-      ? ""
-      : `<button class="m-button m-button--small" type="button" data-compare="${escape(version)}">${view.compareTo === version ? "Stop comparing" : "Compare"}</button>`;
-    return `<div class="m-version"${isCurrent ? ' aria-current="true"' : ""}>
-        ${state}
-        <strong>ARTBOARD V0${escape(version)}</strong>
-        <span class="m-meta">AGAINST BRIEF V0${escape(entry.artboard.briefVersion)}</span>
-        <span class="m-meta">${escape(entry.receipt.receivedAt)}</span>
-        ${compare}
-      </div>`;
+    const value = entry.artboard.artboardVersion;
+    const isCurrent = current && value === current.artboard.artboardVersion;
+    return `<div class="m-version" ${isCurrent ? 'aria-current="true"' : ""}><span class="${isCurrent ? "m-state m-state--current" : "m-state"}">V${version(value)} ${isCurrent ? "Current" : "Earlier"}</span><span class="m-meta">BRIEF V${version(entry.artboard.briefVersion)}</span>${isCurrent ? "" : `<button class="m-button m-button--small" type="button" data-compare="${escape(value)}">${view.compareTo === value ? "Stop comparing" : "Compare"}</button>`}</div>`;
   }).join("");
-  return `<aside class="m-review__rail" aria-label="Versions">
-      <div class="m-version">
-        <span class="m-label">Versions</span>
-        <span class="m-meta">${escape(view.artboards.length)} RECEIVED</span>
-      </div>
-      ${rows}
-    </aside>`;
+  return `<section class="m-workstation__panel" role="tabpanel"><div class="m-inspector-group"><span class="m-label">Versions</span><h2 class="m-inspector-heading">${view.artboards.length} received</h2></div>${rows}</section>`;
 }
 
-// ---------------------------------------------------------------------------
-// What production said, and what Higher Roads says back
-// ---------------------------------------------------------------------------
-
-function fromProduction() {
+function productionPanel() {
   const current = latest();
-  if (!current) return "";
-  const list = (items, empty) => (items.length
-    ? items.map((line) => `<li class="m-copy">${escape(line)}</li>`).join("")
-    : `<li class="m-copy">${escape(empty)}</li>`);
-  return `<section class="m-work m-stack" aria-labelledby="built-heading">
-      <h2 id="built-heading" class="m-section-heading">The concept as built</h2>
-      <p class="m-copy">${escape(current.artboard.conceptSummary)}</p>
-      <div class="m-stack">
-        <span class="m-label">What production assumed</span>
-        <ul>${list(current.artboard.technicalAssumptions || [], "Nothing recorded.")}</ul>
-      </div>
-      <div class="m-stack">
-        <span class="m-label">Technical items production raised</span>
-        <ul>${list(current.artboard.technicalFindings || [], "Nothing raised.")}</ul>
-      </div>
-      <span class="m-help">Shown as production wrote it. Meridian checks none of it against anything.</span>
-    </section>`;
+  if (!current) return `<section class="m-workstation__panel"><p class="m-copy">Nothing has come back yet.</p></section>`;
+  const value = current.artboard.artboardVersion;
+  const state = approvedFor(value) ? "Approved by the client" : readyFor(value) ? "With the client" : "Internal review";
+  return `<section class="m-workstation__panel" role="tabpanel"><div class="m-inspector-group"><span class="m-label">Current state</span><h2 class="m-inspector-heading">${escape(state)}</h2><p class="m-copy">${escape(current.artboard.conceptSummary)}</p></div><div class="m-inspector-group"><span class="m-label">Production assumed</span><ul>${list(current.artboard.technicalAssumptions)}</ul></div><div class="m-inspector-group"><span class="m-label">Technical items</span><ul>${list(current.artboard.technicalFindings)}</ul></div></section>`;
 }
 
-function reviewSection() {
-  const current = latest();
-  if (!current) return "";
-  const version = current.artboard.artboardVersion;
-  const written = reviewFor(version);
-  if (written) {
-    const lines = (items) => items.map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
-    return `<section class="m-work m-stack" aria-labelledby="review-heading">
-        <div class="m-cluster">
-          <h2 id="review-heading" class="m-section-heading">The review of V0${escape(version)}</h2>
-          <span class="m-state m-state--approved">Written by ${escape(written.writtenBy)}</span>
-        </div>
-        ${written.departures.length ? `<div class="m-stack"><span class="m-label">Where it departs from the brief</span><ul>${lines(written.departures)}</ul></div>` : ""}
-        ${written.technicalItems.length ? `<div class="m-stack"><span class="m-label">Technical items needing a decision</span><ul>${lines(written.technicalItems)}</ul></div>` : ""}
-        <span class="m-help">A review is written once. Anything further makes a new version.</span>
-      </section>`;
-  }
-  return `<section class="m-work m-stack" aria-labelledby="review-heading">
-      <h2 id="review-heading" class="m-section-heading">Review V0${escape(version)}</h2>
-      <div class="m-field">
-        <label class="m-label" for="departure">Where it departs from the brief</label>
-        <textarea class="m-textarea" id="departure" data-draft="departure" placeholder="One note per line.">${escape(view.draft.departure)}</textarea>
-      </div>
-      <div class="m-field">
-        <label class="m-label" for="technical">Technical items needing a decision</label>
-        <textarea class="m-textarea" id="technical" data-draft="technical" placeholder="One item per line.">${escape(view.draft.technical)}</textarea>
-      </div>
-      <span class="m-help">This is Higher Roads' record. The client never reads it.</span>
-    </section>`;
+function recordPanel() {
+  const rows = view.facts.slice().reverse().map((fact) => `<div class="m-activity-row"><span class="m-activity-row__marker"></span><div><p class="m-activity-row__copy">${escape(fact.action)} ${escape(fact.version || "")}</p><span class="m-meta">${escape(String(fact.actor).toUpperCase())} / ${escape(fact.at)}</span></div></div>`).join("");
+  return `<section class="m-workstation__panel" role="tabpanel"><div class="m-inspector-group"><span class="m-label">Scene record</span><h2 class="m-inspector-heading">What happened</h2></div><div class="m-activity-list">${rows || `<p class="m-copy">No recorded actions yet.</p>`}</div></section>`;
 }
 
-function feedbackSection() {
-  const current = latest();
-  if (!current) return "";
-  const options = REGIONS
-    .map((name) => `<option value="${escape(name)}" ${view.draft.anchor === name ? "selected" : ""}>${escape(name)}</option>`)
-    .join("");
-  return `<section class="m-work m-stack" aria-labelledby="feedback-heading">
-      <h2 id="feedback-heading" class="m-section-heading">Send it back for changes</h2>
-      <div class="m-field">
-        <label class="m-label" for="anchor">Which part of the picture</label>
-        <select class="m-select" id="anchor" data-draft="anchor">
-          <option value="">The whole picture</option>
-          ${options}
-        </select>
-      </div>
-      <div class="m-field">
-        <label class="m-label" for="feedback">What should change</label>
-        <textarea class="m-textarea" id="feedback" data-draft="feedback" placeholder="One instruction per line.">${escape(view.draft.feedback)}</textarea>
-      </div>
-      <div class="m-field">
-        <label class="m-label" for="preserve">What should stay as it is</label>
-        <textarea class="m-textarea" id="preserve" data-draft="preserve" placeholder="One note per line.">${escape(view.draft.preserve)}</textarea>
-      </div>
-    </section>`;
+function inspectorPanel() {
+  if (view.inspector === "versions") return versionsPanel();
+  if (view.inspector === "production") return productionPanel();
+  if (view.inspector === "record") return recordPanel();
+  return briefPanel();
 }
 
-function sentSection() {
-  if (!view.revisions.length) return "";
-  const rows = view.revisions.slice().reverse().map((entry) => {
-    const items = entry.instructions
-      .map((line) => `<li class="m-copy">${line.regionAnchor ? `${escape(line.regionAnchor)}. ` : ""}${escape(line.text)}</li>`)
-      .join("");
-    const kept = entry.preserve.length
-      ? `<div class="m-stack"><span class="m-label">Kept</span><ul>${entry.preserve.map((line) => `<li class="m-copy">${escape(line)}</li>`).join("")}</ul></div>`
-      : "";
-    return `<div class="m-contribution">
-        <span class="m-contribution__source">${escape(entry.revisionId)} / AGAINST V0${escape(entry.sourceArtboardVersion)} / CAME BACK AS V0${escape(entry.producedArtboardVersion)}</span>
-        <ul>${items}</ul>
-        ${kept}
-        <span class="m-meta">${escape(String(entry.sentBy).toUpperCase())} / ${escape(entry.sentAt)}</span>
-      </div>`;
-  }).join("");
-  return `<section class="m-work m-stack" aria-labelledby="sent-heading">
-      <h2 id="sent-heading" class="m-section-heading">What went back</h2>
-      ${rows}
-    </section>`;
-}
-
-// ---------------------------------------------------------------------------
-// The end of the loop
-// ---------------------------------------------------------------------------
-
-function readyFor(artboardVersion) {
-  return view.readyForClient.find((entry) => entry.artboardVersion === artboardVersion) || null;
-}
-
-function approvedFor(artboardVersion) {
-  return view.clientApprovals.find((entry) => entry.artboardVersion === artboardVersion) || null;
-}
-
-function clientSection() {
-  const current = latest();
-  if (!current) return "";
-  const version = current.artboard.artboardVersion;
-  const ready = readyFor(version);
-  const approved = approvedFor(version);
-  const said = view.clientComments.length
-    ? `<div class="m-stack"><span class="m-label">What the client said</span>${view.clientComments.map((entry) => `<div class="m-contribution">
-        <span class="m-contribution__source">V0${escape(entry.artboardVersion)} / ${escape(entry.writtenAt)}</span>
-        <p class="m-copy">${escape(entry.text)}</p>
-      </div>`).join("")}</div>`
-    : "";
-  const state = approved
-    ? `<span class="m-state m-state--approved">Approved by the client on ${escape(approved.approvedAt)}</span>`
-    : ready
-      ? `<span class="m-state m-state--current">With the client since ${escape(ready.approvedAt)}</span>`
-      : `<span class="m-state">Not with the client yet</span>`;
-  return `<section class="m-work m-stack" aria-labelledby="client-heading">
-      <div class="m-cluster">
-        <h2 id="client-heading" class="m-section-heading">The client on V0${escape(version)}</h2>
-        ${state}
-      </div>
-      <p class="m-copy">Clearing a version for the client and the client approving it are two decisions by two people. Neither is the other.</p>
-      ${said}
-    </section>`;
-}
-
-// Built from app/design/samples/handoff.html. Frozen at the moment the client
-// approved, and never edited. A later approval writes a new record beside it.
-function handoffSection() {
-  if (!view.intents.length) return "";
-  const rows = view.intents.slice().reverse().map((intent) => `<div class="m-stack">
-      <div class="m-cluster">
-        <div class="m-stack">
-          <span class="m-label">Frozen production record</span>
-          <h3 class="m-section-heading">Production intent, artboard V0${escape(intent.artboardVersion)}</h3>
-        </div>
-        <span class="m-state m-state--approved">Frozen</span>
-      </div>
-      <div class="m-record-grid">
-        <div class="m-record-grid__item"><span class="m-label">Job</span><strong>${escape(intent.jobId)}</strong></div>
-        <div class="m-record-grid__item"><span class="m-label">Brief version</span><strong>V0${escape(intent.briefVersion)}</strong></div>
-        <div class="m-record-grid__item"><span class="m-label">Approved work</span><strong>ARTBOARD V0${escape(intent.artboardVersion)}</strong></div>
-        <div class="m-record-grid__item"><span class="m-label">Playback</span><strong>${escape(intent.technicalProfileRef || "Not recorded")}</strong></div>
-        <div class="m-record-grid__item"><span class="m-label">Approved by</span><strong>${escape(String(intent.approvedBy).toUpperCase())}</strong></div>
-        <div class="m-record-grid__item"><span class="m-label">Approved at</span><strong>${escape(intent.approvedAt)}</strong></div>
-      </div>
-      <div class="m-callout m-callout--approved">
-        <span class="m-state m-state--approved">Ready to build</span>
-        <p class="m-copy">Production builds artboard V0${escape(intent.artboardVersion)} against brief V0${escape(intent.briefVersion)} on job ${escape(intent.jobId)}.</p>
-      </div>
-    </div>`).join("");
-  return `<section class="m-work m-stack" aria-labelledby="handoff-heading">
-      <h2 id="handoff-heading" class="m-section-heading">Production handoff</h2>
-      <p class="m-copy">A later change needs a new version and a new approval. What is here is never quietly replaced.</p>
-      ${rows}
-    </section>`;
-}
-
-function recordSection() {
-  if (!view.facts.length) return "";
-  const rows = view.facts.map((fact) => `<div class="m-record-grid__item">
-      <span class="m-label">${escape(fact.action)}</span>
-      <strong>${escape(fact.version || "")}</strong>
-      <span class="m-meta">${escape(String(fact.actor).toUpperCase())}${fact.role ? `, ${escape(String(fact.role).toUpperCase())}` : ""} / ${escape(fact.at)}</span>
-    </div>`).join("");
-  return `<section class="m-work m-stack" aria-labelledby="record-heading">
-      <h2 id="record-heading" class="m-section-heading">What happened on this Scene</h2>
-      <p class="m-copy">Every line is written once and stays as written.</p>
-      <div class="m-record-grid">${rows}</div>
-    </section>`;
-}
-
-// ---------------------------------------------------------------------------
-// Render
-// ---------------------------------------------------------------------------
-
-function lines(text) {
-  return String(text || "").split("\n").map((line) => line.trim()).filter(Boolean);
+function tab(name, label) {
+  return `<button class="m-workstation__tab" type="button" role="tab" aria-selected="${view.inspector === name}" data-inspector="${escape(name)}">${escape(label)}</button>`;
 }
 
 function actionBar() {
   const current = latest();
   if (!current) {
-    actions.innerHTML = `<p class="m-action-bar__context">Nothing has come back yet.</p>`;
+    actions.innerHTML = `<p class="m-action-bar__context">Waiting for production to submit the first version.</p>`;
     return;
   }
-  const version = current.artboard.artboardVersion;
-  const written = reviewFor(version);
-  const save = written
-    ? ""
-    : `<button class="m-button" type="button" data-save>Save the review</button>`;
-  const ready = readyFor(version);
-  const send = ready
-    ? ""
-    : `<button class="m-button m-button--primary" type="button" data-send-client>Send V0${escape(version)} to the client</button>`;
-  actions.innerHTML = `<p class="m-action-bar__context">Feedback makes a new version rather than an edit.</p>
-    <div class="m-cluster">
-      <a class="m-button" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Back to the Scene</a>
-      ${save}
-      <button class="m-button m-button--change" type="button" data-revise>Request internal changes</button>
-      ${send}
-    </div>`;
+  const value = current.artboard.artboardVersion;
+  const pending = view.handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value);
+  const ready = readyFor(value);
+  let controls = "";
+  if (pending) controls = `<a class="m-button m-button--primary" href="${escape(pending.directPath)}">Open revision handoff</a>`;
+  else if (ready) controls = `<a class="m-button m-button--primary" href="./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open client view</a>`;
+  else controls = `<button class="m-button m-button--change" type="button" data-revise>Request changes</button><button class="m-button m-button--primary" type="button" data-send-client>Send V${version(value)} to client</button>`;
+  actions.innerHTML = `<p class="m-action-bar__context">Choose what happens to this exact version.</p><div class="m-action-bar__actions">${controls}</div>`;
 }
 
 function render() {
-  locationBar.innerHTML = `<span class="m-meta">${escape(String(view.tour.name).toUpperCase())} / SCENE / REVIEW</span>
-    <span class="m-state m-state--current">${escape(view.artboards.length ? "Internal review" : "Waiting on production")}</span>`;
-  page.innerHTML = `<header class="m-job-header">
-      <div class="m-job-header__copy">
-        <span class="m-label">${escape(view.assignment.title)}</span>
-        <h1 class="m-heading">Artboard review</h1>
-        <p class="m-copy m-copy--large">Review the work against the brief it was built from.</p>
-      </div>
-    </header>
-    ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}`;
-  reviewPane.innerHTML = view.artboards.length ? `${stage()}${rail()}` : "";
-  utility.innerHTML = `<a class="m-shell__nav-link" href="/api/auth/login?signout=1">
-      <span class="m-shell__nav-label">Sign out</span>
-    </a>`;
-  detail.innerHTML = `${fromProduction()}${reviewSection()}${feedbackSection()}${sentSection()}${clientSection()}${handoffSection()}${recordSection()}`;
+  const current = latest();
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scenes.html?tour=${escape(TOUR_ID)}">Scenes</a><span aria-hidden="true">/</span><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Review V${version(current?.artboard.artboardVersion)}</span></nav><span class="m-state m-state--current">${current ? "Needs a decision" : "Waiting on production"}</span>`;
+  workspace.innerHTML = `<div class="m-workstation"><section class="m-workstation__stage" aria-label="Work under review"><div class="m-workstation__canvas"><section class="m-direction-editor"><header class="m-direction-editor__header"><span class="m-label m-direction-editor__label">${escape(view.assignment.title)}</span><h1 class="m-section-heading">Review the work</h1></header><div class="m-direction-editor__body m-stack">${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${workSurface()}</div></section></div></section><aside class="m-workstation__inspector" aria-label="Review context"><div class="m-workstation__inspector-head"><span class="m-label">Inspector</span></div><div class="m-workstation__tabs" role="tablist">${tab("brief", "Brief")}${tab("versions", "Versions")}${tab("production", "Production")}${tab("record", "Record")}</div><div class="m-workstation__panels">${inspectorPanel()}</div></aside></div>`;
   actionBar();
 }
 
 async function loadArtifacts() {
   const artifacts = {};
   for (const entry of view.artboards) {
-    const version = entry.artboard.artboardVersion;
+    const value = entry.artboard.artboardVersion;
     try {
-      artifacts[version] = (await call("get-artboard-artifact", { assignmentId: view.sceneId, artboardVersion: version })).svg;
+      const item = await call("get-artboard-artifact", { assignmentId: view.sceneId, artboardVersion: value });
+      let src = item.dataUrl || null;
+      if (!src && item.blobPathname) {
+        const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "read", tourId: TOUR_ID, assignmentId: view.sceneId, pathname: item.blobPathname }) });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "That work file could not be opened.");
+        src = body.presignedUrl;
+      }
+      if (!src && item.svg) src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(item.svg);
+      artifacts[String(value)] = { src, contentType: item.contentType, name: item.name };
     } catch {
-      artifacts[version] = null;
+      artifacts[String(value)] = null;
     }
   }
   view.artifacts = artifacts;
 }
 
 async function refresh() {
-  view.artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
-  const written = await call("get-reviews", { assignmentId: view.sceneId });
-  view.reviews = written.reviews;
-  view.revisions = written.revisions;
-  view.facts = (await call("get-scene-record", { assignmentId: view.sceneId })).facts;
-  const end = await call("get-production-intent", { assignmentId: view.sceneId });
-  view.readyForClient = end.readyForClient;
-  view.clientApprovals = end.clientApprovals;
-  view.clientComments = end.comments;
-  view.intents = end.intents;
+  const [artboards, written, facts, end, handoffs] = await Promise.all([
+    call("get-artboards", { assignmentId: view.sceneId }),
+    call("get-reviews", { assignmentId: view.sceneId }),
+    call("get-scene-record", { assignmentId: view.sceneId }),
+    call("get-production-intent", { assignmentId: view.sceneId }),
+    call("get-handoffs", { assignmentId: view.sceneId }),
+  ]);
+  view.artboards = artboards.artboards || [];
+  view.reviews = written.reviews || [];
+  view.revisions = written.revisions || [];
+  view.facts = facts.facts || [];
+  view.readyForClient = end.readyForClient || [];
+  view.clientApprovals = end.clientApprovals || [];
+  view.clientComments = end.comments || [];
+  view.intents = end.intents || [];
+  view.handoffs = handoffs.handoffs || [];
   await loadArtifacts();
+  const current = latest();
+  if (current) view.brief = await call("get-brief", { assignmentId: view.sceneId, briefVersion: current.artboard.briefVersion });
 }
 
 async function load() {
@@ -422,92 +249,72 @@ async function load() {
 
 async function guard(work) {
   try {
+    view.working = true;
     await work();
   } catch (error) {
+    view.working = false;
     view.message = error.message;
-    try {
-      render();
-    } catch {
-      page.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`;
-    }
+    render();
   }
 }
+
+document.addEventListener("input", (event) => {
+  const field = event.target;
+  if (field.dataset && field.dataset.draft) view.draft[field.dataset.draft] = field.value;
+});
+
+document.addEventListener("change", (event) => {
+  const field = event.target;
+  if (field.dataset && field.dataset.draft) view.draft[field.dataset.draft] = field.value;
+});
 
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
-  if (target.dataset.compare) {
-    const version = Number(target.dataset.compare);
-    view.compareTo = view.compareTo === version ? null : version;
+  if (target.dataset.inspector) {
+    view.inspector = target.dataset.inspector;
     render();
     return;
   }
-  if (target.hasAttribute("data-save")) {
-    guard(async () => {
-      const current = latest();
-      await call("save-review", {
-        assignmentId: view.sceneId,
-        artboardVersion: current.artboard.artboardVersion,
-        departures: lines(view.draft.departure),
-        technicalItems: lines(view.draft.technical),
-      });
-      view.draft.departure = "";
-      view.draft.technical = "";
-      view.message = "The review is saved.";
-      await refresh();
-      render();
-    });
+  if (target.dataset.compare) {
+    const value = Number(target.dataset.compare);
+    view.compareTo = view.compareTo === value ? null : value;
+    render();
     return;
   }
   if (target.hasAttribute("data-send-client")) {
     guard(async () => {
       const current = latest();
-      await call("approve-for-client", {
-        assignmentId: view.sceneId,
-        artboardVersion: current.artboard.artboardVersion,
-      });
-      view.message = `V0${current.artboard.artboardVersion} is with the client.`;
+      await call("approve-for-client", { assignmentId: view.sceneId, artboardVersion: current.artboard.artboardVersion });
+      view.message = `V${version(current.artboard.artboardVersion)} is with the client.`;
       await refresh();
+      view.working = false;
       render();
     });
-    return;
   }
   if (target.hasAttribute("data-revise")) {
     guard(async () => {
+      const feedback = lines(view.draft.feedback);
+      if (!feedback.length) throw new Error("Say what should change before issuing a revision.");
       const current = latest();
-      const source = current.artboard.artboardVersion;
-      const instructions = lines(view.draft.feedback)
-        .map((text) => ({ text, regionAnchor: view.draft.anchor || null }));
-      const sent = await call("send-revision", {
+      const value = current.artboard.artboardVersion;
+      if (!reviewFor(value)) {
+        await call("save-review", { assignmentId: view.sceneId, artboardVersion: value, departures: feedback, technicalItems: lines(view.draft.technical) });
+      }
+      await call("issue-revision", {
         assignmentId: view.sceneId,
-        sourceArtboardVersion: source,
-        revisionId: `rev-${source}-${Date.now()}`,
-        instructions,
+        sourceArtboardVersion: value,
+        revisionId: `rev-${value}-${Date.now()}`,
+        instructions: feedback.map((text) => ({ text, regionAnchor: view.draft.anchor || null })),
         preserve: lines(view.draft.preserve),
       });
-      view.draft.feedback = "";
-      view.draft.preserve = "";
-      view.draft.anchor = "";
-      view.compareTo = source;
-      view.message = `V0${sent.artboard.artboardVersion} came back. Job ${sent.receipt.jobId}, received ${sent.receipt.receivedAt}.`;
+      view.draft = { feedback: "", preserve: "", technical: "", anchor: "" };
+      view.message = `Revision issued against V${version(value)}.`;
       await refresh();
+      view.working = false;
       render();
     });
   }
-});
-
-// The draft lives in the page until someone sends it, so a redraw never loses
-// what a person typed.
-document.addEventListener("input", (event) => {
-  const field = event.target;
-  if (!field.dataset || !field.dataset.draft) return;
-  view.draft[field.dataset.draft] = field.value;
-});
-
-document.addEventListener("change", (event) => {
-  const field = event.target;
-  if (!field.dataset || field.dataset.draft !== "anchor") return;
-  view.draft.anchor = field.value;
 });
 
 guard(load);

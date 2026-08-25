@@ -4,7 +4,7 @@ import { parseTourFixture } from "../../src/tour/parse-fixture.js";
 import { assembleContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
 import { createTourStore } from "../../src/tour/store.js";
-import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
+import { compileBrief, directionParagraphs, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar, venueExceptions } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
 import { createSceneRecord } from "../../src/tour/scene-record.js";
@@ -17,9 +17,10 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // The tour layer's one function. Actions: get-tour, get-assignment,
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
-// get-artboards, get-artboard-artifact, save-review, send-revision,
+// issue-brief, get-handoffs, submit-artboard, get-artboards,
+// get-artboard-artifact, save-review, issue-revision, send-revision,
 // get-reviews, approve-for-client, client-approve, client-comment,
-// get-production-intent, get-scene-record.
+// get-production-intent, get-scene-activity, get-scene-record.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -49,7 +50,33 @@ async function loadTour(tourId, options) {
     error.status = 404;
     throw error;
   }
-  return parseTourFixture(texts);
+  const fixture = parseTourFixture(texts);
+  // Production reads Tour-level additions from the Tour store. Older focused
+  // tests that pass only an Artist store continue to exercise the fixture in
+  // isolation; tests of these interactions pass the Tour store explicitly.
+  const tourStore = options.tourStore || (!options.store && !options.reader && !options.lister ? createTourStore() : null);
+  if (!tourStore) return fixture;
+  const [directions, requests] = await Promise.all([
+    tourStore.readDirections(fixture.tour.id),
+    tourStore.readRequests(fixture.tour.id),
+  ]);
+  const direction = directions.length ? directions[directions.length - 1] : fixture.tour.direction;
+  return {
+    tour: { ...fixture.tour, direction },
+    assignments: [...fixture.assignments, ...requests],
+  };
+}
+
+function requestId(title, assignments, at = Date.now()) {
+  const stem = sanitizeClientId(title || "scene");
+  let value = `${stem}-${Number(at).toString(36)}`;
+  let suffix = 2;
+  const used = new Set(assignments.map((entry) => entry.id));
+  while (used.has(value)) {
+    value = `${stem}-${Number(at).toString(36)}-${suffix}`;
+    suffix += 1;
+  }
+  return value;
 }
 
 function findAssignment(fixture, assignmentId) {
@@ -134,6 +161,45 @@ function instructionList(value) {
     .filter((entry) => entry.text);
 }
 
+function optionalText(value) {
+  const text = String(value === null || value === undefined ? "" : value).trim();
+  return text || null;
+}
+
+function submissionArtifact(value, tourId, assignmentId) {
+  const source = value && typeof value === "object" ? value : {};
+  const contentType = optionalText(source.contentType) || "application/octet-stream";
+  const name = optionalText(source.name) || "Submitted work";
+  const size = Number(source.size) || null;
+  const blobPathname = optionalText(source.blobPathname);
+  const dataUrl = optionalText(source.dataUrl);
+  const prefix = `brand-world-system/clients/${tourId}/tour/${assignmentId}/uploads/`;
+  if (blobPathname && !blobPathname.startsWith(prefix)) {
+    const error = new Error("That submitted file is outside this Scene.");
+    error.status = 400;
+    throw error;
+  }
+  if (dataUrl && !/^data:(image\/(?:gif|jpeg|png|svg\+xml|webp)|application\/pdf);base64,/i.test(dataUrl)) {
+    const error = new Error("That submitted file format is not supported.");
+    error.status = 400;
+    throw error;
+  }
+  if (!blobPathname && !dataUrl) {
+    const error = new Error("Add the work before submitting this version.");
+    error.status = 400;
+    throw error;
+  }
+  return {
+    type: "artboard",
+    location: blobPathname || "stored-with-submission",
+    blobPathname,
+    dataUrl,
+    contentType,
+    name,
+    size,
+  };
+}
+
 // Everything at the end of the loop is about one artboard version, so they all
 // resolve the same way.
 async function atArtboard(body, options) {
@@ -153,20 +219,29 @@ async function atArtboard(body, options) {
   return { fixture, assignment, tourStore, artboardStore, record, entry, wanted };
 }
 
-// What a client reviewer may do. Their page shows the work, the version, the
-// line saying what it is going for, and two controls, so these are the reads
-// behind that page and the two things they can send. Everything else on this
-// route is Higher Roads work.
+// Client and Higher Roads users share the Tour and Scene workflow. Internal
+// review and Artist Brain evidence remain on the Higher Roads side of the
+// glass. The route enforces that surface boundary even when a page is bypassed.
 //
 // The check is here rather than on the page, because a page that hides a
 // button is a page, and this route is what storage listens to.
 const CLIENT_ACTIONS = new Set([
+  "get-me",
   "get-tour",
   "get-assignment",
   "get-artboards",
   "get-artboard-artifact",
   "get-brief",
+  "list-briefs",
+  "get-handoffs",
+  "get-reviews",
   "get-production-intent",
+  "get-scene-activity",
+  "submit-artboard",
+  "add-tour-direction",
+  "create-scene-request",
+  "get-scene-workspace",
+  "save-scene-direction",
   "client-approve",
   "client-comment",
 ]);
@@ -191,6 +266,8 @@ function signedIn(options) {
 export async function handleAction(body, options = {}) {
   const user = signedIn({ ...options, action: body.action });
   const actor = { actor: user.displayName, role: user.roleLabel };
+
+  if (body.action === "get-me") return { user };
 
   if (body.action === "get-tour") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
@@ -232,9 +309,142 @@ export async function handleAction(body, options = {}) {
     }
     return { tour: fixture.tour, assignments };
   }
+  if (body.action === "add-tour-direction") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const words = String(body.words || "").trim();
+    if (!words) {
+      const error = new Error("Add the director's words before saving Tour Direction.");
+      error.status = 400;
+      throw error;
+    }
+    if (words === fixture.tour.direction.words) {
+      const error = new Error("Those words already are the current Tour Direction.");
+      error.status = 409;
+      throw error;
+    }
+    const tourStore = options.tourStore || createTourStore();
+    const direction = {
+      version: fixture.tour.direction.version + 1,
+      setBy: optionalText(body.onBehalfOf) || user.displayName,
+      setOn: new Date().toISOString(),
+      words,
+      recordedBy: user.displayName,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    };
+    await tourStore.addDirection(fixture.tour.id, direction);
+    const affectedScenes = fixture.assignments
+      .filter((entry) => entry.directionVersion < direction.version)
+      .map((entry) => ({ id: entry.id, title: entry.title, directionVersion: entry.directionVersion }));
+    return { direction, affectedScenes };
+  }
+
+  if (body.action === "create-scene-request") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const request = String(body.request || "").trim();
+    if (!request) {
+      const error = new Error("Write the Scene request before submitting it.");
+      error.status = 400;
+      throw error;
+    }
+    const moment = optionalText(body.moment);
+    const title = optionalText(body.title) || moment || "Untitled Scene";
+    const tourStore = options.tourStore || createTourStore();
+    const requestedAt = new Date().toISOString();
+    const assignment = {
+      id: requestId(title, fixture.assignments, options.now ? options.now() : Date.now()),
+      version: 1,
+      tourId: fixture.tour.id,
+      title,
+      directionVersion: fixture.tour.direction.version,
+      moment,
+      identity: optionalText(body.identity) || null,
+      requestedBy: user.displayName,
+      requestedOn: requestedAt,
+      onBehalfOf: optionalText(body.onBehalfOf),
+      status: "Requested",
+      request,
+      requiredElements: textList(body.requiredElements),
+      references: textList(body.references),
+    };
+    await tourStore.addRequest(fixture.tour.id, assignment);
+    const record = options.sceneRecord || createSceneRecord();
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      ...actor,
+      action: "Requested the Scene",
+      version: `Direction V0${assignment.directionVersion}`,
+      onBehalfOf: assignment.onBehalfOf,
+    });
+    return { assignment };
+  }
   if (body.action === "get-assignment") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     return { tour: fixture.tour, assignment: findAssignment(fixture, body.assignmentId) };
+  }
+  if (body.action === "get-scene-workspace") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const stored = await tourStore.readConcept(fixture.tour.id, assignment.id);
+    const concept = stored ? {
+      title: stored.title,
+      idea: stored.idea,
+      directionParagraphs: stored.directionParagraphs || [],
+      venueExceptions: stored.venueExceptions || [],
+      cameFrom: stored.cameFrom || null,
+      shapedBy: stored.shapedBy || null,
+      shapedAt: stored.shapedAt || null,
+    } : null;
+    return {
+      tour: fixture.tour,
+      assignment,
+      concept,
+      context: {
+        directionVersion: fixture.tour.direction.version,
+        directionParagraphs: directionParagraphs(fixture.tour.direction),
+        productionSetup: fixture.tour.productionSetup || null,
+        setupVersion: fixture.tour.productionSetup ? fixture.tour.productionSetup.version : null,
+        venueExceptions: venueExceptions(fixture.tour.productionSetup),
+      },
+    };
+  }
+
+  if (body.action === "save-scene-direction") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const source = body.concept || {};
+    if (!String(source.title || "").trim() || !String(source.idea || "").trim()) {
+      const error = new Error("A Scene direction needs a name and some direction.");
+      error.status = 400;
+      throw error;
+    }
+    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    if (briefs.some((entry) => entry.status === "frozen")) {
+      const error = new Error("A brief is already frozen for this Scene. A change now needs a new brief version.");
+      error.status = 409;
+      throw error;
+    }
+    const concept = {
+      title: String(source.title).trim(),
+      idea: String(source.idea).trim(),
+      whyThisArtist: "",
+      asksOfProduction: "",
+      whereItMightMiss: "",
+      rhymesWith: [],
+      avoid: [],
+      artistContext: [],
+      creativeLatitude: [],
+      openQuestions: [],
+      cameFrom: "written directly",
+      directionParagraphs: (Array.isArray(source.directionParagraphs) ? source.directionParagraphs : []).map(Number).filter((entry) => Number.isInteger(entry) && entry >= 0),
+      venueExceptions: (Array.isArray(source.venueExceptions) ? source.venueExceptions : []).map(Number).filter((entry) => Number.isInteger(entry) && entry >= 0),
+      directionSelectedBy: user.displayName,
+      directionSelectedAt: new Date().toISOString(),
+      shapedBy: user.displayName,
+      shapedAt: new Date().toISOString(),
+    };
+    await tourStore.writeConcept(fixture.tour.id, assignment.id, concept);
+    return { concept };
   }
   if (body.action === "assignment-context") {
     const { fixture, assignment, context } = await contextFor(body, options);
@@ -375,6 +585,58 @@ export async function handleAction(body, options = {}) {
     return { brief, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
   }
 
+  // Issuing is the outbound half of a governed handoff. It records the exact
+  // version, who was asked, and the direct path. It does not pretend the work
+  // came back in the same click.
+  if (body.action === "issue-brief") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const record = options.sceneRecord || createSceneRecord();
+    const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const wanted = body.briefVersion === undefined || body.briefVersion === null
+      ? null
+      : Number(body.briefVersion);
+    const frozen = versions.filter((entry) => entry.status === "frozen");
+    const brief = wanted === null
+      ? frozen[frozen.length - 1]
+      : frozen.find((entry) => entry.briefVersion === wanted);
+    if (!brief) {
+      const error = new Error("Freeze the brief before issuing it.");
+      error.status = 400;
+      throw error;
+    }
+    const handoff = {
+      handoffId: `brief-${brief.jobId}-v${brief.briefVersion}`,
+      kind: "brief",
+      jobId: brief.jobId,
+      briefVersion: brief.briefVersion,
+      sourceArtboardVersion: null,
+      recipient: optionalText(body.recipient) || "Media artist",
+      dueDate: optionalText(body.dueDate),
+      contact: optionalText(body.contact),
+      directPath: `/handoff.html?tour=${encodeURIComponent(fixture.tour.id)}&scene=${encodeURIComponent(assignment.id)}&brief=${brief.briefVersion}`,
+      issuedBy: user.displayName,
+      issuedAt: new Date().toISOString(),
+    };
+    await artboardStore.addHandoff(fixture.tour.id, assignment.id, handoff);
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      ...actor,
+      action: SENT_TO_PRODUCTION,
+      version: `Brief V0${brief.briefVersion}`,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { handoff };
+  }
+
+  if (body.action === "get-handoffs") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const artboardStore = options.artboardStore || createArtboardStore();
+    return { handoffs: await artboardStore.readHandoffs(fixture.tour.id, assignment.id) };
+  }
+
   // The seam. What goes out is one frozen brief. What comes back is an
   // artboard version and the receipt that came with it. The stand-in is ours
   // and its label travels on everything it produces, so its shape never
@@ -406,6 +668,12 @@ export async function handleAction(body, options = {}) {
       error.status = 409;
       throw error;
     }
+    const handoffs = await artboardStore.readHandoffs(fixture.tour.id, assignment.id);
+    if (handoffs.some((entry) => entry.kind === "brief" && entry.briefVersion === brief.briefVersion)) {
+      const error = new Error("That brief was issued to a person and is waiting for their submission.");
+      error.status = 409;
+      throw error;
+    }
 
     const produced = receiveBrief(brief, { artboardVersion: 1 });
     const entry = { receipt: produced.receipt, artboard: produced.artboard };
@@ -426,6 +694,97 @@ export async function handleAction(body, options = {}) {
       label: STAND_IN_LABEL,
     };
   }
+
+  // The inbound half of the seam. The artifact is already in private storage
+  // (or held as a local data URL during development); this action writes the
+  // attributed version and receipt in the same shape as the stand-in.
+  if (body.action === "submit-artboard") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore();
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const record = options.sceneRecord || createSceneRecord();
+    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const briefVersion = Number(body.briefVersion);
+    const brief = briefs.find((entry) => entry.briefVersion === briefVersion && entry.status === "frozen");
+    if (!brief) {
+      const error = new Error("Submit work against a frozen brief version.");
+      error.status = 400;
+      throw error;
+    }
+    const artboards = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    const nextVersion = artboards.length
+      ? Math.max(...artboards.map((entry) => Number(entry.artboard.artboardVersion) || 0)) + 1
+      : 1;
+    const wanted = body.artboardVersion === undefined || body.artboardVersion === null
+      ? nextVersion
+      : Number(body.artboardVersion);
+    if (!Number.isInteger(wanted) || wanted !== nextVersion) {
+      const error = new Error(`The next work version is V0${nextVersion}.`);
+      error.status = 409;
+      throw error;
+    }
+    const handoffs = await artboardStore.readHandoffs(fixture.tour.id, assignment.id);
+    const sourceArtboardVersion = body.sourceArtboardVersion === undefined || body.sourceArtboardVersion === null
+      ? null
+      : Number(body.sourceArtboardVersion);
+    const issued = sourceArtboardVersion === null
+      ? handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === briefVersion)
+      : handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === sourceArtboardVersion);
+    if (!issued) {
+      const error = new Error(sourceArtboardVersion === null
+        ? "Issue this brief before work is submitted against it."
+        : "Issue the revision before the next version is submitted.");
+      error.status = 409;
+      throw error;
+    }
+    const conceptSummary = String(body.conceptSummary || "").trim();
+    if (!conceptSummary) {
+      const error = new Error("Add one sentence about how you read the brief.");
+      error.status = 400;
+      throw error;
+    }
+    const submittedBy = user.displayName;
+    const onBehalfOf = optionalText(body.onBehalfOf);
+    const receivedAt = new Date().toISOString();
+    const label = onBehalfOf ? `Submitted by ${submittedBy} for ${onBehalfOf}` : `Submitted by ${submittedBy}`;
+    const artboard = {
+      jobId: brief.jobId,
+      briefVersion,
+      artboardVersion: wanted,
+      status: "received",
+      artifact: submissionArtifact(body.artifact, fixture.tour.id, assignment.id),
+      conceptSummary,
+      technicalAssumptions: textList(body.technicalAssumptions),
+      technicalFindings: textList(body.technicalFindings),
+      warnings: textList(body.warnings),
+      unresolvedQuestions: textList(body.unresolvedQuestions),
+      receivedAt,
+      standIn: false,
+      label,
+    };
+    const receipt = {
+      jobId: brief.jobId,
+      briefVersion,
+      artboardVersion: wanted,
+      sourceArtboardVersion,
+      receivedAt,
+      receivedBy: "Meridian",
+      submittedBy,
+      onBehalfOf,
+      standIn: false,
+      label,
+    };
+    await artboardStore.addSubmittedArtboard(fixture.tour.id, assignment.id, { receipt, artboard });
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      ...actor,
+      action: "Submitted work",
+      version: `Artboard V0${wanted}`,
+      onBehalfOf,
+      path: "direct",
+    });
+    return { receipt, artboard };
+  }
   // The stored artifact is a file in private storage, so the review screen asks
   // for it by the location the artboard names rather than reaching for a path
   // of its own.
@@ -441,13 +800,24 @@ export async function handleAction(body, options = {}) {
       error.status = 404;
       throw error;
     }
-    const svg = await artboardStore.readArtifact(entry.artboard.artifact.location);
+    const artifact = entry.artboard.artifact || {};
+    if (artifact.dataUrl || artifact.blobPathname) {
+      return {
+        artboardVersion: wanted,
+        dataUrl: artifact.dataUrl || null,
+        blobPathname: artifact.blobPathname || null,
+        contentType: artifact.contentType || null,
+        name: artifact.name || null,
+        label: entry.artboard.label || null,
+      };
+    }
+    const svg = await artboardStore.readArtifact(artifact.location);
     if (!svg) {
       const error = new Error("That artboard file could not be read.");
       error.status = 404;
       throw error;
     }
-    return { artboardVersion: wanted, svg, label: STAND_IN_LABEL };
+    return { artboardVersion: wanted, svg, contentType: "image/svg+xml", label: entry.artboard.label || STAND_IN_LABEL };
   }
   // Where one artboard version departs from the brief, and the technical items
   // a person has to decide about. Higher Roads' words. The client never reads
@@ -493,6 +863,85 @@ export async function handleAction(body, options = {}) {
   // A revision against a version that has already been revised is refused, so
   // two people cannot send different feedback on the same picture and both
   // believe theirs is what production is building.
+  if (body.action === "issue-revision") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const record = options.sceneRecord || createSceneRecord();
+    const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    const source = Number(body.sourceArtboardVersion);
+    const entry = versions.find((stored) => stored.artboard.artboardVersion === source);
+    if (!entry) {
+      const error = new Error("That artboard version was not found.");
+      error.status = 404;
+      throw error;
+    }
+    if (versions.some((stored) => stored.artboard.artboardVersion > source)) {
+      const error = new Error("A newer version already came back. Send feedback against that one.");
+      error.status = 409;
+      throw error;
+    }
+    const revisionId = String(body.revisionId || "").trim();
+    if (!revisionId) {
+      const error = new Error("A revision needs an identifier.");
+      error.status = 400;
+      throw error;
+    }
+    const existingRevisions = await artboardStore.readRevisions(fixture.tour.id, assignment.id);
+    if (existingRevisions.some((stored) => stored.revisionId === revisionId)) {
+      const error = new Error("That revision has already been sent.");
+      error.status = 409;
+      throw error;
+    }
+    const existingHandoffs = await artboardStore.readHandoffs(fixture.tour.id, assignment.id);
+    if (existingHandoffs.some((stored) => stored.kind === "revision" && stored.sourceArtboardVersion === source)) {
+      const error = new Error("That revision was issued to a person and is waiting for their submission.");
+      error.status = 409;
+      throw error;
+    }
+    const instructions = instructionList(body.instructions);
+    if (!instructions.length) {
+      const error = new Error("Say what should change before you send it back.");
+      error.status = 400;
+      throw error;
+    }
+    const revision = {
+      revisionId,
+      jobId: entry.artboard.jobId,
+      sourceArtboardVersion: source,
+      instructions,
+      preserve: textList(body.preserve),
+      source: optionalText(body.source) || "Higher Roads review",
+      sentBy: user.displayName,
+      sentAt: new Date().toISOString(),
+      receipt: null,
+      producedArtboardVersion: null,
+    };
+    const handoff = {
+      handoffId: `revision-${revisionId}`,
+      kind: "revision",
+      jobId: entry.artboard.jobId,
+      briefVersion: entry.artboard.briefVersion,
+      sourceArtboardVersion: source,
+      revisionId,
+      recipient: optionalText(body.recipient) || "Media artist",
+      dueDate: optionalText(body.dueDate),
+      contact: optionalText(body.contact),
+      directPath: `/handoff.html?tour=${encodeURIComponent(fixture.tour.id)}&scene=${encodeURIComponent(assignment.id)}&revision=${encodeURIComponent(revisionId)}`,
+      issuedBy: user.displayName,
+      issuedAt: revision.sentAt,
+    };
+    await artboardStore.addRevision(fixture.tour.id, assignment.id, revision);
+    await artboardStore.addHandoff(fixture.tour.id, assignment.id, handoff);
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      ...actor,
+      action: "Requested internal changes",
+      version: `Artboard V0${source}`,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { revision, handoff };
+  }
+
   if (body.action === "send-revision") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
@@ -518,6 +967,18 @@ export async function handleAction(body, options = {}) {
     if (!revisionId) {
       const error = new Error("A revision needs an identifier.");
       error.status = 400;
+      throw error;
+    }
+    const existingRevisions = await artboardStore.readRevisions(fixture.tour.id, assignment.id);
+    if (existingRevisions.some((stored) => stored.revisionId === revisionId)) {
+      const error = new Error("That revision has already been sent.");
+      error.status = 409;
+      throw error;
+    }
+    const existingHandoffs = await artboardStore.readHandoffs(fixture.tour.id, assignment.id);
+    if (existingHandoffs.some((stored) => stored.kind === "revision" && stored.sourceArtboardVersion === source)) {
+      const error = new Error("That revision was issued to a person and is waiting for their submission.");
+      error.status = 409;
       throw error;
     }
     const instructions = instructionList(body.instructions);
@@ -676,6 +1137,26 @@ export async function handleAction(body, options = {}) {
     const artboardStore = options.artboardStore || createArtboardStore();
     const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
     return { ...approvals, intents: await artboardStore.readIntents(fixture.tour.id, assignment.id) };
+  }
+  if (body.action === "get-scene-activity") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const record = options.sceneRecord || createSceneRecord();
+    const facts = await record.readFacts(fixture.tour.id, assignment.id);
+    const clientVisible = new Set([
+      "Requested the Scene",
+      "Froze the brief",
+      SENT_TO_PRODUCTION,
+      "Submitted work",
+      "Approved for the client to see",
+      "Approved the work",
+      "Left a comment",
+    ]);
+    return {
+      facts: user.role === CLIENT_ROLE
+        ? facts.filter((fact) => clientVisible.has(fact.action))
+        : facts,
+    };
   }
   if (body.action === "get-scene-record") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
