@@ -118,6 +118,28 @@ Work planes fill the available shell. Do not center a narrow page container insi
 
 Use `.m-page--fluid` for primary left-nav destinations and `.m-page--workstation` for canvas and Inspector compositions. The default `.m-page` remains available for genuinely reading-sized documents.
 
+## Orientation pages
+
+Use `.m-orientation` for a quiet destination with one primary reference and a compact supporting record.
+
+- `.m-orientation__primary` holds the object the page exists to read.
+- `.m-orientation__aside` holds facts that help interpret that object.
+- `.m-orientation__section` groups one family of supporting facts.
+
+Do not turn every available record into an equal section. On Tour Home, Tour Direction leads. Dates, playback, setup, and themes support it. Scenes remain in the Scenes destination.
+
+## Intelligence browser
+
+Use `.m-intelligence-browser` when a large approved reference needs to remain browsable without rendering every entry.
+
+- `.m-intelligence-browser__index` selects one category and identity.
+- `.m-intelligence-browser__reader` shows only the selected intelligence.
+- `.m-intelligence-remainder` keeps a dense category to a short first read.
+- `.m-intelligence-provenance` keeps source detail one disclosure deeper.
+- `.m-intelligence-admin` contains maintenance tools that ordinary reading does not need.
+
+The default view is the approved intelligence, not the research database. A category index and one reading plane replace a continuous stack of every category and entry.
+
 ## Type and language
 
 Use `.m-heading` for the page job, `.m-section-heading` for a real section, `.m-copy` for explanation, `.m-label` for a compact label, and `.m-meta` for exact identifiers and time.
