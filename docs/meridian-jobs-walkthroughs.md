@@ -1,118 +1,208 @@
 # Meridian: Jobs Walkthroughs
 
 Date: 2026-08-25
-Status: draft for tearing up. Written by the architect against the live app at head, honestly, including what is missing and what is noise. The owner and the designer correct what it gets wrong about what people actually want. Once agreed, every screen build cites the job it serves, and review asks "can the person do the job" before it asks whether the record holds.
+Status: revision 2, incorporating the design review of revision 1. Awaiting the owner's tear-up. Once agreed, every screen build cites the moment it serves, and review asks "can the person do the job" before it asks whether the record holds.
 
-Format per job: who and the moment; what they want; what they are holding when they arrive; what the app gives them today, stated plainly; where it fights them; what the screen should be. "Today" describes the live app, not the architecture doc.
+Ten moments, not ten screens. Jobs are what people come to do; navigation is decided elsewhere. Each moment answers: who and when; what they want; what they hold; what the app gives them today, stated plainly; where it fights them; what the screen should be; and four questions that keep builders honest about the human: what are they afraid will go wrong, what gives them confidence, what is the minimum they must provide, and what tells them they are done and can leave.
 
----
+## The people, in their own terms
 
-## Job 1: Request a Scene
+| Person | The question Meridian answers for them |
+|---|---|
+| Artist management | Is the artist aligned, is anything drifting, and do I need to step in? |
+| Creative director | Did the original vision survive, what changed, and where should I respond? |
+| Production support | Will this work on the actual system, and what has changed technically? |
+| Media artist | What am I making, what is fixed, what changed, and where do I return it? |
+| Higher Roads | What needs moving, who are we waiting on, and what can I safely do on someone's behalf? |
 
-**Who and when.** A creative director (or Higher Roads after a call with one) has a song and a one-line intention. "Storm and lightning for the closer. It builds and passes inside the song."
+The same record can present a different job depending on what the person has been asked to do. Attribution over permissions does not mean everyone gets the same framing.
 
-**What they want.** To hand that intention over in under five minutes and trust it will not be lost, flattened, or reinterpreted before someone works on it. Then leave.
+## Two principles that run through all ten
 
-**What they are holding.** A sentence or a paragraph. Maybe a voice memo's worth of context. Maybe references: a photo, a link, another artist's moment they loved. Almost never structure.
+**Governed handoff, not document export.** At every boundary with the outside world, the person needs a stable handoff: the frozen brief or approved version, files, technical profile, due date, and contact, with a download as one representation and a direct link as another. Builders who read "packet" as "export a file" have missed the need.
 
-**Today.** There is no request surface. The request exists in the fixture because a builder typed it there. A real second Scene cannot be requested through the app at all.
-
-**Friction.** Total; the job cannot be done. And the coming risk is the opposite failure: a request form with required fields that interrogates a person who has one sentence. The doc's word "draft request" matters: a request is allowed to be thin.
-
-**What the screen should be.** One box that takes the sentence as spoken, a place to drop references without naming them, and done. Everything else (identity, era hooks, what the direction says) is Meridian's job to attach, not the requester's job to enter. The record marks who asked and when, silently.
-
----
-
-## Job 2: Develop the concept
-
-**Who and when.** Higher Roads, sitting with a request, the tour direction, and the brain. The working session.
-
-**What they want.** To get from a sentence to a concept the client will recognize as this artist, with the reasoning attached, without re-reading a research binder every time. And to know what the brand would refuse before they propose it.
-
-**What they are holding.** The request, their own taste, and partial memory of the artist.
-
-**Today.** The best-served job in the app. The Scene page holds the request, direction paragraphs to mark, suggestions on demand with "why this artist" and "where it might miss," prohibitions attached on save, compile and freeze. This job is why the pilot worked.
-
-**Friction.** The page runs top to bottom as a form rather than a session: direction marking, suggestion cards, and the compiled result all compete at once (the workspace re-hierarchy is aimed exactly here). Suggestions arrive as three finished essays rather than sparks to react to; there is no way to say "more like the second one." The marked-paragraph control speaks in indexes, [1] and [4], to a person thinking in Nadia's sentences.
-
-**What the screen should be.** The concept in the center as the thing being made; the request, direction, and brain as material at hand, pulled in when wanted; the brief as the output that assembles from what happened, not a separate chore.
+**The arrival moment is part of the product.** Home and Reviews only work if people know something is waiting. V1 does not need a notification center. It needs a dependable way to send or copy a direct review link, say what is being requested, and record that the person was told.
 
 ---
 
-## Job 3: Receive the packet, deliver the work
+## Moment 1: Arrive and understand what needs me
 
-**Who and when.** A media artist, twice. Day one: brief in hand, starting the work. Weeks later: finished artboard, needing to hand it back.
+**Who and when.** Anyone opening Meridian, most often artist management checking in without intending to change anything. The informed observer is a real job, not passive filler.
 
-**What they want.** Day one: everything that governs the work in one packet they can take into their own tools, and certainty nothing will move under them while they work. Later: to hand back the work and one paragraph of how they read the brief, and be done until feedback comes.
+**What they want.** Within seconds: is the tour creatively on course, does the artist have an unresolved decision, is anything becoming risky, does anything need me.
 
-**What they are holding.** Day one: a login they may use once. Later: files and an explanation.
+**What they hold.** A spare minute and a vague worry.
 
-**Today.** The packet exists and is good: frozen brief, two formats, versioned. But it is downloadable only from the Scene page, and nothing tells the media artist it exists or that it is final. And the way back in does not exist at all: no way to submit an artboard, no way to deliver final media. The stand-in occupies the door. This is the largest gap in the product and it was found by the owner asking a question, not by any review.
+**Today.** The Scenes directory now answers stage, waiting-on, and next action per row, which is the first real arrival surface. There is no Home, no needs-your-attention, no sense of drift or risk.
 
-**Friction.** Half the job is impossible; the possible half is unannounced.
+**Friction.** Arrival lands on a list of work items, which serves Higher Roads and nobody else.
 
-**What the screen should be.** For a media artist, Meridian is two moments, not a workspace: a packet page (the brief, the version, "this is frozen, nothing changes without a new version reaching you") and a submit page (drop the work, say how you read the brief, flag any technical assumption, send). Everything else in the app is someone else's job and should not be in their way.
+**What the screen should be.** Home as the architecture defines it: needs your attention first, Scenes in progress, tour readiness exceptions, recent decisions. For the observer, "nothing needs you, here is the shape of things" is a successful visit.
 
----
+Afraid: that something went wrong weeks ago and nobody told them. Confidence: recent decisions with names and dates, nothing flagged. Minimum to provide: nothing. Done: the four questions answered without clicking deeper.
 
-## Job 4: Review what came back
+## Moment 2: Establish or revise Tour Direction
+
+**Who and when.** The creative director, at the start of a cycle or when the vision moves; Higher Roads on their behalf after a call.
+
+**What they want.** To give the tour a creative center everyone works from, have it preserved as stated, and have later changes visible with their consequences named.
+
+**What they hold.** A vision in their own words: sometimes a document, sometimes a monologue someone must capture faithfully.
+
+**Today.** Direction is stored as given, versioned, with who set it, shown on the tour home. It got there because a builder put it in the fixture; there is no surface for entering or revising it, and a direction change names no affected Scenes.
+
+**Friction.** The most load-bearing object in the product cannot be created through the product.
+
+**What the screen should be.** Enter the direction as spoken or pasted, version it on change, and on revision show which Scenes were written against the old version. Never a form that restructures their words.
+
+Afraid: paraphrase; that the system will restate their vision in someone else's words. Confidence: seeing their exact words back, marked version 1, with their name. Minimum: the words. Done: it is stored, versioned, and everything downstream names it.
+
+## Moment 3: Request a Scene
+
+**Who and when.** The creative director or artist camp with a song and an intention; Higher Roads after a conversation.
+
+**What they want.** Hand over the intention in under five minutes, with a fast path for one sentence and room for depth when they have it, then leave trusting nothing gets lost or flattened.
+
+**What they hold.** A sentence, maybe references: a photo, a link, a moment from another show. Almost never structure.
+
+**Today.** No request surface exists. The pilot request was typed into the fixture by a builder.
+
+**Friction.** The job cannot be done. Coming risk is the opposite failure: a form with required fields interrogating a person who has one sentence. A request is allowed to be thin.
+
+**What the screen should be.** One box that takes the sentence as spoken, an optional drop zone for references, done. Attaching identity, era, and direction context is Meridian's job, not the requester's.
+
+Afraid: that thin input makes them look unprepared, or gets reinterpreted. Confidence: the request shown back verbatim with "we take it from here." Minimum: one sentence. Done: submitted, attributed, visible in the Scene.
+
+## Moment 4: Develop and issue Scene Direction
+
+**Who and when.** Higher Roads (or a creative director working directly), turning a request into a concept and a governed brief. The working session.
+
+**What they want.** Get from sentence to a concept the client will recognize as this artist, reasoning attached, prohibitions surfaced before they err, without re-reading a research binder. Then issue it cleanly.
+
+**What they hold.** The request, taste, partial memory of the artist.
+
+**Today.** The best-served moment in the app: direction paragraphs to mark, suggestions with "why this artist" and "where it might miss," prohibitions attached on save, compile, freeze, two formats.
+
+**Friction.** The page runs as a form rather than a session; everything competes at once. Suggestions arrive as finished essays with no way to steer ("more like the second one"). The paragraph picker speaks in indexes to a person thinking in Nadia's sentences. Production constraints are present but nothing flags a concept that fights them until a person notices.
+
+**What the screen should be.** The concept centered as the thing being made; request, direction, brain, and production setup as material at hand; the brief assembling from what happened rather than being a separate chore. Production information stays quiet until it affects this Scene, then becomes impossible to miss.
+
+Afraid: proposing something the artist would refuse, or the rig cannot do. Confidence: prohibitions and rig limits surfaced beside the work, evidence attached. Minimum: pick or write a concept. Done: brief frozen, version named, handed off.
+
+## Moment 5: Receive the governed brief and submit work
+
+**Who and when.** The media artist, day one of the engagement.
+
+**What they want.** Everything that governs the work in one stable handoff they can take into their own tools, certainty it will not move underneath them, and a clear place to return the work with one paragraph of how they read the brief.
+
+**What they hold.** A link they were sent. Later, files and an explanation.
+
+**Today.** The handoff half exists and is good: frozen brief, versioned, two formats, downloadable from the Scene page, though nothing tells the media artist where it is or that it is final. The return half does not exist: no way to submit an artboard, no way to deliver media. The stand-in occupies the door. Largest gap in the product; found by the owner, not by review.
+
+**Friction.** Half the job impossible, the possible half unannounced.
+
+**What the screen should be.** Two moments, not a workspace: a handoff page (the brief, its version, files, technical profile, due date, contact, "this is frozen; changes reach you as a new version") and a submit page (drop the work, concept summary as built, technical assumptions, send). Everything else in Meridian is someone else's job and stays out of their way.
+
+Afraid: building against a brief that silently changed; work vanishing into a void after submission. Confidence: the version number on everything; a receipt with their name and time. Minimum: the artifact and a sentence. Done: receipt shown, next step named ("Higher Roads reviews; feedback returns as anchored notes against this version").
+
+## Moment 6: Review what came back
 
 **Who and when.** Higher Roads, artboard in, before the client sees anything.
 
-**What they want.** Work-first: see it big, compare against last time, check it against what was asked, and either send it onward or say precisely what changes, fast.
+**What they want.** Work-first: see it big, compare with last time, check it against what was asked, and either send it onward or say precisely what changes.
 
-**What they are holding.** Judgment, the brief in memory, maybe notes from the client's last reaction.
+**What they hold.** Judgment, the brief in memory, the client's last reaction.
 
-**Today.** The review page shows the artboard, the concept as built, technical items, review notes, feedback with a region dropdown, the wipe that is really side-by-side, the Scene record, and the client and handoff sections as they accrue. The mechanics all work.
+**Today.** Mechanics all work: artboard, concept as built, technical items, notes, feedback with region dropdown, side-by-side versions, record, client and handoff sections.
 
-**Friction.** This is the gobbledygook page. It reads as the record displaying itself: version tables, timestamps, the full Scene history, all at equal weight with the work. The artboard, the only thing the reviewer's eyes want, sits at a fixed 640 pixels inside the evidence. The brief being reviewed against is not on the page (it is a download, back on the Scene). The region control is a dropdown of nine place names instead of a mark on the picture. The review-notes-versus-feedback split makes a person decide which box their thought belongs in.
+**Friction.** The gobbledygook page. The record displays itself: version tables, timestamps, full history at equal weight with the work. The artboard sits at 640 fixed pixels inside the evidence. The governing brief is not on the page. The region control is a dropdown of nine names instead of a mark on the picture. Notes-versus-feedback makes a person classify their own thought.
 
-**What the screen should be.** The work at full size. The brief one glance away. One way to say "change this," anchored by pointing. History behind a disclosure for the day it is needed. The record still catches everything; it just stops performing.
+**What the screen should be.** The work at full size. The brief one glance away. One way to say "change this," anchored by pointing. History behind disclosure. The record catches everything and stops performing.
+
+Afraid: sending the client something with a flaw they missed; feedback that produces the wrong fix. Confidence: brief beside work; the departure check; anchored notes. Minimum: a decision, onward or back, with reasons when back. Done: state moved, waiting-on flipped, notified.
+
+## Moment 7: Understand feedback and submit the next version
+
+**Who and when.** The media artist, feedback in hand. This is not an edge case; it is the loop.
+
+**What they want.** To see the exact version the feedback applies to, what must change, what must remain, visual anchors when relevant, whether the note is internal or client-approved, what is due, and then return the next version the same way as the first.
+
+**What they hold.** Version 1 in their tools, and a revision notice.
+
+**Today.** The revision payload carries instructions, preserve list, anchors, and the version. It goes to the stand-in; no person can receive it, and nothing distinguishes internal direction from client-driven direction on its face.
+
+**Friction.** The moment does not exist for a human.
+
+**What the screen should be.** The revision as a governed handoff mirroring the brief: this version, change these things (anchored), preserve these, source of the direction, due date, submit slot for version 2 alongside.
+
+Afraid: fixing the wrong thing; losing what was working; conflicting notes with no priority. Confidence: change and preserve as separate lists against a named version. Minimum: the next version and a sentence on what they did. Done: receipt, version 2 on record, back to waiting.
+
+## Moment 8: Make a creative or technical decision
+
+**Who and when.** The client side, differentiated: a manager approving in ninety seconds on a phone; a creative director inspecting coherence and leaving precise feedback; production support judging feasibility. Same record, different framing per what the person was asked to do.
+
+**What they want.** The manager: see it, trust that what they approve is what will exist, say yes or say what bothers them, leave. The director: what changed since my last note, against the direction. Production: will this play on the actual system.
+
+**What they hold.** A link, taste, accountability.
+
+**Today.** The client page is the strongest in the app: work, version, rationale, approve, comment, nothing else. It serves exactly one of the three framings. The rationale is static; what-changed-since-your-note does not exist; the artboard has not met a phone; the arrival depends on a human sending a text.
+
+**Friction.** Small for the manager, total for the other two framings, and the arrival moment is manual.
+
+**What the screen should be.** The decision page keeps its discipline and gains "since your last note" above the work, phone-sized art, and a copyable direct link that records the ask and that the person was told. The director and production framings are the same page asked a different question, not new surfaces.
+
+Afraid: approving something that embarrasses the artist; their feedback being lost or reworded. Confidence: version label, what-changed, their words stored verbatim. Minimum: yes, or what bothers them. Done: decision recorded with their name; they can close the phone.
+
+## Moment 9: Validate the production version
+
+**Who and when.** Production support, once creative approval exists and playable media is being made. Approved to make and approved to play are different approvals.
+
+**What they want.** To check the playable artifact against the technical profile it must play on, record that check, and catch incompatibility before load-in rather than at it. Production information stays quiet until it affects the current Scene, then becomes impossible to miss.
+
+**What they hold.** The real system: machines, screens, formats.
+
+**Today.** Production intent freezes creative approval correctly. No playable-media stage exists, no validation record, and the seam document assigns media-matches-approval to production's side, where the craft stays.
+
+**Friction.** The stage is unrepresented, so late incompatibility has nowhere to surface early.
+
+**What the screen should be.** A validation record on the approved version: checked against profile X, by whom, when, pass or named findings. Meridian records the validation; production performs it. The craft does not cross the seam.
+
+Afraid: discovering at the venue that the file fights the system. Confidence: a named check against a named profile on record. Minimum: pass, or what failed. Done: validation recorded, delivery unblocked.
+
+## Moment 10: Deliver it and confirm receipt
+
+**Who and when.** The media artist or production, handing the exact approved, validated version to the show; and the record closing the loop.
+
+**What they want.** A governed handoff out: the approved artifact, the intent record, the technical profile, one link or download. And a receipt back, so "delivered" is a fact, not an assumption.
+
+**What they hold.** The whole downstream pipeline.
+
+**Today.** The intent record freezes the right things but is a paragraph on the review page; nothing is handed off, and the delivery record the lifecycle defines has no writer.
+
+**Friction.** The record exists; the handoff and the confirmation do not.
+
+**What the screen should be.** The handoff mirroring the brief's: artifact, intent, profile, one gesture. Receipt confirmation writes the delivery record, and the Scene reads Delivered because it is true.
+
+Afraid: the played version not matching the approved one; months later, no answer to "why does the wall look like that." Confidence: version identity end to end; the receipt. Minimum: confirm receipt. Done: the Scene closed, the answer on record forever.
 
 ---
 
-## Job 5: Decide
+## What the ten say together
 
-**Who and when.** The client. A text says the new version is ready.
+1. The middle of the loop is served; both ends and the return path are missing: request, tour direction entry, the media artist's door in both directions, validation, delivery. We built the stations Higher Roads operates and starved the ones others operate.
+2. The cure for the evidence-table feel is one rule everywhere: the work in front, the record behind disclosure. Nothing about the record weakens.
+3. Governed handoffs are the product's native gesture at every boundary: brief out, feedback out, work in, delivery out, receipt in.
+4. The arrival moment is part of the product. A copyable link that records the ask is V1's notification.
+5. Approved to make and approved to play stay distinct, and validation is recorded by Meridian while performed by production.
 
-**What they want.** Ninety seconds on a phone: see it, trust that what they approve is what will exist, say yes or say what bothers them, in their own words, without learning software.
+## Acceptance for phase two
 
-**What they are holding.** A login they were sent and whatever taste and anxiety they carry.
+One complete vertical journey, not screen-by-screen sign-off: request, develop, issue, submit, review, revise, approve, validate, deliver. The test at each station: the person enters for their moment, immediately understands what is expected, completes it, and leaves without learning Meridian's internal architecture.
 
-**Today.** The strongest page in the app, by design: the work, the version, a rationale, approve and comment, nothing else. The three rulings (attribution over permissions) fit it exactly.
+## Build order once agreed
 
-**Friction.** Small but real for a ninety-second job: no notification reaches them (the "text that says it is ready" does not exist; someone sends it by hand, which is fine at this scale but is a person doing the product's job); the rationale is one static line where a client deciding between versions wants "what changed since what I said"; and the fixed-width artboard has not met a phone.
-
-**What the screen should be.** Almost what it is. What changed since your last note, above the work. The work sized to the screen in hand. Nothing added.
-
----
-
-## Job 6: Take it to the screen
-
-**Who and when.** Production, holding an approved artboard, building the show.
-
-**What they want.** The exact approved version, the technical profile it was approved against, and certainty that what plays matches what was approved. Months later, when someone asks why the wall looks like that, the answer on record.
-
-**What they are holding.** The whole downstream pipeline.
-
-**Today.** Production intent freezes the right things: job, brief version, artboard version, playback line, who, when. But it is a paragraph on the review page. Nothing is downloadable at handoff, no delivery record exists to close the loop, and the lifecycle honestly says "hand the approved version to production" with no hand to give it to.
-
-**Friction.** The record exists; the handoff does not.
-
-**What the screen should be.** A handoff packet mirroring the brief packet: the approved artifact, the intent record, the technical profile, one download. And a delivery confirmation coming back, which is the delivery record the lifecycle already defines and nothing writes.
-
----
-
-## What the six say together
-
-1. The middle of the loop (develop, review-mechanics, decide) is served; both ends (request, media artist, handoff) are missing or nearly so. We built the stations we operate and starved the stations others operate. Consistent with how the pilot was built; wrong for a product other people touch.
-2. The evidence-table complaint is Job 4 and the directory, and the cure is one rule applied everywhere: the work in front, the record behind a disclosure. Nothing about the record weakens.
-3. Two packets bracket the product: brief out, work back, handoff out. Packets are the product's native gesture at every boundary with the outside world, and they are what makes "use Meridian as version control and approval only" real.
-4. Notification is a person's job right now. Fine at pilot scale; it becomes the product's job the first time a client wonders why nobody told them.
-
-## Proposed build order once this document is agreed
-
-1. The inbound door (Job 3's second half): submit-artboard and delivery, attributed, same shape the stand-in stores. Missing under any philosophy.
-2. Workspace re-hierarchy (Jobs 2 and 4) on the revised foundation.
-3. Request surface (Job 1) and the handoff packet (Job 6), both small.
-4. Home and Reviews as designed, which mostly serve Jobs 4 and 5's arrival moments.
+1. The inbound door (moments 5 and 7's return halves): submit and revision receipt, attributed, same shape the stand-in stores. Missing under any philosophy; can start now.
+2. Workspace re-hierarchy on the revised foundation (moments 4 and 6).
+3. Tour Direction entry and the request surface (moments 2 and 3), both small.
+4. Home and Reviews (moments 1 and 8's arrival).
+5. Validation and delivery records with the handoff out (moments 9 and 10).
