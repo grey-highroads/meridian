@@ -29,8 +29,30 @@ function reviewHref(scene, user) {
     : `./client-review.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`;
 }
 
-function queueRows(queue, user) {
-  if (!queue.length) return `<div class="m-callout m-callout--approved"><h2 class="m-scene-work-heading">Nothing is waiting for review</h2><p class="m-copy">No Artboard or Scene concept needs your decision right now.</p></div>`;
+function clearQueue(hasScenes) {
+  const title = hasScenes ? "Nothing needs your decision" : "Reviews start when work is ready";
+  const copy = hasScenes
+    ? "No Artboard or Scene concept needs your decision. Past decisions stay below."
+    : "When a Scene concept or Artboard needs your decision, the exact version and the choice to make will appear here.";
+  return `<section class="m-empty-state m-empty-state--clear" aria-labelledby="clear-reviews-heading">
+      <div class="m-empty-state__visual" aria-hidden="true">
+        <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor">
+          <circle cx="32" cy="32" r="21"></circle>
+          <path d="m22 32 7 7 14-16"></path>
+          <path d="M32 5v7M32 52v7M5 32h7M52 32h7"></path>
+        </svg>
+        <span class="m-empty-state__calibration">Decision queue / Clear</span>
+      </div>
+      <div class="m-empty-state__body">
+        <span class="m-label">You are clear</span>
+        <h2 id="clear-reviews-heading" class="m-section-heading">${title}</h2>
+        <p class="m-copy m-copy--large">${copy}</p>
+      </div>
+    </section>`;
+}
+
+function queueRows(queue, user, hasScenes) {
+  if (!queue.length) return clearQueue(hasScenes);
   const rows = queue.map((scene) => {
     const object = scene.stage === "Production review" ? (scene.currentVersion || "Latest Artboard") : (scene.currentVersion || "Scene concept");
     return `<a class="m-rule-row" href="${escape(href(scene, user))}"><div class="m-stack"><span class="m-rule-row__title">${escape(scene.title)}</span><span class="m-meta">${escape(String(object).toUpperCase())}</span></div><div class="m-stack"><span class="m-state m-state--current">Decision requested</span><span class="m-copy">${escape(object)} needs your review.</span></div></a>`;
@@ -50,7 +72,7 @@ async function load() {
   const queued = new Set(queue.map((scene) => scene.id));
   const recent = assignments.filter((scene) => scene.currentVersion && ["Final approved", "Delivered"].includes(scene.stage) && !queued.has(scene.id));
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./index.html?tour=${escape(TOUR_ID)}">${escape(tour.name)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Reviews</span></nav><span class="m-state ${queue.length ? "m-state--current" : "m-state--approved"}">${queue.length} waiting</span>`;
-  root.innerHTML = `${queueRows(queue, user)}${recentRows(recent, user)}`;
+  root.innerHTML = `${queueRows(queue, user, Boolean(assignments.length))}${recentRows(recent, user)}`;
 }
 
 load().catch((error) => { locationBar.innerHTML = ""; root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`; });

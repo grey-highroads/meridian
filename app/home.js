@@ -32,9 +32,16 @@ function needsUser(scene, user) {
   return scene.waitingOn === "the client";
 }
 
+function emptyGlyph(kind) {
+  if (kind === "clear") return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="32" cy="32" r="21"></circle><path d="m22 32 7 7 14-16"></path></svg>`;
+  if (kind === "scene") return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><rect x="10" y="16" width="44" height="32" rx="2"></rect><path d="M20 32h24M32 20v24"></path></svg>`;
+  return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 44h40M16 36h32M22 28h20"></path><circle cx="32" cy="16" r="4"></circle></svg>`;
+}
+
 function attention(assignments, user) {
   const rows = assignments.filter((scene) => needsUser(scene, user)).map((scene) => `<a class="m-attention-row" href="${escape(sceneHref(scene))}"><div class="m-stack"><span class="m-meta">${escape(String(scene.stage).toUpperCase())}</span><strong>${escape(scene.title)}</strong><span class="m-copy">${escape(scene.nextAction)}</span></div><span class="m-button m-button--small">Open</span></a>`).join("");
-  return `<section class="m-home__attention" aria-labelledby="attention-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Needs your attention</span><h2 id="attention-heading" class="m-section-heading">${rows ? "Move the work" : "Nothing needs you"}</h2></div><span class="m-state ${rows ? "m-state--current" : "m-state--approved"}">${rows ? "Action waiting" : "Clear"}</span></div><div class="m-attention-list">${rows || `<div class="m-callout m-callout--approved"><p class="m-copy">The tour is moving and no decision is waiting on you.</p></div>`}</div></section>`;
+  const empty = `<div class="m-empty-state m-empty-state--clear m-empty-state--compact"><div class="m-empty-state__visual">${emptyGlyph("clear")}</div><div class="m-empty-state__body"><h3 class="m-scene-work-heading">You are clear for now</h3><p class="m-copy">No decision or handoff needs you. We will put the exact Scene here when that changes.</p></div></div>`;
+  return `<section class="m-home__attention" aria-labelledby="attention-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Needs your attention</span><h2 id="attention-heading" class="m-section-heading">${rows ? "Move the work" : "Nothing needs you"}</h2></div><span class="m-state ${rows ? "m-state--current" : "m-state--approved"}">${rows ? "Action waiting" : "Clear"}</span></div><div class="m-attention-list">${rows || empty}</div></section>`;
 }
 
 function progress(assignments) {
@@ -50,7 +57,8 @@ function progress(assignments) {
     return "The Scene request still needs to be submitted.";
   };
   const rows = active.map((scene) => `<a class="m-lifecycle-row" href="${escape(sceneHref(scene))}"><div class="m-lifecycle-row__object"><strong>${escape(scene.title)}</strong>${scene.currentVersion ? `<span class="m-meta">${escape(String(scene.currentVersion).toUpperCase())}</span>` : ""}</div><p class="m-lifecycle-row__summary">${escape(status(scene))}</p></a>`).join("");
-  return `<section class="m-home__progress" aria-labelledby="progress-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Scenes in progress</span><h2 id="progress-heading" class="m-section-heading">Current work</h2></div><a class="m-button m-button--small" href="./scenes.html?tour=${escape(TOUR_ID)}">All Scenes</a></div><div class="m-lifecycle-list">${rows || `<p class="m-copy">No Scenes are in progress.</p>`}</div></section>`;
+  const empty = `<div class="m-empty-state m-empty-state--action"><div class="m-empty-state__visual">${emptyGlyph("scene")}<span class="m-empty-state__calibration">First Scene / Ready</span></div><div class="m-empty-state__body"><span class="m-label">Start the creative loop</span><h3 class="m-section-heading">Give the tour its first Scene</h3><p class="m-copy m-copy--large">Name the song, transition, or show moment that needs media. Tell us what it should do. Higher Roads can take it from there.</p><div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a><span class="m-meta">ONE SENTENCE IS ENOUGH</span></div></div></div>`;
+  return `<section class="m-home__progress" aria-labelledby="progress-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Scenes in progress</span><h2 id="progress-heading" class="m-section-heading">Current work</h2></div>${active.length ? `<a class="m-button m-button--small" href="./scenes.html?tour=${escape(TOUR_ID)}">All Scenes</a>` : ""}</div><div class="m-lifecycle-list">${rows || empty}</div></section>`;
 }
 
 function tourReference(tour) {
@@ -68,7 +76,8 @@ function tourReference(tour) {
 
 function recent(facts) {
   const rows = facts.sort((left, right) => String(right.at).localeCompare(String(left.at))).slice(0, 5).map((fact) => `<div class="m-activity-row"><span class="m-activity-row__marker ${fact.action.includes("Approved") ? "m-activity-row__marker--approved" : ""}"></span><div><p class="m-activity-row__copy">${escape(fact.action)} ${escape(fact.version || "")}</p><span class="m-meta">${escape(String(fact.actor).toUpperCase())} / ${escape(fact.at)}</span></div></div>`).join("");
-  return `<section class="m-home__activity" aria-labelledby="activity-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Recent decisions</span><h2 id="activity-heading" class="m-section-heading">What changed</h2></div></div><div class="m-activity-list">${rows || `<p class="m-copy">No decisions have been recorded yet.</p>`}</div></section>`;
+  const empty = `<div class="m-empty-inline"><span class="m-label">The record starts with the first decision</span><p class="m-copy">Approvals, feedback, and handoffs will stay here with the person, time, and exact version.</p></div>`;
+  return `<section class="m-home__activity" aria-labelledby="activity-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Recent decisions</span><h2 id="activity-heading" class="m-section-heading">What changed</h2></div></div><div class="m-activity-list">${rows || empty}</div></section>`;
 }
 
 async function load() {
@@ -81,7 +90,7 @@ async function load() {
   const reviews = assignments.filter((scene) => needsUser(scene, user) && ["Production review", "Concept review"].includes(scene.stage));
   reviewCount.textContent = reviews.length ? String(reviews.length) : "";
   locationBar.innerHTML = `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(tour.name)}</span>`;
-  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Today</span><h1 class="m-heading">Welcome, ${escape(firstName(user))}</h1><p class="m-copy m-copy--large">See what needs you, then move on.</p></div><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a></header><div class="m-home__layout"><div class="m-home__primary">${attention(assignments, user)}${progress(assignments)}${recent(facts)}</div>${tourReference(tour)}</div>`;
+  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Today</span><h1 class="m-heading">Welcome, ${escape(firstName(user))}</h1><p class="m-copy m-copy--large">See what needs you, then move on.</p></div>${assignments.length ? `<a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a>` : ""}</header><div class="m-home__layout"><div class="m-home__primary">${attention(assignments, user)}${progress(assignments)}${recent(facts)}</div>${tourReference(tour)}</div>`;
 }
 
 load().catch((error) => { locationBar.innerHTML = ""; root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`; });
