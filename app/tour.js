@@ -49,141 +49,125 @@ function paragraphs(text) {
     .join("");
 }
 
+function version(value) {
+  return String(value || "").padStart(2, "0");
+}
+
 function directionSection(tour) {
-  return `<section class="m-reference-section" aria-labelledby="direction-heading">
-      <div class="m-reference-section__label">
-        <span class="m-state m-state--current">Direction V0${escape(tour.direction.version)} / Current</span>
+  const direction = tour.direction;
+  return `<section class="m-orientation__primary" aria-labelledby="direction-heading">
+      <header class="m-orientation__object-head">
         <div class="m-stack">
-          <div>
-            <span class="m-label">Set by</span>
-            <p>${escape(tour.direction.setBy)}</p>
-          </div>
-          <div>
-            <span class="m-label">Set on</span>
-            <p class="m-meta">${escape(String(tour.direction.setOn || "").toUpperCase())}</p>
-          </div>
-          <span class="m-meta">STORED AS GIVEN</span>
+          <span class="m-label">Director-provided direction</span>
+          <h2 id="direction-heading" class="m-section-heading">The direction</h2>
         </div>
+        <span class="m-state m-state--current">Direction V${escape(version(direction.version))} / Current</span>
+      </header>
+      <div class="m-orientation__reading">
+        <div class="m-source-copy">${paragraphs(direction.words)}</div>
       </div>
-      <div class="m-reference-section__body m-stack">
-        <h2 id="direction-heading" class="m-section-heading">The direction</h2>
-        <div class="m-source-copy">${paragraphs(tour.direction.words)}</div>
-      </div>
+      <footer class="m-orientation__object-meta">
+        <div><span class="m-label">Set by</span><p>${escape(direction.setBy)}</p></div>
+        <div><span class="m-label">Set on</span><p class="m-meta">${escape(String(direction.setOn || "").toUpperCase())}</p></div>
+        <span class="m-meta">STORED AS GIVEN</span>
+      </footer>
     </section>`;
+}
+
+function dateRow(entry) {
+  return `<li class="m-compact-itinerary__row">
+      <time class="m-meta" datetime="${escape(entry.date)}">${escape(readableDate(entry.date))}</time>
+      <div class="m-compact-itinerary__place">
+        <strong>${escape(entry.venue)}</strong>
+        <span class="m-meta">${escape(entry.place)}</span>
+      </div>
+    </li>`;
 }
 
 function datesSection(tour) {
   const dates = tour.dates || [];
-  const rows = dates.map((entry, index) => `<li class="m-itinerary__row">
-      <time class="m-meta" datetime="${escape(entry.date)}">${escape(readableDate(entry.date))}</time>
-      <div class="m-itinerary__place">
-        <strong>${escape(entry.venue)}</strong>
-        <span class="m-meta">${escape(entry.place)}</span>
+  const first = dates.slice(0, 2).map(dateRow).join("");
+  const rest = dates.slice(2).map(dateRow).join("");
+  return `<section class="m-orientation__section" aria-labelledby="tour-run-heading">
+      <div class="m-orientation__section-head">
+        <h3 id="tour-run-heading" class="m-label">Tour run</h3>
+        <span class="m-meta">${escape(dates.length)} ${dates.length === 1 ? "DATE" : "DATES"}</span>
       </div>
-      <span class="m-label">Show ${escape(String(index + 1).padStart(2, "0"))}</span>
-    </li>`).join("");
-  return `<section class="m-reference-section" aria-labelledby="dates-heading">
-      <div class="m-reference-section__label">
-        <span class="m-label">Tour record</span>
-        <h2 id="dates-heading" class="m-section-heading">Dates and venues</h2>
-      </div>
-      <div class="m-reference-section__body">
-        ${dates.length ? `<ol class="m-itinerary">${rows}</ol>` : `<p class="m-copy">No dates are recorded on this tour yet.</p>`}
-      </div>
+      ${dates.length ? `<ol class="m-compact-itinerary">${first}</ol>` : `<p class="m-copy">No dates are recorded yet.</p>`}
+      ${rest ? `<details class="m-compact-disclosure">
+        <summary>Full itinerary</summary>
+        <ol class="m-compact-itinerary">${rest}</ol>
+      </details>` : ""}
     </section>`;
 }
 
-// What the show plays on. Supplied by production, stored as given and
-// versioned the same way the direction is. The playback line lives here now
-// rather than beside the themes, because it is part of the same setup.
 function setupSection(tour) {
   const setup = tour.productionSetup;
-  if (!setup) return "";
-  const rows = (setup.venueExceptions || []).map((entry) => `<li class="m-itinerary__row">
-      <time class="m-meta" datetime="${escape(entry.date)}">${escape(readableDate(entry.date))}</time>
-      <div class="m-itinerary__place">
-        <strong>${escape(entry.venue)}</strong>
-        <span class="m-copy">${escape(entry.text)}</span>
+  const setupState = setup ? `<span class="m-state m-state--current">Setup V${escape(version(setup.version))}</span>` : "";
+  const exceptions = (setup && setup.venueExceptions || []).map((entry) => `<div class="m-setup-exception">
+      <span class="m-meta">${escape(readableDate(entry.date))} / ${escape(entry.venue)}</span>
+      <p class="m-copy">${escape(entry.text)}</p>
+    </div>`).join("");
+  const setupDetail = setup ? `<details class="m-compact-disclosure">
+      <summary>View production setup</summary>
+      <div class="m-setup-copy">
+        <div>${paragraphs(setup.words)}</div>
+        <div><span class="m-label">Supplied by</span><p class="m-meta">${escape(String(setup.suppliedBy || "").toUpperCase())} / ${escape(String(setup.suppliedOn || "").toUpperCase())}</p></div>
+        <h4 class="m-label">Dates where the rig differs</h4>
+        ${exceptions || `<p class="m-copy">Every date uses the standard setup.</p>`}
       </div>
-      <span class="m-label">Differs</span>
-    </li>`).join("");
-  return `<section class="m-reference-section" aria-labelledby="setup-heading">
-      <div class="m-reference-section__label">
-        <span class="m-state m-state--current">Setup V0${escape(setup.version)} / Current</span>
-        <div class="m-stack">
-          <div>
-            <span class="m-label">Supplied by</span>
-            <p>${escape(setup.suppliedBy)}</p>
-          </div>
-          <div>
-            <span class="m-label">Supplied on</span>
-            <p class="m-meta">${escape(String(setup.suppliedOn || "").toUpperCase())}</p>
-          </div>
-          <span class="m-meta">STORED AS GIVEN</span>
-        </div>
+    </details>` : "";
+  return `<section class="m-orientation__section" aria-labelledby="setup-heading">
+      <div class="m-orientation__section-head">
+        <h3 id="setup-heading" class="m-label">Production setup</h3>
+        ${setupState}
       </div>
-      <div class="m-reference-section__body m-stack">
-        <h2 id="setup-heading" class="m-section-heading">Production setup</h2>
-        <div class="m-source-copy">${paragraphs(setup.words)}</div>
-        <h3 class="m-section-heading">Playback</h3>
-        <p class="m-copy">${escape(tour.playbackSystem || "Not recorded.")}</p>
-        <h3 class="m-section-heading">Dates where the rig differs</h3>
-        ${rows ? `<ol class="m-itinerary">${rows}</ol>` : `<p class="m-copy">Every date on this tour runs the setup above.</p>`}
-      </div>
+      <dl class="m-compact-definition">
+        <div class="m-compact-definition__row"><dt class="m-label">Playback</dt><dd>${escape(tour.playbackSystem || "Not recorded.")}</dd></div>
+      </dl>
+      ${setupDetail}
     </section>`;
 }
 
-function contextSection(tour) {
+function themesSection(tour) {
   const themes = (tour.themes || []).map((entry) => `<li>${escape(entry)}</li>`).join("");
-  return `<section class="m-reference-section" aria-labelledby="context-heading">
-      <div class="m-reference-section__label">
-        <span class="m-label">Production reference</span>
-        <h2 id="context-heading" class="m-section-heading">Themes</h2>
-      </div>
-      <div class="m-reference-section__body">
-        ${themes ? `<ul class="m-theme-list">${themes}</ul>` : `<p class="m-copy">None recorded.</p>`}
-      </div>
+  return `<section class="m-orientation__section" aria-labelledby="themes-heading">
+      <h3 id="themes-heading" class="m-label">Themes</h3>
+      ${themes ? `<ul class="m-compact-themes">${themes}</ul>` : `<p class="m-copy">None recorded.</p>`}
     </section>`;
 }
 
-function sceneList(assignments) {
-  const rows = assignments.map((entry) => `<a class="m-rule-row" href="./scene.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(entry.id)}">
-      <div class="m-stack">
-        <span class="m-meta">WRITTEN AGAINST DIRECTION V0${escape(entry.directionVersion)}</span>
-        <span class="m-rule-row__title">${escape(entry.title)}</span>
-      </div>
-      <span class="m-meta">${escape(entry.moment || "")}</span>
-    </a>`).join("");
-  return `<section class="m-reference-section" aria-labelledby="scenes-heading">
-      <div class="m-reference-section__label">
-        <span class="m-label">Under this direction</span>
-        <h2 id="scenes-heading" class="m-section-heading">Scenes</h2>
-      </div>
-      <div class="m-reference-section__body">
-        ${assignments.length ? `<div class="m-rule-list">${rows}</div>` : `<p class="m-copy">No Scenes have been requested on this tour yet.</p>`}
-      </div>
-    </section>`;
+function supportingReference(tour) {
+  return `<aside class="m-orientation__aside" aria-labelledby="tour-facts-heading">
+      <header class="m-orientation__aside-head">
+        <span class="m-label">Supporting reference</span>
+        <h2 id="tour-facts-heading" class="m-section-heading">Tour facts</h2>
+      </header>
+      ${datesSection(tour)}
+      ${setupSection(tour)}
+      ${themesSection(tour)}
+    </aside>`;
 }
 
 async function render() {
-  const { tour, assignments } = await call("get-tour");
+  const { tour } = await call("get-tour");
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
       <a href="./tour.html?tour=${escape(TOUR_ID)}">Tour</a>
       <span aria-hidden="true">/</span>
       <span class="m-breadcrumb__current">${escape(tour.name)}</span>
     </nav>`;
-  root.innerHTML = `<header class="m-job-header">
+  root.innerHTML = `<header class="m-job-header m-tour-header">
       <div class="m-job-header__copy">
+        <span class="m-label">Active upcoming tour</span>
         <h1 class="m-heading">${escape(tour.name)}</h1>
         <p class="m-meta">${escape(run(tour.dates || []))}</p>
         ${tour.cycle ? `<p class="m-copy">${escape(tour.cycle)}</p>` : ""}
       </div>
     </header>
-    ${directionSection(tour)}
-    ${setupSection(tour)}
-    ${datesSection(tour)}
-    ${contextSection(tour)}
-    ${sceneList(assignments)}`;
+    <div class="m-orientation">
+      ${directionSection(tour)}
+      ${supportingReference(tour)}
+    </div>`;
 }
 
 render().catch((error) => {

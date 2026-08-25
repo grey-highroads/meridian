@@ -12,7 +12,7 @@ const locationBar = document.getElementById("location");
 const root = document.getElementById("artist");
 const operator = document.getElementById("operator");
 
-const view = { mode: "brain", identity: "", part: "", open: {}, message: "" };
+const view = { mode: "brain", identity: "", part: "", open: {}, provenance: false, message: "" };
 
 const IDENTITY_LABELS = [
   { id: "", name: "Both identities" },
@@ -47,10 +47,15 @@ function escape(value) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// The intake file writes the lead sentence of a finding in bold. Keep that
-// emphasis and let nothing else through as markup.
-function findingText(text) {
-  return escape(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+// The intake file writes the lead sentence of an entry in bold. Use it as the
+// principle heading and keep the supporting sentence visually secondary.
+function principleParts(text) {
+  const value = String(text || "").trim();
+  const marked = value.match(/^\*\*(.+?)\*\*\s*(.*)$/s);
+  if (marked) return { heading: marked[1], body: marked[2] };
+  const sentence = value.match(/^(.+?[.!?])(?:\s+|$)(.*)$/s);
+  if (sentence) return { heading: sentence[1], body: sentence[2] };
+  return { heading: value, body: "" };
 }
 
 function sourceLine(finding) {
@@ -78,45 +83,140 @@ function evidenceBody(finding) {
   return `<ul>${items}</ul>`;
 }
 
-function findingBlock(finding) {
-  const open = view.open[finding.id] ? " open" : "";
-  const controls = view.mode === "brain"
-    ? ""
-    : `<div class="m-cluster">${finding.inBrain
-        ? `<button class="m-button m-button--small" type="button" data-remove="${escape(finding.id)}">Not this one</button>`
-        : `<button class="m-button m-button--small" type="button" data-restore="${escape(finding.id)}">Put it back</button>`}</div>`;
-  const takenOut = finding.inBrain
-    ? ""
-    : `<span class="m-state m-state--change">Taken out${finding.removedBy ? ` by ${escape(finding.removedBy)}` : ""}</span>`;
-  return `<article class="m-contribution">
-      <span class="m-contribution__source">${escape(sourceLine(finding))}</span>
-      <p class="m-copy">${findingText(finding.text)}</p>
-      ${takenOut}
-      <details class="m-disclosure" data-evidence="${escape(finding.id)}"${open}>
-        <summary>
-          <span class="m-label">Evidence</span>
-          <span class="m-meta">WHAT THIS RESTS ON</span>
-        </summary>
-        <div class="m-disclosure__body">${open ? evidenceBody(finding) : ""}</div>
-      </details>
-      ${controls}
+function principleBlock(entry, index) {
+  const parts = principleParts(entry.text);
+  return `<article class="m-intelligence-principle">
+      <span class="m-meta">APPROVED PRINCIPLE ${escape(String(index + 1).padStart(2, "0"))} / ${escape(entry.identityName.toUpperCase())}</span>
+      <h3 class="m-intelligence-principle__heading">${escape(parts.heading)}</h3>
+      ${parts.body ? `<p class="m-intelligence-principle__copy">${escape(parts.body)}</p>` : ""}
     </article>`;
 }
 
-function groupBlock(group) {
-  const count = group.findings.length;
-  return `<section class="m-work m-stack m-brain-group">
-      <div class="m-cluster">
-        <h2 class="m-section-heading">${escape(group.facetName)}, ${escape(group.identityName.toLowerCase())}</h2>
-        <span class="m-meta">${escape(count)} ${count === 1 ? "ENTRY" : "ENTRIES"}</span>
+function evidenceItem(entry) {
+  const open = view.open[entry.id] ? " open" : "";
+  const parts = principleParts(entry.text);
+  const controls = view.mode === "brain"
+    ? ""
+    : `<div class="m-cluster">${entry.inBrain
+        ? `<button class="m-button m-button--small" type="button" data-remove="${escape(entry.id)}">Take out</button>`
+        : `<button class="m-button m-button--small" type="button" data-restore="${escape(entry.id)}">Put back</button>`}</div>`;
+  const state = entry.inBrain
+    ? ""
+    : `<span class="m-state m-state--change">Taken out${entry.removedBy ? ` by ${escape(entry.removedBy)}` : ""}</span>`;
+  return `<details class="m-evidence-item" data-evidence="${escape(entry.id)}"${open}>
+      <summary>
+        <span class="m-meta">${escape(sourceLine(entry).toUpperCase())}</span>
+        <span>${escape(parts.heading)}</span>
+      </summary>
+      <div class="m-evidence-item__body">
+        ${state}
+        ${open ? evidenceBody(entry) : ""}
+        ${controls}
       </div>
-      ${group.findings.map(findingBlock).join("")}
-    </section>`;
+    </details>`;
 }
 
 function options(labels, current) {
   return labels.map((entry) =>
     `<option value="${escape(entry.id)}"${entry.id === current ? " selected" : ""}>${escape(entry.name)}</option>`).join("");
+}
+
+function entriesFrom(groups) {
+  return groups.flatMap((group) => group.findings.map((entry) => ({ ...entry, identityName: group.identityName })));
+}
+
+function categoryCount(groups, part) {
+  return groups.filter((group) => group.facet === part)
+    .reduce((count, group) => count + group.findings.length, 0);
+}
+
+function choosePart(groups) {
+  const available = PART_LABELS.slice(1).filter((part) => categoryCount(groups, part.id));
+  if (!available.length) {
+    view.part = "";
+    return;
+  }
+  if (available.some((part) => part.id === view.part)) return;
+  view.part = available.some((part) => part.id === "VL") ? "VL" : available[0].id;
+}
+
+function categoryIndex(groups) {
+  const rows = PART_LABELS.slice(1).map((part) => {
+    const count = categoryCount(groups, part.id);
+    return `<button class="m-intelligence-category" type="button" data-category="${escape(part.id)}" aria-pressed="${view.part === part.id}" ${count ? "" : "disabled"}>
+        <span>${escape(part.name)}</span>
+      </button>`;
+  }).join("");
+  return `<div class="m-intelligence-browser__categories">
+      <span class="m-label">Categories</span>
+      ${rows}
+    </div>`;
+}
+
+function adminPanel(brain) {
+  if (!brain.approved) return "";
+  return `<details class="m-intelligence-admin">
+      <summary>Administrative mode</summary>
+      <div class="m-intelligence-admin__body">
+        <div class="m-segmented">
+          <button class="m-segmented__item" type="button" data-mode="brain" aria-pressed="${view.mode === "brain"}">In the brain</button>
+          <button class="m-segmented__item" type="button" data-mode="review" aria-pressed="${view.mode === "review"}">Everything imported</button>
+        </div>
+        <button class="m-button m-button--small" type="button" data-import>Import intake files</button>
+      </div>
+    </details>`;
+}
+
+function reader(groups) {
+  const selected = groups.filter((group) => group.facet === view.part);
+  const entries = entriesFrom(selected);
+  const category = PART_LABELS.find((part) => part.id === view.part);
+  const identity = IDENTITY_LABELS.find((entry) => entry.id === view.identity);
+  const title = category ? category.name : "Approved intelligence";
+  const scope = view.identity ? identity.name : "Across both identities";
+  const initialLimit = 4;
+  const visible = entries.slice(0, initialLimit);
+  const remaining = entries.slice(initialLimit);
+  const remainder = remaining.length ? `<details class="m-intelligence-remainder">
+      <summary>${escape(remaining.length)} more approved ${remaining.length === 1 ? "principle" : "principles"}</summary>
+      <div class="m-intelligence-principles">${remaining.map((entry, index) => principleBlock(entry, index + initialLimit)).join("")}</div>
+    </details>` : "";
+  const principles = entries.length
+    ? `<div class="m-intelligence-principles">${visible.map(principleBlock).join("")}</div>${remainder}`
+    : `<p class="m-copy">Nothing in this category matches the current identity.</p>`;
+  const provenance = entries.length ? `<details class="m-intelligence-provenance" data-provenance${view.provenance ? " open" : ""}>
+      <summary>
+        <span class="m-label">Evidence and provenance</span>
+        <span class="m-meta">WHAT THIS RESTS ON</span>
+      </summary>
+      <div class="m-intelligence-provenance__body">${entries.map(evidenceItem).join("")}</div>
+    </details>` : "";
+  return `<section class="m-intelligence-browser__reader" aria-labelledby="selected-intelligence-heading">
+      <div class="m-intelligence-reader">
+        <header class="m-intelligence-reader__head">
+          <span class="m-label">Selected intelligence</span>
+          <h2 id="selected-intelligence-heading" class="m-heading">${escape(title)}</h2>
+          <span class="m-meta">${escape(scope.toUpperCase())}</span>
+        </header>
+        ${principles}
+        ${provenance}
+      </div>
+    </section>`;
+}
+
+function browser(brain, groups) {
+  choosePart(groups);
+  return `<div class="m-intelligence-browser">
+      <aside class="m-intelligence-browser__index" aria-label="Brain categories">
+        <div class="m-intelligence-browser__filter">
+          <label class="m-label" for="identity-filter">Identity</label>
+          <select class="m-select" id="identity-filter" data-filter="identity">${options(IDENTITY_LABELS, view.identity)}</select>
+        </div>
+        ${categoryIndex(groups)}
+        ${adminPanel(brain)}
+      </aside>
+      ${reader(groups)}
+    </div>`;
 }
 
 function summaryLine(brain) {
@@ -131,44 +231,35 @@ function summaryLine(brain) {
 function head(brain) {
   const name = brain.artist ? brain.artist.name : ARTIST_ID;
   const state = brain.approved ? "m-state m-state--approved" : "m-state m-state--current";
-  const stateText = brain.approved ? "Approved" : "Not approved yet";
+  const stateText = brain.approved ? "Approved intelligence" : "Not approved yet";
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
       <span class="m-breadcrumb__current">Artist Brain</span>
     </nav>
     <span class="${state}">${escape(stateText)}</span>`;
 
-  const switches = brain.approved
-    ? `<div class="m-segmented">
-        <button class="m-segmented__item" type="button" data-mode="brain" aria-pressed="${view.mode === "brain"}">In the brain</button>
-        <button class="m-segmented__item" type="button" data-mode="review" aria-pressed="${view.mode === "review"}">Everything imported</button>
-      </div>`
-    : "";
-
-  return `<header class="m-job-header">
+  return `<header class="m-job-header m-intelligence-header">
       <div class="m-job-header__copy">
         <span class="m-label">What Meridian knows</span>
         <h1 class="m-heading">${escape(name)}</h1>
-        <p class="m-copy m-copy--large">${escape(summaryLine(brain))}</p>
-        ${brain.approved && brain.approvedBy ? `<p class="m-meta">APPROVED BY ${escape(brain.approvedBy.toUpperCase())}</p>` : ""}
+        ${brain.approved ? "" : `<p class="m-copy m-copy--large">${escape(summaryLine(brain))}</p>`}
       </div>
-    </header>
-    ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-    <div class="m-brain-controls">
-      ${switches}
-      <select class="m-select" data-filter="identity" aria-label="Which identity">${options(IDENTITY_LABELS, view.identity)}</select>
-      <select class="m-select" data-filter="part" aria-label="Which part of the artist">${options(PART_LABELS, view.part)}</select>
-    </div>`;
+      ${brain.approved && brain.approvedBy ? `<p class="m-meta">APPROVED BY ${escape(brain.approvedBy.toUpperCase())}</p>` : ""}
+    </header>`;
 }
 
 function actionBar(brain) {
-  const approve = brain.artist && !brain.approved
+  if (brain.approved) {
+    operator.innerHTML = "";
+    return;
+  }
+  const approve = brain.artist
     ? `<button class="m-button m-button--primary" type="button" data-approve-brain>Approve this brain</button>`
     : "";
-  const context = brain.approved
-    ? "Higher Roads maintains the brain here. New sources are integrated; the approved brain is never rebuilt."
-    : "Import the intake files, read what came in, then approve the whole brain and take out what should not be in it.";
+  const context = brain.artist
+    ? "Read what came in, then approve the whole brain and take out what should not be in it."
+    : "Import the intake files to begin review.";
   operator.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
-    <div class="m-cluster">
+    <div class="m-action-bar__actions">
       <button class="m-button" type="button" data-import>Import intake files</button>
       ${approve}
     </div>`;
@@ -177,18 +268,16 @@ function actionBar(brain) {
 async function render() {
   const brain = await call("get-artist");
   if (!brain.approved) view.mode = "review";
-  let groups;
+  let groups = [];
   if (view.mode === "brain") {
     groups = brain.groups.filter((group) =>
-      (!view.identity || group.identity === view.identity) && (!view.part || group.facet === view.part));
+      !view.identity || group.identity === view.identity);
   } else {
-    const listed = await call("list-findings", { identity: view.identity || null, facet: view.part || null });
+    const listed = await call("list-findings", { identity: view.identity || null, facet: null });
     groups = listed.groups;
   }
-  const empty = view.mode === "brain"
-    ? `<section class="m-work"><p class="m-copy">Nothing is in the brain yet.</p></section>`
-    : `<section class="m-work"><p class="m-copy">Nothing here yet.</p></section>`;
-  root.innerHTML = head(brain) + (groups.length ? groups.map(groupBlock).join("") : empty);
+  const message = view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : "";
+  root.innerHTML = head(brain) + message + browser(brain, groups);
   actionBar(brain);
 }
 
@@ -220,9 +309,19 @@ document.addEventListener("click", (event) => {
   if (target.dataset.mode) {
     guard(async () => {
       view.mode = target.dataset.mode;
+      view.open = {};
+      view.provenance = false;
       view.message = "";
       await render();
     });
+    return;
+  }
+  if (target.dataset.category) {
+    view.part = target.dataset.category;
+    view.open = {};
+    view.provenance = false;
+    view.message = "";
+    guard(render);
     return;
   }
   if (target.hasAttribute("data-approve-brain")) {
@@ -256,6 +355,10 @@ document.addEventListener("click", (event) => {
 // nothing loads sources a person did not ask to see.
 document.addEventListener("toggle", (event) => {
   const details = event.target;
+  if (details.dataset && Object.prototype.hasOwnProperty.call(details.dataset, "provenance")) {
+    view.provenance = details.open;
+    return;
+  }
   if (!details.dataset || !details.dataset.evidence) return;
   const id = details.dataset.evidence;
   if (!details.open) {
@@ -276,7 +379,8 @@ document.addEventListener("change", (event) => {
   if (!select || !select.dataset.filter) return;
   guard(async () => {
     if (select.dataset.filter === "identity") view.identity = select.value;
-    if (select.dataset.filter === "part") view.part = select.value;
+    view.open = {};
+    view.provenance = false;
     await render();
   });
 });
