@@ -117,7 +117,10 @@ test("the Scene workspace keeps the request and applicable direction with the wo
   assert.match(source, /Tour Direction for this Scene/, "Scene main workspace does not show applicable Tour Direction");
   assert.match(source, /Scene direction for production/, "Scene main workspace does not name the production direction");
   assert.doesNotMatch(source, /tab\("request"|tab\("direction"/, "request or direction still live in the inspector");
-  assert.match(source, /tab\("brain".*tab\("setup".*tab\("versions"/s, "inspector does not contain only optional tools and history");
+  assert.match(source, /tab\("brain".*tab\("setup"/s, "inspector does not contain the optional Brain and Setup tools");
+  assert.doesNotMatch(source, /tab\("versions"|Scene versions|What is current/, "Scene versions still occupy the inspector without a job");
+  assert.match(source, /Artboard V0.*is ready for review/s, "returned artboards are not announced above the Scene workspace");
+  assert.match(source, /actions\.innerHTML = "";\s*return;/, "returned artboards still put review at the bottom of the page");
 });
 
 test("the Scene directory is a quiet list and Scene requests require names", () => {

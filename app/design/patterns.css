@@ -113,6 +113,7 @@
   .m-page--workstation {
     display: flex;
     flex: 1;
+    flex-direction: column;
     margin: 0;
     max-width: none;
     min-height: 0;
@@ -598,6 +599,24 @@
     flex: 1;
     grid-template-columns: minmax(0, 1fr) var(--m-inspector-width);
     min-height: 0;
+  }
+
+  .m-workstation-notice {
+    align-items: center;
+    background: var(--m-gradient-raised);
+    border: var(--m-rule-width) solid var(--m-border-strong);
+    border-left-color: var(--m-signal-instrument);
+    box-shadow: var(--m-shadow-raised);
+    display: grid;
+    flex: 0 0 auto;
+    gap: var(--m-space-6);
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin: var(--m-space-5) var(--m-space-6) 0;
+    padding: var(--m-space-5);
+  }
+
+  .m-workstation-notice .m-stack {
+    gap: var(--m-space-2);
   }
 
   .m-workstation__stage {
@@ -1706,6 +1725,15 @@
     align-items: stretch;
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .m-workstation-notice {
+    grid-template-columns: 1fr;
+    margin: var(--m-space-4) var(--m-space-4) 0;
+  }
+
+  .m-workstation-notice .m-button {
+    width: 100%;
   }
 
   .m-workstation__stage {

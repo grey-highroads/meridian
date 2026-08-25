@@ -228,13 +228,6 @@ function venueSection() {
     </section>`;
 }
 
-function versionsSection() {
-  const rows = view.briefs.length
-    ? view.briefs.slice().reverse().map((brief) => `<div class="m-version"><span class="m-state ${brief.status === "frozen" ? "m-state--approved" : "m-state--current"}">Brief V0${escape(brief.briefVersion)}</span><span class="m-meta">${escape(String(brief.status).toUpperCase())}</span></div>`).join("")
-    : `<p class="m-copy">No production brief has been issued yet.</p>`;
-  return `<section class="m-workstation__panel" id="versions-panel" role="tabpanel" aria-labelledby="versions-tab" ${view.inspector === "versions" ? "" : "hidden"}><div class="m-inspector-group"><span class="m-label">Scene versions</span><h2 class="m-inspector-heading">What is current</h2></div>${rows}</section>`;
-}
-
 // ---------------------------------------------------------------------------
 // The brief
 // ---------------------------------------------------------------------------
@@ -315,8 +308,8 @@ function actionBar() {
     const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
     const work = view.artboards.length > 0;
     if (work) {
-      context = "Work is back. Review the latest version against the brief.";
-      controls = `<a class="m-button m-button--primary" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open review</a>`;
+      actions.innerHTML = "";
+      return;
     } else {
       context = handoff
         ? `Brief V0${escape(latestBrief.briefVersion)} is issued. Production returns the work through the same handoff.`
@@ -328,6 +321,20 @@ function actionBar() {
     <div class="m-action-bar__actions">${controls}</div>`;
 }
 
+function reviewNotice() {
+  if (!view.user || view.user.role !== "higher-roads" || !view.artboards.length) return "";
+  const current = view.artboards.at(-1);
+  const value = current && current.artboard ? current.artboard.artboardVersion : null;
+  if (!value) return "";
+  return `<section class="m-workstation-notice" aria-labelledby="artboard-ready-heading">
+      <div class="m-stack">
+        <h2 id="artboard-ready-heading" class="m-scene-work-heading">Artboard V0${escape(value)} is ready for review</h2>
+        <p class="m-copy">Compare it with the production brief and decide whether it is ready for the client.</p>
+      </div>
+      <a class="m-button m-button--primary" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Review Artboard V0${escape(value)}</a>
+    </section>`;
+}
+
 function render() {
   const assignment = view.assignment;
   const tab = (name, label) => `<button class="m-workstation__tab" id="${escape(name)}-tab" type="button" role="tab" aria-selected="${view.inspector === name}" aria-controls="${escape(name)}-panel" data-inspector="${escape(name)}">${escape(label)}</button>`;
@@ -336,7 +343,7 @@ function render() {
       <span aria-hidden="true">/</span>
       <span class="m-breadcrumb__current">${escape(assignment.title)}</span>
     </nav>`;
-  root.innerHTML = `<div class="m-workstation">
+  root.innerHTML = `${reviewNotice()}<div class="m-workstation">
       <section class="m-workstation__stage" aria-label="Scene direction workspace">
         <div class="m-workstation__canvas">
           ${directionSection()}
@@ -349,12 +356,10 @@ function render() {
         <div class="m-workstation__tabs" role="tablist" aria-label="Scene context">
           ${view.user && view.user.role === "higher-roads" ? tab("brain", "Brain") : ""}
           ${tab("setup", "Setup")}
-          ${tab("versions", "Versions")}
         </div>
         <div class="m-workstation__panels">
           ${view.user && view.user.role === "higher-roads" ? brainSection() : ""}
           ${venueSection()}
-          ${versionsSection()}
         </div>
       </aside>
     </div>`;
