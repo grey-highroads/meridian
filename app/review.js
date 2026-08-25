@@ -109,6 +109,9 @@ function decisionComposer(current) {
   const artboardVersion = current.artboard.artboardVersion;
   const written = reviewFor(artboardVersion);
   const pending = view.handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === artboardVersion);
+  if (approvedFor(artboardVersion)) {
+    return `<div class="m-callout m-callout--approved"><span class="m-state m-state--approved">Client approved</span><p class="m-copy">The client approved V${version(artboardVersion)}. The decision remains available here with the work.</p></div>`;
+  }
   if (pending) {
     return `<div class="m-callout m-callout--change"><span class="m-state m-state--change">Changes issued</span><p class="m-copy">Production is working from feedback against V${version(artboardVersion)}.</p><a class="m-button m-button--small" href="${escape(pending.directPath)}">Open revision handoff</a></div>`;
   }
@@ -180,16 +183,31 @@ function actionBar() {
   const value = current.artboard.artboardVersion;
   const pending = view.handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value);
   const ready = readyFor(value);
+  const approved = approvedFor(value);
   let controls = "";
-  if (pending) controls = `<a class="m-button m-button--primary" href="${escape(pending.directPath)}">Open revision handoff</a>`;
+  let context = "Choose what happens to this exact version.";
+  if (approved) {
+    context = `The client approved V${version(value)}. This review is now read only.`;
+    controls = `<a class="m-button" href="./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open client view</a>`;
+  } else if (pending) controls = `<a class="m-button m-button--primary" href="${escape(pending.directPath)}">Open revision handoff</a>`;
   else if (ready) controls = `<a class="m-button m-button--primary" href="./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open client view</a>`;
   else controls = `<button class="m-button m-button--change" type="button" data-revise>Request changes</button><button class="m-button m-button--primary" type="button" data-send-client>Send V${version(value)} to client</button>`;
-  actions.innerHTML = `<p class="m-action-bar__context">Choose what happens to this exact version.</p><div class="m-action-bar__actions">${controls}</div>`;
+  actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p><div class="m-action-bar__actions">${controls}</div>`;
+}
+
+function currentState(current) {
+  if (!current) return { label: "Waiting on production", className: "m-state m-state--current" };
+  const value = current.artboard.artboardVersion;
+  if (approvedFor(value)) return { label: "Client approved", className: "m-state m-state--approved" };
+  if (readyFor(value)) return { label: "With the client", className: "m-state m-state--current" };
+  if (view.handoffs.some((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value)) return { label: "Changes issued", className: "m-state m-state--change" };
+  return { label: "Needs a decision", className: "m-state m-state--current" };
 }
 
 function render() {
   const current = latest();
-  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scenes.html?tour=${escape(TOUR_ID)}">Scenes</a><span aria-hidden="true">/</span><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Review V${version(current?.artboard.artboardVersion)}</span></nav><span class="m-state m-state--current">${current ? "Needs a decision" : "Waiting on production"}</span>`;
+  const state = currentState(current);
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scenes.html?tour=${escape(TOUR_ID)}">Scenes</a><span aria-hidden="true">/</span><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Review V${version(current?.artboard.artboardVersion)}</span></nav><span class="${escape(state.className)}">${escape(state.label)}</span>`;
   workspace.innerHTML = `<div class="m-workstation"><section class="m-workstation__stage" aria-label="Work under review"><div class="m-workstation__canvas"><section class="m-direction-editor"><header class="m-direction-editor__header"><span class="m-label m-direction-editor__label">${escape(view.assignment.title)}</span><h1 class="m-section-heading">Review the work</h1></header><div class="m-direction-editor__body m-stack">${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${workSurface()}</div></section></div></section><aside class="m-workstation__inspector" aria-label="Review context"><div class="m-workstation__inspector-head"><span class="m-label">Inspector</span></div><div class="m-workstation__tabs" role="tablist">${tab("brief", "Brief")}${tab("versions", "Versions")}${tab("production", "Production")}${tab("record", "Record")}</div><div class="m-workstation__panels">${inspectorPanel()}</div></aside></div>`;
   actionBar();
 }

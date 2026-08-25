@@ -20,23 +20,21 @@ Each request names the job, the missing state, and where it occurs. Use one of f
 
 ### Region anchor on a feedback note
 
-Status: requested
+Status: use the existing pattern
 
 Job: Higher Roads reviews an artboard version and says which part of it needs to change, so the note reaches production attached to a place rather than as a sentence about the whole picture.
 
-Missing state: The feedback aside in `app/design/samples/review.html` sits inside the artboard frame and reads as a note about the version. There is no way to mark a region on the artboard, no way to show which region a note belongs to, and no way to show several notes on several regions at once.
+Missing state: Use the existing named-region field when feedback needs a location. The location travels with the instruction and stays beside the feedback composer. Meridian does not place pins or notes over the work in V1.
 
 Where: The Artboard review job, on the review screen built from that sample. The optional anchor is recorded as provisional in section 6 of `docs/meridian-seam-with-jim.md` and whether Jim's side can read one is a discovery question in section 4.
 
-Standing in for it: the review screen offers a list of nine named places on the picture. It is a list of words, not a mark on the artboard, and it cannot show which note belongs to which place while a person reads the work. Marked provisional in a comment in `app/review.js` rather than on screen.
-
 ### Showing a real artboard file in the artboard frame
 
-Status: requested
+Status: available
 
 Job: Higher Roads looks at the work that came back and compares one version against another.
 
-Missing state: `m-artboard` and its two halves are built around a placeholder shape, so there is no pattern for putting a real file in the frame at the right size, and no pattern for wiping one version over another. The review screen uses the two halves side by side with the file at a fixed width, which clips on a narrow window.
+Missing state: `m-work-frame` displays a submitted image or PDF as the primary work surface. `m-reference-pair` places an earlier version beside the current one only when a person asks to compare. Meridian uses this deliberate comparison instead of a wipe control in V1.
 
 Where: The Artboard review job, on `app/review.html`.
 

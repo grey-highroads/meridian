@@ -120,3 +120,12 @@ test("the Scene directory is a quiet list and Scene requests require names", () 
   const request = read("app/request.js");
   assert.match(request, /id="title"[^>]*required/, "Scene name is not required in the request form");
 });
+
+test("an empty decision queue does not hide completed sample reviews", () => {
+  const directory = read("app/reviews.js");
+  assert.match(directory, /Recently reviewed/, "Reviews has no route back into completed work");
+  assert.match(directory, /\["Final approved", "Delivered"\]/, "Reviews does not limit recent work to completed review states");
+  const review = read("app/review.js");
+  assert.match(review, /The client approved V/, "completed review does not show its exact approved version");
+  assert.match(review, /read only/, "completed review still presents itself as an active decision");
+});
