@@ -102,6 +102,7 @@ test("the shared shell restores every primary navigation icon", () => {
   for (const destination of ["index.html", "scenes.html", "reviews.html", "tour.html"]) {
     assert.match(source, new RegExp(`"${destination.replace(".", "\\.")}"`), `shell has no icon for ${destination}`);
   }
+  assert.match(source, /link\.matches\("\.m-shell__nav-link"\)/, "shell can add a navigation icon to the wordmark");
   assert.match(source, /insertAdjacentHTML\("afterbegin"/, "shell does not add missing icons to live navigation");
 });
 

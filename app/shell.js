@@ -15,7 +15,9 @@ for (const link of document.querySelectorAll(".m-shell a[href^='./']")) {
     link.href = url.href;
   }
   const name = Object.keys(NAV_ICONS).find((entry) => url.pathname.endsWith(`/${entry}`));
-  if (name && !link.querySelector(".m-shell__nav-icon")) link.insertAdjacentHTML("afterbegin", NAV_ICONS[name]);
+  if (name && link.matches(".m-shell__nav-link") && !link.querySelector(".m-shell__nav-icon")) {
+    link.insertAdjacentHTML("afterbegin", NAV_ICONS[name]);
+  }
 }
 
 fetch("/api/tour", {
