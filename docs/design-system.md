@@ -142,6 +142,19 @@ Five patterns carry the phase-two workflow grammar:
 
 The same patterns serve client and Higher Roads work. Available actions and internal context may differ. The shell and workflow grammar do not.
 
+### Empty states
+
+An empty state answers the question a person brought to the page. It does not announce an empty database.
+
+- Use `.m-empty-state` when the page has no work object yet. Use one oversized line glyph, one plain headline, one short explanation, and at most one primary action.
+- Use `.m-empty-state--compact` when the page still has other useful work. Use `.m-empty-inline` for a missing optional detail inside an existing object.
+- Use `--action` for an available next step, `--waiting` for a named input that has not arrived, and `--clear` when the absence of work is a successful condition. These colors clarify the kind of moment. They do not replace the words or create a color-coded lifecycle.
+- Name the real object and the real handoff. Say `Artboard V02 has not come back from production`, not `No data` or `Nothing here`.
+- A client empty state explains what Higher Roads will do next. A Higher Roads empty state names the safe next move or who holds the work. An observer can simply be told that nothing needs a decision.
+- Do not use a large empty state for every missing optional field. Optional Brain notes, themes, references, and setup exceptions use the compact inline treatment and must not read like blockers.
+
+See `app/design/samples/empty-states.html` for the composition reference. The live Home, Scenes, Reviews, Tour Details, Scene, and review screens use the same family.
+
 ## Workstation
 
 Use `.m-workstation` when one authored or reviewed object needs supporting context.

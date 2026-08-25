@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Empty states | Meridian design system</title>
+    <link rel="stylesheet" href="../index.css" />
+  </head>
+  <body class="m-ui">
+    <main class="m-shell__main">
+      <article class="m-page m-stack">
+        <header class="m-job-header">
+          <div class="m-job-header__copy">
+            <span class="m-label">Pattern reference</span>
+            <h1 class="m-heading">Empty states</h1>
+            <p class="m-copy m-copy--large">The absence of work should explain the job, not expose the database.</p>
+          </div>
+        </header>
+
+        <section class="m-work m-stack" aria-labelledby="start-example-heading">
+          <span class="m-label">Available action</span>
+          <div class="m-empty-state m-empty-state--action">
+            <div class="m-empty-state__visual" aria-hidden="true">
+              <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><rect x="10" y="16" width="44" height="32" rx="2"></rect><path d="M20 32h24M32 20v24"></path><path d="M6 24v-8a4 4 0 0 1 4-4h8M58 40v8a4 4 0 0 1-4 4h-8"></path></svg>
+              <span class="m-empty-state__calibration">Scene register / Open</span>
+            </div>
+            <div class="m-empty-state__body">
+              <span class="m-label">Start the work</span>
+              <h2 id="start-example-heading" class="m-section-heading">Request the first Scene</h2>
+              <p class="m-copy m-copy--large">A Scene can be a song, an intro, a transition, or any show moment that needs media. Name it and tell us what the moment should do. One sentence is enough.</p>
+              <div class="m-empty-state__actions"><button class="m-button m-button--primary" type="button">Request a Scene</button><span class="m-meta">REFERENCES ARE OPTIONAL</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="m-work m-stack" aria-labelledby="clear-example-heading">
+          <span class="m-label">Successful absence</span>
+          <div class="m-empty-state m-empty-state--clear m-empty-state--compact">
+            <div class="m-empty-state__visual" aria-hidden="true"><svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><circle cx="32" cy="32" r="21"></circle><path d="m22 32 7 7 14-16"></path></svg></div>
+            <div class="m-empty-state__body"><h2 id="clear-example-heading" class="m-scene-work-heading">You are clear for now</h2><p class="m-copy">No decision or handoff needs you. We will put the exact Scene here when that changes.</p></div>
+          </div>
+        </section>
+
+        <section class="m-work m-stack" aria-labelledby="inline-example-heading">
+          <span class="m-label">Optional context</span>
+          <div class="m-empty-inline" id="inline-example-heading"><span class="m-label">No tour setup yet</span><p class="m-copy">You can keep writing the Scene. Add confirmed playback and screen details before production receives the brief.</p></div>
+        </section>
+      </article>
+    </main>
+  </body>
+</html>
