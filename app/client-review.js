@@ -68,7 +68,7 @@ function render() {
         <div class="m-empty-state__body">
           <span class="m-label">Nothing for you to review</span>
           <h1 id="client-waiting-heading" class="m-section-heading">No Artboard has been sent yet</h1>
-          <p class="m-copy m-copy--large">Higher Roads will bring the exact version here when it is ready. You do not need to do anything yet.</p>
+          <p class="m-copy m-copy--large">The exact version will appear here when it is ready. You do not need to do anything yet.</p>
           <div class="m-empty-state__actions"><a class="m-button" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open the Scene</a></div>
         </div>
       </section>`;
