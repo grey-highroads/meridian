@@ -1,6 +1,6 @@
 # Meridian design system
 
-Status: Foundation and living reference screens available.
+Status: Phase-two foundation available. The current shell and Home reference land in the companion samples commit.
 
 ## Purpose
 
@@ -45,13 +45,13 @@ Class names use the `m-` prefix. Do not copy classes from `app/styles.css` or `a
 - `tokens.css` holds every color, type, spacing, size, motion, and layer value.
 - `foundation.css` holds the scoped reset, base behavior, focus treatment, and small layout utilities.
 - `components.css` holds controls, fields, labels, states, disclosures, and dialogs.
-- `patterns.css` holds the shell, page rhythm, work surface, action bar, contextual contribution, and work frame.
+- `patterns.css` holds the shell, page rhythm, work surface, attention rows, lifecycle rows, inspectors, decision zones, attributed records, and work frames.
 - `index.css` is the only stylesheet a Meridian screen imports.
 - `samples/` holds static reference screens that show how the system composes around a job.
 
 ## Living reference screens
 
-The real Meridian screens are the primary composition references. They use live application behavior and the isolated design foundation at the same time.
+The real Meridian screens remain implementation references. Phase-two builders use the new shell and Home fixture as the composition source once the companion samples commit lands.
 
 - `app/tour.html` and `app/tour.js` define the quiet reference page.
 - `app/scene.html` and `app/scene.js` define the focused Workstation.
@@ -72,6 +72,7 @@ Every page starts with the job, not the data model.
 5. Do not repeat project details, state, or instructions in several regions.
 6. Use empty space to show priority.
 7. Attach feedback and decisions to the object they govern.
+8. Separate functional planes with surface value and depth before adding another box or label.
 
 Orient a person once with a quiet breadcrumb. Do not repeat the current object, location, version, or state in the rail, header, workspace, Inspector, and action bar.
 
@@ -87,21 +88,51 @@ After Higher Roads completes manual research and approves the Brain, ordinary sc
 
 Brain guidance never becomes Scene Direction by itself. Do not reserve permanent page space for Brain history, scoring, or revision controls.
 
+## Surface hierarchy
+
+Meridian is dark without being flat. The shell, field, work plane, raised controls, Inspector, and record surfaces occupy distinct grayscale values.
+
+Use the semantic surface and material tokens from `tokens.css`. Do not write local gradients, shadows, or colors. Gradients stay within neighboring charcoal values and should be felt before they are noticed.
+
+Use color surgically:
+
+- instrument cobalt and cyan for interaction, selection, and focus;
+- amber for current attention;
+- green for approval;
+- rust for a real change or blockage.
+
+Lifecycle stages do not receive individual colors. The words carry their meaning.
+
 ## Shell
 
-The current three-destination shell (Scenes, Tour, Artist Brain) is transitional. The target primary navigation is Home, Scenes, Reviews, and Tour details, as defined in docs/meridian-product-architecture.md, with Artist Brain becoming a Higher Roads utility and contextual contributor. Do not extend the transitional navigation into new screens; the revised foundation lands before the workspace, Home, and Reviews builds begin.
+The primary navigation is Home, Scenes, Reviews, and Tour details, as defined in `docs/meridian-product-architecture.md`. Artist Brain is a Higher Roads utility and contextual contributor, not a client destination.
 
 Use `.m-shell` for the application frame.
 
-The transitional shell's three destinations, until the revised foundation lands:
-
-- Scenes
-- Tour
-- Artist Brain
+- Home shows the condition of the active tour and the work that needs attention.
+- Scenes holds all Scene work across the lifecycle.
+- Reviews is the current person's decision queue.
+- Tour details holds direction, dates, venues, setup, team, and approval authority.
 
 Admin work is a quiet utility. Concept development, review, and handoff are states inside a Scene. They are not top-level navigation.
 
 Use `.m-location` once for the client, artist, active production, and current Scene. Do not restate the same scope in the page body.
+
+Use `.m-shell__nav-icon` with a visible `.m-shell__nav-label`. Use `.m-shell__nav-count` only for assigned queue work, never as a general metric.
+
+## Home and workflow patterns
+
+Use `.m-home` for the Home orientation screen. It has a broad primary plane and one purposeful sidecar that moves below the main work before either column becomes narrow.
+
+Five patterns carry the phase-two workflow grammar:
+
+- `.m-attention-list` and `.m-attention-row` show work assigned to the current person. The action stays attached to the object it affects.
+- `.m-lifecycle-list` and `.m-lifecycle-row` show Scene, stage, waiting on, next action, and a due date only when it matters.
+- `.m-inspector` holds supporting context that affects the current job. It never repeats the main work.
+- `.m-decision-zone` names the consequence and presents one primary action plus one real alternative when required.
+- `.m-activity-list` and `.m-activity-row` show a short attributed record. Each event names who acted, when, the version, and on whose behalf when relevant.
+
+The same patterns serve client and Higher Roads work. Available actions and internal context may differ. The shell and workflow grammar do not.
 
 ## Workstation
 
@@ -112,7 +143,7 @@ Use `.m-workstation` when one authored or reviewed object needs supporting conte
 - `.m-workstation__tabs` switches between context families. Only one panel is visible at a time.
 - `.m-action-bar` names the consequence and presents one primary next action.
 
-The Inspector is not a summary column. Request, Brain, Direction, and Setup appear there because each can contribute to the Scene Direction. Do not add a panel merely because the backend has another record.
+The Inspector is not a summary column. Request, Brain, Direction, and Setup appear there because each can contribute to the Scene Direction. Its graphite material distinguishes support from the work plane. Do not add a panel merely because the backend has another record.
 
 Compiled output stays behind a disclosure until a person asks to inspect or download it. Do not keep an output strip visible while the current job is authoring.
 

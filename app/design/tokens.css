@@ -2,29 +2,39 @@
   color-scheme: dark;
 
   /* Core color */
-  --m-color-stage: #08090a;
-  --m-color-shell: #0d0f12;
-  --m-color-work: #14171b;
-  --m-color-raised: #1c2026;
-  --m-color-sidecar: #232830;
-  --m-color-active: #2b313a;
-  --m-color-chalk: #f1f0ea;
-  --m-color-chalk-muted: #d1d2cf;
-  --m-color-fog: #9da2a7;
-  --m-color-dim: #6d737a;
-  --m-color-instrument: #6f8fac;
-  --m-color-instrument-strong: #88abc8;
-  --m-color-current: #d39a4a;
-  --m-color-approved: #7f9d78;
-  --m-color-change: #a66d59;
+  --m-color-stage: #090a0c;
+  --m-color-shell: #111316;
+  --m-color-field: #1a1d21;
+  --m-color-work: #24282d;
+  --m-color-raised: #2d3137;
+  --m-color-sidecar-top: #3a3e44;
+  --m-color-sidecar: #2b2f34;
+  --m-color-active: #383d44;
+  --m-color-chalk: #f2f1ed;
+  --m-color-chalk-muted: #c4c6c7;
+  --m-color-fog: #92979c;
+  --m-color-dim: #676d73;
+  --m-color-instrument: #7584dc;
+  --m-color-instrument-strong: #57afbe;
+  --m-color-current: #d09a4a;
+  --m-color-approved: #7f9a79;
+  --m-color-change: #a66c59;
   --m-color-system: #82909b;
-  --m-color-rule-soft: #1b1e23;
-  --m-color-rule: #30353d;
-  --m-color-rule-strong: #4a515c;
+  --m-color-rule-soft: #25292e;
+  --m-color-rule: #373c42;
+  --m-color-rule-strong: #50565e;
+
+  /* Light and material */
+  --m-light-inset-soft: rgba(242, 241, 237, 0.04);
+  --m-light-inset: rgba(242, 241, 237, 0.07);
+  --m-dark-inset: rgba(9, 10, 12, 0.72);
+  --m-shadow-ambient: rgba(0, 0, 0, 0.18);
+  --m-shadow-floating: rgba(0, 0, 0, 0.24);
 
   /* Semantic color */
   --m-surface-page: var(--m-color-stage);
   --m-surface-shell: var(--m-color-shell);
+  --m-surface-field: var(--m-color-field);
   --m-surface-work: var(--m-color-work);
   --m-surface-raised: var(--m-color-raised);
   --m-surface-sidecar: var(--m-color-sidecar);
@@ -42,6 +52,12 @@
   --m-border-soft: var(--m-color-rule-soft);
   --m-border-default: var(--m-color-rule);
   --m-border-strong: var(--m-color-rule-strong);
+  --m-gradient-field: radial-gradient(circle at 46% 0%, var(--m-color-work) 0%, var(--m-color-field) 42%, var(--m-color-shell) 100%);
+  --m-gradient-raised: linear-gradient(to bottom, var(--m-color-active), var(--m-color-work));
+  --m-gradient-sidecar: linear-gradient(to bottom, var(--m-color-sidecar-top), var(--m-color-sidecar));
+  --m-gradient-control: linear-gradient(to bottom, var(--m-color-active), var(--m-color-work));
+  --m-shadow-raised: inset 0 var(--m-rule-width) 0 var(--m-light-inset-soft), inset 0 calc(var(--m-rule-width) * -1) 0 var(--m-dark-inset), 0 var(--m-space-3) var(--m-space-7) var(--m-shadow-ambient);
+  --m-shadow-control: inset 0 var(--m-rule-width) 0 var(--m-light-inset), inset 0 calc(var(--m-rule-width) * -1) 0 var(--m-dark-inset), 0 var(--m-space-2) var(--m-space-4) var(--m-shadow-floating);
 
   /* Type */
   --m-font-sans: Inter, "Helvetica Neue", Arial, sans-serif;
@@ -80,7 +96,7 @@
   --m-control-default: 2.5rem;
   --m-control-large: 3rem;
   --m-target-minimum: 2.75rem;
-  --m-rail-width: 10rem;
+  --m-rail-width: 13.5rem;
   --m-inspector-width: 21rem;
   --m-work-width: 58rem;
   --m-page-width: 76rem;

@@ -3,9 +3,9 @@
     align-items: flex-end;
     display: inline-flex;
     flex-direction: column;
-    font-size: 0.875rem;
-    font-weight: var(--m-weight-medium);
-    letter-spacing: var(--m-tracking-tight);
+    font-size: 1.0625rem;
+    font-weight: var(--m-weight-strong);
+    letter-spacing: 0.17em;
     line-height: 1;
     text-decoration: none;
   }
@@ -13,9 +13,9 @@
   .m-wordmark__byline {
     color: var(--m-text-quiet);
     font-family: var(--m-font-mono);
-    font-size: var(--m-type-label);
+    font-size: 0.5rem;
     font-weight: var(--m-weight-medium);
-    letter-spacing: var(--m-tracking-label);
+    letter-spacing: 0.14em;
     margin-top: var(--m-space-2);
     text-transform: uppercase;
   }
@@ -87,9 +87,10 @@
 
   .m-button {
     align-items: center;
-    background: transparent;
+    background: var(--m-gradient-control);
     border: var(--m-rule-width) solid var(--m-border-strong);
     border-radius: var(--m-radius-control);
+    box-shadow: var(--m-shadow-control);
     color: var(--m-text-primary);
     display: inline-flex;
     font-family: var(--m-font-mono);
@@ -102,26 +103,28 @@
     padding: var(--m-space-3) var(--m-space-5);
     text-decoration: none;
     text-transform: uppercase;
-    transition: background-color var(--m-motion-fast) var(--m-ease-standard), border-color var(--m-motion-fast) var(--m-ease-standard), color var(--m-motion-fast) var(--m-ease-standard);
+    transition: border-color var(--m-motion-fast) var(--m-ease-standard), color var(--m-motion-fast) var(--m-ease-standard), filter var(--m-motion-fast) var(--m-ease-standard), transform var(--m-motion-fast) var(--m-ease-standard);
   }
 
   .m-button:hover {
-    background: var(--m-surface-active);
+    border-color: var(--m-text-quiet);
+    filter: brightness(1.08);
   }
 
   .m-button--primary {
-    background: var(--m-text-primary);
-    border-color: var(--m-text-primary);
-    color: var(--m-surface-page);
+    border-left: var(--m-focus-width) solid var(--m-signal-instrument);
+    color: var(--m-text-primary);
   }
 
   .m-button--primary:hover {
-    background: var(--m-text-secondary);
-    border-color: var(--m-text-secondary);
+    border-color: var(--m-signal-instrument-strong);
+    transform: translateY(calc(var(--m-rule-width) * -1));
   }
 
   .m-button--quiet {
+    background: transparent;
     border-color: transparent;
+    box-shadow: none;
     color: var(--m-text-muted);
   }
 
@@ -130,14 +133,13 @@
   }
 
   .m-button--instrument {
-    background: var(--m-surface-active);
     border-color: var(--m-signal-instrument);
     color: var(--m-signal-instrument-strong);
   }
 
   .m-button--instrument:hover {
-    background: var(--m-signal-instrument);
-    color: var(--m-surface-page);
+    border-color: var(--m-signal-instrument-strong);
+    color: var(--m-text-primary);
   }
 
   .m-button--small {
@@ -192,9 +194,10 @@
   .m-input,
   .m-select,
   .m-textarea {
-    background: var(--m-surface-work);
+    background: var(--m-surface-raised);
     border: var(--m-rule-width) solid var(--m-border-default);
     border-radius: var(--m-radius-control);
+    box-shadow: inset 0 var(--m-rule-width) 0 var(--m-light-inset-soft), inset 0 calc(var(--m-rule-width) * -1) 0 var(--m-dark-inset);
     color: var(--m-text-primary);
     min-height: var(--m-control-default);
     padding: var(--m-space-3) var(--m-space-4);
@@ -251,28 +254,30 @@
   }
 
   .m-rule-list {
-    border-bottom: var(--m-rule-width) solid var(--m-border-default);
+    background: var(--m-border-default);
+    display: grid;
+    gap: var(--m-rule-width);
   }
 
   .m-rule-row {
     align-items: center;
-    border-top: var(--m-rule-width) solid var(--m-border-default);
+    background: var(--m-surface-work);
     display: grid;
     gap: var(--m-space-5);
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: 7rem;
     padding: var(--m-space-5) var(--m-space-4);
     text-decoration: none;
-    transition: background-color var(--m-motion-fast) var(--m-ease-standard);
+    transition: background-color var(--m-motion-fast) var(--m-ease-standard), box-shadow var(--m-motion-fast) var(--m-ease-standard);
   }
 
   .m-rule-row:hover,
   .m-rule-row[aria-current="true"] {
-    background: var(--m-surface-work);
+    background: var(--m-surface-raised);
   }
 
   .m-rule-row[aria-current="true"] {
-    box-shadow: inset var(--m-rule-width) 0 0 var(--m-signal-current);
+    box-shadow: inset var(--m-focus-width) 0 0 var(--m-signal-instrument);
   }
 
   .m-rule-row__title {
@@ -322,8 +327,9 @@
   }
 
   .m-callout {
-    background: var(--m-surface-work);
-    border: var(--m-rule-width) solid var(--m-border-default);
+    background: var(--m-gradient-raised);
+    border: var(--m-rule-width) solid var(--m-border-strong);
+    box-shadow: var(--m-shadow-raised);
     display: grid;
     gap: var(--m-space-3);
     padding: var(--m-space-5);

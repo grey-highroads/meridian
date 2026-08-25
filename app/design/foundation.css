@@ -29,7 +29,7 @@
 @layer meridian-base {
   .m-ui {
     min-height: 100%;
-    background: var(--m-surface-page);
+    background: var(--m-gradient-field);
     color: var(--m-text-primary);
     font-family: var(--m-font-sans);
     font-size: var(--m-type-copy);
@@ -49,7 +49,7 @@
   }
 
   .m-ui :where(:focus-visible) {
-    outline: var(--m-focus-width) solid var(--m-signal-current);
+    outline: var(--m-focus-width) solid var(--m-signal-instrument-strong);
     outline-offset: var(--m-space-1);
   }
 
@@ -58,7 +58,7 @@
   }
 
   .m-ui ::selection {
-    background: var(--m-signal-current);
+    background: var(--m-signal-instrument);
     color: var(--m-surface-page);
   }
 }
