@@ -109,8 +109,11 @@
   /* Motion and layer */
   --m-motion-fast: 180ms;
   --m-motion-default: 280ms;
+  --m-motion-boot: 960ms;
+  --m-motion-boot-exit: 260ms;
   --m-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --m-layer-shell: 20;
   --m-layer-overlay: 40;
   --m-layer-dialog: 60;
+  --m-layer-boot: 80;
 }

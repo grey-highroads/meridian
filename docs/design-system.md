@@ -122,6 +122,12 @@ Use `.m-location` once for the client, artist, active production, and current Sc
 
 Use `.m-shell__nav-icon` with a visible `.m-shell__nav-label`. Use `.m-shell__nav-count` only for assigned queue work, never as a general metric.
 
+### Boot sequence
+
+The temporary boot sequence appears once after a successful login. It uses a native vector object and CSS motion from `app/design/`, fills most of the viewport, and resolves in about one second while the real page loads behind it.
+
+The sequence creates atmosphere. It does not claim that Meridian is running checks, show fake progress, or delay later navigation. Reduced motion receives a brief static resolve. The calibration object is temporary and must not be reused as the Meridian identity mark without a separate design decision.
+
 ## Home and workflow patterns
 
 Use `.m-home` for the Home orientation screen. It has a broad primary plane and one purposeful sidecar that moves below the main work before either column becomes narrow.

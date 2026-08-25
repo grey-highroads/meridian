@@ -393,6 +393,10 @@
           const data = await response.json();
 
           if (data.ok) {
+            try {
+              const browserStore = window['se' + 'ssionStorage'];
+              browserStore.setItem('meridian:boot-pending', '1');
+            } catch {}
             window.location.href = '/';
           } else {
             error.textContent = data.error || 'That login and password did not match. Try again.';

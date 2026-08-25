@@ -111,6 +111,20 @@ test("the shared shell restores every primary navigation icon", () => {
   assert.match(source, /insertAdjacentHTML\("afterbegin"/, "shell does not add missing icons to live navigation");
 });
 
+test("a successful login runs the temporary Meridian boot sequence once", () => {
+  const landing = read("app/landing.html");
+  const shell = read("app/shell.js");
+  const patterns = read("app/design/patterns.css");
+
+  assert.match(landing, /browserStore\.setItem\('meridian:boot-pending', '1'\)/, "login does not request the boot sequence");
+  assert.match(shell, /sessionStorage\.removeItem\(BOOT_PENDING_KEY\)/, "the boot request can replay during the session");
+  assert.match(shell, /class=\"m-boot__glyph\"/, "the boot sequence has no vector object");
+  assert.match(shell, /Opening Meridian/, "the boot sequence has no accessible status");
+  assert.match(patterns, /height: min\(80vh, 80vw\)/, "the boot object is not the intended viewport scale");
+  assert.match(patterns, /m-boot-sweep/, "the temporary object has no calibration motion");
+  assert.doesNotMatch(shell, /\.gif|\.png|\.webp/, "the boot sequence uses a raster asset");
+});
+
 test("the Scene workspace keeps the request and applicable direction with the work", () => {
   const source = read("app/scene.js");
   assert.match(source, /Client request/, "Scene main workspace does not show the request");

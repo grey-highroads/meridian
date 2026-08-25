@@ -1,3 +1,55 @@
+const BOOT_PENDING_KEY = "meridian:boot-pending";
+
+function takeBootRequest() {
+  try {
+    const requested = window.sessionStorage.getItem(BOOT_PENDING_KEY) === "1";
+    window.sessionStorage.removeItem(BOOT_PENDING_KEY);
+    return requested;
+  } catch {
+    return false;
+  }
+}
+
+function mountBootSequence() {
+  const shell = document.querySelector(".m-shell");
+  const boot = document.createElement("div");
+  boot.className = "m-boot";
+  boot.setAttribute("role", "status");
+  boot.setAttribute("aria-live", "polite");
+  boot.innerHTML = `<span class="m-visually-hidden">Opening Meridian</span>
+    <svg class="m-boot__glyph" aria-hidden="true" viewBox="0 0 100 100">
+      <circle class="m-boot__ring" cx="50" cy="50" r="43" pathLength="100" />
+      <circle class="m-boot__sweep" cx="50" cy="50" r="43" pathLength="100" />
+      <g class="m-boot__longitude">
+        <ellipse cx="50" cy="50" rx="18" ry="43" />
+        <ellipse cx="50" cy="50" rx="31" ry="43" />
+      </g>
+      <g class="m-boot__latitude">
+        <ellipse cx="50" cy="50" rx="43" ry="16" />
+        <ellipse cx="50" cy="50" rx="43" ry="29" />
+      </g>
+      <path class="m-boot__ticks" d="M50 4v6M50 90v6M4 50h6M90 50h6" />
+      <path class="m-boot__axis" pathLength="100" d="M50 7v86" />
+      <path class="m-boot__scan" d="M11 50h78" />
+      <circle class="m-boot__core" cx="50" cy="50" r="1.4" />
+    </svg>`;
+
+  document.body.classList.add("m-booting");
+  shell?.setAttribute("aria-hidden", "true");
+  document.body.prepend(boot);
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const displayTime = reducedMotion ? 120 : 1040;
+  window.setTimeout(() => {
+    boot.classList.add("is-leaving");
+    document.body.classList.remove("m-booting");
+    shell?.removeAttribute("aria-hidden");
+    window.setTimeout(() => boot.remove(), reducedMotion ? 20 : 280);
+  }, displayTime);
+}
+
+if (takeBootRequest()) mountBootSequence();
+
 const params = new URLSearchParams(window.location.search);
 const tourId = params.get("tour") || "off-the-map-2026";
 
