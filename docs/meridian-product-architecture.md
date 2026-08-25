@@ -117,7 +117,7 @@ Draft request
 
 Feedback may return a Scene to its appropriate development stage without deleting or overwriting prior versions.
 
-At every stage the interface identifies the current stage, the current owner, the next required action, the version under discussion, and who is waiting on whom.
+At every stage the interface identifies the current stage, the party Meridian is waiting on, the next required action, and the version under discussion. Nobody owns a stage; the record shows who the work waits on.
 
 ## Scene workspace
 
@@ -149,6 +149,8 @@ It does not become a large daily management system. Clients do not browse or adm
 Meridian preserves an append-only history of material creative decisions. The system never silently overwrites Tour Direction, Scene Direction, concepts, production versions, feedback, approvals, or final deliverables.
 
 Comments and decisions are different: a comment contributes discussion; an approval or change request moves the workflow.
+
+Every material action is an attributed event: what happened, who performed it, when, which object and version it affected, on whose behalf when someone acted for another, and by which path when the route matters (for example brain-assisted or direct). A missing value stays missing; representation is never inferred from a role.
 
 Higher Roads overrides are possible, visible, attributed, and dated.
 
