@@ -3,6 +3,9 @@ import test from "node:test";
 import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
+import { createTourStore } from "../src/tour/store.js";
+import { createArtboardStore } from "../src/seam/artboard-store.js";
+import { createSceneRecord } from "../src/tour/scene-record.js";
 import { parseTour, parseAssignment, parseTourFixture } from "../src/tour/parse-fixture.js";
 import { readTourFixture } from "../api/tour/index.js";
 import { buildProposalRequest, checkProposals } from "../src/tour/propose.js";
@@ -167,7 +170,16 @@ test("proposing concepts with no key configured says so instead of failing obscu
 test("nothing the tour does writes to the artist layer", async () => {
   const { backend, store } = await brainReady();
   const before = new Map(backend.files);
-  await tourAction({ action: "get-tour", tourId: TOUR }, { store, user: OPERATOR });
+  // The Scenes directory reads tour storage. It gets its own place to read so
+  // this test can watch the artist layer and nothing else.
+  const tourBackend = createMemoryBackend();
+  const tourStore = createTourStore({ backend: tourBackend });
+  const artboardStore = createArtboardStore({ backend: tourBackend });
+  const sceneRecord = createSceneRecord({ backend: tourBackend });
+  await tourAction(
+    { action: "get-tour", tourId: TOUR },
+    { store, tourStore, artboardStore, sceneRecord, user: OPERATOR },
+  );
   await tourAction({ action: "get-assignment", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   await tourAction({ action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT }, { store, user: OPERATOR });
   assert.deepEqual([...backend.files.keys()].sort(), [...before.keys()].sort());

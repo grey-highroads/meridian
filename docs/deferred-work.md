@@ -406,3 +406,15 @@ The compile drops any avoid entry that still carries our vocabulary after the bo
 The gap is in the file. An entry that records what was removed from the prior belongs in the intake log rather than in the artist's prohibitions, and a second entry, `finding-70`, buries its own operator commentary after the source count where a reader would take it for a fact about the artist.
 
 Bring it back when: the findings file is regenerated and the intake playbook says an entry in the avoid part states something the artist avoids and nothing else. The filter can come out in the same commit that lands the corrected file.
+
+## Three Scene stages the current loop cannot show
+
+Recorded 2026-08-25 when Scene lifecycle state landed in `src/tour/lifecycle.js`. The module derives all eight stages from durable stored objects and the append-only Scene record. Three of them are unreachable through the app as it stands, and the tests say so rather than pretending otherwise.
+
+Approved for production is a real derived state that the current stand-in never exposes. Sending a brief stores the first artboard inside the same action, so the Scene passes from concept review to production review between one request and the next. It is unit-tested from a stored snapshot of a sent brief with no artboard back, and the loop test asserts the stage the stand-in actually produces.
+
+Concept review rests on a frozen brief that has not gone out, because no record of a client approving a concept exists yet. Nothing on that stage says a client approved anything. When a concept-approval record lands, the mapping moves to it and the comment in the lifecycle module comes out with it.
+
+Delivered rests on a delivery record, and nothing writes one. Production intent is frozen at client approval and the loop ends there.
+
+Bring them back when: Jim's real system replaces the stand-in and a brief goes out before an artboard returns, which makes approved for production observable on its own; a concept-approval record exists; and a delivery is recorded against an approved version.

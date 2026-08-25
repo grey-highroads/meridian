@@ -8,6 +8,7 @@ import { handleAction as tourAction } from "../api/tour/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore } from "../src/tour/store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
+import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { buildProposalRequest } from "../src/tour/propose.js";
 
 // What the show plays on, carried from the tour file through the prompt and
@@ -35,7 +36,8 @@ async function ready() {
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
   const sceneRecord = createSceneRecord({ backend: tourBackend });
-  return { options: { store, tourStore, sceneRecord, user: OPERATOR } };
+  const artboardStore = createArtboardStore({ backend: tourBackend });
+  return { options: { store, tourStore, artboardStore, sceneRecord, user: OPERATOR } };
 }
 
 test("the tour carries its production setup with a version and who supplied it", async () => {

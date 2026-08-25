@@ -43,6 +43,11 @@ export function createSceneRecord(options = {}) {
         role: fact.role || null,
         action: String(fact.action || "").trim(),
         version: fact.version || null,
+        // Who the actor was acting for, when the action establishes it, and
+        // which route the work took. Both stay empty when the action does not
+        // establish them. A person's role never fills either one in.
+        onBehalfOf: fact.onBehalfOf || null,
+        path: fact.path || null,
         at: fact.at || new Date().toISOString(),
       };
       if (!entry.action) {

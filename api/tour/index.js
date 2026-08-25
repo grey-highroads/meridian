@@ -8,6 +8,7 @@ import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDoc
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
 import { createSceneRecord } from "../../src/tour/scene-record.js";
+import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
@@ -193,17 +194,43 @@ export async function handleAction(body, options = {}) {
 
   if (body.action === "get-tour") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
-    return {
-      tour: fixture.tour,
-      assignments: fixture.assignments.map((entry) => ({
+    const tourStore = options.tourStore || createTourStore();
+    const artboardStore = options.artboardStore || createArtboardStore();
+    const record = options.sceneRecord || createSceneRecord();
+    const assignments = [];
+    // Where each Scene has got to, read from what is stored for it. Nothing
+    // here compiles a brief, because a draft that exists for the length of one
+    // request is not evidence of anything.
+    for (const entry of fixture.assignments) {
+      const [concept, briefs, facts, artboards, approvals] = await Promise.all([
+        tourStore.readConcept(fixture.tour.id, entry.id),
+        tourStore.readBriefs(fixture.tour.id, entry.id),
+        record.readFacts(fixture.tour.id, entry.id),
+        artboardStore.readArtboards(fixture.tour.id, entry.id),
+        artboardStore.readApprovals(fixture.tour.id, entry.id),
+      ]);
+      const state = sceneLifecycle({
+        request: entry.requestedBy ? { requestedBy: entry.requestedBy, requestedOn: entry.requestedOn } : null,
+        concept,
+        briefs,
+        facts,
+        artboards,
+        approvals,
+        // Nothing in this phase records a delivery, so delivered is a stage the
+        // module supports and the app cannot yet reach.
+        deliveries: [],
+      });
+      assignments.push({
         id: entry.id,
         title: entry.title,
         moment: entry.moment,
         requestedBy: entry.requestedBy,
         requestedOn: entry.requestedOn,
         directionVersion: entry.directionVersion,
-      })),
-    };
+        ...state,
+      });
+    }
+    return { tour: fixture.tour, assignments };
   }
   if (body.action === "get-assignment") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
@@ -313,6 +340,7 @@ export async function handleAction(body, options = {}) {
       ...actor,
       action: "Froze the brief",
       version: `Brief V0${frozen.briefVersion}`,
+      path: conceptPath(concept),
     });
     return { brief: frozen, document: renderBriefDocument(frozen), sidecar: renderBriefSidecar(frozen) };
   }
@@ -384,7 +412,7 @@ export async function handleAction(body, options = {}) {
     await artboardStore.addArtboard(fixture.tour.id, assignment.id, entry, produced.artifactBody);
     await record.appendFact(fixture.tour.id, assignment.id, {
       ...actor,
-      action: "Sent the brief to production",
+      action: SENT_TO_PRODUCTION,
       version: `Brief V0${brief.briefVersion}`,
     });
     return { receipt: produced.receipt, artboard: produced.artboard, label: STAND_IN_LABEL };
