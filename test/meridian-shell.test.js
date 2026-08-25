@@ -95,6 +95,11 @@ test("the live shell has the four destinations and Home uses the approved patter
   }
   assert.doesNotMatch(script, /Foundation ready|Tour readiness/, "Home exposes architecture instead of tour language");
   assert.match(script, /Request a Scene/, "Home does not offer the primary Scene action independently");
+  assert.match(script, /Welcome,/, "Home does not greet the signed-in person");
+  for (const category of ["Tour Direction", "Dates and venues", "Playback system", "Production setup", "Themes"]) {
+    assert.match(script, new RegExp(category), `Tour at a glance is missing ${category}`);
+  }
+  assert.doesNotMatch(script, /m-lifecycle-row__fact/, "Home still splits one Scene state across several columns");
 });
 
 test("the shared shell restores every primary navigation icon", () => {

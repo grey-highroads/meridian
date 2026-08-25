@@ -318,7 +318,7 @@
     background: var(--m-surface-work);
     display: grid;
     gap: var(--m-space-5);
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.75fr) minmax(0, 0.8fr) minmax(0, 1fr);
+    grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 1fr);
     min-height: 5.75rem;
     padding: var(--m-space-5) var(--m-space-6);
     text-decoration: none;
@@ -341,6 +341,13 @@
   .m-lifecycle-row__value {
     color: var(--m-text-secondary);
     font-size: 0.8125rem;
+  }
+
+  .m-lifecycle-row__summary {
+    color: var(--m-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    max-width: var(--m-copy-width);
   }
 
   .m-lifecycle-row__due {
@@ -376,6 +383,30 @@
     gap: var(--m-space-2);
     padding: var(--m-space-5) 0;
     text-decoration: none;
+  }
+
+  .m-readiness-list {
+    display: grid;
+    padding-bottom: 0;
+    padding-top: 0;
+  }
+
+  .m-readiness-row {
+    align-items: center;
+    border-bottom: var(--m-rule-width) solid var(--m-border-default);
+    display: grid;
+    gap: var(--m-space-4);
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: var(--m-space-4) 0;
+    text-decoration: none;
+  }
+
+  .m-readiness-row:last-child {
+    border-bottom: 0;
+  }
+
+  .m-readiness-row .m-stack {
+    gap: var(--m-space-1);
   }
 
   .m-inspector__item + .m-inspector__item {

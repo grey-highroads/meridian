@@ -12,6 +12,11 @@ async function call(action, extra = {}) {
 
 function escape(value) { return String(value === null || value === undefined ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 function version(value) { return String(value || 0).padStart(2, "0"); }
+function firstName(user) {
+  const explicit = String(user.firstName || "").trim();
+  if (explicit) return explicit;
+  return String(user.displayName || "").trim().split(/\s+/)[0] || "there";
+}
 
 function sceneHref(scene) {
   if (scene.stage === "Production review") {
@@ -34,16 +39,31 @@ function attention(assignments, user) {
 
 function progress(assignments) {
   const active = assignments.filter((scene) => scene.stage !== "Delivered").slice(0, 6);
-  const rows = active.map((scene) => `<a class="m-lifecycle-row" href="${escape(sceneHref(scene))}"><div class="m-lifecycle-row__object"><strong>${escape(scene.title)}</strong><span class="m-meta">${escape(String(scene.currentVersion || "NO VERSION YET").toUpperCase())}</span></div><div class="m-lifecycle-row__fact"><span class="m-label">Stage</span><span class="m-lifecycle-row__stage">${escape(scene.stage)}</span></div><div class="m-lifecycle-row__fact"><span class="m-label">Waiting on</span><span class="m-lifecycle-row__value">${escape(scene.waitingOn)}</span></div><div class="m-lifecycle-row__fact"><span class="m-label">Next</span><span class="m-lifecycle-row__value">${escape(scene.nextAction)}</span></div></a>`).join("");
+  const status = (scene) => {
+    if (scene.stage === "Final approved") return `${scene.currentVersion || "The latest artboard"} is approved. Final delivery is next.`;
+    if (scene.stage === "Production review" && scene.waitingOn === "the client") return `${scene.currentVersion || "The latest artboard"} is with the client for approval.`;
+    if (scene.stage === "Production review") return `${scene.currentVersion || "The latest artboard"} is ready for Higher Roads review.`;
+    if (scene.stage === "Approved for production") return `${scene.currentVersion || "The approved brief"} is with production.`;
+    if (scene.stage === "Concept review") return `${scene.currentVersion || "The brief"} is ready to send to production.`;
+    if (scene.stage === "Concept in development") return "Higher Roads is preparing the production brief.";
+    if (scene.stage === "Requested") return "Higher Roads is developing the Scene direction.";
+    return "The Scene request still needs to be submitted.";
+  };
+  const rows = active.map((scene) => `<a class="m-lifecycle-row" href="${escape(sceneHref(scene))}"><div class="m-lifecycle-row__object"><strong>${escape(scene.title)}</strong>${scene.currentVersion ? `<span class="m-meta">${escape(String(scene.currentVersion).toUpperCase())}</span>` : ""}</div><p class="m-lifecycle-row__summary">${escape(status(scene))}</p></a>`).join("");
   return `<section class="m-home__progress" aria-labelledby="progress-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Scenes in progress</span><h2 id="progress-heading" class="m-section-heading">Current work</h2></div><a class="m-button m-button--small" href="./scenes.html?tour=${escape(TOUR_ID)}">All Scenes</a></div><div class="m-lifecycle-list">${rows || `<p class="m-copy">No Scenes are in progress.</p>`}</div></section>`;
 }
 
 function tourReference(tour) {
-  const missing = [];
-  if (!tour.direction?.words) missing.push("Add Tour Direction");
-  if (!(tour.dates || []).length) missing.push("Add dates and venues");
-  if (!tour.playbackSystem) missing.push("Add the playback system");
-  return `<aside class="m-home__sidecar m-inspector" aria-labelledby="tour-reference-heading"><header class="m-inspector__header"><div class="m-stack"><span class="m-label">Tour at a glance</span><h2 id="tour-reference-heading" class="m-inspector-heading">${missing.length ? `${missing.length} details need attention` : "Key details are on record"}</h2></div></header><section class="m-inspector__section">${missing.length ? missing.map((item) => `<a class="m-inspector__item" href="./tour.html?tour=${escape(TOUR_ID)}"><strong>${escape(item)}</strong><span class="m-meta">OPEN TOUR DETAILS</span></a>`).join("") : `<p class="m-copy">Tour Direction V${version(tour.direction.version)}, ${escape((tour.dates || []).length)} dates, and ${escape(tour.playbackSystem)}.</p>`}</section><section class="m-inspector__section"><a class="m-button" href="./tour.html?tour=${escape(TOUR_ID)}">Open Tour Details</a></section></aside>`;
+  const categories = [
+    { label: "Tour Direction", ready: Boolean(tour.direction?.words), detail: tour.direction?.words ? `Direction V${version(tour.direction.version)}` : "Not added" },
+    { label: "Dates and venues", ready: Boolean((tour.dates || []).length), detail: (tour.dates || []).length ? `${tour.dates.length} dates` : "Not added" },
+    { label: "Playback system", ready: Boolean(tour.playbackSystem), detail: tour.playbackSystem ? "Recorded" : "Not added" },
+    { label: "Production setup", ready: Boolean(tour.productionSetup?.words), detail: tour.productionSetup?.words ? `Setup V${version(tour.productionSetup.version)}` : "Not added" },
+    { label: "Themes", ready: Boolean((tour.themes || []).length), detail: (tour.themes || []).length ? `${tour.themes.length} themes` : "Not added" },
+  ];
+  const ready = categories.filter((item) => item.ready).length;
+  const rows = categories.map((item) => `<a class="m-readiness-row" href="./tour.html?tour=${escape(TOUR_ID)}"><div class="m-stack"><strong>${escape(item.label)}</strong><span class="m-meta">${escape(String(item.detail).toUpperCase())}</span></div><span class="m-state ${item.ready ? "m-state--approved" : "m-state--current"}">${item.ready ? "Ready" : "Needs info"}</span></a>`).join("");
+  return `<aside class="m-home__sidecar m-inspector" aria-labelledby="tour-reference-heading"><header class="m-inspector__header"><div class="m-stack"><span class="m-label">Tour at a glance</span><h2 id="tour-reference-heading" class="m-inspector-heading">${ready} of ${categories.length} ready</h2></div></header><section class="m-inspector__section m-readiness-list">${rows}</section><section class="m-inspector__section"><a class="m-button" href="./tour.html?tour=${escape(TOUR_ID)}">Open Tour Details</a></section></aside>`;
 }
 
 function recent(facts) {
@@ -58,10 +78,10 @@ async function load() {
   for (const scene of assignments) {
     try { facts.push(...(await call("get-scene-activity", { assignmentId: scene.id })).facts); } catch {}
   }
-  const reviews = assignments.filter((scene) => scene.stage === "Production review" || scene.stage === "Concept review");
+  const reviews = assignments.filter((scene) => needsUser(scene, user) && ["Production review", "Concept review"].includes(scene.stage));
   reviewCount.textContent = reviews.length ? String(reviews.length) : "";
   locationBar.innerHTML = `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(tour.name)}</span>`;
-  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Today</span><h1 class="m-heading">${escape(tour.name)}</h1><p class="m-copy m-copy--large">See what needs you, then move on.</p></div><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a></header><div class="m-home__layout"><div class="m-home__primary">${attention(assignments, user)}${progress(assignments)}${recent(facts)}</div>${tourReference(tour)}</div>`;
+  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Today</span><h1 class="m-heading">Welcome, ${escape(firstName(user))}</h1><p class="m-copy m-copy--large">See what needs you, then move on.</p></div><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a></header><div class="m-home__layout"><div class="m-home__primary">${attention(assignments, user)}${progress(assignments)}${recent(facts)}</div>${tourReference(tour)}</div>`;
 }
 
 load().catch((error) => { locationBar.innerHTML = ""; root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`; });
