@@ -4,6 +4,8 @@ This applies to anyone pushing to this repo, human or agent. It is short on purp
 
 ## Before you change anything
 
+Required reading before building any screen: docs/meridian-product-architecture.md. Every screen answers four questions within seconds: where am I, what is current, what needs my attention, what happens next. Its interface-consequences list is the review checklist, and the product test in that document is part of acceptance, checked by the owner on the live app.
+
 Read `docs/meridian-thesis-and-architecture.md`. It says what Meridian is and what it is not. A change that does not fit one of its three layers, or the seam with Jim's system, does not belong here.
 
 Read `docs/meridian-roadmap.md` to see what is being built now. Work that is not needed by the current step waits.

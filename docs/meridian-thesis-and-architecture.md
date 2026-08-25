@@ -22,6 +22,8 @@ Three kinds of intelligence make that confidence real, and all three matter: art
 
 The first version is a Higher Roads service operated through Meridian. Higher Roads builds the artist brain, builds or inherits the tour direction, and facilitates approvals. The client gets clarity. Software the client configures comes after repeated proof.
 
+Corrected 2026-08-24. The sentence above is about capability on our side, never a gate on the client's. Nothing requires the client to configure anything; nothing prevents an engaged client from acting directly. Higher Roads can perform every act on the client's behalf, same screens, same record. Two further rulings the same day, recorded in docs/meridian-product-architecture.md: the loop's stations are required while the tools at each station are optional, and attribution replaces permission tiers, with identity on every action and the client-facing surface rule unchanged.
+
 ## The three layers
 
 The system has three layers. They have different lifetimes, different owners, and different jobs. Most architectural questions are answered by asking which layer a thing belongs to.
