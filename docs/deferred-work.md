@@ -416,3 +416,7 @@ Concept review rests on a frozen brief that has not gone out, because no record 
 Delivered rests on a delivery record, and nothing writes one. Production intent is frozen at client approval and the loop ends there.
 
 Bring them back when: Jim's real system replaces the stand-in and a brief goes out before an artboard returns, which makes approved for production observable on its own; a concept-approval record exists; and a delivery is recorded against an approved version.
+
+## The fact shape is written twice
+
+Recorded 2026-08-25 at brief 1 of the accounts spec. The Scene record and the new tour-level record write the same fact shape in two modules. Extracting it was skipped on purpose: a refactor of tested code does not belong inside a storage change. Extract when a third writer appears or when either shape needs to change.

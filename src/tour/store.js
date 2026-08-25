@@ -81,6 +81,37 @@ export function createTourStore(options = {}) {
       return Array.isArray(stored.versions) ? stored.versions : [];
     },
 
+    // The stored tour document. Brief 1 of docs/spec-accounts-artists-tours.md:
+    // a tour created through the app lives here in the exact shape
+    // parseTourFixture produces, so downstream readers cannot tell the
+    // difference. Absent for the demo tour until something writes it.
+    async readTour(tourId) {
+      return readTourDocument(tourId, "tour", null);
+    },
+    async createTour(tourId, document) {
+      const existing = await readTourDocument(tourId, "tour", null);
+      if (existing) {
+        const error = new Error("A tour already exists under that name.");
+        error.status = 409;
+        throw error;
+      }
+      await writeTourDocument(tourId, "tour", document);
+      return document;
+    },
+    // Tour-level facts, the same shape the Scene record writes. The shape is
+    // written twice on purpose for now; extracting it inside this commit would
+    // refactor tested code in a change that is about storage. Recorded in
+    // docs/deferred-work.md.
+    async appendTourFact(tourId, fact) {
+      const stored = await readTourDocument(tourId, "record", { facts: [] });
+      stored.facts.push({ ...fact, at: fact.at || new Date().toISOString() });
+      await writeTourDocument(tourId, "record", stored);
+      return fact;
+    },
+    async readTourFacts(tourId) {
+      const stored = await readTourDocument(tourId, "record", { facts: [] });
+      return stored.facts;
+    },
     async addDirection(tourId, direction) {
       const versions = await this.readDirections(tourId);
       if (versions.some((entry) => entry.version === direction.version)) {

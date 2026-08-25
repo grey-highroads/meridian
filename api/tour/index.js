@@ -14,7 +14,7 @@ import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { CLIENT_ROLE } from "../../src/org/store.js";
 
-// The tour layer's one function. Actions: get-tour, get-assignment,
+// The tour layer's one function. Actions: create-tour, get-tour, get-assignment,
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
 // issue-brief, get-handoffs, submit-artboard, get-artboards,
@@ -42,19 +42,31 @@ export async function readTourFixture(tourId, options = {}) {
 }
 
 async function loadTour(tourId, options) {
-  let texts;
-  try {
-    texts = await readTourFixture(tourId, options);
-  } catch {
-    const error = new Error("No tour is stored under that name.");
-    error.status = 404;
-    throw error;
+  // Stored tours win. The fixture is the demo seed and is only load bearing
+  // when nothing is stored under the id, which in production is true only for
+  // the demo tour. A test that injects its own reader reads what it supplied,
+  // exactly as before.
+  const tourStoreForRead = options.tourStore || (!options.store && !options.reader && !options.lister ? createTourStore() : null);
+  let fixture = null;
+  if (tourStoreForRead) {
+    const stored = await tourStoreForRead.readTour(tourId);
+    if (stored) fixture = stored;
   }
-  const fixture = parseTourFixture(texts);
+  if (!fixture) {
+    let texts;
+    try {
+      texts = await readTourFixture(tourId, options);
+    } catch {
+      const error = new Error("No tour is stored under that name.");
+      error.status = 404;
+      throw error;
+    }
+    fixture = parseTourFixture(texts);
+  }
   // Production reads Tour-level additions from the Tour store. Older focused
   // tests that pass only an Artist store continue to exercise the fixture in
   // isolation; tests of these interactions pass the Tour store explicitly.
-  const tourStore = options.tourStore || (!options.store && !options.reader && !options.lister ? createTourStore() : null);
+  const tourStore = tourStoreForRead;
   if (!tourStore) return fixture;
   const [directions, requests] = await Promise.all([
     tourStore.readDirections(fixture.tour.id),
@@ -239,6 +251,7 @@ const CLIENT_ACTIONS = new Set([
   "get-scene-activity",
   "submit-artboard",
   "add-tour-direction",
+  "create-tour",
   "create-scene-request",
   "get-scene-workspace",
   "save-scene-direction",
@@ -336,6 +349,65 @@ export async function handleAction(body, options = {}) {
       .filter((entry) => entry.directionVersion < direction.version)
       .map((entry) => ({ id: entry.id, title: entry.title, directionVersion: entry.directionVersion }));
     return { direction, affectedScenes };
+  }
+
+  if (body.action === "create-tour") {
+    const name = String(body.name || "").trim();
+    if (!name) {
+      const error = new Error("Name the tour before creating it.");
+      error.status = 400;
+      throw error;
+    }
+    const artistId = String(body.artistId || "").trim();
+    if (!artistId) {
+      const error = new Error("Name the artist this tour belongs to.");
+      error.status = 400;
+      throw error;
+    }
+    const id = sanitizeClientId(name);
+    if (id === "default") {
+      // sanitizeClientId falls back to "default", which is the inherited BWS
+      // namespace under the same storage root. Nothing lands there.
+      const error = new Error("That name does not make a usable tour id. Use letters or numbers.");
+      error.status = 400;
+      throw error;
+    }
+    if (id === "off-the-map-2026") {
+      const error = new Error("A tour already exists under that name.");
+      error.status = 409;
+      throw error;
+    }
+    const tourStore = options.tourStore || createTourStore();
+    const createdAt = new Date().toISOString();
+    // The artist id is stored as given and not validated against the artist
+    // constant, because artists become stored objects in brief 3 of
+    // docs/spec-accounts-artists-tours.md.
+    const document = {
+      tour: {
+        id,
+        name,
+        artistId,
+        playbackSystem: null,
+        productionSetup: null,
+        dates: [],
+        themes: [],
+        approximateDates: optionalText(body.approximateDates),
+        primaryContact: optionalText(body.primaryContact),
+        // An absent direction reads as version 0 with no words, so the first
+        // direction someone writes becomes version 1 and Home shows the gap.
+        direction: { version: 0, words: "", setBy: null, setOn: null, role: null },
+      },
+      assignments: [],
+    };
+    await tourStore.createTour(id, document);
+    await tourStore.appendTourFact(id, {
+      ...actor,
+      action: "Created the tour",
+      version: null,
+      onBehalfOf: optionalText(body.onBehalfOf),
+      at: createdAt,
+    });
+    return { tour: document.tour };
   }
 
   if (body.action === "create-scene-request") {
