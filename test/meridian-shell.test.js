@@ -122,6 +122,9 @@ test("a successful login runs the temporary Meridian boot sequence once", () => 
   assert.match(shell, /Opening Meridian/, "the boot sequence has no accessible status");
   assert.match(patterns, /height: min\(80vh, 80vw\)/, "the boot object is not the intended viewport scale");
   assert.match(patterns, /m-boot-sweep/, "the temporary object has no calibration motion");
+  assert.match(patterns, /var\(--m-motion-boot\)/, "the calibration parts do not share one build duration");
+  assert.match(read("app/design/tokens.css"), /--m-motion-boot: 2880ms/, "the build is not three times the original duration");
+  assert.match(shell, /reducedMotion \? 120 : 3120/, "the full-motion sequence exits before the build resolves");
   assert.doesNotMatch(shell, /\.gif|\.png|\.webp/, "the boot sequence uses a raster asset");
 });
 

@@ -39,12 +39,12 @@ function mountBootSequence() {
   document.body.prepend(boot);
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const displayTime = reducedMotion ? 120 : 1040;
+  const displayTime = reducedMotion ? 120 : 3120;
   window.setTimeout(() => {
     boot.classList.add("is-leaving");
     document.body.classList.remove("m-booting");
     shell?.removeAttribute("aria-hidden");
-    window.setTimeout(() => boot.remove(), reducedMotion ? 20 : 280);
+    window.setTimeout(() => boot.remove(), reducedMotion ? 20 : 520);
   }, displayTime);
 }
 

@@ -124,7 +124,7 @@ Use `.m-shell__nav-icon` with a visible `.m-shell__nav-label`. Use `.m-shell__na
 
 ### Boot sequence
 
-The temporary boot sequence appears once after a successful login. It uses a native vector object and CSS motion from `app/design/`, fills most of the viewport, and resolves in about one second while the real page loads behind it.
+The temporary boot sequence appears once after a successful login. It uses a native vector object and CSS motion from `app/design/`, fills most of the viewport, and assembles over about three seconds while the real page loads behind it.
 
 The sequence creates atmosphere. It does not claim that Meridian is running checks, show fake progress, or delay later navigation. Reduced motion receives a brief static resolve. The calibration object is temporary and must not be reused as the Meridian identity mark without a separate design decision.
 
