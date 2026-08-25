@@ -89,6 +89,8 @@ Brain guidance never becomes Scene Direction by itself. Do not reserve permanent
 
 ## Shell
 
+The current three-destination shell (Scenes, Tour, Artist Brain) is transitional. The target primary navigation is Home, Scenes, Reviews, and Tour details, as defined in docs/meridian-product-architecture.md, with Artist Brain becoming a Higher Roads utility and contextual contributor. Do not extend the transitional navigation into new screens; the revised foundation lands before the workspace, Home, and Reviews builds begin.
+
 Use `.m-shell` for the application frame.
 
 The everyday navigation has three destinations:
@@ -213,4 +215,4 @@ Use the static screens in `app/design/samples/` as composition references:
 - `review.html` for Artboard feedback and version comparison;
 - `handoff.html` for the issued record and approved Production Intent.
 
-Fixtures demonstrate hierarchy, disclosure, states, and component structure. They do not define backend mechanics, permissions, or data contracts. Read `docs/meridian-experience.md` for the product and experience reasoning behind them.
+Stage and status treatments stay restrained: the words carry the meaning. Active stages use the current treatment and completed states use the approved treatment; nobody invents a color per stage. Fixtures demonstrate hierarchy, disclosure, states, and component structure. They do not define backend mechanics, permissions, or data contracts. Read `docs/meridian-experience.md` for the product and experience reasoning behind them.
