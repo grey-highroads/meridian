@@ -420,3 +420,5 @@ Bring them back when: Jim's real system replaces the stand-in and a brief goes o
 ## The fact shape is written twice
 
 Recorded 2026-08-25 at brief 1 of the accounts spec. The Scene record and the new tour-level record write the same fact shape in two modules. Extracting it was skipped on purpose: a refactor of tested code does not belong inside a storage change. Extract when a third writer appears or when either shape needs to change.
+
+Updated 2026-08-25 at brief 3 of the accounts spec. The third writer has appeared: `appendArtistFact` in `src/org/artists.js` writes the same shape a third time, with an `artistId` field the other two do not carry. The named trigger has fired. Extraction was still not done inside brief 3, because the brief covers artist rows and the builder does not widen a brief on its own. This is now a ruling waiting on the architect, not a condition waiting on an event.

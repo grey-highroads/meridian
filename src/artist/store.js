@@ -84,6 +84,10 @@ export function createArtistStore(options = {}) {
   }
 
   return {
+    // Exposed so a caller holding this store can open the account's artist
+    // directory on the same backend. Reading it does not reach brain content.
+    backend,
+
     async readRecord(artistId) {
       return await readDocument(artistId, "record", { ...EMPTY_RECORD });
     },

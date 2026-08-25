@@ -5,15 +5,16 @@ import { applyRulings, createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { OPERATOR_ROLE } from "../../src/org/store.js";
+import { DEMO_ACCOUNT_ID, RECORD_ACTOR, createArtistDirectory } from "../../src/org/artists.js";
 
 // The artist layer's one function. New operations arrive as actions here
 // rather than as new files, because the hosting tier caps functions and
 // retrofitting dispatch later is more work than starting with it.
 //
-// The actions are: import-intake, get-artist, list-findings, approve-brain,
-// remove-finding, restore-finding, get-evidence. None of them returns the
-// prior. The prior is written at import and read by nothing, because the
-// thesis says it is never shown.
+// The actions are: create-artist, list-artists, import-intake, get-artist,
+// list-findings, approve-brain, remove-finding, restore-finding, get-evidence.
+// None of them returns the prior. The prior is written at import and read by
+// nothing, because the thesis says it is never shown.
 //
 // Approval is wholesale. The operator read and sorted every finding during
 // intake, so one person approves the whole brain and then takes out the
@@ -27,8 +28,19 @@ const INTAKE_FILES = {
   log: "04-log.md",
 };
 
-// Names the operator would use for the artists the repo carries intake for.
-const ARTIST_NAMES = { "dierks-bentley": "Dierks Bentley" };
+function optionalText(value) {
+  const text = String(value || "").trim();
+  return text || null;
+}
+
+// The account's artist rows, opened on the same backend as the artist store so
+// a caller that injected one backend gets one backend. Brief 3 of
+// docs/spec-accounts-artists-tours.md.
+function openDirectory(options, store, accountId) {
+  if (options.artists) return options.artists;
+  const backend = store && store.backend ? store.backend : null;
+  return createArtistDirectory(backend ? { backend, accountId } : { accountId });
+}
 
 export function intakeDirectory(artistId) {
   return join(process.cwd(), "artists", artistId, "intake");
@@ -43,7 +55,7 @@ export async function readIntakeFiles(artistId, reader = readFile) {
   return texts;
 }
 
-async function importIntake(store, artistId, reader) {
+async function importIntake(store, directory, artistId, reader) {
   let texts;
   try {
     texts = await readIntakeFiles(artistId, reader);
@@ -52,9 +64,18 @@ async function importIntake(store, artistId, reader) {
     error.status = 404;
     throw error;
   }
+  // Intake requires an artist that exists in the account doing the importing.
+  // The display name is the one stored on that row, so two accounts holding the
+  // same artist id read their own name and neither learns about the other.
+  const artist = await directory.findArtist(artistId);
+  if (!artist) {
+    const error = new Error("No artist is stored under that name. Create the artist before importing intake files.");
+    error.status = 404;
+    throw error;
+  }
   const parsed = parseIntake({
     artistId,
-    artistName: Object.prototype.hasOwnProperty.call(ARTIST_NAMES, artistId) ? ARTIST_NAMES[artistId] : artistId,
+    artistName: artist.name,
     ...texts,
   });
   const record = await store.writeImport(artistId, parsed);
@@ -88,6 +109,26 @@ export async function handleAction(body, options = {}) {
   const accountId = options.user ? (options.user.accountId || "dierks-bentley") : null;
   const store = options.store || createArtistStore({ accountId });
   const reader = options.reader;
+
+  // Both of these name an artist by its name or name none at all, so they run
+  // before the guard that requires an artist id on the body.
+  if (body.action === "list-artists") {
+    return { artists: await openDirectory(options, store, accountId).readArtists() };
+  }
+  if (body.action === "create-artist") {
+    const directory = openDirectory(options, store, accountId);
+    const created = await directory.createArtist({ name: body.name, identities: body.identities });
+    await directory.appendArtistFact({
+      actor: options.user ? options.user.displayName : RECORD_ACTOR,
+      role: options.user ? options.user.roleLabel || null : null,
+      account: accountId || DEMO_ACCOUNT_ID,
+      action: "Created the artist",
+      artistId: created.id,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { artist: created };
+  }
+
   const artistId = sanitizeClientId(body.artistId || "");
   if (!artistId || artistId === "default") {
     const error = new Error("Name the artist to work on.");
@@ -96,7 +137,7 @@ export async function handleAction(body, options = {}) {
   }
 
   if (body.action === "import-intake") {
-    return await importIntake(store, artistId, reader);
+    return await importIntake(store, openDirectory(options, store, accountId), artistId, reader);
   }
   if (body.action === "get-artist") {
     const [record, decisions] = await Promise.all([store.readRecord(artistId), store.readDecisions(artistId)]);
