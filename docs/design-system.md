@@ -93,7 +93,7 @@ The current three-destination shell (Scenes, Tour, Artist Brain) is transitional
 
 Use `.m-shell` for the application frame.
 
-The everyday navigation has three destinations:
+The transitional shell's three destinations, until the revised foundation lands:
 
 - Scenes
 - Tour
