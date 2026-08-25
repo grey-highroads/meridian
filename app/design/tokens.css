@@ -75,6 +75,8 @@
   --m-type-object: 1.25rem;
   --m-type-section: clamp(1.5rem, 2.2vw, 2.125rem);
   --m-type-page: clamp(2.375rem, 5vw, 4.5rem);
+  --m-type-work-copy: 1rem;
+  --m-type-work-title: clamp(1.375rem, 1.6vw, 1.75rem);
 
   /* Space */
   --m-space-1: 0.25rem;

@@ -93,4 +93,14 @@ test("the live shell has the four destinations and Home uses the approved patter
   for (const pattern of ["m-home__layout", "m-attention-list", "m-lifecycle-list", "m-home__sidecar m-inspector"]) {
     assert.match(script, new RegExp(pattern), `live Home is missing ${pattern}`);
   }
+  assert.doesNotMatch(script, /Foundation ready|Tour readiness/, "Home exposes architecture instead of tour language");
+  assert.match(script, /Request a Scene/, "Home does not offer the primary Scene action independently");
+});
+
+test("the shared shell restores every primary navigation icon", () => {
+  const source = read("app/shell.js");
+  for (const destination of ["index.html", "scenes.html", "reviews.html", "tour.html"]) {
+    assert.match(source, new RegExp(`"${destination.replace(".", "\\.")}"`), `shell has no icon for ${destination}`);
+  }
+  assert.match(source, /insertAdjacentHTML\("afterbegin"/, "shell does not add missing icons to live navigation");
 });

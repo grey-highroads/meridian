@@ -38,12 +38,12 @@ function progress(assignments) {
   return `<section class="m-home__progress" aria-labelledby="progress-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Scenes in progress</span><h2 id="progress-heading" class="m-section-heading">Current work</h2></div><a class="m-button m-button--small" href="./scenes.html?tour=${escape(TOUR_ID)}">All Scenes</a></div><div class="m-lifecycle-list">${rows || `<p class="m-copy">No Scenes are in progress.</p>`}</div></section>`;
 }
 
-function readiness(tour) {
+function tourReference(tour) {
   const missing = [];
   if (!tour.direction?.words) missing.push("Add Tour Direction");
   if (!(tour.dates || []).length) missing.push("Add dates and venues");
   if (!tour.playbackSystem) missing.push("Add the playback system");
-  return `<aside class="m-home__sidecar m-inspector" aria-labelledby="readiness-heading"><header class="m-inspector__header"><div class="m-stack"><span class="m-label">Tour readiness</span><h2 id="readiness-heading" class="m-inspector-heading">${missing.length ? `${missing.length} items missing` : "Foundation ready"}</h2></div></header><section class="m-inspector__section">${missing.length ? missing.map((item) => `<a class="m-inspector__item" href="./tour.html?tour=${escape(TOUR_ID)}"><strong>${escape(item)}</strong><span class="m-meta">OPEN TOUR DETAILS</span></a>`).join("") : `<div class="m-stack"><span class="m-state m-state--approved">Ready</span><p class="m-copy">Direction V${version(tour.direction.version)}, ${escape((tour.dates || []).length)} dates, and ${escape(tour.playbackSystem)} are on record.</p></div>`}</section><section class="m-inspector__section"><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a></section></aside>`;
+  return `<aside class="m-home__sidecar m-inspector" aria-labelledby="tour-reference-heading"><header class="m-inspector__header"><div class="m-stack"><span class="m-label">Tour at a glance</span><h2 id="tour-reference-heading" class="m-inspector-heading">${missing.length ? `${missing.length} details need attention` : "Key details are on record"}</h2></div></header><section class="m-inspector__section">${missing.length ? missing.map((item) => `<a class="m-inspector__item" href="./tour.html?tour=${escape(TOUR_ID)}"><strong>${escape(item)}</strong><span class="m-meta">OPEN TOUR DETAILS</span></a>`).join("") : `<p class="m-copy">Tour Direction V${version(tour.direction.version)}, ${escape((tour.dates || []).length)} dates, and ${escape(tour.playbackSystem)}.</p>`}</section><section class="m-inspector__section"><a class="m-button" href="./tour.html?tour=${escape(TOUR_ID)}">Open Tour Details</a></section></aside>`;
 }
 
 function recent(facts) {
@@ -61,7 +61,7 @@ async function load() {
   const reviews = assignments.filter((scene) => scene.stage === "Production review" || scene.stage === "Concept review");
   reviewCount.textContent = reviews.length ? String(reviews.length) : "";
   locationBar.innerHTML = `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(tour.name)}</span>`;
-  root.innerHTML = `<header class="m-home__header"><span class="m-label">Today</span><h1 class="m-heading">${escape(tour.name)}</h1><p class="m-copy m-copy--large">See what needs you, then move on.</p></header><div class="m-home__layout"><div class="m-home__primary">${attention(assignments, user)}${progress(assignments)}${recent(facts)}</div>${readiness(tour)}</div>`;
+  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Today</span><h1 class="m-heading">${escape(tour.name)}</h1><p class="m-copy m-copy--large">See what needs you, then move on.</p></div><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a></header><div class="m-home__layout"><div class="m-home__primary">${attention(assignments, user)}${progress(assignments)}${recent(facts)}</div>${tourReference(tour)}</div>`;
 }
 
 load().catch((error) => { locationBar.innerHTML = ""; root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`; });
