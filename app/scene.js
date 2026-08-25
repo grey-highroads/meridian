@@ -26,8 +26,8 @@ const view = {
   handoffs: [],
   artboards: [],
   receipt: null,
-  draft: { title: "", direction: "", marked: [], markedVenues: [] },
-  inspector: "request",
+  draft: { direction: "", marked: [], markedVenues: [] },
+  inspector: "brain",
   message: "",
   // Which part of the page the message belongs beside. Empty means the top of
   // the page. A message about the brain belongs next to the button that asked
@@ -87,22 +87,17 @@ function sourceLine(entry) {
 // The request, as it arrived
 // ---------------------------------------------------------------------------
 
-function requestSection() {
+function requestWork() {
   const assignment = view.assignment;
   const required = (assignment.requiredElements || [])
     .map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
-  return `<section class="m-workstation__panel" id="request-panel" role="tabpanel" aria-labelledby="request-tab" ${view.inspector === "request" ? "" : "hidden"}>
-      <div class="m-inspector-group">
-        <span class="m-label">Client request</span>
-        <h2 class="m-inspector-heading">${escape(assignment.title)}</h2>
-        ${assignment.moment ? `<p class="m-meta">${escape(assignment.moment.toUpperCase())}</p>` : ""}
-        ${paragraphs(assignment.request)}
+  return `<section class="m-scene-source" aria-labelledby="client-request-heading">
+      <div class="m-scene-source__head">
+        <h2 id="client-request-heading" class="m-scene-work-heading">Client request</h2>
+        <span class="m-meta">FROM ${escape(String(assignment.requestedBy || "CLIENT TEAM").toUpperCase())}</span>
       </div>
-      ${required ? `<div class="m-inspector-group"><span class="m-label">Required</span><ul>${required}</ul></div>` : ""}
-      <div class="m-inspector-group">
-        <span class="m-label">Source</span>
-        <p class="m-copy">${escape(assignment.requestedBy || "Client team")}</p>
-      </div>
+      <div class="m-scene-source__copy">${paragraphs(assignment.request)}</div>
+      ${required ? `<div class="m-scene-required"><span class="m-label">Required</span><ul>${required}</ul></div>` : ""}
     </section>`;
 }
 
@@ -168,13 +163,20 @@ function directionSection() {
   const version = view.assignment.directionVersion;
   return `<section class="m-direction-editor" aria-labelledby="scene-direction-heading">
       <div class="m-direction-editor__header">
-        <span id="scene-direction-heading" class="m-label m-direction-editor__label">Scene direction</span>
-        <input class="m-direction-editor__title" id="scene-title" data-draft="title" value="${escape(view.draft.title)}" aria-label="Scene direction name" placeholder="Name this direction" />
+        <span class="m-label m-direction-editor__label">Scene${view.assignment.moment ? ` / ${escape(view.assignment.moment)}` : ""}</span>
+        <h1 id="scene-direction-heading" class="m-direction-editor__title">${escape(view.assignment.title)}</h1>
       </div>
       <div class="m-direction-editor__body">
         ${view.message && !view.messageAt ? `<div class="m-callout m-callout--current m-direction-editor__notice"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-        <label class="m-label" for="scene-direction">Production-facing direction</label>
-        <textarea class="m-direction-editor__textarea" id="scene-direction" data-draft="direction" placeholder="Describe the direction production should build to.">${escape(view.draft.direction)}</textarea>
+        ${requestWork()}
+        ${tourDirectionWork()}
+        <section class="m-scene-direction-work" aria-labelledby="production-direction-heading">
+          <div class="m-stack">
+            <h2 id="production-direction-heading" class="m-scene-work-heading">Scene direction for production</h2>
+            <p class="m-copy">Turn the request and selected Tour Direction into the direction production should build.</p>
+          </div>
+          <textarea class="m-direction-editor__textarea" id="scene-direction" data-draft="direction" aria-label="Scene direction for production" placeholder="Describe the direction production should build to.">${escape(view.draft.direction)}</textarea>
+        </section>
         <div class="m-direction-editor__meta">
           <span>Written by Higher Roads</span>
           <span>Against Tour Direction V0${escape(version)}</span>
@@ -189,19 +191,21 @@ function directionSection() {
 // Which parts of the tour direction bear on this Scene
 // ---------------------------------------------------------------------------
 
-function marksSection() {
+function tourDirectionWork() {
   const all = view.context.directionParagraphs || [];
   const rows = all.map((text, index) => `<label class="m-inspector-choice">
       <input type="checkbox" data-paragraph="${escape(index)}" ${view.draft.marked.includes(index) ? "checked" : ""} />
       <span class="m-copy">${escape(text)}</span>
     </label>`).join("");
-  return `<section class="m-workstation__panel" id="direction-panel" role="tabpanel" aria-labelledby="marks-heading" ${view.inspector === "direction" ? "" : "hidden"}>
-      <div class="m-inspector-group">
-        <span class="m-label">Tour Direction V0${escape(view.context.directionVersion)}</span>
-        <h2 id="marks-heading" class="m-inspector-heading">Applied to this Scene</h2>
-        <p class="m-copy">Mark only the parts production needs with this Scene.</p>
+  return `<section class="m-scene-source" aria-labelledby="tour-direction-heading">
+      <div class="m-scene-source__head">
+        <div class="m-stack">
+          <h2 id="tour-direction-heading" class="m-scene-work-heading">Tour Direction for this Scene</h2>
+          <p class="m-copy">Select the parts production needs with this Scene.</p>
+        </div>
+        <span class="m-meta">DIRECTION V0${escape(view.context.directionVersion)}</span>
       </div>
-      <div>${rows}</div>
+      <div class="m-scene-direction-options">${rows}</div>
     </section>`;
 }
 
@@ -343,18 +347,14 @@ function render() {
           <span class="m-label">Inspector</span>
         </div>
         <div class="m-workstation__tabs" role="tablist" aria-label="Scene context">
-          ${tab("request", "Request")}
           ${view.user && view.user.role === "higher-roads" ? tab("brain", "Brain") : ""}
-          ${tab("direction", "Direction")}
           ${tab("setup", "Setup")}
-          ${view.user && view.user.role !== "higher-roads" ? tab("versions", "Versions") : ""}
+          ${tab("versions", "Versions")}
         </div>
         <div class="m-workstation__panels">
-          ${requestSection()}
           ${view.user && view.user.role === "higher-roads" ? brainSection() : ""}
-          ${marksSection()}
           ${venueSection()}
-          ${view.user && view.user.role !== "higher-roads" ? versionsSection() : ""}
+          ${versionsSection()}
         </div>
       </aside>
     </div>`;
@@ -367,6 +367,7 @@ async function load() {
   } catch {
     view.user = { role: "higher-roads", displayName: "Higher Roads" };
   }
+  view.inspector = view.user.role === "higher-roads" ? "brain" : "setup";
   const { tour, assignments } = await call("get-tour");
   view.tour = tour;
   if (!view.sceneId && assignments.length) view.sceneId = assignments[0].id;
@@ -390,7 +391,6 @@ async function load() {
     view.artboards = [];
   }
   if (view.concept) {
-    view.draft.title = view.concept.title;
     view.draft.direction = view.concept.idea;
     view.draft.marked = (view.concept.directionParagraphs || []).slice();
     view.draft.markedVenues = (view.concept.venueExceptions || []).slice();
@@ -414,14 +414,14 @@ async function guard(work, where = "") {
 }
 
 async function save() {
-  if (!view.draft.title.trim() || !view.draft.direction.trim()) {
-    throw new Error("A Scene direction needs a name and some direction.");
+  if (!view.draft.direction.trim()) {
+    throw new Error("Write the Scene direction before saving it.");
   }
   const used = view.usedSuggestion;
   const applied = view.suggestions ? view.suggestions.appliedFindings || [] : [];
   const cited = new Set(used ? used.rhymesWith || [] : []);
   const concept = {
-    title: view.draft.title.trim(),
+    title: view.assignment.title,
     idea: view.draft.direction.trim(),
     whyThisArtist: used ? used.whyThisArtist : "",
     asksOfProduction: used ? used.asksOfProduction : "",
@@ -468,9 +468,8 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       const used = view.suggestions.proposals[Number(target.dataset.use)];
       view.usedSuggestion = used;
-      view.draft.title = used.title;
-      view.draft.direction = used.idea;
-      view.message = "Used. Edit it into your words before you save.";
+      view.draft.direction = [view.draft.direction.trim(), used.idea.trim()].filter(Boolean).join("\n\n");
+      view.message = "Added to the Scene direction. Edit it into your words before you save.";
       view.messageAt = "";
       render();
     });
@@ -507,7 +506,6 @@ document.addEventListener("click", (event) => {
 document.addEventListener("input", (event) => {
   const field = event.target;
   if (!field.dataset || !field.dataset.draft) return;
-  if (field.dataset.draft === "title") view.draft.title = field.value;
   if (field.dataset.draft === "direction") view.draft.direction = field.value;
 });
 

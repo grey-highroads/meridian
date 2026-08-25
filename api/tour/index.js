@@ -346,8 +346,13 @@ export async function handleAction(body, options = {}) {
       error.status = 400;
       throw error;
     }
+    const title = optionalText(body.title);
+    if (!title) {
+      const error = new Error("Name the Scene before submitting it.");
+      error.status = 400;
+      throw error;
+    }
     const moment = optionalText(body.moment);
-    const title = optionalText(body.title) || moment || "Untitled Scene";
     const tourStore = options.tourStore || createTourStore();
     const requestedAt = new Date().toISOString();
     const assignment = {

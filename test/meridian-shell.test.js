@@ -104,3 +104,19 @@ test("the shared shell restores every primary navigation icon", () => {
   }
   assert.match(source, /insertAdjacentHTML\("afterbegin"/, "shell does not add missing icons to live navigation");
 });
+
+test("the Scene workspace keeps the request and applicable direction with the work", () => {
+  const source = read("app/scene.js");
+  assert.match(source, /Client request/, "Scene main workspace does not show the request");
+  assert.match(source, /Tour Direction for this Scene/, "Scene main workspace does not show applicable Tour Direction");
+  assert.match(source, /Scene direction for production/, "Scene main workspace does not name the production direction");
+  assert.doesNotMatch(source, /tab\("request"|tab\("direction"/, "request or direction still live in the inspector");
+  assert.match(source, /tab\("brain".*tab\("setup".*tab\("versions"/s, "inspector does not contain only optional tools and history");
+});
+
+test("the Scene directory is a quiet list and Scene requests require names", () => {
+  const directory = read("app/scenes.js");
+  assert.doesNotMatch(directory, /WAITING ON|currentVersion|nextAction/, "Scene cards still repeat lifecycle metadata");
+  const request = read("app/request.js");
+  assert.match(request, /id="title"[^>]*required/, "Scene name is not required in the request form");
+});

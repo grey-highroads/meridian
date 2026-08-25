@@ -168,6 +168,26 @@
     padding-right: var(--m-space-6);
   }
 
+  .m-directory .m-scene-row {
+    min-height: 6rem;
+  }
+
+  .m-directory .m-rule-row__title {
+    font-size: 1.125rem;
+  }
+
+  .m-scene-row__open {
+    color: var(--m-text-quiet);
+    font-family: var(--m-font-mono);
+    font-size: var(--m-type-label);
+    letter-spacing: var(--m-tracking-label);
+    text-transform: uppercase;
+  }
+
+  .m-scene-row:hover .m-scene-row__open {
+    color: var(--m-signal-instrument-strong);
+  }
+
   .m-directory .m-rule-row > .m-meta {
     max-width: 32rem;
     text-align: right;
@@ -608,14 +628,70 @@
     padding: var(--m-space-7);
   }
 
+  .m-scene-source,
+  .m-scene-direction-work {
+    border-bottom: var(--m-rule-width) solid var(--m-border-default);
+    display: grid;
+    gap: var(--m-space-5);
+    padding-bottom: var(--m-space-6);
+  }
+
+  .m-scene-source + .m-scene-source,
+  .m-scene-direction-work {
+    padding-top: var(--m-space-6);
+  }
+
+  .m-scene-source__head {
+    align-items: start;
+    display: flex;
+    gap: var(--m-space-5);
+    justify-content: space-between;
+  }
+
+  .m-scene-work-heading {
+    color: var(--m-text-primary);
+    font-size: 1.0625rem;
+    font-weight: var(--m-weight-medium);
+    letter-spacing: var(--m-tracking-tight);
+    line-height: 1.25;
+  }
+
+  .m-scene-source__copy {
+    max-width: var(--m-copy-width);
+  }
+
+  .m-scene-source__copy .m-copy {
+    color: var(--m-text-secondary);
+    font-size: var(--m-type-work-copy);
+    line-height: 1.6;
+  }
+
+  .m-scene-required {
+    border-left: var(--m-rule-width) solid var(--m-signal-current);
+    display: grid;
+    gap: var(--m-space-3);
+    padding-left: var(--m-space-4);
+  }
+
+  .m-scene-required ul {
+    display: grid;
+    gap: var(--m-space-2);
+    margin: 0;
+    padding-left: var(--m-space-5);
+  }
+
+  .m-scene-direction-options {
+    border-bottom: var(--m-rule-width) solid var(--m-border-default);
+  }
+
   .m-direction-editor__textarea {
     background: transparent;
     border: 0;
     color: var(--m-text-secondary);
-    flex: 1;
+    flex: none;
     font-size: var(--m-type-work-copy);
     line-height: 1.7;
-    min-height: 18rem;
+    min-height: 12rem;
     outline: 0;
     padding: 0;
     resize: vertical;
@@ -688,7 +764,7 @@
   .m-workstation__tabs {
     border-bottom: var(--m-rule-width) solid var(--m-border-default);
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   }
 
   .m-workstation__tab {

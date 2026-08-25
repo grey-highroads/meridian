@@ -45,6 +45,7 @@ test("an engaged client can request a thin Scene against the current direction",
   const { assignment } = await tourAction({
     action: "create-scene-request",
     tourId: TOUR,
+    title: "Final chorus",
     moment: "Final chorus",
     request: "Let the whole room feel like it is breathing with the last chorus.",
     references: ["https://example.com/reference"],
@@ -67,14 +68,18 @@ test("an engaged client can request a thin Scene against the current direction",
   assert.equal(facts[0].actor, "Nadia Cole");
 });
 
-test("a Scene request needs only the sentence and never requires references", async () => {
+test("a Scene request needs a name and the request, and never requires references", async () => {
   const { asClient } = await ready();
-  const { assignment } = await tourAction({ action: "create-scene-request", tourId: TOUR, request: "A quiet field of light behind the first verse." }, asClient);
-  assert.equal(assignment.title, "Untitled Scene");
+  const { assignment } = await tourAction({ action: "create-scene-request", tourId: TOUR, title: "First light", request: "A quiet field of light behind the first verse." }, asClient);
+  assert.equal(assignment.title, "First light");
   assert.deepEqual(assignment.references, []);
   await assert.rejects(
-    () => tourAction({ action: "create-scene-request", tourId: TOUR, request: "" }, asClient),
+    () => tourAction({ action: "create-scene-request", tourId: TOUR, title: "First light", request: "" }, asClient),
     /Write the Scene request/,
+  );
+  await assert.rejects(
+    () => tourAction({ action: "create-scene-request", tourId: TOUR, request: "A quiet field of light." }, asClient),
+    /Name the Scene/,
   );
 });
 

@@ -203,13 +203,13 @@ function scenePage(propose) {
   };
 }
 
-// The markup between the Artist Brain heading and the next section. A sentence
-// in here sits beside the button that was pressed.
+// The markup between the Artist Brain heading and the next inspector panel. A
+// sentence in here sits beside the button that was pressed.
 function suggestionsSection(markup) {
   const start = markup.indexOf('aria-labelledby="brain-heading"');
-  const end = markup.indexOf('aria-labelledby="marks-heading"');
+  const end = markup.indexOf('id="setup-panel"');
   assert.ok(start > -1, "the Scene page no longer has an Artist Brain section");
-  assert.ok(end > start, "the Artist Brain section is no longer followed by the marks section");
+  assert.ok(end > start, "the Artist Brain section is no longer followed by another inspector panel");
   return markup.slice(start, end);
 }
 
