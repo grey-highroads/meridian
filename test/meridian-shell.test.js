@@ -132,9 +132,25 @@ test("the Scene directory is a quiet list and Scene requests require names", () 
 
 test("an empty decision queue does not hide completed sample reviews", () => {
   const directory = read("app/reviews.js");
-  assert.match(directory, /Recently reviewed/, "Reviews has no route back into completed work");
+  assert.match(directory, /Past reviews/, "Reviews has no route back into completed work");
   assert.match(directory, /\["Final approved", "Delivered"\]/, "Reviews does not limit recent work to completed review states");
+  assert.doesNotMatch(directory, /Open past work/, "the past-review section still reads like a card action");
+  assert.match(directory, /Artboard or Scene concept needs your decision/, "the empty queue does not name what is clear");
   const review = read("app/review.js");
-  assert.match(review, /The client approved V/, "completed review does not show its exact approved version");
+  assert.match(review, /was approved by the client/, "completed review does not show its exact approved version");
   assert.match(review, /read only/, "completed review still presents itself as an active decision");
+});
+
+test("review decisions lead instead of hiding in a footer", () => {
+  const operatorMarkup = read("app/review.html");
+  const operator = read("app/review.js");
+  const clientMarkup = read("app/client-review.html");
+  const client = read("app/client-review.js");
+  assert.doesNotMatch(operatorMarkup, /m-action-bar/, "internal review still reserves the footer for its decision");
+  assert.doesNotMatch(clientMarkup, /m-action-bar/, "client review still reserves the footer for its decision");
+  assert.match(operator, /Decide on Artboard V/, "internal review does not lead with the exact Artboard decision");
+  assert.match(operator, /href="#review-feedback"/, "internal review does not offer feedback near the top");
+  assert.doesNotMatch(client, /Your work/, "client review still spends its headline on a generic phrase");
+  assert.match(client, /Approve Artboard V/, "client review does not offer exact-version approval near the top");
+  assert.match(client, /Feedback on Artboard V/, "client feedback does not name the Artboard it affects");
 });

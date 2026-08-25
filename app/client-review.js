@@ -12,7 +12,6 @@ const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 const utility = document.getElementById("utility");
 const locationBar = document.getElementById("location");
 const page = document.getElementById("page");
-const actions = document.getElementById("actions");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
@@ -54,8 +53,11 @@ function render() {
   utility.innerHTML = `<a class="m-shell__nav-link" href="/api/auth/login?signout=1">
       <span class="m-shell__nav-label">Sign out</span>
     </a>`;
+  const locationState = view.version
+    ? (view.approved ? `Artboard V${view.version} approved` : `Artboard V${view.version} waiting on you`)
+    : "No Artboard waiting";
   locationBar.innerHTML = `<span class="m-meta">${escape(String(view.tour.name).toUpperCase())}</span>
-    <span class="m-state ${view.approved ? "m-state--approved" : "m-state--current"}">${escape(view.approved ? "Approved" : "Waiting on you")}</span>`;
+    <span class="m-state ${view.approved || !view.version ? "m-state--approved" : "m-state--current"}">${escape(locationState)}</span>`;
 
   if (!view.version) {
     page.innerHTML = `<header class="m-job-header">
@@ -64,7 +66,6 @@ function render() {
           <p class="m-copy m-copy--large">There is nothing waiting for you on this one.</p>
         </div>
       </header>`;
-    actions.innerHTML = "";
     return;
   }
 
@@ -78,38 +79,11 @@ function render() {
       </section>`
     : "";
 
-  page.innerHTML = `<header class="m-job-header">
-      <div class="m-job-header__copy">
-        <span class="m-label">${escape(view.assignment.title)}</span>
-        <h1 class="m-heading">Your work</h1>
-      </div>
-      <span class="m-state m-state--current">Version ${escape(view.version)}</span>
-    </header>
-    ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-    <section class="m-work m-stack" aria-labelledby="work-heading">
-      <h2 id="work-heading" class="m-section-heading">${escape(view.assignment.title)}</h2>
-      <div class="m-artboard" aria-label="The work, version ${escape(view.version)}">
-        <div class="m-artboard__current">
-          ${frame()}
-        </div>
-      </div>
-      <p class="m-copy m-copy--large">${escape(view.rationale)}</p>
-      <span class="m-meta">${escape(String(view.label).toUpperCase())}</span>
-    </section>
-    <section class="m-work m-stack" aria-labelledby="say-heading">
-      <h2 id="say-heading" class="m-section-heading">Say something about it</h2>
-      <textarea class="m-textarea" id="comment" aria-label="Say something about it" placeholder="Anything you want us to know.">${escape(view.draft)}</textarea>
-    </section>
-    ${said}`;
-
-  const approve = view.approved
-    ? `<span class="m-state m-state--approved">Approved by you on ${escape(view.approved.approvedAt)}</span>`
-    : `<button class="m-button m-button--primary" type="button" data-approve>Approve this</button>`;
-  actions.innerHTML = `<p class="m-action-bar__context">${escape(view.approved ? "This is the version being made." : "Approve it, or tell us what you think.")}</p>
-    <div class="m-cluster">
-      <button class="m-button" type="button" data-comment>Send your comment</button>
-      ${approve}
-    </div>`;
+  const decision = view.approved
+    ? `<section class="m-review-decision m-review-decision--approved"><div class="m-stack"><h1 class="m-scene-work-heading">Artboard V${escape(view.version)} approved</h1><p class="m-copy">You approved this exact version on ${escape(view.approved.approvedAt)}.</p></div><span class="m-state m-state--approved">Approved</span></section>`
+    : `<section class="m-review-decision"><div class="m-stack"><h1 class="m-scene-work-heading">Review Artboard V${escape(view.version)}</h1><p class="m-copy">Approve this version, or leave feedback for the team.</p></div><div class="m-action-bar__actions"><a class="m-button" href="#client-feedback">Leave feedback</a><button class="m-button m-button--primary" type="button" data-approve>Approve Artboard V${escape(view.version)}</button></div></section>`;
+  const feedback = view.approved ? "" : `<section class="m-client-review__feedback m-stack" id="client-feedback" aria-labelledby="say-heading"><div class="m-stack"><span class="m-label">Your feedback</span><h2 id="say-heading" class="m-scene-work-heading">Feedback on Artboard V${escape(view.version)}</h2></div><textarea class="m-textarea" id="comment" aria-label="Feedback on Artboard V${escape(view.version)}" placeholder="Tell us what should change or what you want us to know.">${escape(view.draft)}</textarea><button class="m-button" type="button" data-comment>Send feedback on V${escape(view.version)}</button></section>`;
+  page.innerHTML = `${decision}${view.message ? `<div class="m-client-review__message"><div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div></div>` : ""}<section class="m-client-review__work" aria-labelledby="work-heading"><div class="m-client-review__work-head"><div class="m-stack"><span class="m-label">Scene</span><h2 id="work-heading" class="m-section-heading">${escape(view.assignment.title)}</h2></div><span class="m-meta">${escape(String(view.label).toUpperCase())}</span></div><div class="m-work-frame m-client-review__frame" aria-label="Artboard version ${escape(view.version)}">${frame()}<span class="m-work-frame__label">Artboard V${escape(view.version)}</span></div><p class="m-copy m-copy--large">${escape(view.rationale)}</p></section>${feedback}${said}`;
 }
 
 async function refresh() {
@@ -163,7 +137,7 @@ document.addEventListener("click", (event) => {
   if (target.hasAttribute("data-approve")) {
     guard(async () => {
       await call("client-approve", { assignmentId: view.sceneId, artboardVersion: view.version });
-      view.message = "Approved. We are making this one.";
+      view.message = `Artboard V${view.version} approved.`;
       await refresh();
       render();
     });
@@ -173,7 +147,7 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       await call("client-comment", { assignmentId: view.sceneId, artboardVersion: view.version, text: view.draft });
       view.draft = "";
-      view.message = "Sent.";
+      view.message = `Feedback sent for Artboard V${view.version}.`;
       await refresh();
       render();
     });

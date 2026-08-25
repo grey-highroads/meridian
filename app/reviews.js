@@ -30,13 +30,17 @@ function reviewHref(scene, user) {
 }
 
 function queueRows(queue, user) {
-  if (!queue.length) return `<div class="m-callout m-callout--approved"><span class="m-state m-state--approved">Nothing waiting</span><p class="m-copy">No review or approval needs you right now.</p></div>`;
-  return `<div class="m-rule-list">${queue.map((scene) => `<a class="m-rule-row" href="${escape(href(scene, user))}"><div class="m-stack"><span class="m-meta">${escape(String(scene.stage).toUpperCase())}</span><span class="m-rule-row__title">${escape(scene.title)}</span><span class="m-copy">${escape(scene.nextAction)}</span></div><div class="m-stack"><span class="m-state m-state--current">Decision requested</span><span class="m-meta">${escape(String(scene.currentVersion || "NO VERSION YET").toUpperCase())}</span></div></a>`).join("")}</div>`;
+  if (!queue.length) return `<div class="m-callout m-callout--approved"><h2 class="m-scene-work-heading">Nothing is waiting for review</h2><p class="m-copy">No Artboard or Scene concept needs your decision right now.</p></div>`;
+  const rows = queue.map((scene) => {
+    const object = scene.stage === "Production review" ? (scene.currentVersion || "Latest Artboard") : (scene.currentVersion || "Scene concept");
+    return `<a class="m-rule-row" href="${escape(href(scene, user))}"><div class="m-stack"><span class="m-rule-row__title">${escape(scene.title)}</span><span class="m-meta">${escape(String(object).toUpperCase())}</span></div><div class="m-stack"><span class="m-state m-state--current">Decision requested</span><span class="m-copy">${escape(object)} needs your review.</span></div></a>`;
+  }).join("");
+  return `<section class="m-directory-section" aria-labelledby="waiting-reviews-heading"><div class="m-directory-section__head"><h2 id="waiting-reviews-heading" class="m-scene-work-heading">Waiting on you</h2></div><div class="m-directory-list m-rule-list">${rows}</div></section>`;
 }
 
 function recentRows(recent, user) {
   if (!recent.length) return "";
-  return `<section class="m-work" aria-labelledby="recent-reviews-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Recently reviewed</span><h2 id="recent-reviews-heading" class="m-section-heading">Open past work</h2></div></div><div class="m-rule-list">${recent.map((scene) => `<a class="m-rule-row" href="${escape(reviewHref(scene, user))}"><div class="m-stack"><span class="m-meta">${escape(String(scene.stage).toUpperCase())}</span><span class="m-rule-row__title">${escape(scene.title)}</span></div><div class="m-stack"><span class="m-state m-state--approved">${escape(scene.stage)}</span><span class="m-meta">${escape(String(scene.currentVersion).toUpperCase())}</span></div></a>`).join("")}</div></section>`;
+  return `<section class="m-directory-section" aria-labelledby="recent-reviews-heading"><div class="m-directory-section__head"><h2 id="recent-reviews-heading" class="m-scene-work-heading">Past reviews</h2><p class="m-copy">Open any completed decision with the Artboard it approved.</p></div><div class="m-directory-list m-rule-list">${recent.map((scene) => `<a class="m-rule-row" href="${escape(reviewHref(scene, user))}"><div class="m-stack"><span class="m-rule-row__title">${escape(scene.title)}</span><span class="m-meta">${escape(String(scene.currentVersion).toUpperCase())}</span></div><span class="m-state m-state--approved">${escape(scene.currentVersion)} approved</span></a>`).join("")}</div></section>`;
 }
 
 async function load() {
@@ -45,8 +49,8 @@ async function load() {
   const queue = assignments.filter((scene) => needsUser(scene, user));
   const queued = new Set(queue.map((scene) => scene.id));
   const recent = assignments.filter((scene) => scene.currentVersion && ["Final approved", "Delivered"].includes(scene.stage) && !queued.has(scene.id));
-  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./index.html?tour=${escape(TOUR_ID)}">${escape(tour.name)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Reviews</span></nav><span class="m-state ${queue.length ? "m-state--current" : "m-state--approved"}">${queue.length ? `${queue.length} waiting` : "Clear"}</span>`;
-  root.innerHTML = `<section class="m-work" aria-labelledby="reviews-heading"><h2 id="reviews-heading" class="m-visually-hidden">Reviews waiting</h2>${queueRows(queue, user)}</section>${recentRows(recent, user)}`;
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./index.html?tour=${escape(TOUR_ID)}">${escape(tour.name)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Reviews</span></nav><span class="m-state ${queue.length ? "m-state--current" : "m-state--approved"}">${queue.length} waiting</span>`;
+  root.innerHTML = `${queueRows(queue, user)}${recentRows(recent, user)}`;
 }
 
 load().catch((error) => { locationBar.innerHTML = ""; root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`; });

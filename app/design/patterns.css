@@ -146,6 +146,7 @@
   .m-directory .m-job-header {
     align-items: end;
     grid-template-columns: minmax(0, 1fr) auto;
+    padding-bottom: var(--m-space-5);
   }
 
   .m-directory .m-work {
@@ -192,6 +193,34 @@
   .m-directory .m-rule-row > .m-meta {
     max-width: 32rem;
     text-align: right;
+  }
+
+  .m-review-directory,
+  .m-directory-section {
+    display: grid;
+    gap: var(--m-space-5);
+  }
+
+  .m-review-directory {
+    gap: var(--m-space-8);
+  }
+
+  .m-directory-section__head {
+    display: grid;
+    gap: var(--m-space-2);
+  }
+
+  .m-directory-list {
+    border: var(--m-rule-width) solid var(--m-border-default);
+    box-shadow: var(--m-shadow-raised);
+  }
+
+  .m-review-directory .m-rule-row {
+    min-height: 6rem;
+  }
+
+  .m-review-directory .m-rule-row .m-stack {
+    gap: var(--m-space-2);
   }
 
   .m-home {
@@ -619,6 +648,20 @@
     gap: var(--m-space-2);
   }
 
+  .m-workstation-message {
+    flex: 0 0 auto;
+    margin: var(--m-space-4) var(--m-space-6) 0;
+  }
+
+  .m-review-feedback {
+    border-top: var(--m-rule-width) solid var(--m-border-default);
+    padding-top: var(--m-space-6);
+  }
+
+  .m-review-feedback > .m-button {
+    justify-self: start;
+  }
+
   .m-workstation__stage {
     background: var(--m-gradient-field);
     display: flex;
@@ -987,6 +1030,65 @@
     position: absolute;
     right: var(--m-space-6);
     z-index: 2;
+  }
+
+  .m-client-review {
+    display: grid;
+    gap: var(--m-space-6);
+    padding-top: var(--m-space-5);
+  }
+
+  .m-client-review > .m-review-decision {
+    align-items: center;
+    background: var(--m-gradient-raised);
+    border: var(--m-rule-width) solid var(--m-border-strong);
+    border-left-color: var(--m-signal-instrument);
+    box-shadow: var(--m-shadow-raised);
+    display: grid;
+    gap: var(--m-space-6);
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: var(--m-space-5);
+  }
+
+  .m-client-review > .m-review-decision--approved {
+    border-left-color: var(--m-signal-approved);
+  }
+
+  .m-review-decision .m-stack,
+  .m-client-review__work-head .m-stack,
+  .m-client-review__feedback > .m-stack {
+    gap: var(--m-space-2);
+  }
+
+  .m-client-review__message {
+    margin-top: calc(var(--m-space-2) * -1);
+  }
+
+  .m-client-review__work,
+  .m-client-review__feedback {
+    background: var(--m-surface-work);
+    border: var(--m-rule-width) solid var(--m-border-default);
+    box-shadow: var(--m-shadow-raised);
+    display: grid;
+    gap: var(--m-space-5);
+    padding: var(--m-space-6);
+  }
+
+  .m-client-review__work-head {
+    align-items: end;
+    display: flex;
+    gap: var(--m-space-5);
+    justify-content: space-between;
+  }
+
+  .m-client-review__frame img {
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+  }
+
+  .m-client-review__feedback > .m-button {
+    justify-self: start;
   }
 
   .m-record-grid {
@@ -1732,8 +1834,22 @@
     margin: var(--m-space-4) var(--m-space-4) 0;
   }
 
+  .m-workstation-message {
+    margin: var(--m-space-4) var(--m-space-4) 0;
+  }
+
   .m-workstation-notice .m-button {
     width: 100%;
+  }
+
+  .m-client-review > .m-review-decision {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .m-client-review__work-head {
+    align-items: start;
+    flex-direction: column;
   }
 
   .m-workstation__stage {

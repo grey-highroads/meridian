@@ -129,7 +129,7 @@ Use `.m-home` for the Home orientation screen. It has a broad primary plane and 
 Five patterns carry the phase-two workflow grammar:
 
 - `.m-attention-list` and `.m-attention-row` show work assigned to the current person. The action stays attached to the object it affects.
-- `.m-lifecycle-list` and `.m-lifecycle-row` show Scene, stage, waiting on, next action, and a due date only when it matters.
+- `.m-lifecycle-list` and `.m-lifecycle-row` show the Scene and one plain sentence about its current condition. Name who or what happens next only when it changes the current person's work.
 - `.m-inspector` holds supporting context that affects the current job. It never repeats the main work.
 - `.m-decision-zone` names the consequence and presents one primary action plus one real alternative when required.
 - `.m-activity-list` and `.m-activity-row` show a short attributed record. Each event names who acted, when, the version, and on whose behalf when relevant.
@@ -143,9 +143,10 @@ Use `.m-workstation` when one authored or reviewed object needs supporting conte
 - `.m-workstation__stage` holds the dominant work object.
 - `.m-workstation__inspector` holds context that can affect the work.
 - `.m-workstation__tabs` switches between context families. Only one panel is visible at a time.
-- `.m-action-bar` names the consequence and presents one primary next action.
+- `.m-workstation-notice` puts an urgent doorway or decision before the work. An Artboard ready for review must appear here, not only in a footer.
+- `.m-action-bar` stays available for authoring steps that naturally follow the work. It must not be the only place a review or approval can be discovered.
 
-The Inspector is not a summary column. Request, Brain, Direction, and Setup appear there because each can contribute to the Scene Direction. Its graphite material distinguishes support from the work plane. Do not add a panel merely because the backend has another record.
+The Inspector is not a summary column. Request and applicable Tour Direction belong with Scene Direction in the main work plane. Brain and Setup may appear in the Inspector because they can contribute to the work. Versions belong there only when comparing versions is the job. Do not add a panel merely because the backend has another record.
 
 Compiled output stays behind a disclosure until a person asks to inspect or download it. Do not keep an output strip visible while the current job is authoring.
 

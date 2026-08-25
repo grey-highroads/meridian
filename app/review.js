@@ -3,7 +3,6 @@ const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 
 const locationBar = document.getElementById("location");
 const workspace = document.getElementById("workspace");
-const actions = document.getElementById("actions");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
@@ -102,31 +101,25 @@ function workSurface() {
   const frames = prior
     ? `<div class="m-reference-pair">${workFrame(prior, `Earlier V${version(prior.artboard.artboardVersion)}`)}${workFrame(current, `Current V${version(current.artboard.artboardVersion)}`)}</div>`
     : workFrame(current, `Current V${version(current.artboard.artboardVersion)}`);
-  return `<div class="m-stack">${frames}${decisionComposer(current)}</div>`;
+  const decision = decisionComposer(current);
+  return `<div class="m-stack">${frames}${decision}</div>`;
 }
 
 function decisionComposer(current) {
   const artboardVersion = current.artboard.artboardVersion;
   const written = reviewFor(artboardVersion);
   const pending = view.handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === artboardVersion);
-  if (approvedFor(artboardVersion)) {
-    return `<div class="m-callout m-callout--approved"><span class="m-state m-state--approved">Client approved</span><p class="m-copy">The client approved V${version(artboardVersion)}. The decision remains available here with the work.</p></div>`;
-  }
-  if (pending) {
-    return `<div class="m-callout m-callout--change"><span class="m-state m-state--change">Changes issued</span><p class="m-copy">Production is working from feedback against V${version(artboardVersion)}.</p><a class="m-button m-button--small" href="${escape(pending.directPath)}">Open revision handoff</a></div>`;
-  }
-  if (readyFor(artboardVersion)) {
-    return `<div class="m-callout m-callout--current"><span class="m-state m-state--current">With the client</span><p class="m-copy">This exact version is waiting for the client's decision.</p></div>`;
-  }
+  if (approvedFor(artboardVersion) || pending || readyFor(artboardVersion)) return "";
   if (written) {
     return `<details class="m-disclosure"><summary><span class="m-label">Internal review saved</span><span class="m-meta">V${version(artboardVersion)}</span></summary><div class="m-disclosure__body m-stack"><div><span class="m-label">Changes</span><ul>${list(written.departures)}</ul></div><div><span class="m-label">Technical notes</span><ul>${list(written.technicalItems)}</ul></div></div></details>`;
   }
   const options = REGIONS.map((name) => `<option value="${escape(name)}" ${view.draft.anchor === name ? "selected" : ""}>${escape(name)}</option>`).join("");
-  return `<section class="m-stack" aria-labelledby="decision-heading">
-      <div class="m-stack"><span class="m-label">Your decision</span><h2 id="decision-heading" class="m-section-heading">What, if anything, needs to change?</h2></div>
+  return `<section class="m-stack m-review-feedback" id="review-feedback" aria-labelledby="decision-heading">
+      <div class="m-stack"><span class="m-label">Feedback on Artboard V${version(artboardVersion)}</span><h2 id="decision-heading" class="m-section-heading">What needs to change?</h2></div>
       <div class="m-field"><label class="m-label" for="anchor">Where, optional</label><select class="m-select" id="anchor" data-draft="anchor"><option value="">The whole picture</option>${options}</select></div>
       <div class="m-field"><label class="m-label" for="feedback">Change</label><textarea class="m-textarea" id="feedback" data-draft="feedback" placeholder="Say what should change. One note per line.">${escape(view.draft.feedback)}</textarea></div>
       <details class="m-disclosure"><summary><span class="m-label">Preserve or add a technical note</span><span class="m-meta">Optional</span></summary><div class="m-disclosure__body m-stack"><div class="m-field"><label class="m-label" for="preserve">Preserve</label><textarea class="m-textarea" id="preserve" data-draft="preserve" placeholder="What should stay as it is.">${escape(view.draft.preserve)}</textarea></div><div class="m-field"><label class="m-label" for="technical">Technical note</label><textarea class="m-textarea" id="technical" data-draft="technical" placeholder="One note per line.">${escape(view.draft.technical)}</textarea></div></div></details>
+      <button class="m-button m-button--change" type="button" data-revise>Issue changes against V${version(artboardVersion)}</button>
     </section>`;
 }
 
@@ -174,25 +167,32 @@ function tab(name, label) {
   return `<button class="m-workstation__tab" type="button" role="tab" aria-selected="${view.inspector === name}" data-inspector="${escape(name)}">${escape(label)}</button>`;
 }
 
-function actionBar() {
+function decisionToolbar() {
   const current = latest();
   if (!current) {
-    actions.innerHTML = `<p class="m-action-bar__context">Waiting for production to submit the first version.</p>`;
-    return;
+    return `<section class="m-workstation-notice"><div class="m-stack"><h1 class="m-scene-work-heading">Waiting for the first Artboard</h1><p class="m-copy">Production has not submitted work for this Scene yet.</p></div></section>`;
   }
   const value = current.artboard.artboardVersion;
   const pending = view.handoffs.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value);
   const ready = readyFor(value);
   const approved = approvedFor(value);
-  let controls = "";
-  let context = "Choose what happens to this exact version.";
+  let title = `Decide on Artboard V${version(value)}`;
+  let context = "Compare this version with the production brief, then send it to the client or request changes.";
+  let controls = `<a class="m-button" href="#review-feedback">Request changes</a><button class="m-button m-button--primary" type="button" data-send-client>Send V${version(value)} to client</button>`;
   if (approved) {
-    context = `The client approved V${version(value)}. This review is now read only.`;
+    title = `Artboard V${version(value)} was approved by the client`;
+    context = "This exact version and its decision are read only.";
     controls = `<a class="m-button" href="./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open client view</a>`;
-  } else if (pending) controls = `<a class="m-button m-button--primary" href="${escape(pending.directPath)}">Open revision handoff</a>`;
-  else if (ready) controls = `<a class="m-button m-button--primary" href="./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open client view</a>`;
-  else controls = `<button class="m-button m-button--change" type="button" data-revise>Request changes</button><button class="m-button m-button--primary" type="button" data-send-client>Send V${version(value)} to client</button>`;
-  actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p><div class="m-action-bar__actions">${controls}</div>`;
+  } else if (pending) {
+    title = `Changes were issued against Artboard V${version(value)}`;
+    context = "Production is working from the recorded feedback.";
+    controls = `<a class="m-button m-button--primary" href="${escape(pending.directPath)}">Open revision handoff</a>`;
+  } else if (ready) {
+    title = `Artboard V${version(value)} is with the client`;
+    context = "This exact version is waiting for the client's decision.";
+    controls = `<a class="m-button m-button--primary" href="./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Open client view</a>`;
+  }
+  return `<section class="m-workstation-notice m-review-decision"><div class="m-stack"><h1 class="m-scene-work-heading">${escape(title)}</h1><p class="m-copy">${escape(context)}</p></div><div class="m-action-bar__actions">${controls}</div></section>`;
 }
 
 function currentState(current) {
@@ -208,8 +208,7 @@ function render() {
   const current = latest();
   const state = currentState(current);
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scenes.html?tour=${escape(TOUR_ID)}">Scenes</a><span aria-hidden="true">/</span><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Review V${version(current?.artboard.artboardVersion)}</span></nav><span class="${escape(state.className)}">${escape(state.label)}</span>`;
-  workspace.innerHTML = `<div class="m-workstation"><section class="m-workstation__stage" aria-label="Work under review"><div class="m-workstation__canvas"><section class="m-direction-editor"><header class="m-direction-editor__header"><span class="m-label m-direction-editor__label">${escape(view.assignment.title)}</span><h1 class="m-section-heading">Review the work</h1></header><div class="m-direction-editor__body m-stack">${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${workSurface()}</div></section></div></section><aside class="m-workstation__inspector" aria-label="Review context"><div class="m-workstation__inspector-head"><span class="m-label">Inspector</span></div><div class="m-workstation__tabs" role="tablist">${tab("brief", "Brief")}${tab("versions", "Versions")}${tab("production", "Production")}${tab("record", "Record")}</div><div class="m-workstation__panels">${inspectorPanel()}</div></aside></div>`;
-  actionBar();
+  workspace.innerHTML = `${decisionToolbar()}${view.message ? `<div class="m-workstation-message"><div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div></div>` : ""}<div class="m-workstation"><section class="m-workstation__stage" aria-label="Work under review"><div class="m-workstation__canvas"><section class="m-direction-editor m-review-surface"><div class="m-direction-editor__body m-stack">${workSurface()}</div></section></div></section><aside class="m-workstation__inspector" aria-label="Review context"><div class="m-workstation__inspector-head"><span class="m-label">Inspector</span></div><div class="m-workstation__tabs" role="tablist">${tab("brief", "Brief")}${tab("versions", "Versions")}${tab("production", "Production")}${tab("record", "Record")}</div><div class="m-workstation__panels">${inspectorPanel()}</div></aside></div>`;
 }
 
 async function loadArtifacts() {
