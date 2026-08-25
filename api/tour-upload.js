@@ -27,8 +27,8 @@ export function uploadPrefix(tourId, assignmentId, accountId) {
   return `brand-world-system/clients/${sanitizeClientId(accountId)}/tours/${sanitizeClientId(tourId)}/${sanitizeClientId(assignmentId)}/uploads/`;
 }
 
-export function uploadPathFor(tourId, assignmentId, filename, id = randomUUID()) {
-  return `${uploadPrefix(tourId, assignmentId)}${sanitizeClientId(id)}-${safeFilename(filename)}`;
+export function uploadPathFor(tourId, assignmentId, filename, accountId, id = randomUUID()) {
+  return `${uploadPrefix(tourId, assignmentId, accountId)}${sanitizeClientId(id)}-${safeFilename(filename)}`;
 }
 
 export default async function handler(request, response) {
@@ -43,10 +43,42 @@ export default async function handler(request, response) {
     const body = await readJsonBody(request, 1024 * 1024);
     const tourId = sanitizeClientId(body.tourId || "");
     const assignmentId = sanitizeClientId(body.assignmentId || "");
-    const prefix = uploadPrefix(tourId, assignmentId);
+    const accountId = user.accountId || null;
+    const prefix = uploadPrefix(tourId, assignmentId, accountId);
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     const credentials = token ? { token } : {};
 
+    if (String(body.mode || "") === "reference-list") {
+      const { createSceneRecord } = await import("../src/tour/scene-record.js");
+      const record = createSceneRecord({ accountId });
+      const facts = await record.readFacts(tourId, assignmentId);
+      const references = facts.filter((fact) => fact.action === "Added reference").map((fact) => ({
+        pathname: fact.pathname,
+        filename: fact.filename,
+        contentType: fact.contentType,
+        addedBy: fact.actor,
+        addedOn: fact.at,
+      })).reverse();
+      sendJson(response, 200, { references });
+      return;
+    }
+    if (String(body.mode || "") === "reference-record") {
+      const { createSceneRecord } = await import("../src/tour/scene-record.js");
+      const record = createSceneRecord({ accountId });
+      const pathname = String(body.pathname || "");
+      if (!pathname.startsWith(prefix)) throw new Error("That file is outside this Scene.");
+      await record.appendFact(tourId, assignmentId, {
+        actor: user.displayName,
+        role: user.roleLabel,
+        account: accountId,
+        action: "Added reference",
+        pathname,
+        filename: String(body.filename || "reference"),
+        contentType: String(body.contentType || ""),
+      });
+      sendJson(response, 200, { ok: true });
+      return;
+    }
     if (String(body.mode || "") === "read") {
       const pathname = String(body.pathname || "");
       if (!pathname.startsWith(prefix)) throw new Error("That file is outside this Scene.");
@@ -68,7 +100,7 @@ export default async function handler(request, response) {
     if (!Number.isFinite(size) || size <= 0 || size > MAXIMUM_SIZE) {
       throw new Error("Choose one file no larger than 20 MB.");
     }
-    const pathname = uploadPathFor(tourId, assignmentId, body.filename);
+    const pathname = uploadPathFor(tourId, assignmentId, body.filename, accountId);
     const validUntil = Date.now() + 10 * 60 * 1000;
     const signedToken = await issueSignedToken({
       ...credentials,

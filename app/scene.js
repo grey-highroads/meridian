@@ -18,6 +18,8 @@ const view = {
   tour: null,
   assignment: null,
   context: null,
+  references: [],
+  referenceMessage: "",
   concept: null,
   suggestions: null,
   usedSuggestion: null,
@@ -233,7 +235,7 @@ function venueSection() {
         ${setupCopy}
       </div>
       ${exceptionCopy}
-    </section>`;
+    ${referencesSection()}</section>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -388,6 +390,7 @@ async function load() {
     ? await call("assignment-context", { assignmentId: view.sceneId })
     : await call("get-scene-workspace", { assignmentId: view.sceneId });
   view.assignment = context.assignment;
+  refreshReferences().then(() => { try { render(); } catch (_) {} });
   view.context = context.context;
   view.concept = view.user.role === "higher-roads"
     ? (await call("get-concept", { assignmentId: view.sceneId })).concept
@@ -538,5 +541,57 @@ document.addEventListener("change", (event) => {
     view.draft.markedVenues = toggle(view.draft.markedVenues, Number(box.dataset.venue), box.checked);
   }
 });
+
+
+async function refreshReferences() {
+  try {
+    const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId: SCENE_ID, mode: "reference-list" }) });
+    if (!response.ok) return;
+    const data = await response.json();
+    view.references = data.references || [];
+  } catch (_error) {
+    // A page in a test harness or a failing network never blocks load.
+  }
+}
+
+async function uploadReference(file) {
+  view.referenceMessage = "Uploading " + file.name + "...";
+  render();
+  const authorization = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId: SCENE_ID, filename: file.name, contentType: file.type, size: file.size }) });
+  const authorized = await authorization.json();
+  if (!authorization.ok) { view.referenceMessage = authorized.error || "The reference could not be authorized."; render(); return; }
+  const put = await fetch(authorized.presignedUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+  if (!put.ok) { view.referenceMessage = "The reference could not be uploaded."; render(); return; }
+  const recorded = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId: SCENE_ID, mode: "reference-record", pathname: authorized.pathname, filename: file.name, contentType: file.type }) });
+  if (!recorded.ok) { view.referenceMessage = "The reference uploaded but could not be recorded."; render(); return; }
+  view.referenceMessage = "";
+  await refreshReferences();
+  render();
+}
+
+document.addEventListener("change", (event) => {
+  const field = event.target;
+  if (field && field.dataset && field.dataset.reference === "input") {
+    const file = field.files && field.files[0];
+    if (file) uploadReference(file);
+  }
+});
+
+function referencesSection() {
+  const items = view.references || [];
+  const rows = items.map((entry) => {
+    const alt = entry.filename || "Reference";
+    const kind = String(entry.contentType || "").startsWith("image/")
+      ? `<span class="m-stack"><span class="m-copy">${alt}</span></span>`
+      : `<span class="m-copy">${alt}</span>`;
+    const when = entry.addedOn ? new Date(entry.addedOn).toLocaleDateString() : "";
+    return `<li class="m-stack">${kind}<span class="m-meta">Added by ${entry.addedBy} ${when ? "on " + when : ""}</span></li>`;
+  }).join("");
+  const list = rows
+    ? `<ul class="m-stack">${rows}</ul>`
+    : `<p class="m-copy">Optional. Add a photo, a mood image, or a still from another show; the concept can be developed with or without them.</p>`;
+  const message = view.referenceMessage ? `<p class="m-copy">${view.referenceMessage}</p>` : "";
+  return `<section class="m-inspector-group m-stack" aria-label="Reference images"><span class="m-label">Reference images (optional)</span>${list}${message}<label class="m-button m-button--secondary"><input type="file" accept="image/*" data-reference="input" hidden>Add a reference image</label></section>`;
+}
 
 guard(load);
