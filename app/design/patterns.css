@@ -221,6 +221,8 @@
     box-shadow: var(--m-shadow-raised);
     display: grid;
     gap: var(--m-rule-width);
+    min-width: 0;
+    width: 100%;
   }
 
   .m-attention-row {
@@ -289,7 +291,7 @@
     background: var(--m-surface-work);
     display: grid;
     gap: var(--m-space-5);
-    grid-template-columns: minmax(11rem, 1.1fr) minmax(9rem, 0.75fr) minmax(9rem, 0.8fr) minmax(12rem, 1fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.75fr) minmax(0, 0.8fr) minmax(0, 1fr);
     min-height: 5.75rem;
     padding: var(--m-space-5) var(--m-space-6);
     text-decoration: none;

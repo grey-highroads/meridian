@@ -1,6 +1,6 @@
 # Meridian design system
 
-Status: Phase-two foundation available. The current shell and Home reference land in the companion samples commit.
+Status: Phase-two foundation, shell, and Home reference available.
 
 ## Purpose
 
@@ -51,15 +51,17 @@ Class names use the `m-` prefix. Do not copy classes from `app/styles.css` or `a
 
 ## Living reference screens
 
-The real Meridian screens remain implementation references. Phase-two builders use the new shell and Home fixture as the composition source once the companion samples commit lands.
+The new shell and Home fixture in `app/design/samples/index.html` are the composition source of truth for phase-two navigation, orientation, surface hierarchy, and Home. New work must not copy or extend the transitional shell in the live screens.
+
+The real Meridian screens remain job and behavior references while their layouts transition to the revised foundation.
 
 - `app/tour.html` and `app/tour.js` define the quiet reference page.
 - `app/scene.html` and `app/scene.js` define the focused Workstation.
 - `app/review.html` and `app/review.js` define the review and decision surface.
 
-Builders should copy visual structure and classes from these screens. They should not copy their data loading or workflow logic into another feature.
+Builders should copy workflow behavior from these screens only when it serves the same job. They should not copy their transitional shell or dense record layouts into another feature.
 
-The files in `app/design/samples/` are controlled state fixtures. They show states that may be difficult to reach with current data. When a fixture and a real screen differ, the real screen is the composition source of truth and the fixture must be brought back into alignment.
+The files in `app/design/samples/` are controlled state fixtures. They show states that may be difficult to reach with current data. The Home fixture governs composition. Real screens govern stored behavior until their phase-two rebuild lands.
 
 ## Page rules
 
@@ -238,7 +240,7 @@ npm run check:design
 
 Use the static screens in `app/design/samples/` as composition references:
 
-- `index.html` for a quiet active Scenes directory;
+- `index.html` for the phase-two shell and active tour Home orientation;
 - `tour.html` for the active tour record and governed Tour Direction;
 - `request.html` for a client request with a short valid path;
 - `intake.html` for vertical source review;

@@ -3,88 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Meridian reference sample for the active production Scenes directory.">
-  <title>Meridian reference sample | Scenes</title>
+  <meta name="description" content="Meridian reference sample for the active tour Home screen.">
+  <title>Meridian reference sample | Home</title>
   <link rel="stylesheet" href="../index.css">
 </head>
 <body class="m-ui">
   <div class="m-shell">
     <aside class="m-shell__rail">
       <div class="m-shell__brand">
-        <a class="m-wordmark" href="index.html">
-          MERIDIAN
-          <span class="m-wordmark__byline">BY HIGHER ROADS</span>
-        </a>
+        <a class="m-wordmark" href="index.html">MERIDIAN<span class="m-wordmark__byline">BY HIGHER ROADS</span></a>
       </div>
-      <nav class="m-shell__nav" aria-label="Artist work">
-        <a class="m-shell__nav-link" href="index.html" aria-current="page">
-          <span class="m-shell__nav-label">Scenes</span>
-        </a>
-        <a class="m-shell__nav-link" href="tour.html">
-          <span class="m-shell__nav-label">Tour</span>
-        </a>
-        <a class="m-shell__nav-link" href="#artist-brain">
-          <span class="m-shell__nav-label">Artist Brain</span>
-        </a>
+      <nav class="m-shell__nav" aria-label="Active tour">
+        <a class="m-shell__nav-link" href="index.html" aria-current="page"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg><span class="m-shell__nav-label">Home</span></a>
+        <a class="m-shell__nav-link" href="#scenes"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="m-shell__nav-label">Scenes</span></a>
+        <a class="m-shell__nav-link" href="#reviews"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9 11h6M9 15h4"/><path d="M5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2Z"/></svg><span class="m-shell__nav-label">Reviews</span><span class="m-shell__nav-count" aria-label="2 reviews need attention">2</span></a>
+        <a class="m-shell__nav-link" href="tour.html"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg><span class="m-shell__nav-label">Tour details</span></a>
       </nav>
       <div class="m-shell__utility">
-        <a class="m-shell__nav-link" href="#admin">
-          <span class="m-shell__nav-label">Admin</span>
-        </a>
+        <a class="m-shell__nav-link" href="#artist-brain"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M9.5 4.5A3.5 3.5 0 0 0 6 8v1a3 3 0 0 0-1 5.83V16a4 4 0 0 0 4 4h1V4.5Z"/><path d="M14.5 4.5A3.5 3.5 0 0 1 18 8v1a3 3 0 0 1 1 5.83V16a4 4 0 0 1-4 4h-1V4.5Z"/></svg><span class="m-shell__nav-label">Artist Brain</span></a>
+        <a class="m-shell__nav-link" href="#admin"><svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1V21H9.6v-.09A1.7 1.7 0 0 0 8.5 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4H3V9.6h.09A1.7 1.7 0 0 0 4.6 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1V3h4v.09A1.7 1.7 0 0 0 15.5 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.39.33.74.6 1 .28.27.63.48 1 .6h.09v4H21a1.7 1.7 0 0 0-1.6.4Z"/></svg><span class="m-shell__nav-label">Admin</span></a>
       </div>
     </aside>
 
     <main class="m-shell__main">
-      <header class="m-location">
-        <span class="m-meta">CLIENT 01 / ARTIST 01 / UPCOMING TOUR</span>
-        <span class="m-state m-state--current">Active production</span>
-      </header>
-
-      <div class="m-page">
-        <header class="m-job-header">
-          <div class="m-job-header__copy">
-            <span class="m-label">Current work</span>
-            <h1 class="m-heading">Scenes</h1>
-            <p class="m-copy">Open the moment that needs work. Status appears only when it changes the next step.</p>
-          </div>
-          <div class="m-cluster">
-            <a class="m-button" href="request.html">Request a scene</a>
-          </div>
+      <header class="m-location"><span class="m-meta">ANONYMOUS ARTIST / NORTHLINE 2026 / HOME</span><span class="m-meta">ALEX MORGAN</span></header>
+      <div class="m-page m-page--fluid m-home">
+        <header class="m-home__header">
+          <span class="m-label">Today</span>
+          <h1 class="m-heading">Two decisions need you.</h1>
+          <p class="m-copy m-copy--large">Everything else is moving.</p>
         </header>
 
-        <section class="m-work" aria-labelledby="scene-list-heading">
-          <h2 id="scene-list-heading" class="m-visually-hidden">Active scenes</h2>
-          <div class="m-rule-list">
-            <a class="m-rule-row" href="develop.html">
-              <div class="m-stack">
-                <span class="m-meta">SCENE 01</span>
-                <span class="m-rule-row__title">Opening sequence</span>
+        <div class="m-home__layout">
+          <div class="m-home__primary">
+            <section aria-labelledby="attention-heading">
+              <div class="m-section-lead"><div class="m-section-lead__copy"><span class="m-label">Needs attention</span><h2 id="attention-heading" class="m-section-heading">Decide what moves next</h2></div></div>
+              <div class="m-attention-list">
+                <article class="m-attention-row">
+                  <div class="m-attention-row__body"><span class="m-attention-row__marker" aria-hidden="true"><svg class="m-icon m-icon--small" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><div class="m-attention-row__content"><div class="m-attention-row__eyebrow"><span class="m-meta">SCENE 04</span><span class="m-state m-state--current">CONCEPT V02</span></div><h3 class="m-attention-row__title">Opening Sequence</h3><p class="m-attention-row__copy">The revised concept is ready for your decision.</p></div></div>
+                  <a class="m-button m-button--primary" href="review.html">Review concept</a>
+                </article>
+                <article class="m-attention-row">
+                  <div class="m-attention-row__body"><span class="m-attention-row__marker" aria-hidden="true"><svg class="m-icon m-icon--small" viewBox="0 0 24 24"><path d="M12 18h.01M9.1 9a3 3 0 1 1 5.15 2.08c-1.12 1.08-2.25 1.67-2.25 3.42"/></svg></span><div class="m-attention-row__content"><div class="m-attention-row__eyebrow"><span class="m-meta">SCENE 07</span><span class="m-state m-state--change">PRODUCTION QUESTION</span></div><h3 class="m-attention-row__title">Mid-show Interlude</h3><p class="m-attention-row__copy">Confirm how the artwork should adapt to the revised screen crop.</p></div></div>
+                  <a class="m-button" href="develop.html">Answer question</a>
+                </article>
               </div>
-              <span class="m-state m-state--current">Concept in development</span>
-            </a>
-            <a class="m-rule-row" href="intake.html">
-              <div class="m-stack">
-                <span class="m-meta">SCENE 02</span>
-                <span class="m-rule-row__title">Transition system</span>
+            </section>
+
+            <section id="scenes" aria-labelledby="scenes-heading">
+              <div class="m-section-lead"><div class="m-section-lead__copy"><span class="m-label">Scenes in progress</span><h2 id="scenes-heading" class="m-section-heading">The active production</h2></div><a class="m-button m-button--quiet" href="#all-scenes">View all scenes</a></div>
+              <div class="m-lifecycle-list">
+                <a class="m-lifecycle-row" href="review.html"><span class="m-lifecycle-row__object"><span class="m-meta">SCENE 04</span><span class="m-lifecycle-row__title">Opening Sequence</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Stage</span><span class="m-lifecycle-row__stage">Concept review</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Waiting on</span><span class="m-lifecycle-row__value">Alex Morgan</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Next</span><span class="m-lifecycle-row__value">Approve Concept V02</span></span></a>
+                <a class="m-lifecycle-row" href="develop.html"><span class="m-lifecycle-row__object"><span class="m-meta">SCENE 07</span><span class="m-lifecycle-row__title">Mid-show Interlude</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Stage</span><span class="m-lifecycle-row__stage">Production review</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Waiting on</span><span class="m-lifecycle-row__value">Alex Morgan</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Next</span><span class="m-lifecycle-row__value">Resolve screen crop</span><span class="m-meta m-lifecycle-row__due">DUE TODAY</span></span></a>
+                <a class="m-lifecycle-row" href="develop.html"><span class="m-lifecycle-row__object"><span class="m-meta">SCENE 11</span><span class="m-lifecycle-row__title">Finale</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Stage</span><span class="m-lifecycle-row__stage">Concept in development</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Waiting on</span><span class="m-lifecycle-row__value">Media team</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Next</span><span class="m-lifecycle-row__value">Share first treatment</span></span></a>
+                <a class="m-lifecycle-row" href="handoff.html"><span class="m-lifecycle-row__object"><span class="m-meta">SCENE 02</span><span class="m-lifecycle-row__title">Walk-in Film</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Stage</span><span class="m-lifecycle-row__stage">Approved for production</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Waiting on</span><span class="m-lifecycle-row__value">Live media team</span></span><span class="m-lifecycle-row__fact"><span class="m-label">Next</span><span class="m-lifecycle-row__value">Build production master</span></span></a>
               </div>
-              <span class="m-state">Client input received</span>
-            </a>
-            <a class="m-rule-row" href="review.html" aria-current="true">
-              <div class="m-stack">
-                <span class="m-meta">SCENE 03</span>
-                <span class="m-rule-row__title">Visual treatment</span>
-              </div>
-              <span class="m-state m-state--current">Internal review</span>
-            </a>
-            <a class="m-rule-row" href="handoff.html">
-              <div class="m-stack">
-                <span class="m-meta">SCENE 04</span>
-                <span class="m-rule-row__title">Venue application</span>
-              </div>
-              <span class="m-state m-state--approved">Ready to ship</span>
-            </a>
+            </section>
           </div>
-        </section>
+
+          <aside class="m-home__sidecar m-inspector" aria-label="Tour readiness and recent decisions">
+            <header class="m-inspector__header"><svg class="m-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="m8 12 2.5 2.5L16 9"/></svg><h2 class="m-section-heading">Tour readiness</h2></header>
+            <section class="m-inspector__section">
+              <a class="m-inspector__item" href="tour.html"><span class="m-state m-state--change">Playback spec unresolved</span><span class="m-copy">Production needs the final frame rate before delivery.</span></a>
+              <a class="m-inspector__item" href="tour.html"><span class="m-state m-state--current">Venue screen profile changed</span><span class="m-copy">The lead venue supplied a revised center-screen crop.</span></a>
+            </section>
+            <section class="m-inspector__section" aria-labelledby="decisions-heading">
+              <div class="m-section-lead__copy"><span class="m-label">Recent decisions</span><h2 id="decisions-heading" class="m-section-heading">What is on record</h2></div>
+              <div class="m-activity-list">
+                <article class="m-activity-row"><span class="m-activity-row__marker m-activity-row__marker--approved" aria-hidden="true"></span><div><p class="m-activity-row__copy">Jamie Lee approved Tour Direction V03.</p><span class="m-meta">24 AUG / 16:10</span></div></article>
+                <article class="m-activity-row"><span class="m-activity-row__marker" aria-hidden="true"></span><div><p class="m-activity-row__copy">Morgan Reed created Scene 09 on behalf of the client.</p><span class="m-meta">24 AUG / 11:42</span></div></article>
+              </div>
+            </section>
+          </aside>
+        </div>
       </div>
     </main>
   </div>

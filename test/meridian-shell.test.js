@@ -57,3 +57,19 @@ test("no architecture words reach the pages", () => {
     assert.ok(!copy.includes("\u2014"), `${name} carries an em dash`);
   }
 });
+
+test("the phase-two Home fixture is the shell composition reference", () => {
+  const source = read("app/design/samples/index.html");
+  const primaryNav = source.match(/<nav class="m-shell__nav"[\s\S]*?<\/nav>/)?.[0] || "";
+
+  for (const label of ["Home", "Scenes", "Reviews", "Tour details"]) {
+    assert.match(primaryNav, new RegExp(`>${label}<`), `Home fixture is missing ${label}`);
+  }
+
+  assert.doesNotMatch(primaryNav, />Artist Brain</, "Artist Brain appears in primary navigation");
+  assert.match(source, /class="m-home"|class="[^"]*m-home[^"]*"/, "Home fixture does not use the Home pattern");
+  assert.match(source, /class="m-attention-list"/, "Home fixture does not show assigned attention");
+  assert.match(source, /class="m-lifecycle-list"/, "Home fixture does not show Scene lifecycle");
+  assert.match(source, /class="m-home__sidecar m-inspector"/, "Home fixture does not use the readiness Inspector");
+  assert.doesNotMatch(source, /style=/, "Home fixture uses an inline style");
+});

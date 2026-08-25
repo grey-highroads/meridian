@@ -171,7 +171,11 @@
   }
 
   .m-icon {
+    fill: none;
     height: 1rem;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     stroke-width: 1.75;
     width: 1rem;
   }
