@@ -254,6 +254,17 @@ test("the account picker is built for the Higher Roads role only", () => {
   assert.match(shell, /data-operator-utility/, "the picker is not hidden by the rule that hides the Admin link");
   assert.match(shell, /role === "higher-roads"\) \{\s*\n\s*mountOperatorDestinations\(\);\s*\n\s*void mountAccountPicker/, "the picker is built for a role that may not have it");
   assert.match(shell, /url\.searchParams\.delete\("tour"\)/, "switching accounts carries the old account's tour id");
+  // Under the wordmark and above the tour navigation, not in the group at the
+  // bottom of the rail.
+  assert.match(shell, /querySelector\("\.m-shell__brand"\)/, "the account switcher is not built under the wordmark");
+  assert.match(shell, /brand\.after\(picker\)/, "the account switcher does not sit above the tour navigation");
+  assert.doesNotMatch(shell, /m-select/, "the account switcher is still a select in the utility group");
+  assert.match(shell, /New account/, "there is no way to start a new account from the switcher");
+  assert.match(shell, /aria-current="true"/, "the account being worked in is not marked");
+  // Every row names the account it switches to, so the active context must not
+  // be written back over those links.
+  assert.match(shell, /data-keep-href/, "the switcher links can be rewritten with the account they switch away from");
+  assert.match(read("app/context.js"), /data-keep-href/, "navigation still writes the active account over a link that names another");
 });
 
 test("the org store's account list and the tour store's listing stay account scoped", async () => {

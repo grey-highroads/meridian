@@ -30,6 +30,9 @@ export function scopedBody(body = {}) {
 
 function carryContext(link) {
   if (!link || !link.href) return;
+  // A link that names its own account is the way out of this one, so the
+  // active context is not written back over it.
+  if (link.hasAttribute && link.hasAttribute("data-keep-href")) return;
   const url = new URL(link.href, window.location.href);
   if (url.origin !== window.location.origin || !url.pathname.endsWith(".html")) return;
   if (ACCOUNT_ID) url.searchParams.set("account", ACCOUNT_ID);

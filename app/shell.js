@@ -80,15 +80,32 @@ function escape(value) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// The account a Higher Roads session is working in. The server already decides
-// what any session may reach, so this selects and reloads and nothing more. It
-// is built only for the Higher Roads role and carries the same attribute the
-// Artist Brain and Admin links carry, so it is hidden by the one rule that
-// hides them. A client reviewer never receives it and gains no way to name
-// another account from here.
+// The account a Higher Roads session is working in, under the wordmark and
+// above the tour navigation. The server already decides what any session may
+// reach, so this selects and reloads and nothing more. It is built only for the
+// Higher Roads role and carries the same attribute the Artist Brain and Admin
+// links carry, so it is hidden by the one rule that hides them. A client
+// reviewer never receives it and gains no way to name another account from
+// here.
+//
+// It is built from the rail's own classes, so the labels collapse with the rail
+// at narrow widths without a rule of its own. There is no design pattern for an
+// account switcher; the gap is recorded in docs/deferred-work.md.
+const CHEVRON = '<svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg>';
+
+function accountHref(accountId) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("account", accountId);
+  // A different account has different tours and different Scenes, so the ids
+  // naming this one are dropped rather than carried into the next.
+  url.searchParams.delete("tour");
+  url.searchParams.delete("scene");
+  return url.href;
+}
+
 async function mountAccountPicker(active) {
-  const host = document.querySelector(".m-shell__utility");
-  if (!host) return;
+  const brand = document.querySelector(".m-shell__brand");
+  if (!brand) return;
   let accounts = [];
   try {
     const response = await fetch("/api/artist", {
@@ -104,22 +121,29 @@ async function mountAccountPicker(active) {
   }
   if (!accounts.length) return;
 
-  const field = document.createElement("div");
-  field.className = "m-field";
-  field.setAttribute("data-operator-utility", "");
-  field.innerHTML = `<label class="m-label" for="m-account-picker">Account</label>
-    <select class="m-select" id="m-account-picker">${accounts.map((entry) => `<option value="${escape(entry.id)}"${entry.id === active ? " selected" : ""}>${escape(entry.name || entry.id)}</option>`).join("")}</select>`;
-  host.prepend(field);
+  const current = accounts.find((entry) => entry.id === active) || accounts[0];
+  const rows = accounts.map((entry) => {
+    const here = entry.id === current.id;
+    return `<a class="m-shell__nav-link" data-keep-href href="${escape(accountHref(entry.id))}"${here ? ' aria-current="true"' : ""}>
+        <span class="m-shell__nav-label">${escape(entry.name || entry.id)}</span>
+        ${here ? '<span class="m-shell__nav-count" aria-hidden="true">\u2713</span>' : ""}
+      </a>`;
+  }).join("");
 
-  // A different account has different tours and different Scenes, so the ids
-  // naming this one are dropped rather than carried into the next.
-  field.querySelector("select").addEventListener("change", (event) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("account", event.target.value);
-    url.searchParams.delete("tour");
-    url.searchParams.delete("scene");
-    window.location.href = url.href;
-  });
+  const picker = document.createElement("nav");
+  picker.className = "m-shell__nav";
+  picker.setAttribute("aria-label", "Account");
+  picker.setAttribute("data-operator-utility", "");
+  picker.setAttribute("data-account-picker", "");
+  picker.innerHTML = `<details data-account-list>
+      <summary class="m-shell__nav-link">
+        ${CHEVRON}
+        <span class="m-shell__nav-label">${escape(current.name || current.id)}</span>
+      </summary>
+      ${rows}
+      <a class="m-shell__nav-link" href="./admin.html"><span class="m-shell__nav-label">New account</span></a>
+    </details>`;
+  brand.after(picker);
 }
 
 // Where a Higher Roads session goes that a client never does. Both used to be

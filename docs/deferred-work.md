@@ -28,6 +28,16 @@ Missing state: Use the existing named-region field when feedback needs a locatio
 
 Where: The Artboard review job, on the review screen built from that sample. The optional anchor is recorded as provisional in section 6 of `docs/meridian-seam-with-jim.md` and whether Jim's side can read one is a discovery question in section 4.
 
+### The account switcher under the wordmark
+
+Status: use the existing pattern
+
+Job: a Higher Roads admin sees which client account they are working in, switches to another, and starts a new one, from the top of the rail rather than from the bottom of it.
+
+Missing state: There is no pattern for an account switcher. The shell builds it from the rail's own classes, `m-shell__nav`, `m-shell__nav-link`, `m-shell__nav-label`, and `m-shell__nav-count`, inside a plain `details` element, so the labels collapse with the rail at narrow widths without a rule of its own. What the reference design has and this does not: the account tile with its initial, the account's description under its name, and a drawn open state on the list. The account being worked in is marked with `aria-current` and a check glyph.
+
+Where: Every page that loads `app/shell.js`, under the wordmark, built in `mountAccountPicker`.
+
 ### A persistent group in the bar at the top of the page
 
 Status: use the existing pattern
