@@ -1,4 +1,4 @@
-import { get, put } from "@vercel/blob";
+import { del, get, list as listBlobs, put } from "@vercel/blob";
 import { ownEntry } from "../lookup.js";
 
 // The artist layer's storage. It reuses the client-scoped blob path from
@@ -32,6 +32,39 @@ export function pathFor(artistId, document, accountId) {
   return `${ROOT}/${accountId}/artists/${artistId}/${document}.json`;
 }
 
+// How many paths one listing page holds and how many one delete call takes.
+// The clients store has used this size against Vercel Blob since ADR 0011.
+const PAGE = 1000;
+
+// A listing arrives one page at a time and the last page is the one that comes
+// back without a cursor. Stopping at the first page would return part of the
+// answer and look exactly like the whole answer, so every caller goes through
+// here rather than reading a page itself.
+export async function collectPages(readPage) {
+  const paths = [];
+  let cursor;
+  do {
+    const page = await readPage(cursor);
+    for (const path of page.paths) paths.push(path);
+    cursor = page.cursor;
+  } while (cursor);
+  return paths;
+}
+
+// Deleting is the same shape in reverse: a bounded number of paths per call,
+// repeated until the list is spent. Duplicates and empty values are dropped
+// first so a caller cannot ask for the same path twice.
+export async function removeInBatches(paths, deleteBatch, size = PAGE) {
+  const targets = [...new Set((Array.isArray(paths) ? paths : []).filter(Boolean).map(String))];
+  for (let index = 0; index < targets.length; index += size) {
+    await deleteBatch(targets.slice(index, index + size));
+  }
+  return targets.length;
+}
+
+// The prefix is a plain string prefix, the same rule Vercel Blob applies, so
+// `.../dierks/` and `.../dierks-bentley/` are separate directories and
+// `.../dierks` would reach both. Callers pass the trailing slash.
 // Reads and writes as plain documents. The Vercel blob backend is the default.
 // Tests pass an in-memory backend so the effect of every action is checked
 // without a network call.
@@ -55,11 +88,25 @@ export function createBlobBackend(options = {}) {
         cacheControlMaxAge: 0,
       });
     },
+    async list(prefix) {
+      return await collectPages(async (cursor) => {
+        const page = await listBlobs({ prefix: String(prefix ?? ""), cursor, limit: PAGE, ...credentials });
+        return { paths: (page.blobs || []).map((blob) => blob.pathname), cursor: page.cursor };
+      });
+    },
+    async remove(paths) {
+      return await removeInBatches(paths, async (batch) => {
+        await del(batch, { ...credentials });
+      });
+    },
   };
 }
 
-export function createMemoryBackend(seed = {}) {
+// The page size is settable so a test can put more paths under a prefix than
+// one page holds and prove the listing does not stop early.
+export function createMemoryBackend(seed = {}, options = {}) {
   const files = new Map(Object.entries(seed));
+  const size = options.pageSize || PAGE;
   return {
     files,
     async read(pathname) {
@@ -67,6 +114,20 @@ export function createMemoryBackend(seed = {}) {
     },
     async write(pathname, body) {
       files.set(pathname, body);
+    },
+    async list(prefix) {
+      const value = String(prefix ?? "");
+      const matched = [...files.keys()].filter((path) => path.startsWith(value));
+      return await collectPages(async (cursor) => {
+        const start = cursor || 0;
+        const next = start + size;
+        return { paths: matched.slice(start, next), cursor: next < matched.length ? next : undefined };
+      });
+    },
+    async remove(paths) {
+      return await removeInBatches(paths, async (batch) => {
+        for (const path of batch) files.delete(path);
+      }, size);
     },
   };
 }
