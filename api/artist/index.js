@@ -4,7 +4,8 @@ import { parseIntake } from "../../src/artist/parse-intake.js";
 import { applyRulings, createArtistStore } from "../../src/artist/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
-import { ACCOUNT, OPERATOR_ROLE, createOrgStore, publicUser } from "../../src/org/store.js";
+import { ACCOUNT, OPERATOR_ROLE, createOrgStore } from "../../src/org/store.js";
+import { ACTIVE, DEACTIVATED, publicPerson } from "../../src/org/people.js";
 import { RECORD_ACTOR, createArtistDirectory, sanitizeArtistId } from "../../src/org/artists.js";
 import { createTourStore } from "../../src/tour/store.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
@@ -14,9 +15,10 @@ import { resolveActingAccount } from "../../src/org/acting-account.js";
 // retrofitting dispatch later is more work than starting with it.
 //
 // The actions are: create-account, list-accounts, set-active-tour, delete-tour,
-// delete-account, create-artist, list-artists, list-people, import-intake,
-// get-artist, list-findings, approve-brain, remove-finding, restore-finding,
-// get-evidence.
+// delete-account, create-artist, list-artists, list-people, invite-person,
+// resend-invite, revoke-invite, edit-person, send-reset, deactivate-person,
+// reactivate-person, delete-person, import-intake, get-artist, list-findings,
+// approve-brain, remove-finding, restore-finding, get-evidence.
 // None of them returns the prior. The prior is written at import and read by
 // nothing, because the thesis says it is never shown.
 //
@@ -66,6 +68,24 @@ async function removeUnder(backend, prefix) {
   const paths = (await backend.list(prefix)).filter((path) => String(path).startsWith(prefix));
   if (paths.length) await backend.remove(paths);
   return paths.length;
+}
+
+const PEOPLE_ACTS = new Set([
+  "invite-person",
+  "resend-invite",
+  "revoke-invite",
+  "edit-person",
+  "send-reset",
+  "deactivate-person",
+  "reactivate-person",
+  "delete-person",
+]);
+
+// The address a person opens to set their own password. Relative, so it works
+// on the deployment and on a preview without the deployment's name being
+// written into a stored document.
+function linkFor(token) {
+  return `/set-password.html?token=${encodeURIComponent(token)}`;
 }
 
 // The people of one named account. An injected store is bound to whichever
@@ -193,7 +213,7 @@ export async function handleAction(body, options = {}) {
   if (body.action === "list-people" && options.user && options.user.role === OPERATOR_ROLE) {
     const org = openPeople(options, store, accountId);
     const [people, admins] = await Promise.all([org.readUsers(), org.readAdmins()]);
-    return { accountId, people: people.map(publicUser), admins: admins.map(publicUser) };
+    return { accountId, people: people.map(publicPerson), admins: admins.map(publicPerson) };
   }
   // An account with no artist is an account nobody can do anything in, because
   // a tour needs an artist. The two are made in one act, and the artist name is
@@ -299,6 +319,44 @@ export async function handleAction(body, options = {}) {
     const removed = await removeUnder(store.backend, `${CLIENTS_ROOT}/${wanted}/`);
     await accounts.removeAccount(wanted);
     return { account: row, removed };
+  }
+
+  // The people acts. Every one of them is Higher Roads only, and none of them
+  // sends anything: Meridian hands back the link and the admin sends it from
+  // their own inbox. Ruled 2026-08-26 in docs/spec-admin-surface.md.
+  if (PEOPLE_ACTS.has(body.action) && options.user && options.user.role === OPERATOR_ROLE) {
+    const org = openPeople(options, store, accountId);
+    const personId = String(body.personId || "").trim();
+
+    if (body.action === "invite-person") {
+      const invited = await org.invitePerson(accountId, body.person || {});
+      return { person: invited.person, link: linkFor(invited.token) };
+    }
+    if (body.action === "resend-invite" || body.action === "send-reset") {
+      const purpose = body.action === "send-reset" ? "reset" : "invite";
+      const minted = await org.mintPersonLink(personId, purpose);
+      return { person: minted.person, link: linkFor(minted.token) };
+    }
+    if (body.action === "revoke-invite") {
+      return { person: await org.clearPersonLink(personId) };
+    }
+    if (body.action === "edit-person") {
+      return { person: await org.editPerson(personId, body.person || {}) };
+    }
+    if (body.action === "deactivate-person" || body.action === "reactivate-person") {
+      // Turning yourself off would sign you out of the screen you did it on and
+      // leave nobody able to turn you back on.
+      if (personId === options.user.id && body.action === "deactivate-person") {
+        const error = new Error("You cannot turn off the person you are signed in as.");
+        error.status = 409;
+        throw error;
+      }
+      const status = body.action === "deactivate-person" ? DEACTIVATED : ACTIVE;
+      return { person: await org.setPersonStatus(personId, status) };
+    }
+    if (body.action === "delete-person") {
+      return { person: await org.removePerson(personId) };
+    }
   }
 
   const artistId = sanitizeClientId(body.artistId || "");

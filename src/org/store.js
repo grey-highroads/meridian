@@ -2,6 +2,19 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { createBlobBackend, createMemoryBackend } from "../artist/store.js";
 import { ownEntry } from "../lookup.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "./roles.js";
+import {
+  ACTIVE,
+  DEACTIVATED,
+  INVITED,
+  buildPerson,
+  displayNameFor,
+  linkMatches,
+  mintLink,
+  normalizeEmail,
+  publicPerson,
+  validEmail,
+  validRole,
+} from "./people.js";
 
 export { CLIENT_ROLE, OPERATOR_ROLE };
 
@@ -97,6 +110,7 @@ export function publicUser(user) {
     // No default. A client carries the account they belong to and a Higher
     // Roads admin carries none.
     accountId: user.accountId === undefined ? null : user.accountId,
+    status: user.status || (user.password ? "active" : "invited"),
   };
 }
 
@@ -204,7 +218,7 @@ export function createOrgStore(options = {}) {
     // Admins first, then the account's people. The two lists never share an id,
     // so the order settles nothing except which document is read first.
     async everyone() {
-      return [...(await this.readAdmins()), ...(await this.readUsers())];
+      return (await this.everyPerson()).map((entry) => entry.person);
     },
 
     // Which tour an account opens when the address names none. Written onto the
@@ -241,6 +255,201 @@ export function createOrgStore(options = {}) {
       return account;
     },
 
+    // Everyone Meridian holds, across every account and the admin list, with
+    // the document each of them is stored in. Reading all of them is what makes
+    // an email unique across accounts and lets a link be completed without the
+    // person naming which account they belong to.
+    async everyPerson() {
+      const found = [];
+      for (const person of await this.readAdmins()) found.push({ person, path: ADMINS_PATH, accountId: null });
+      for (const entry of await this.readAccounts()) {
+        const scoped = createOrgStore({ backend, account: entry, env });
+        for (const person of await scoped.readUsers()) {
+          found.push({ person, path: usersPath(entry.id), accountId: entry.id });
+        }
+      }
+      return found;
+    },
+
+    // Writing one person back into whichever document they belong in. A role
+    // change moves them, because an admin belongs to no account and a client
+    // belongs to one.
+    async writePerson(next, previousPath) {
+      const path = next.role === OPERATOR_ROLE ? ADMINS_PATH : usersPath(next.accountId);
+      if (previousPath && previousPath !== path) {
+        const body = await backend.read(previousPath);
+        const stored = body ? JSON.parse(body) : { users: [] };
+        const users = (stored.users || []).filter((entry) => entry.id !== next.id);
+        await backend.write(previousPath, JSON.stringify({ ...stored, users }, null, 2));
+      }
+      const body = await backend.read(path);
+      const stored = body ? JSON.parse(body) : {};
+      const users = Array.isArray(stored.users) ? stored.users.slice() : [];
+      const at = users.findIndex((entry) => entry.id === next.id);
+      if (at === -1) users.push(next);
+      else users[at] = next;
+      const document = next.role === OPERATOR_ROLE
+        ? { users }
+        : { account: { id: next.accountId, name: next.accountId }, ...stored, users };
+      await backend.write(path, JSON.stringify(document, null, 2));
+      return next;
+    },
+
+    async findPerson(personId) {
+      return (await this.everyPerson()).find((entry) => entry.person.id === personId) || null;
+    },
+
+    // Inviting somebody. The link is handed back once and never stored, so an
+    // admin who loses it sends a new one rather than reading the old one back.
+    async invitePerson(accountId, fields) {
+      const person = buildPerson(fields, sanitizeAccountId(accountId));
+      const taken = (await this.everyPerson()).find((entry) => normalizeEmail(entry.person.login) === person.login);
+      if (taken) {
+        const error = new Error("Somebody already signs in with that email.");
+        error.status = 409;
+        throw error;
+      }
+      const minted = mintLink("invite");
+      await this.writePerson({ ...person, link: minted.link });
+      return { person: publicPerson({ ...person, link: minted.link }), token: minted.token };
+    },
+
+    async mintPersonLink(personId, purpose) {
+      const found = await this.findPerson(personId);
+      if (!found) {
+        const error = new Error("No person is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      if (found.person.status === DEACTIVATED) {
+        const error = new Error("This person cannot sign in. Turn them back on before sending a link.");
+        error.status = 409;
+        throw error;
+      }
+      const minted = mintLink(purpose);
+      const next = { ...found.person, link: minted.link };
+      await this.writePerson(next, found.path);
+      return { person: publicPerson(next), token: minted.token };
+    },
+
+    async clearPersonLink(personId) {
+      const found = await this.findPerson(personId);
+      if (!found) {
+        const error = new Error("No person is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      const next = { ...found.person, link: null };
+      await this.writePerson(next, found.path);
+      return publicPerson(next);
+    },
+
+    async editPerson(personId, fields) {
+      const found = await this.findPerson(personId);
+      if (!found) {
+        const error = new Error("No person is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      const role = validRole(fields.role) || found.person.role;
+      const email = validEmail(fields.email);
+      if (!email) {
+        const error = new Error("That email address does not look like one. The email is how they sign in.");
+        error.status = 400;
+        throw error;
+      }
+      const displayName = displayNameFor(fields.firstName, fields.lastName);
+      if (!displayName) {
+        const error = new Error("Give this person a name. It is the name that stays on everything they approve.");
+        error.status = 400;
+        throw error;
+      }
+      const taken = (await this.everyPerson())
+        .find((entry) => entry.person.id !== personId && normalizeEmail(entry.person.login) === email);
+      if (taken) {
+        const error = new Error("Somebody already signs in with that email.");
+        error.status = 409;
+        throw error;
+      }
+      const next = {
+        ...found.person,
+        firstName: String(fields.firstName || "").trim(),
+        lastName: String(fields.lastName || "").trim(),
+        displayName,
+        phone: String(fields.phone || "").trim(),
+        email,
+        login: email,
+        role,
+        accountId: role === OPERATOR_ROLE ? null : (found.accountId || found.person.accountId),
+      };
+      await this.writePerson(next, found.path);
+      return publicPerson(next);
+    },
+
+    // Turning somebody off keeps their name on everything they decided and
+    // stops them signing in. It is the only way out for a person who has ever
+    // signed in.
+    async setPersonStatus(personId, status) {
+      const found = await this.findPerson(personId);
+      if (!found) {
+        const error = new Error("No person is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      const next = {
+        ...found.person,
+        status,
+        link: status === DEACTIVATED ? null : found.person.link,
+      };
+      await this.writePerson(next, found.path);
+      return publicPerson(next);
+    },
+
+    async removePerson(personId) {
+      const found = await this.findPerson(personId);
+      if (!found) {
+        const error = new Error("No person is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      if (!publicPerson(found.person).deletable) {
+        const error = new Error("This person has signed in. Turn them off instead, so the record keeps their name on what they decided.");
+        error.status = 409;
+        throw error;
+      }
+      const body = await backend.read(found.path);
+      const stored = body ? JSON.parse(body) : { users: [] };
+      const users = (stored.users || []).filter((entry) => entry.id !== personId);
+      await backend.write(found.path, JSON.stringify({ ...stored, users }, null, 2));
+      return publicPerson(found.person);
+    },
+
+    // Completing an invite or a reset. The link goes with it, so the same one
+    // cannot be used twice.
+    async completeLink(token, password) {
+      const now = new Date();
+      const found = (await this.everyPerson()).find((entry) => linkMatches(entry.person.link, token, now));
+      if (!found) {
+        const error = new Error("That link has expired or has already been used. Ask for a new one.");
+        error.status = 400;
+        throw error;
+      }
+      if (String(password || "").length < 10) {
+        const error = new Error("Use at least ten characters.");
+        error.status = 400;
+        throw error;
+      }
+      const next = {
+        ...found.person,
+        password: hashPassword(String(password)),
+        status: ACTIVE,
+        link: null,
+        acceptedAt: found.person.acceptedAt || now.toISOString(),
+      };
+      await this.writePerson(next, found.path);
+      return publicUser(next);
+    },
+
     async findUser(userId) {
       const users = await this.everyone();
       return publicUser(users.find((entry) => entry.id === userId) || null);
@@ -253,6 +462,10 @@ export function createOrgStore(options = {}) {
       const wanted = String(login || "").trim().toLowerCase();
       const user = users.find((entry) => String(entry.login).toLowerCase() === wanted);
       if (!user) return null;
+      // A person who has been turned off, and a person who has been invited and
+      // has not set a password, both fail here rather than at a second check a
+      // caller might forget.
+      if (user.status === DEACTIVATED || !user.password) return null;
       if (!passwordMatches(String(password || ""), user.password)) return null;
       return publicUser(user);
     },

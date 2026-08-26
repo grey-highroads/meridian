@@ -34,6 +34,8 @@ Edit a person: first name, last name, phone, email, and whether they are a clien
 
 Deactivate a person who has acted in the app. They keep their name on every approval and every note and cannot sign in. Deleting is available only for a person who has never done anything, because deleting someone who has acted makes the record lie about who decided what.
 
+Narrowed 2026-08-26 with brief 4: never done anything is read as never signed in. A fact names whoever acted by their display name rather than by their id, so a scan for a person's acts cannot be exact and a person renamed after acting would scan clean. Signing in is doing something, so anybody who has completed a link is turned off rather than deleted. Delete stays available for the case it is for, which is the invitation sent to the wrong address. This narrows the ruling toward the safe side of an act that cannot be undone.
+
 Set which tour is active when an account holds more than one.
 
 Delete a tour. Delete an account.
@@ -50,7 +52,7 @@ Meridian mints the link. The admin sends it from their own inbox. No mail provid
 
 What follows from that. The invite state on a person's row records what Meridian knows and never claims delivery: invited, accepted, revoked. Resend mints a fresh link and replaces the one before it. A password reset works the same way and is the only route by which a password changes, because an admin never sets another person's password.
 
-A link is good for 30 days. Ruled 2026-08-26. Whether it survives a second use inside that window is settled in the people brief, against the code that mints it.
+A link is good for 30 days. Ruled 2026-08-26. Single use inside that window, ruled 2026-08-26 with brief 4: accepting an invite or completing a reset clears the link, so a link read over somebody's shoulder a week later opens nothing. Resending mints a fresh one and the one before it stops working. What is stored is the link's hash, so the stored people document cannot be read to sign in as anybody.
 
 ## What this supersedes
 

@@ -7,6 +7,10 @@ import { readJsonBody, sendJson, sendPublicError } from "../../src/server/http.j
 //
 // A POST with a login and a password sets the session cookie. A GET with
 // signout on it clears the cookie and sends the person back to the front door.
+//
+// A POST carrying a token and a password completes an invite or a reset. It
+// runs without a session, because the person completing it has no way to sign
+// in yet. The link is what stands in for one, and it goes when it is used.
 
 export default async function handler(request, response, options = {}) {
   try {
@@ -35,6 +39,23 @@ export default async function handler(request, response, options = {}) {
     }
 
     const body = await readJsonBody(request);
+
+    // Setting a password from a link. The person is signed in on the way out,
+    // so completing an invite lands them in the app rather than at a second
+    // form asking for what they just typed.
+    if (body.action === "set-password") {
+      let person;
+      try {
+        person = await store.completeLink(body.token, body.password);
+      } catch (error) {
+        sendPublicError(response, error);
+        return;
+      }
+      const accepted = await signSession({ userId: person.id, role: person.role }, sessionSecret());
+      response.setHeader("Set-Cookie", sessionCookie(accepted, { secure }));
+      sendJson(response, 200, { ok: true, user: person });
+      return;
+    }
 
     // Two different failures, two different sentences. The store throws when
     // the deployment has no sign in values set, and that sentence goes to the

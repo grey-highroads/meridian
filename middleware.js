@@ -9,7 +9,16 @@ import { CLIENT_ROLE } from "./src/org/roles.js";
 // An invited client lands on Home and can use the Tour and Scene workflow.
 // Internal review and Artist Brain stay on the Higher Roads side of the glass.
 
-const PUBLIC_PATHS = new Set(["/landing.html", "/api/blob/upload", "/api/auth/login"]);
+// Set-password is public because the person opening it has no way to sign in
+// yet. The link is what stands in for a session, and the server is what checks
+// it. Ruled 2026-08-26 in docs/spec-admin-surface.md.
+const PUBLIC_PATHS = new Set([
+  "/landing.html",
+  "/set-password.html",
+  "/set-password.js",
+  "/api/blob/upload",
+  "/api/auth/login",
+]);
 
 const CLIENT_PATHS = new Set([
   "/", "/index.html", "/home.js", "/shell.js",

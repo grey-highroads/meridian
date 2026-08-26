@@ -491,6 +491,20 @@ Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Up
 
 Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
+## A fact names who acted by display name, not by id
+
+Recorded 2026-08-26 with brief 4 of the admin surface. `src/org/artists.js`, `src/tour/scene-record.js`, `api/tour/index.js`, and `api/tour-upload.js` all write `actor` as the person's display name. Nothing on a fact points back at the person record.
+
+Two effects. Editing somebody's name leaves earlier facts reading the name they had then, which is right for a record of who decided what and wrong for anyone trying to gather one person's acts. And the delete guard cannot ask whether a person ever acted, which is why brief 4 reads never done anything as never signed in.
+
+Bring it back when: something needs one person's acts gathered, such as a page showing what somebody decided, or a delete guard that reads the ruling as written. The change is an `actorId` written beside `actor` at those four call sites, with the display name kept as it is so old facts still read.
+
+## Nobody can be invited into an account with no artist
+
+Recorded 2026-08-26 with brief 4 of the admin surface. Nothing stops it. An account is created with its first artist, so the case takes deliberate work to reach, and a client with nothing to look at is a state Admin shows plainly in its lists.
+
+Bring it back when: an invite is sent before the artist exists in real use and the person lands on an empty app.
+
 ## A deleted account left its name on the page
 
 Recorded 2026-08-26, found by Grey on the live app after deleting a test account. The account list showed one account and the three sections under it were still headed with the deleted one's name, because the address still named it and nothing checked the name against the list. `resolveActingAccount` sanitizes whatever was selected and hands it back, so a Higher Roads session could go on acting inside an account with no row and write documents under it.

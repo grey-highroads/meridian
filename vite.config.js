@@ -24,6 +24,7 @@ export default defineConfig({
         request: resolve(__dirname, "app/request.html"),
         admin: resolve(__dirname, "app/admin.html"),
         newTour: resolve(__dirname, "app/new-tour.html"),
+        setPassword: resolve(__dirname, "app/set-password.html"),
       },
     },
   },

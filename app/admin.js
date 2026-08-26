@@ -28,6 +28,9 @@ const view = {
   deleting: null,
   confirmName: "",
   working: false,
+  editing: null,
+  link: null,
+  person: { firstName: "", lastName: "", email: "", phone: "", role: "client-reviewer" },
 };
 
 const acts = {
@@ -127,6 +130,85 @@ function resultBlock(state, label) {
     ${lines ? `<div class="m-stack"><ul class="m-stack">${lines}</ul></div>` : ""}`;
 }
 
+// What a person's row says about them, in the words an admin would use rather
+// than the words the record uses.
+function personState(entry) {
+  if (entry.status === "deactivated") return "Turned off";
+  if (entry.invitePending) return `Invited, link good until ${new Date(entry.linkExpiresAt).toLocaleDateString()}`;
+  if (entry.status === "invited") return "Invited, no link out";
+  return `Signed in since ${entry.acceptedAt ? new Date(entry.acceptedAt).toLocaleDateString() : "the start"}`;
+}
+
+function personRow(entry) {
+  const editing = view.editing === entry.id;
+  if (editing) return personForm(entry);
+  const off = entry.status === "deactivated";
+  const controls = [
+    `<button class="m-button" type="button" data-edit-person="${escape(entry.id)}">Edit</button>`,
+    entry.invitePending
+      ? `<button class="m-button" type="button" data-person-act="resend-invite" data-person="${escape(entry.id)}">New link</button>
+         <button class="m-button" type="button" data-person-act="revoke-invite" data-person="${escape(entry.id)}">Revoke</button>`
+      : `<button class="m-button" type="button" data-person-act="send-reset" data-person="${escape(entry.id)}">Send a reset</button>`,
+    off
+      ? `<button class="m-button" type="button" data-person-act="reactivate-person" data-person="${escape(entry.id)}">Turn back on</button>`
+      : `<button class="m-button" type="button" data-person-act="deactivate-person" data-person="${escape(entry.id)}">Turn off</button>`,
+    entry.deletable
+      ? `<button class="m-button" type="button" data-person-act="delete-person" data-person="${escape(entry.id)}">Delete</button>`
+      : "",
+  ].join("");
+  return `<article class="m-rule-row">
+      <div class="m-stack">
+        <span class="m-rule-row__title">${escape(entry.displayName)}</span>
+        <span class="m-meta">${escape(entry.email)}${entry.phone ? ` and ${escape(entry.phone)}` : ""}</span>
+        <span class="m-meta">${escape(entry.roleLabel || (entry.role === "higher-roads" ? "Higher Roads" : "Client"))}. ${escape(personState(entry))}</span>
+      </div>
+      <div class="m-cluster">${controls}</div>
+    </article>`;
+}
+
+// One form, used for inviting somebody and for editing them. The fields are the
+// same five either way, so the page does not carry two of them.
+function personForm(entry) {
+  const editing = Boolean(entry);
+  const values = editing ? entry : view.person;
+  const field = (name, label, type = "text") => `<div class="m-field">
+      <label class="m-label" for="person-${name}">${escape(label)}</label>
+      <input class="m-input" id="person-${name}" type="${type}" data-person-field="${name}" value="${escape(values[name] || "")}">
+    </div>`;
+  return `<article class="m-rule-row">
+      <div class="m-stack">
+        ${field("firstName", "First name")}
+        ${field("lastName", "Last name")}
+        ${field("email", "Email, which is how they sign in", "email")}
+        ${field("phone", "Phone")}
+        <div class="m-field">
+          <label class="m-label" for="person-role">They are</label>
+          <select class="m-input" id="person-role" data-person-field="role">
+            <option value="client-reviewer" ${values.role === "higher-roads" ? "" : "selected"}>A client on this account</option>
+            <option value="higher-roads" ${values.role === "higher-roads" ? "selected" : ""}>Higher Roads</option>
+          </select>
+        </div>
+        <div class="m-cluster">
+          <button class="m-button m-button--primary" type="button" ${editing ? `data-save-person="${escape(entry.id)}"` : "data-invite-person"} ${view.working ? "disabled" : ""}>${view.working ? "Saving" : (editing ? "Save" : "Invite them")}</button>
+          <button class="m-button" type="button" data-cancel-person>Cancel</button>
+        </div>
+      </div>
+    </article>`;
+}
+
+// The link Meridian minted, shown once. Nothing sends it, so the admin copies
+// it out of here into whatever they are already using to talk to the person.
+function linkBlock() {
+  if (!view.link) return "";
+  const full = `${window.location.origin}${view.link.href}`;
+  return `<div class="m-callout m-callout--approved">
+      <span class="m-state m-state--approved">Link ready</span>
+      <p class="m-copy">Send this to ${escape(view.link.name)} yourself. It works once and stops working in thirty days. Meridian will not show it again.</p>
+      <div class="m-field"><input class="m-input" data-link value="${escape(full)}" readonly aria-label="The link to send"></div>
+      <div class="m-cluster"><button class="m-button" type="button" data-copy-link>Copy it</button><button class="m-button" type="button" data-dismiss-link>Done</button></div>
+    </div>`;
+}
+
 function accountName() {
   return view.account ? view.account.name : "this account";
 }
@@ -168,16 +250,12 @@ function render() {
     </section>
     <section class="m-stack" aria-labelledby="people-heading">
       <h2 id="people-heading" class="m-section-heading">People in ${escape(accountName())}</h2>
-      ${rows(
-        view.people.map((entry) => row(entry.displayName, entry.login)),
-        "Nobody has been invited into this account yet.",
-      )}
+      ${linkBlock()}
+      ${rows(view.people.map(personRow), "Nobody has been invited into this account yet.")}
+      ${view.editing === "new" ? personForm(null) : `<div class="m-cluster"><button class="m-button m-button--primary" type="button" data-new-person>Invite somebody</button></div>`}
       <h2 class="m-section-heading">Higher Roads</h2>
       <p class="m-copy">Higher Roads belongs to no account and sees every one of them.</p>
-      ${rows(
-        view.admins.map((entry) => row(entry.displayName, entry.login)),
-        "No Higher Roads person is set up.",
-      )}
+      ${rows(view.admins.map(personRow), "No Higher Roads person is set up.")}
     </section>
     <section class="m-stack" aria-labelledby="account-heading">
       <h2 id="account-heading" class="m-section-heading">Create an account</h2>
@@ -268,6 +346,16 @@ function run(state, work) {
   });
 }
 
+// The person form is read from the page when it is submitted rather than
+// written back on every keystroke, so the caret stays where it was typed.
+function readPersonForm() {
+  const values = {};
+  for (const field of document.querySelectorAll("[data-person-field]")) {
+    values[field.getAttribute("data-person-field")] = field.value;
+  }
+  return values;
+}
+
 document.addEventListener("input", (event) => {
   const field = event.target.closest("[data-field]");
   if (!field) return;
@@ -294,6 +382,7 @@ async function act(work) {
   view.error = "";
   render();
   try {
+    view.link = null;
     await work();
     view.deleting = null;
     view.confirmName = "";
@@ -326,6 +415,64 @@ document.addEventListener("click", (event) => {
       // Deleting the account being worked in leaves the address naming
       // something that is gone, so the name goes with the account.
       if (namedAccount() === accountToDelete) window.location.replace("./admin.html");
+    });
+    return;
+  }
+  if (target.hasAttribute("data-new-person")) {
+    view.editing = "new";
+    view.link = null;
+    view.person = { firstName: "", lastName: "", email: "", phone: "", role: "client-reviewer" };
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-edit-person")) {
+    view.editing = target.getAttribute("data-edit-person");
+    view.link = null;
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-cancel-person")) {
+    view.editing = null;
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-dismiss-link")) {
+    view.link = null;
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-copy-link")) {
+    const field = document.querySelector("[data-link]");
+    if (field) {
+      field.select();
+      void navigator.clipboard.writeText(field.value).catch(() => {});
+    }
+    return;
+  }
+  if (target.hasAttribute("data-invite-person")) {
+    const person = readPersonForm();
+    void act(async () => {
+      const created = await post("/api/artist", { action: "invite-person", person });
+      view.editing = null;
+      view.link = { href: created.link, name: created.person.displayName };
+    });
+    return;
+  }
+  if (target.hasAttribute("data-save-person")) {
+    const personId = target.getAttribute("data-save-person");
+    const person = readPersonForm();
+    void act(async () => {
+      await post("/api/artist", { action: "edit-person", personId, person });
+      view.editing = null;
+    });
+    return;
+  }
+  if (target.hasAttribute("data-person-act")) {
+    const action = target.getAttribute("data-person-act");
+    const personId = target.getAttribute("data-person");
+    void act(async () => {
+      const result = await post("/api/artist", { action, personId });
+      view.link = result.link ? { href: result.link, name: result.person.displayName } : null;
     });
     return;
   }
