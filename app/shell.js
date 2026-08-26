@@ -122,6 +122,41 @@ async function mountAccountPicker(active) {
   });
 }
 
+// Where a Higher Roads session goes that a client never does. Both used to be
+// hard-coded into a page's markup, so reaching either meant landing on the one
+// page that happened to carry the link. They are built here instead, on every
+// page that loads the shell, and only for the Higher Roads role. The route
+// still refuses a client session on its own; nothing here is the enforcement.
+const OPERATOR_DESTINATIONS = [
+  { page: "artist.html", label: "Artist Brain" },
+  { page: "admin.html", label: "Admin" },
+];
+
+function operatorGroup() {
+  const group = document.createElement("div");
+  group.className = "m-cluster";
+  group.setAttribute("data-operator-utility", "");
+  group.setAttribute("data-operator-group", "");
+  group.innerHTML = OPERATOR_DESTINATIONS.map((entry) => {
+    const here = window.location.pathname.endsWith(`/${entry.page}`);
+    return `<a class="m-button m-button--small" href="./${entry.page}"${here ? ' aria-current="page"' : ""}>${escape(entry.label)}</a>`;
+  }).join("");
+  return group;
+}
+
+// The group sits in the upper right, in the bar every page already has there.
+// Pages write that bar whole on every render, so the group is put back when it
+// goes, rather than the pages each being taught to keep it.
+function mountOperatorDestinations() {
+  const bar = document.getElementById("location");
+  if (!bar) return;
+  const place = () => {
+    if (!bar.querySelector("[data-operator-group]")) bar.append(operatorGroup());
+  };
+  place();
+  new MutationObserver(place).observe(bar, { childList: true });
+}
+
 fetch("/api/tour", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -131,5 +166,8 @@ fetch("/api/tour", {
   document.querySelectorAll("[data-operator-utility]").forEach((entry) => {
     entry.hidden = body.user.role !== "higher-roads";
   });
-  if (body.user.role === "higher-roads") void mountAccountPicker(body.actingAccount || ACCOUNT_ID);
+  if (body.user.role === "higher-roads") {
+    mountOperatorDestinations();
+    void mountAccountPicker(body.actingAccount || ACCOUNT_ID);
+  }
 }).catch(() => {});

@@ -60,7 +60,7 @@ The normal tour workspace has four destinations.
 
 **Tour details.** The shared foundation for the work: creative direction, dates and venues, production setup, team, approval authority.
 
-Artist Brain does not appear in the primary client navigation. Higher Roads users receive a separate Admin utility area for client accounts, artists, Artist Brains, access, and system administration. Admin tools stay separate from daily tour production, and Higher Roads operational users work through the same Tour and Scene workflows as everyone else.
+Artist Brain does not appear in the primary client navigation. Higher Roads users receive a separate Admin utility area for client accounts, artists, Artist Brains, access, and system administration. Built 2026-08-26: Admin and Artist Brain are placed in the top right of every page by `app/shell.js` for the Higher Roads role, and no page carries either link in its markup. The route refuses a client session on its own; a link that is not drawn is never the enforcement. Admin tools stay separate from daily tour production, and Higher Roads operational users work through the same Tour and Scene workflows as everyone else.
 
 ## Roles
 
@@ -86,7 +86,7 @@ Ruled 2026-08-26. Naming approval authorities per tour is not in this version. T
 
 ## Tour creation
 
-Higher Roads creates the client account and invites the client team. An authorized client or Higher Roads user can then create the active Tour with minimal information: artist, tour name, approximate dates, primary contact.
+Higher Roads creates the client account and invites the client team. An account is created with its first artist in the same step, because a tour sits under an artist and an account with none is an account nobody can work in. An authorized client or Higher Roads user can then create the active Tour with minimal information: artist, tour name, approximate dates, primary contact.
 
 Built 2026-08-26 on `app/new-tour.html`, reached from Home when the account holds no tour. The tour name is the only required value. Rough dates and the main contact are offered and skippable, with the signed in person filled in as the contact. The artist is shown as context while the account holds one and becomes a picker when it holds more. A refused create leaves every typed value on the screen. Creating a tour is the client's own first job and no longer sits on the Higher Roads Admin page.
 

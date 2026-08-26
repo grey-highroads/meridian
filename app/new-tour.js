@@ -14,6 +14,7 @@ const view = {
   primaryContact: "",
   artistId: "",
   artists: [],
+  role: null,
   working: false,
   message: "",
 };
@@ -36,7 +37,12 @@ function escape(value) {
 
 function artistField() {
   if (!view.artists.length) {
-    return `<div class="m-callout m-callout--change"><p class="m-copy">This account holds no artist yet. Higher Roads adds the artist, and the tour can be started after that.</p></div>`;
+    // Higher Roads reads this and can go and do it. A client reads the same
+    // sentence without the way in, because the artist is ours to add.
+    return `<div class="m-callout m-callout--change">
+        <p class="m-copy">This account holds no artist yet, and a tour sits under an artist. The tour can be started once the artist is there.</p>
+        ${view.role === "higher-roads" ? `<div class="m-cluster"><a class="m-button m-button--small" href="./admin.html">Add the artist</a></div>` : ""}
+      </div>`;
   }
   if (view.artists.length === 1) {
     return `<div class="m-field"><span class="m-label">Artist</span><p class="m-copy">${escape(view.artists[0].name)}</p></div>`;
@@ -49,7 +55,7 @@ function render() {
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./index.html">Home</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Start the tour</span></nav>`;
   root.innerHTML = `<header class="m-form-page__intro">
       <span class="m-label">Start the tour</span>
-      <h1 class="m-heading">Open the tour Meridian works on.</h1>
+      <h1 class="m-heading">Start the tour Meridian works on.</h1>
       <p class="m-copy m-copy--large">The name is all Meridian needs. Direction, dates, production details, and Scenes all sit under the tour once it exists.</p>
     </header>
     <div class="m-form-page__work">
@@ -112,7 +118,10 @@ Promise.all([
 ]).then(([{ artists }, me]) => {
   view.artists = Array.isArray(artists) ? artists : [];
   view.artistId = view.artists.length ? view.artists[0].id : "";
-  if (me && me.user) view.primaryContact = me.user.displayName || "";
+  if (me && me.user) {
+    view.primaryContact = me.user.displayName || "";
+    view.role = me.user.role || null;
+  }
   render();
 }).catch((error) => {
   view.message = error.message;

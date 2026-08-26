@@ -32,19 +32,22 @@ function read(name) {
   return readFileSync(join(process.cwd(), name), "utf8");
 }
 
+// An account and its first artist are made in one act, because a tour sits
+// under an artist and an account with none is an account nobody can work in.
 async function makeAccountB(backend) {
   return await artistAction(
-    { action: "create-account", name: "Northstar Live" },
+    { action: "create-account", name: "Northstar Live", artistName: "Wren Halloway" },
     artistOptions(backend, OPERATOR),
   );
 }
 
-test("a created account is stored, listed, and starts with no artists and no tours", async () => {
+test("a created account is stored, listed, holds its first artist, and starts with no tours", async () => {
   const backend = createMemoryBackend();
 
-  const { account } = await makeAccountB(backend);
+  const { account, artist } = await makeAccountB(backend);
   assert.equal(account.id, ACCOUNT_B);
   assert.equal(account.name, "Northstar Live");
+  assert.equal(artist.id, "wren-halloway");
 
   // The stored list, not the return value.
   const stored = JSON.parse(await backend.read("brand-world-system/org/accounts.json"));
@@ -57,7 +60,11 @@ test("a created account is stored, listed, and starts with no artists and no tou
     { action: "list-artists", accountId: ACCOUNT_B },
     artistOptions(backend, OPERATOR, ACCOUNT_B),
   );
-  assert.deepEqual(artists.artists, [], "a new account inherits another account's artists");
+  // The stored rows, not the return value. The account's own artist is there
+  // and nobody else's is.
+  assert.deepEqual(artists.artists.map((entry) => entry.id), ["wren-halloway"]);
+  const storedArtists = JSON.parse(await backend.read(`brand-world-system/clients/${ACCOUNT_B}/org/artists.json`));
+  assert.deepEqual(storedArtists.artists.map((entry) => entry.name), ["Wren Halloway"]);
 
   const tours = await tourAction(
     { action: "list-tours", accountId: ACCOUNT_B },
@@ -86,10 +93,8 @@ test("an artist and a tour created in one account are readable there and absent 
   const backend = createMemoryBackend();
   await makeAccountB(backend);
 
-  await artistAction(
-    { action: "create-artist", accountId: ACCOUNT_B, name: "Wren Halloway" },
-    artistOptions(backend, OPERATOR, ACCOUNT_B),
-  );
+  // The artist arrived with the account, so the tour can be created without a
+  // second visit to Admin.
   const created = await tourAction(
     { action: "create-tour", accountId: ACCOUNT_B, name: "Northstar 2027", artistId: "wren-halloway" },
     tourOptions(backend, OPERATOR, ACCOUNT_B),
@@ -185,7 +190,7 @@ test("a client creating a tour lands in its own account and nowhere else", async
   );
   for (const path of backend.files.keys()) {
     assert.ok(
-      !path.startsWith(`brand-world-system/clients/${ACCOUNT_B}/`),
+      !path.startsWith(`brand-world-system/clients/${ACCOUNT_B}/tours/`),
       `${path} put a client's tour in the account it named rather than its own`,
     );
   }
@@ -218,8 +223,13 @@ test("an account holding no tour resolves without an error", async () => {
   );
   assert.deepEqual(tours.tours, []);
 
-  // Nothing was written by the read.
-  assert.deepEqual([...backend.files.keys()], ["brand-world-system/org/accounts.json"]);
+  // Nothing was written by the read. What is stored is what creating the
+  // account wrote: the accounts list, and the account's first artist.
+  assert.deepEqual([...backend.files.keys()].sort(), [
+    `brand-world-system/clients/${ACCOUNT_B}/org/artist-record.json`,
+    `brand-world-system/clients/${ACCOUNT_B}/org/artists.json`,
+    "brand-world-system/org/accounts.json",
+  ]);
 });
 
 test("the demo account no longer holds a tour id any other account falls back to", () => {
@@ -242,7 +252,7 @@ test("the account picker is built for the Higher Roads role only", () => {
   const shell = read("app/shell.js");
   assert.match(shell, /action: "list-accounts"/, "the shell never reads the accounts it may work in");
   assert.match(shell, /data-operator-utility/, "the picker is not hidden by the rule that hides the Admin link");
-  assert.match(shell, /role === "higher-roads"\) void mountAccountPicker/, "the picker is built for a role that may not have it");
+  assert.match(shell, /role === "higher-roads"\) \{\s*\n\s*mountOperatorDestinations\(\);\s*\n\s*void mountAccountPicker/, "the picker is built for a role that may not have it");
   assert.match(shell, /url\.searchParams\.delete\("tour"\)/, "switching accounts carries the old account's tour id");
 });
 

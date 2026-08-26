@@ -2,10 +2,10 @@ import { ACCOUNT_ID, scopedBody, TOUR_ID } from "./context.js";
 
 // Higher Roads maintenance. Two acts move work to the place every account reads
 // from: the artist's stored files, and the tour that still lives as committed
-// markdown. Two more are ours to perform: an account, and an artist inside the
-// account being worked in. Starting the tour is the client's own first job and
-// lives on Home. Nothing on this page removes anything, so no confirm step and
-// no new pattern are needed.
+// markdown. Two more are ours to perform: an account with its first artist, and
+// a second artist inside an account that already exists. Starting the tour is
+// the client's own first job and lives on Home. Nothing on this page removes
+// anything, so no confirm step and no new pattern are needed.
 
 const ARTIST_ID = new URLSearchParams(window.location.search).get("artist") || "dierks-bentley";
 const TOUR = TOUR_ID || "off-the-map-2026";
@@ -16,7 +16,7 @@ const root = document.getElementById("admin");
 const acts = {
   copy: { working: false, result: null, message: "" },
   seed: { working: false, result: null, message: "" },
-  account: { working: false, result: null, message: "", name: "" },
+  account: { working: false, result: null, message: "", name: "", artistName: "" },
   artist: { working: false, result: null, message: "", name: "" },
 };
 
@@ -106,10 +106,14 @@ function render() {
     <section class="m-stack" aria-labelledby="account-heading">
       <h2 id="account-heading" class="m-section-heading">Create an account</h2>
       <p class="m-copy m-copy--large">An account is one paying organization. It holds its own artists, its own tours, and its own work, and nothing stored in it is readable from another account.</p>
-      <p class="m-copy">Creating one leaves it empty. Switch to it with the account picker, then create an artist and a tour inside it.</p>
+      <p class="m-copy">A tour sits under an artist, so the account and its first artist are made together and the account arrives ready to work in. Switch to it with the account picker, then start the tour inside it.</p>
       <div class="m-field">
         <label class="m-label" for="account-name">Account name</label>
         <input class="m-input" id="account-name" data-field="account" value="${escape(acts.account.name)}" placeholder="For example, Northstar Live">
+      </div>
+      <div class="m-field">
+        <label class="m-label" for="account-artist">Artist name</label>
+        <input class="m-input" id="account-artist" data-field="account-artist" value="${escape(acts.account.artistName)}" placeholder="For example, Wren Halloway">
       </div>
       <div class="m-cluster">
         <button class="m-button m-button--primary" type="button" data-create-account ${acts.account.working ? "disabled" : ""}>${acts.account.working ? "Creating" : "Create the account"}</button>
@@ -117,8 +121,8 @@ function render() {
       ${resultBlock(acts.account, "Account created", summary)}
     </section>
     <section class="m-stack" aria-labelledby="artist-heading">
-      <h2 id="artist-heading" class="m-section-heading">Create an artist</h2>
-      <p class="m-copy m-copy--large">The artist is the brand every tour is read against. This creates the row in the account being worked in. Its brain stays empty until intake files are imported for it.</p>
+      <h2 id="artist-heading" class="m-section-heading">Add another artist</h2>
+      <p class="m-copy m-copy--large">The artist is the brand every tour is read against. An account gets its first artist when it is created, and this adds another to the account being worked in. Its brain stays empty until intake files are imported for it.</p>
       <div class="m-field">
         <label class="m-label" for="artist-name">Artist name</label>
         <input class="m-input" id="artist-name" data-field="artist" value="${escape(acts.artist.name)}" placeholder="For example, Wren Halloway">
@@ -159,6 +163,7 @@ document.addEventListener("input", (event) => {
   if (!field) return;
   const which = field.getAttribute("data-field");
   if (which === "account") acts.account.name = field.value;
+  if (which === "account-artist") acts.account.artistName = field.value;
   if (which === "artist") acts.artist.name = field.value;
 });
 
@@ -169,8 +174,21 @@ document.addEventListener("click", (event) => {
   if (target.hasAttribute("data-seed")) start(acts.seed, "seed-tour-at-shared-path", { tourId: TOUR });
   if (target.hasAttribute("data-create-account")) {
     run(acts.account, async () => {
-      const { account } = await post("/api/artist", { action: "create-account", name: acts.account.name });
-      return { summary: `${account.name} is an account now. Switch to it with the account picker to work in it.` };
+      const created = await post("/api/artist", {
+        action: "create-account",
+        name: acts.account.name,
+        artistName: acts.account.artistName,
+      });
+      // The account can arrive without its artist. When it does, the account is
+      // reported as made and the artist is reported as the half that failed,
+      // in the words the server used.
+      if (!created.artist) {
+        return {
+          summary: `${created.account.name} is an account now. The artist was not created: ${created.artistError}`,
+          lines: ["Add the artist below, in the account picker's new account."],
+        };
+      }
+      return { summary: `${created.account.name} is an account now, with ${created.artist.name} in it. Switch to it with the account picker to start the tour.` };
     });
   }
   if (target.hasAttribute("data-create-artist")) {

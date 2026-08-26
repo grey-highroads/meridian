@@ -8,7 +8,7 @@ import { createTourStore, tourDocumentPathFor } from "../../src/tour/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { ACCOUNT, OPERATOR_ROLE, createOrgStore } from "../../src/org/store.js";
-import { RECORD_ACTOR, createArtistDirectory } from "../../src/org/artists.js";
+import { RECORD_ACTOR, createArtistDirectory, sanitizeArtistId } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 
 // The artist layer's one function. New operations arrive as actions here
@@ -50,10 +50,15 @@ function openAccounts(options, store) {
   return createOrgStore(backend ? { backend } : {});
 }
 
-function openDirectory(options, store, accountId) {
-  if (options.artists) return options.artists;
-  const backend = store && store.backend ? store.backend : null;
-  return createArtistDirectory(backend ? { backend, accountId } : { accountId });
+// The account's artist rows. An injected directory is bound to one account, so
+// a caller that needs another account's rows names it and gets a directory on
+// the same backend rather than the injected one.
+function openDirectory(options, store, accountId, forAccount) {
+  const wanted = forAccount || accountId;
+  if (options.artists && options.artists.accountId === wanted) return options.artists;
+  const backend = (options.artists && options.artists.backend)
+    || (store && store.backend ? store.backend : null);
+  return createArtistDirectory(backend ? { backend, accountId: wanted } : { accountId: wanted });
 }
 
 export function intakeDirectory(artistId) {
@@ -176,8 +181,40 @@ export async function handleAction(body, options = {}) {
   if (body.action === "list-accounts" && options.user && options.user.role === OPERATOR_ROLE) {
     return { accounts: await openAccounts(options, store).readAccounts() };
   }
+  // An account with no artist is an account nobody can do anything in, because
+  // a tour needs an artist. The two are made in one act, and the artist name is
+  // checked before the account is written so an unusable name never leaves half
+  // an account behind. If the artist still fails after the account exists, the
+  // account comes back with the reason the artist did not, and the caller says
+  // which half it was.
   if (body.action === "create-account" && options.user && options.user.role === OPERATOR_ROLE) {
-    return { account: await openAccounts(options, store).createAccount(body.name) };
+    const artistName = String(body.artistName || "").trim();
+    if (!artistName) {
+      const error = new Error("Name the artist this account works on before creating it.");
+      error.status = 400;
+      throw error;
+    }
+    if (sanitizeArtistId(artistName) === "default") {
+      const error = new Error("That artist name does not make a usable artist id. Use letters or numbers.");
+      error.status = 400;
+      throw error;
+    }
+    const account = await openAccounts(options, store).createAccount(body.name);
+    const directory = openDirectory(options, store, account.id, account.id);
+    try {
+      const artist = await directory.createArtist({ name: artistName, identities: body.identities });
+      await directory.appendArtistFact({
+        actor: options.user.displayName,
+        role: options.user.roleLabel || null,
+        account: account.id,
+        action: "Created the artist",
+        artistId: artist.id,
+        onBehalfOf: optionalText(body.onBehalfOf),
+      });
+      return { account, artist };
+    } catch (error) {
+      return { account, artist: null, artistError: error.message };
+    }
   }
   if (body.action === "create-artist" && options.user && options.user.role === OPERATOR_ROLE) {
     const directory = openDirectory(options, store, accountId);

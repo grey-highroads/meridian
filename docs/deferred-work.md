@@ -28,6 +28,16 @@ Missing state: Use the existing named-region field when feedback needs a locatio
 
 Where: The Artboard review job, on the review screen built from that sample. The optional anchor is recorded as provisional in section 6 of `docs/meridian-seam-with-jim.md` and whether Jim's side can read one is a discovery question in section 4.
 
+### A persistent group in the bar at the top of the page
+
+Status: use the existing pattern
+
+Job: a Higher Roads admin reaches Admin and Artist Brain from wherever they are, rather than from the one page that happens to carry the link.
+
+Missing state: There is no pattern for a group of destinations living in `m-location`, and no treatment for marking one of them as the page currently open. The shell builds the group from `m-cluster` and `m-button m-button--small`, which is the nearest thing the system supports, and marks the open one with `aria-current` alone, so the state is announced and not drawn. `m-shell__nav-link` was not used because it is styled for the rail.
+
+Where: Every page that loads `app/shell.js`, top right, built in `mountOperatorDestinations`.
+
 ### Showing a real artboard file in the artboard frame
 
 Status: available
@@ -498,3 +508,9 @@ Bring it back when: someone needs to record a date where the rig differs without
 Recorded 2026-08-26 with the dates editor on `app/tour.html`. Each row is three free text fields, and a row keeps whatever it has, so a date with no venue is a date. `readableDate` in `app/tour.js` formats a row that reads as a plain year, month, and day and shows anything else as it came, which is the rule the fixture reader already followed. Nothing validates the date, orders the route, or notices two rows naming the same night.
 
 Bring it back when: a Scene brief needs to name a specific date, or a tour manager reports a route that reads wrong on the tour page.
+
+## The group is put back rather than the pages keeping it
+
+Recorded 2026-08-26 with the persistent Admin and Artist Brain destinations. Every page writes `#location` whole on render, so the shell watches that element and puts the group back when a render drops it. Teaching each page to preserve it would touch eleven files and every future page would have to remember.
+
+Bring it back when: the bar at the top becomes a shell-owned region a page fills through a named slot rather than by writing the whole element. The observer comes out in the same commit.
