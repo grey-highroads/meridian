@@ -357,3 +357,122 @@ test("Admin shows the four lists and no longer carries the finished migration ac
     assert.ok(!route.includes(act), `the route still runs ${act}`);
   }
 });
+
+// The row acts. Ruled 2026-08-26 in docs/spec-admin-surface.md: set which tour
+// is active, delete a tour, delete an account.
+
+async function seedTour(backend, accountId, tourId, name) {
+  const tours = createTourStore({ backend, accountId });
+  await tours.createTour(tourId, { tour: { id: tourId, name, artistId: "wren-halloway" } });
+  await tours.addRequest(tourId, { id: "opening", title: "Opening" });
+  return tours;
+}
+
+test("the active tour is the one an admin set, and it is cleared when that tour is deleted", async () => {
+  const backend = createMemoryBackend();
+  await makeAccountB(backend);
+  const tours = await seedTour(backend, ACCOUNT_B, "first-run", "First Run");
+  await seedTour(backend, ACCOUNT_B, "second-run", "Second Run");
+  const options = { ...artistOptions(backend, OPERATOR, ACCOUNT_B), tourStore: tours };
+
+  // With nothing set, the account reports no active tour and the caller falls
+  // back to the first one it holds.
+  const before = await tourAction({ action: "list-tours", accountId: ACCOUNT_B }, {
+    ...tourOptions(backend, OPERATOR, ACCOUNT_B),
+    orgStore: createOrgStore({ backend }),
+  });
+  assert.equal(before.activeTourId, null);
+
+  await artistAction({ action: "set-active-tour", tourId: "second-run", accountId: ACCOUNT_B }, options);
+  const after = await tourAction({ action: "list-tours", accountId: ACCOUNT_B }, {
+    ...tourOptions(backend, OPERATOR, ACCOUNT_B),
+    orgStore: createOrgStore({ backend }),
+  });
+  assert.equal(after.activeTourId, "second-run");
+
+  // A tour this account does not hold cannot be pointed at.
+  await assert.rejects(
+    () => artistAction({ action: "set-active-tour", tourId: "off-the-map-2026", accountId: ACCOUNT_B }, options),
+    (error) => error.status === 404,
+  );
+
+  // Deleting the active tour clears the pointer rather than leaving the account
+  // opening a tour that is gone.
+  await artistAction({ action: "delete-tour", tourId: "second-run", accountId: ACCOUNT_B }, options);
+  const accounts = await createOrgStore({ backend }).readAccounts();
+  assert.equal(accounts.find((entry) => entry.id === ACCOUNT_B).activeTourId, null);
+});
+
+test("deleting a tour removes what the tour stored and leaves the account's artists alone", async () => {
+  const backend = createMemoryBackend();
+  await makeAccountB(backend);
+  const tours = await seedTour(backend, ACCOUNT_B, "first-run", "First Run");
+  await seedTour(backend, ACCOUNT_B, "second-run", "Second Run");
+  const options = { ...artistOptions(backend, OPERATOR, ACCOUNT_B), tourStore: tours };
+
+  const result = await artistAction({ action: "delete-tour", tourId: "first-run", accountId: ACCOUNT_B }, options);
+  assert.ok(result.removed > 0, "deleting the tour removed nothing");
+
+  const left = [...backend.files.keys()];
+  assert.ok(!left.some((path) => path.includes(`/${ACCOUNT_B}/tours/first-run/`)), "the tour's documents are still stored");
+  assert.ok(left.some((path) => path.includes(`/${ACCOUNT_B}/tours/second-run/`)), "the other tour went with it");
+  assert.ok(left.some((path) => path.includes(`/${ACCOUNT_B}/org/artists.json`)), "the account's artists went with the tour");
+  assert.deepEqual(
+    (await tourAction({ action: "list-tours", accountId: ACCOUNT_B }, tourOptions(backend, OPERATOR, ACCOUNT_B))).tours.map((entry) => entry.id),
+    ["second-run"],
+  );
+
+  // A tour that is not there is absence, and nothing is removed on the way.
+  const count = backend.files.size;
+  await assert.rejects(
+    () => artistAction({ action: "delete-tour", tourId: "first-run", accountId: ACCOUNT_B }, options),
+    (error) => error.status === 404,
+  );
+  assert.equal(backend.files.size, count);
+});
+
+test("an account is deleted only when its name is typed back, and the other account keeps everything", async () => {
+  const backend = createMemoryBackend();
+  await makeAccountB(backend);
+  await seedTour(backend, ACCOUNT_B, "first-run", "First Run");
+  await backend.write(`brand-world-system/clients/${DEMO}/artists/dierks-bentley/record.json`, JSON.stringify({ findings: [] }));
+  const options = artistOptions(backend, OPERATOR, DEMO);
+
+  // The wrong name removes nothing.
+  const before = backend.files.size;
+  await assert.rejects(
+    () => artistAction({ action: "delete-account", accountToDelete: ACCOUNT_B, confirmName: "northstar live" }, options),
+    (error) => error.status === 400,
+  );
+  assert.equal(backend.files.size, before, "a refused delete removed something");
+
+  const result = await artistAction(
+    { action: "delete-account", accountToDelete: ACCOUNT_B, confirmName: "Northstar Live" },
+    options,
+  );
+  assert.equal(result.account.id, ACCOUNT_B);
+  assert.ok(result.removed > 0);
+
+  const left = [...backend.files.keys()];
+  assert.ok(!left.some((path) => path.includes(`/clients/${ACCOUNT_B}/`)), "the account's documents are still stored");
+  assert.ok(left.some((path) => path.includes(`/clients/${DEMO}/artists/dierks-bentley/record.json`)), "the other account's brain went with it");
+  const accounts = await createOrgStore({ backend }).readAccounts();
+  assert.deepEqual(accounts.map((entry) => entry.id), [DEMO]);
+});
+
+test("a client session cannot set an active tour, delete a tour, or delete an account", async () => {
+  const backend = createMemoryBackend();
+  await makeAccountB(backend);
+  await seedTour(backend, ACCOUNT_B, "first-run", "First Run");
+  const stored = backend.files.size;
+  for (const body of [
+    { action: "set-active-tour", tourId: "first-run", accountId: ACCOUNT_B },
+    { action: "delete-tour", tourId: "first-run", accountId: ACCOUNT_B },
+    { action: "delete-account", accountToDelete: ACCOUNT_B, confirmName: "Northstar Live" },
+  ]) {
+    await assert.rejects(() => artistAction(body, artistOptions(backend, CLIENT, ACCOUNT_B)), (error) => error.status === 400);
+  }
+  assert.equal(backend.files.size, stored, "a client removed or changed something");
+  const accounts = await createOrgStore({ backend }).readAccounts();
+  assert.deepEqual(accounts.map((entry) => entry.id).sort(), [DEMO, ACCOUNT_B].sort());
+});

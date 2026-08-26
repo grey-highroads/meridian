@@ -24,6 +24,10 @@ const view = {
   tours: [],
   people: [],
   admins: [],
+  activeTourId: null,
+  deleting: null,
+  confirmName: "",
+  working: false,
 };
 
 const acts = {
@@ -54,10 +58,49 @@ function rows(items, empty) {
   return `<div class="m-directory-list m-rule-list">${items.join("")}</div>`;
 }
 
-function row(title, meta, href) {
+function row(title, meta, href, acts = "") {
   const body = `<div class="m-stack"><span class="m-rule-row__title">${escape(title)}</span><span class="m-meta">${escape(meta)}</span></div>`;
-  if (!href) return `<article class="m-rule-row">${body}</article>`;
+  if (!href) return `<article class="m-rule-row">${body}${acts ? `<div class="m-cluster">${acts}</div>` : ""}</article>`;
   return `<a class="m-rule-row" data-keep-href href="${escape(href)}">${body}</a>`;
+}
+
+// An account row carries its own delete, and the delete is armed by typing the
+// account's name back. Nothing else on this page removes anything, so the
+// typed name is the confirm rather than a dialog pattern built for one act.
+function accountRow(entry) {
+  const here = view.account && entry.id === view.account.id;
+  const arming = view.deleting === entry.id;
+  const armed = view.confirmName.trim() === entry.name;
+  const controls = arming
+    ? `<input class="m-input" data-field="confirm" value="${escape(view.confirmName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the account name to delete it">
+       <button class="m-button m-button--primary" type="button" data-delete-account="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete this account"}</button>
+       <button class="m-button" type="button" data-cancel-delete>Keep it</button>`
+    : `<button class="m-button" type="button" data-arm-delete="${escape(entry.id)}">Delete</button>`;
+  return `<article class="m-rule-row">
+      <div class="m-stack">
+        <span class="m-rule-row__title">${escape(entry.name)}</span>
+        <span class="m-meta">${here ? "Working in this one" : "Open"}</span>
+      </div>
+      <div class="m-cluster">
+        <a class="m-button" data-keep-href href="${escape(accountHref(entry.id))}">Open</a>
+        ${controls}
+      </div>
+      ${arming ? `<p class="m-copy">Deleting ${escape(entry.name)} removes its artists, its brains, its tours, and every approval on record. Nothing brings it back.</p>` : ""}
+    </article>`;
+}
+
+function tourRow(entry) {
+  const active = entry.id === view.activeTourId;
+  const controls = [
+    active ? "" : `<button class="m-button" type="button" data-make-active="${escape(entry.id)}">Make this the one it opens</button>`,
+    `<button class="m-button" type="button" data-delete-tour="${escape(entry.id)}">Delete</button>`,
+  ].join("");
+  return row(
+    entry.name || entry.id,
+    active ? "Opens with the account" : (entry.artistId ? `For ${entry.artistId}` : "No artist named"),
+    null,
+    controls,
+  );
 }
 
 // The way into another account. The link names its own account, so the active
@@ -104,14 +147,7 @@ function render() {
     ${view.error ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.error)}</p></div>` : ""}
     <section class="m-stack" aria-labelledby="accounts-heading">
       <h2 id="accounts-heading" class="m-section-heading">Accounts</h2>
-      ${rows(
-        view.accounts.map((entry) => row(
-          entry.name,
-          view.account && entry.id === view.account.id ? "Working in this one" : "Open",
-          accountHref(entry.id),
-        )),
-        "No account is stored yet.",
-      )}
+      ${rows(view.accounts.map(accountRow), "No account is stored yet.")}
     </section>
     <section class="m-stack" aria-labelledby="artists-heading">
       <h2 id="artists-heading" class="m-section-heading">Artists in ${escape(accountName())}</h2>
@@ -123,10 +159,7 @@ function render() {
     <section class="m-stack" aria-labelledby="tours-heading">
       <h2 id="tours-heading" class="m-section-heading">Tours in ${escape(accountName())}</h2>
       <p class="m-copy">A tour is started on the tour screen, the same one a client uses. Open the account and start it there.</p>
-      ${rows(
-        view.tours.map((entry) => row(entry.name || entry.id, entry.artistId ? `For ${entry.artistId}` : "No artist named")),
-        "This account holds no tour yet.",
-      )}
+      ${rows(view.tours.map(tourRow), "This account holds no tour yet.")}
     </section>
     <section class="m-stack" aria-labelledby="people-heading">
       <h2 id="people-heading" class="m-section-heading">People in ${escape(accountName())}</h2>
@@ -191,6 +224,7 @@ async function load() {
     view.account = view.accounts.find((entry) => entry.id === accountId) || { id: accountId, name: accountId };
     view.artists = artists.artists || [];
     view.tours = tours.tours || [];
+    view.activeTourId = tours.activeTourId || null;
     view.people = people.people || [];
     view.admins = people.admins || [];
   } catch (error) {
@@ -229,11 +263,65 @@ document.addEventListener("input", (event) => {
   if (which === "account") acts.account.name = field.value;
   if (which === "account-artist") acts.account.artistName = field.value;
   if (which === "artist") acts.artist.name = field.value;
+  if (which === "confirm") {
+    view.confirmName = field.value;
+    render();
+    const again = document.querySelector('[data-field="confirm"]');
+    if (again) {
+      again.focus();
+      again.setSelectionRange(again.value.length, again.value.length);
+    }
+  }
 });
+
+// The three acts that change or remove something. Each one reports what it did
+// in the words the server used and reads the lists again, so the page never
+// shows a row that is gone.
+async function act(work) {
+  view.working = true;
+  view.error = "";
+  render();
+  try {
+    await work();
+    view.deleting = null;
+    view.confirmName = "";
+  } catch (error) {
+    view.error = error.message;
+  }
+  view.working = false;
+  await load();
+}
 
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
+  if (target.hasAttribute("data-arm-delete")) {
+    view.deleting = target.getAttribute("data-arm-delete");
+    view.confirmName = "";
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-cancel-delete")) {
+    view.deleting = null;
+    view.confirmName = "";
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-delete-account")) {
+    const accountToDelete = target.getAttribute("data-delete-account");
+    void act(() => post("/api/artist", { action: "delete-account", accountToDelete, confirmName: view.confirmName }));
+    return;
+  }
+  if (target.hasAttribute("data-make-active")) {
+    const tourId = target.getAttribute("data-make-active");
+    void act(() => post("/api/artist", { action: "set-active-tour", tourId }));
+    return;
+  }
+  if (target.hasAttribute("data-delete-tour")) {
+    const tourId = target.getAttribute("data-delete-tour");
+    void act(() => post("/api/artist", { action: "delete-tour", tourId }));
+    return;
+  }
   if (target.hasAttribute("data-create-account")) {
     run(acts.account, async () => {
       const created = await post("/api/artist", {

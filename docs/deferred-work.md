@@ -491,11 +491,19 @@ Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Up
 
 Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
-## Admin lists rows and acts on none of them yet
+## Admin acts on tour rows and account rows, not on artist rows
 
-Recorded 2026-08-26 with brief 2 of the admin surface. Admin shows the accounts Meridian holds and, inside the one being worked in, its artists, its tours, and its people. Only the account rows do anything: opening one switches the page into that account. The acts the ruling names on artist, tour, and people rows are not built.
+Recorded 2026-08-26 with brief 2 of the admin surface and updated 2026-08-26 with brief 3. A tour row can be made the one the account opens and can be deleted. An account row can be opened and deleted. Artist rows and people rows still do nothing.
 
-Bring it back when: brief 3 lands the artist and tour row acts, and brief 4 lands people.
+Bring it back when: brief 4 lands people. Artist rows have no act left to build; the reason is the entry below.
+
+## Creating an empty brain is already what creating an artist does
+
+Recorded 2026-08-26 at brief 3 of the admin surface. The ruling names an act that creates the empty artist brain and attaches it to an artist, so an intake run has somewhere to land. Reading the committed tree says the condition is already met and the act would write a document nothing reads.
+
+`readRecord` in `src/artist/store.js` returns `EMPTY_RECORD` for an artist with nothing stored, so an artist created today already reads as an empty brain. `importIntake` in `api/artist/index.js` refuses an artist id with no row in the account and writes the record at that artist's path when the row is there. Creating the artist row is what gives intake somewhere to land, and the account's create-artist act already does it.
+
+Bring it back when: a brain needs something written at creation time that an empty read cannot stand in for, such as its own approval state before any import. Nothing needs that today.
 
 ## The two migration acts are gone from the page and the route
 

@@ -9,6 +9,7 @@ import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/
 import { createArtistStore } from "../../src/artist/store.js";
 import { createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
+import { createOrgStore } from "../../src/org/store.js";
 import { uploadPrefix } from "../../src/tour/upload-path.js";
 import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
@@ -280,7 +281,16 @@ export async function handleAction(body, options = {}) {
   // session's, so this reads one account and never lists another's.
   if (body.action === "list-tours") {
     const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
-    return { tours: await tourStore.readTours() };
+    const tours = await tourStore.readTours();
+    // Which one the account opens when the address names none. An account that
+    // has never been pointed at one carries nothing here and the caller falls
+    // back to the first tour it holds.
+    const accounts = options.orgStore || createOrgStore({ backend: tourStore.backend });
+    const row = (await accounts.readAccounts()).find((entry) => entry.id === actingAccount);
+    const activeTourId = row && row.activeTourId && tours.some((entry) => entry.id === row.activeTourId)
+      ? row.activeTourId
+      : null;
+    return { tours, activeTourId };
   }
 
   if (body.action === "get-tour") {

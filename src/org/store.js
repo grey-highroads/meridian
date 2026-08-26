@@ -207,6 +207,40 @@ export function createOrgStore(options = {}) {
       return [...(await this.readAdmins()), ...(await this.readUsers())];
     },
 
+    // Which tour an account opens when the address names none. Written onto the
+    // account row, so an account holding several stops resolving one by the
+    // order of a list. Ruled 2026-08-26 in docs/spec-admin-surface.md.
+    async setActiveTour(accountId, tourId) {
+      const accounts = await this.readAccounts();
+      const wanted = sanitizeAccountId(accountId);
+      if (!accounts.some((entry) => entry.id === wanted)) {
+        const error = new Error("No account is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      const next = accounts.map((entry) => (
+        entry.id === wanted ? { ...entry, activeTourId: tourId || null } : entry
+      ));
+      await backend.write(ACCOUNTS_PATH, JSON.stringify({ accounts: next }, null, 2));
+      return next.find((entry) => entry.id === wanted);
+    },
+
+    // The row only. Everything the account stored is removed by the caller,
+    // which holds the backend and can say how much it removed.
+    async removeAccount(accountId) {
+      const accounts = await this.readAccounts();
+      const wanted = sanitizeAccountId(accountId);
+      const account = accounts.find((entry) => entry.id === wanted);
+      if (!account) {
+        const error = new Error("No account is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      const next = accounts.filter((entry) => entry.id !== wanted);
+      await backend.write(ACCOUNTS_PATH, JSON.stringify({ accounts: next }, null, 2));
+      return account;
+    },
+
     async findUser(userId) {
       const users = await this.everyone();
       return publicUser(users.find((entry) => entry.id === userId) || null);

@@ -6,21 +6,26 @@ import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/ser
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { ACCOUNT, OPERATOR_ROLE, createOrgStore, publicUser } from "../../src/org/store.js";
 import { RECORD_ACTOR, createArtistDirectory, sanitizeArtistId } from "../../src/org/artists.js";
+import { createTourStore } from "../../src/tour/store.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 
 // The artist layer's one function. New operations arrive as actions here
 // rather than as new files, because the hosting tier caps functions and
 // retrofitting dispatch later is more work than starting with it.
 //
-// The actions are: create-account, list-accounts, create-artist, list-artists,
-// list-people, import-intake, get-artist, list-findings, approve-brain,
-// remove-finding, restore-finding, get-evidence.
+// The actions are: create-account, list-accounts, set-active-tour, delete-tour,
+// delete-account, create-artist, list-artists, list-people, import-intake,
+// get-artist, list-findings, approve-brain, remove-finding, restore-finding,
+// get-evidence.
 // None of them returns the prior. The prior is written at import and read by
 // nothing, because the thesis says it is never shown.
 //
 // Approval is wholesale. The operator read and sorted every finding during
 // intake, so one person approves the whole brain and then takes out the
 // individual findings that should not be in it.
+
+// Where every account stores its work. One shape for every account.
+const CLIENTS_ROOT = "brand-world-system/clients";
 
 const INTAKE_FILES = {
   prior: "00-prior.md",
@@ -50,6 +55,19 @@ function openAccounts(options, store) {
 // The account's artist rows. An injected directory is bound to one account, so
 // a caller that needs another account's rows names it and gets a directory on
 // the same backend rather than the injected one.
+// Everything one account stored, or everything one tour stored. The trailing
+// slash is what keeps a prefix from reaching its neighbours: without it,
+// northstar would reach northstar-live, and tour-two would reach tour-twenty.
+// The filter repeats what the prefix already asks for, so a backend that
+// widened the match cannot hand this a path outside the directory being
+// removed.
+async function removeUnder(backend, prefix) {
+  if (!prefix.endsWith("/")) throw new Error("A removal prefix has to end with a slash.");
+  const paths = (await backend.list(prefix)).filter((path) => String(path).startsWith(prefix));
+  if (paths.length) await backend.remove(paths);
+  return paths.length;
+}
+
 // The people of one named account. An injected store is bound to whichever
 // account the caller built it for, so a request naming another account gets a
 // store on the same backend rather than the injected one.
@@ -210,6 +228,63 @@ export async function handleAction(body, options = {}) {
       onBehalfOf: optionalText(body.onBehalfOf),
     });
     return { artist: created };
+  }
+
+  // Which tour the account opens when the address names none. The tour has to
+  // be one this account holds, so an admin cannot point an account at another
+  // account's tour by naming its id.
+  if (body.action === "set-active-tour" && options.user && options.user.role === OPERATOR_ROLE) {
+    const tourId = sanitizeClientId(body.tourId || "");
+    const tours = options.tourStore || createTourStore({ backend: store.backend, accountId });
+    const held = await tours.readTours();
+    if (!held.some((entry) => entry.id === tourId)) {
+      const error = new Error("No tour is stored under that name for this account.");
+      error.status = 404;
+      throw error;
+    }
+    const account = await openAccounts(options, store).setActiveTour(accountId, tourId);
+    return { account };
+  }
+  // Deleting a tour removes what the tour stored and nothing else. The
+  // account's artists and their brains sit outside the tour's directory and are
+  // never reached by this.
+  if (body.action === "delete-tour" && options.user && options.user.role === OPERATOR_ROLE) {
+    const tourId = sanitizeClientId(body.tourId || "");
+    const tours = options.tourStore || createTourStore({ backend: store.backend, accountId });
+    const stored = await tours.readTour(tourId);
+    if (!stored) {
+      const error = new Error("No tour is stored under that name for this account.");
+      error.status = 404;
+      throw error;
+    }
+    const removed = await removeUnder(store.backend, `${CLIENTS_ROOT}/${accountId}/tours/${tourId}/`);
+    const accounts = openAccounts(options, store);
+    const row = (await accounts.readAccounts()).find((entry) => entry.id === accountId);
+    // An account pointed at a tour that is gone would open nothing, so the
+    // pointer is cleared with the tour it named.
+    if (row && row.activeTourId === tourId) await accounts.setActiveTour(accountId, null);
+    return { tourId, removed };
+  }
+  // Deleting an account removes every document it stored and takes its row out
+  // of the list. The name is typed back before anything is removed, because
+  // this is the one act here that cannot be undone.
+  if (body.action === "delete-account" && options.user && options.user.role === OPERATOR_ROLE) {
+    const wanted = sanitizeClientId(body.accountToDelete || "");
+    const accounts = openAccounts(options, store);
+    const row = (await accounts.readAccounts()).find((entry) => entry.id === wanted);
+    if (!row) {
+      const error = new Error("No account is stored under that name.");
+      error.status = 404;
+      throw error;
+    }
+    if (String(body.confirmName || "").trim() !== row.name) {
+      const error = new Error("Type the account name exactly as it appears before deleting it.");
+      error.status = 400;
+      throw error;
+    }
+    const removed = await removeUnder(store.backend, `${CLIENTS_ROOT}/${wanted}/`);
+    await accounts.removeAccount(wanted);
+    return { account: row, removed };
   }
 
   const artistId = sanitizeClientId(body.artistId || "");

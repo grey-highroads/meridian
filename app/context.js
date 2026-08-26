@@ -3,9 +3,10 @@ const params = new URLSearchParams(window.location.search);
 export const ACCOUNT_ID = params.get("account") || null;
 
 // The tour a page works on. A named tour wins. With none named, Meridian asks
-// the account which tours it holds and opens the one it has, so no account
-// carries another account's tour id as a default. An account holding none
-// resolves to nothing and the pages show their empty state.
+// the account which tours it holds and opens the one an admin set active, or
+// the one it has when nobody has set one. No account carries another account's
+// tour id as a default, and an account holding none resolves to nothing so the
+// pages show their empty state.
 async function firstStoredTour() {
   try {
     const response = await fetch("/api/tour", {
@@ -16,6 +17,7 @@ async function firstStoredTour() {
     if (!response.ok) return null;
     const body = await response.json();
     const tours = Array.isArray(body.tours) ? body.tours : [];
+    if (body.activeTourId) return body.activeTourId;
     return tours.length ? tours[0].id : null;
   } catch {
     return null;
