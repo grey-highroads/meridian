@@ -9,6 +9,7 @@ import { createOrgStore } from "../src/org/store.js";
 import { createArtistDirectory } from "../src/org/artists.js";
 import { createTourStore } from "../src/tour/store.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "../src/org/store.js";
+import { readFileSync as readSource } from "node:fs";
 
 // Making a second account usable. The acts that create one, the rule that keeps
 // a client out of them, and the answer a page gets when the account it is in
@@ -277,4 +278,82 @@ test("the org store's account list and the tour store's listing stay account sco
   await store.createTour("northstar-2027", { tour: { id: "northstar-2027", name: "Northstar 2027", artistId: "wren-halloway" }, assignments: [] });
   assert.deepEqual(await store.readTours(), [{ id: "northstar-2027", name: "Northstar 2027", artistId: "wren-halloway" }]);
   assert.deepEqual(await createTourStore({ backend, accountId: DEMO }).readTours(), []);
+});
+
+// Admin's lists. Ruled 2026-08-26 in docs/spec-admin-surface.md: the lists come
+// first and every act hangs off a row in one of them.
+
+const SEEDS = {
+  MERIDIAN_OPERATOR: "ray:one-password:Ray Mercer",
+  MERIDIAN_CLIENT: "dana:another-password:Dana Whitlock",
+};
+
+test("the people list holds the account's own people and names Higher Roads apart from them", async () => {
+  const backend = createMemoryBackend();
+  await makeAccountB(backend);
+  const orgStore = createOrgStore({ backend, account: { id: DEMO, name: "Dierks Bentley" }, env: SEEDS });
+
+  const demo = await artistAction({ action: "list-people" }, { ...artistOptions(backend, OPERATOR), orgStore });
+  assert.equal(demo.accountId, DEMO);
+  assert.deepEqual(demo.people.map((entry) => entry.id), ["client"]);
+  assert.equal(demo.people[0].accountId, DEMO);
+
+  // Higher Roads belongs to no account, so the admin comes back beside the
+  // account's people rather than inside them.
+  assert.deepEqual(demo.admins.map((entry) => entry.id), ["operator"]);
+  assert.equal(demo.admins[0].accountId, null);
+  assert.ok(!demo.people.some((entry) => entry.role === OPERATOR_ROLE), "an admin was listed as one of the account's people");
+
+  // A password hash never leaves the store.
+  for (const entry of [...demo.people, ...demo.admins]) assert.equal(entry.password, undefined);
+
+  // The second account holds nobody. The deployment's own sign in values seed
+  // one account and never spill into another.
+  const other = await artistAction(
+    { action: "list-people", accountId: ACCOUNT_B },
+    { ...artistOptions(backend, OPERATOR, ACCOUNT_B), orgStore },
+  );
+  assert.equal(other.accountId, ACCOUNT_B);
+  assert.deepEqual(other.people, []);
+});
+
+test("a client session asking for the people list learns nothing about anyone", async () => {
+  const backend = createMemoryBackend();
+
+  // The act is Higher Roads only, so a client falls past it to the same place a
+  // client asking for the account list falls to. The two answers match, which
+  // is what makes the act indistinguishable from one that is not there.
+  const refusals = [];
+  for (const action of ["list-people", "list-accounts"]) {
+    await assert.rejects(
+      () => artistAction({ action }, artistOptions(backend, CLIENT)),
+      (error) => {
+        refusals.push({ status: error.status, message: error.message });
+        return true;
+      },
+    );
+  }
+  assert.deepEqual(refusals[0], refusals[1], "the people list answers a client differently");
+  assert.equal(refusals[0].status, 400);
+  for (const word of ["people", "admin", "Higher Roads", "account"]) {
+    assert.ok(!refusals[0].message.includes(word), `the refusal says "${word}" to a client`);
+  }
+});
+
+test("Admin shows the four lists and no longer carries the finished migration acts", () => {
+  const admin = readSource("app/admin.js", "utf8");
+  for (const heading of ["Accounts", "Artists in ", "Tours in ", "People in "]) {
+    assert.ok(admin.includes(`m-section-heading">${heading}`), `Admin has no ${heading.trim()} list`);
+  }
+  assert.match(admin, /action: "list-people"/, "Admin does not read the account's people");
+  assert.match(admin, /action: "list-tours"/, "Admin does not read the account's tours");
+  assert.match(admin, /action: "list-artists"/, "Admin does not read the account's artists");
+
+  // Both migration acts ran and were verified. They are gone from the page and
+  // gone from the route.
+  const route = readSource("api/artist/index.js", "utf8");
+  for (const act of ["copy-artist-paths", "seed-tour-at-shared-path"]) {
+    assert.ok(!admin.includes(act), `Admin still offers ${act}`);
+    assert.ok(!route.includes(act), `the route still runs ${act}`);
+  }
 });

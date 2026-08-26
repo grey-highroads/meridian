@@ -491,6 +491,18 @@ Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Up
 
 Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
+## Admin lists rows and acts on none of them yet
+
+Recorded 2026-08-26 with brief 2 of the admin surface. Admin shows the accounts Meridian holds and, inside the one being worked in, its artists, its tours, and its people. Only the account rows do anything: opening one switches the page into that account. The acts the ruling names on artist, tour, and people rows are not built.
+
+Bring it back when: brief 3 lands the artist and tour row acts, and brief 4 lands people.
+
+## The two migration acts are gone from the page and the route
+
+Recorded 2026-08-26 with brief 2 of the admin surface. Copying the artist's files to the uniform account path and storing the demo tour at the shared path both ran and were verified. `pathFor` in `src/artist/store.js` has one shape and no demo branch, and the tour store has no fixture fallback, so neither act had anything left to do. Both came off `app/admin.js` and out of `api/artist/index.js`, and their two tests came out with them. `src/artist/copy-to-account-path.js` and `scripts/copy-artist-to-account-path.js` stay, and `seedTourFromFixture` stays because the tests use it to get a tour to work against.
+
+Bring it back when: nothing brings this back. It is recorded so a reader of the route's action list knows where the two acts went.
+
 ## An admin with no account selected lands in the first one
 
 Recorded 2026-08-26 with brief 1 of the admin surface. A Higher Roads admin belongs to no account, so a request that names none has nothing on the record to act inside. `readSessionUser` in `src/server/http.js` reads the account list and opens the first entry. The demo account is first because it is seeded first, so nothing about the live app changed when the account came off the admin's record.

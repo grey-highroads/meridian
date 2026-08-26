@@ -2,12 +2,9 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseIntake } from "../../src/artist/parse-intake.js";
 import { applyRulings, createArtistStore } from "../../src/artist/store.js";
-import { copyArtistToAccountPath } from "../../src/artist/copy-to-account-path.js";
-import { seedTourFromFixture } from "../../src/tour/seed-from-fixture.js";
-import { createTourStore, tourDocumentPathFor } from "../../src/tour/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
-import { ACCOUNT, OPERATOR_ROLE, createOrgStore } from "../../src/org/store.js";
+import { ACCOUNT, OPERATOR_ROLE, createOrgStore, publicUser } from "../../src/org/store.js";
 import { RECORD_ACTOR, createArtistDirectory, sanitizeArtistId } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 
@@ -16,8 +13,8 @@ import { resolveActingAccount } from "../../src/org/acting-account.js";
 // retrofitting dispatch later is more work than starting with it.
 //
 // The actions are: create-account, list-accounts, create-artist, list-artists,
-// import-intake, get-artist, list-findings, approve-brain, remove-finding,
-// restore-finding, get-evidence, copy-artist-paths, seed-tour-at-shared-path.
+// list-people, import-intake, get-artist, list-findings, approve-brain,
+// remove-finding, restore-finding, get-evidence.
 // None of them returns the prior. The prior is written at import and read by
 // nothing, because the thesis says it is never shown.
 //
@@ -53,6 +50,16 @@ function openAccounts(options, store) {
 // The account's artist rows. An injected directory is bound to one account, so
 // a caller that needs another account's rows names it and gets a directory on
 // the same backend rather than the injected one.
+// The people of one named account. An injected store is bound to whichever
+// account the caller built it for, so a request naming another account gets a
+// store on the same backend rather than the injected one.
+function openPeople(options, store, accountId) {
+  if (options.orgStore && options.orgStore.account && options.orgStore.account.id === accountId) return options.orgStore;
+  const backend = (options.orgStore && options.orgStore.backend) || (store && store.backend ? store.backend : null);
+  const account = { id: accountId, name: accountId };
+  return createOrgStore(backend ? { backend, account } : { account });
+}
+
 function openDirectory(options, store, accountId, forAccount) {
   const wanted = forAccount || accountId;
   if (options.artists && options.artists.accountId === wanted) return options.artists;
@@ -121,40 +128,6 @@ async function setRemoved(store, artistId, findingId, entry) {
   return { finding: applyRulings(findings, decisions).find((finding) => finding.id === findingId) };
 }
 
-// The demo tour arrived as committed markdown, from before a tour was a stored
-// thing. Seeding writes that same fixture into the tour store through the
-// store's own writers, so the tour is an ordinary stored tour like any other
-// account's. The files on disk are left where they are and nothing reads them
-// after this.
-async function seedTourAtSharedPath(store, options, accountId, tourId) {
-  const tours = options.tourStore || createTourStore({ backend: store.backend, accountId });
-  const where = (name) => tourDocumentPathFor(tourId, name, tours.accountId);
-
-  let parsed;
-  try {
-    parsed = await seedTourFromFixture(tours, tourId);
-  } catch (error) {
-    if (error.status === 409) {
-      return { lines: ["A tour is already stored under that name for this account. Nothing was written."], count: 0 };
-    }
-    if (error.code === "ENOENT") {
-      const absent = new Error("No tour fixture is committed under that name.");
-      absent.status = 404;
-      throw absent;
-    }
-    throw error;
-  }
-
-  const lines = [
-    `Tour ${parsed.tour.id} written to ${where("tour")}`,
-    `Direction version ${parsed.tour.direction.version} written to ${where("directions")}`,
-    ...parsed.assignments.map((assignment) => `Assignment ${assignment.id} written to ${where("requests")}`),
-  ];
-  const count = lines.length;
-  lines.push(`Wrote ${count} object${count === 1 ? "" : "s"}. The committed files were not touched.`);
-  return { lines, count };
-}
-
 export async function handleAction(body, options = {}) {
   // The artist store is bound to the session's account, and every account uses
   // the same path shape. A session from another account reading this account's
@@ -176,10 +149,19 @@ export async function handleAction(body, options = {}) {
   }
   // The three acts that make a second account exist. Each one is a Higher
   // Roads act, and a client session falls past the branch to the answer an
-  // unknown action gets, which is the shape copy-artist-paths already uses:
-  // absence rather than an acknowledgment that the act is there at all.
+  // unknown action gets: absence rather than an acknowledgment that the act is
+  // there at all.
   if (body.action === "list-accounts" && options.user && options.user.role === OPERATOR_ROLE) {
     return { accounts: await openAccounts(options, store).readAccounts() };
+  }
+  // The account's own people, for the lists on Admin. Higher Roads admins
+  // belong to no account and are returned beside the account's people rather
+  // than inside them, because an admin listed under an account would read as
+  // that account's client. Ruled 2026-08-26 in docs/spec-admin-surface.md.
+  if (body.action === "list-people" && options.user && options.user.role === OPERATOR_ROLE) {
+    const org = openPeople(options, store, accountId);
+    const [people, admins] = await Promise.all([org.readUsers(), org.readAdmins()]);
+    return { accountId, people: people.map(publicUser), admins: admins.map(publicUser) };
   }
   // An account with no artist is an account nobody can do anything in, because
   // a tour needs an artist. The two are made in one act, and the artist name is
@@ -270,28 +252,6 @@ export async function handleAction(body, options = {}) {
   }
   if (body.action === "restore-finding") {
     return await setRemoved(store, artistId, body.findingId, null);
-  }
-  // Moving an artist's stored documents to the path every account uses is a
-  // Higher Roads act. A client session never learns the action exists: it falls
-  // past this branch to the same answer an unknown action gets, which is how
-  // every other cross-account read returns absence rather than an
-  // acknowledgment. The copying and the byte comparison are the script's, which
-  // is why this collects the lines it already reports instead of asking it to
-  // report differently.
-  if (body.action === "copy-artist-paths" && options.user && options.user.role === OPERATOR_ROLE) {
-    const lines = [];
-    const result = await copyArtistToAccountPath({
-      backend: store.backend,
-      accountId: accountId,
-      artistId,
-      log: (line) => lines.push(line),
-    });
-    return { lines, count: result.copied.length };
-  }
-  // The same shape the copy action uses: a Higher Roads act, and a client
-  // session falls past the branch to the answer an unknown action gets.
-  if (body.action === "seed-tour-at-shared-path" && options.user && options.user.role === OPERATOR_ROLE) {
-    return await seedTourAtSharedPath(store, options, accountId, sanitizeClientId(body.tourId || ""));
   }
   if (body.action === "get-evidence") {
     const record = await store.readRecord(artistId);

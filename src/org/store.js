@@ -133,6 +133,7 @@ export function createOrgStore(options = {}) {
 
   return {
     account,
+    backend,
 
     // Written once. A second read returns what is stored and changes nothing,
     // so the hashes stay put and a session signed yesterday still resolves.
@@ -160,6 +161,11 @@ export function createOrgStore(options = {}) {
           : [];
         if (users.length) return users;
       }
+      // Only the account the deployment was seeded for gets a person from the
+      // environment. Any other account holds nobody until someone is invited
+      // into it, because seeding here would put one account's login into every
+      // account that has none.
+      if (account.id !== ACCOUNT.id) return [];
       const users = [person("client", CLIENT_ROLE, seeds().client, account.id)];
       await backend.write(usersPath(account.id), JSON.stringify({ account, users }, null, 2));
       return users;
