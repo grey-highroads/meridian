@@ -1,4 +1,5 @@
 import { TOUR_ID, scopedBody } from "./context.js";
+import { showNoTour } from "./no-tour.js";
 
 // The Scenes directory. One tour, the Scenes under it, read from the tour
 // handler. Nothing is stored here and nothing is decided here. A Scene row is
@@ -10,7 +11,7 @@ import { TOUR_ID, scopedBody } from "./context.js";
 const locationBar = document.getElementById("location");
 const scenes = document.getElementById("scenes");
 const requestScene = document.getElementById("request-scene");
-if (requestScene) requestScene.href = `./request.html?tour=${encodeURIComponent(TOUR_ID)}`;
+if (requestScene && TOUR_ID) requestScene.href = `./request.html?tour=${encodeURIComponent(TOUR_ID)}`;
 
 function escape(value) {
   return String(value === null || value === undefined ? "" : value)
@@ -53,6 +54,11 @@ function firstScene() {
 }
 
 async function load() {
+  if (!TOUR_ID) {
+    if (requestScene) requestScene.hidden = true;
+    showNoTour(scenes, locationBar);
+    return;
+  }
   scenes.innerHTML = `<p class="m-copy">Reading the tour.</p>`;
   let body;
   try {

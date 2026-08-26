@@ -108,6 +108,27 @@ export function createTourStore(options = {}) {
     async readTour(tourId) {
       return readTourDocument(tourId, "tour", null);
     },
+    // Every tour stored under this account, read from the paths themselves so
+    // a tour created in the app and a tour seeded from the fixture both appear
+    // without an index anyone has to keep in step. Brief 4 of
+    // docs/spec-accounts-artists-tours.md. An account holding none gets an
+    // empty list, which is what lets a page show its empty state instead of
+    // asking for a tour that does not exist.
+    async readTours() {
+      const prefix = `${ROOT}/${accountId}/tours/`;
+      const ids = [];
+      for (const path of await backend.list(prefix)) {
+        const rest = String(path).slice(prefix.length).split("/");
+        if (rest.length === 2 && rest[1] === "tour.json") ids.push(rest[0]);
+      }
+      const tours = [];
+      for (const id of ids.sort()) {
+        const stored = await readTourDocument(id, "tour", null);
+        if (!stored || !stored.tour) continue;
+        tours.push({ id: stored.tour.id, name: stored.tour.name, artistId: stored.tour.artistId || null });
+      }
+      return tours;
+    },
     async createTour(tourId, document) {
       const existing = await readTourDocument(tourId, "tour", null);
       if (existing) {

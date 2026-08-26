@@ -453,6 +453,30 @@ Recorded 2026-08-25 at brief 1 of the accounts spec. The Scene record and the ne
 
 Updated 2026-08-25 at brief 3 of the accounts spec. The third writer has appeared: `appendArtistFact` in `src/org/artists.js` writes the same shape a third time, with an `artistId` field the other two do not carry. The named trigger has fired. Extraction was still not done inside brief 3, because the brief covers artist rows and the builder does not widen a brief on its own. This is now a ruling waiting on the architect, not a condition waiting on an event.
 
+## The artist route is the admin handler now
+
+Recorded 2026-08-26 when `create-account` and `list-accounts` landed on `api/artist/index.js`. That file carries the account acts, the artist acts, the file copy, and the tour seed. Its name says artist and its job is admin. It was not renamed in that commit because the hosting tier caps functions and every page and test names the route, so a rename is its own change with its own verification.
+
+Bring it back when: another act lands there that has nothing to do with an artist, or the route list is reworked for another reason. Rename the route and the imports in one commit, with the page fetch paths in the same commit.
+
+## A client may create a tour inside its own account
+
+Recorded 2026-08-26. The instruction for the account acts said a client session should be refused on creating an account, an artist, and a tour. Two hold. `create-tour` is in `CLIENT_ACTIONS` in `api/tour/index.js` under the earlier ruling that client and Higher Roads users share the tour and Scene workflow, and `test/account-scope.test.js` asserts a client creating a tour and the fact naming the account. Closing it would reverse that ruling, so nothing was changed and the test asserts what is true: a client's tour lands in its own account and never in the account it names.
+
+Bring it back when: Grey rules that tour creation is a Higher Roads act. `create-tour` comes out of `CLIENT_ACTIONS` and the account-scope test moves to a Higher Roads session in the same commit.
+
+## The no-tour state is one shared block, not a page-by-page design
+
+Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Home, Scenes, Reviews, and Tour details now show one shared empty state from `app/no-tour.js` when the account holds no tour. It is a placement, not a design: no page says anything about itself, and the words point at the Admin page because that is where a tour is created today.
+
+Bring it back when: Grey reviews the empty state on the live app and says what each page should say in that condition, or a tour becomes creatable from somewhere a person would already be.
+
+## The active tour is the first one the account holds
+
+Recorded 2026-08-26 with the `list-tours` action. With no tour named in the address, the shell opens the account's tours sorted by id and takes the first. Every account holds one tour today, so the choice never shows. An account with two would open one of them for no stated reason.
+
+Bring it back when: an account holds more than one tour. The tour becomes something a person selects and Meridian remembers, rather than something resolved by sort order.
+
 ## Documentation conflicts awaiting Grey's ruling
 
 Named conflicts are recorded here without declaring a core document or the code stale. Each one stays unresolved until Grey rules which side changes.

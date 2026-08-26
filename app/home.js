@@ -1,4 +1,5 @@
 import { TOUR_ID, scopedBody } from "./context.js";
+import { showNoTour } from "./no-tour.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("home");
 const reviewCount = document.getElementById("review-count");
@@ -81,6 +82,10 @@ function recent(facts) {
 }
 
 async function load() {
+  if (!TOUR_ID) {
+    showNoTour(root, locationBar);
+    return;
+  }
   const [{ user }, { tour, assignments }] = await Promise.all([call("get-me"), call("get-tour")]);
   document.querySelectorAll("[data-operator-utility]").forEach((entry) => { entry.hidden = user.role !== "higher-roads"; });
   const facts = [];

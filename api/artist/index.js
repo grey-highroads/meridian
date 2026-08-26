@@ -7,7 +7,7 @@ import { seedTourFromFixture } from "../../src/tour/seed-from-fixture.js";
 import { createTourStore, tourDocumentPathFor } from "../../src/tour/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
-import { ACCOUNT, OPERATOR_ROLE } from "../../src/org/store.js";
+import { ACCOUNT, OPERATOR_ROLE, createOrgStore } from "../../src/org/store.js";
 import { RECORD_ACTOR, createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 
@@ -15,9 +15,9 @@ import { resolveActingAccount } from "../../src/org/acting-account.js";
 // rather than as new files, because the hosting tier caps functions and
 // retrofitting dispatch later is more work than starting with it.
 //
-// The actions are: create-artist, list-artists, import-intake, get-artist,
-// list-findings, approve-brain, remove-finding, restore-finding, get-evidence,
-// copy-artist-paths, seed-tour-at-shared-path.
+// The actions are: create-account, list-accounts, create-artist, list-artists,
+// import-intake, get-artist, list-findings, approve-brain, remove-finding,
+// restore-finding, get-evidence, copy-artist-paths, seed-tour-at-shared-path.
 // None of them returns the prior. The prior is written at import and read by
 // nothing, because the thesis says it is never shown.
 //
@@ -41,6 +41,15 @@ function optionalText(value) {
 // The account's artist rows, opened on the same backend as the artist store so
 // a caller that injected one backend gets one backend. Brief 3 of
 // docs/spec-accounts-artists-tours.md.
+// The accounts list, opened on the same backend as the artist store so a
+// caller that injected one backend gets one backend. Accounts are not stored
+// under an account, so nothing here is scoped by one.
+function openAccounts(options, store) {
+  if (options.orgStore) return options.orgStore;
+  const backend = store && store.backend ? store.backend : null;
+  return createOrgStore(backend ? { backend } : {});
+}
+
 function openDirectory(options, store, accountId) {
   if (options.artists) return options.artists;
   const backend = store && store.backend ? store.backend : null;
@@ -160,7 +169,17 @@ export async function handleAction(body, options = {}) {
   if (body.action === "list-artists") {
     return { artists: await openDirectory(options, store, accountId).readArtists() };
   }
-  if (body.action === "create-artist") {
+  // The three acts that make a second account exist. Each one is a Higher
+  // Roads act, and a client session falls past the branch to the answer an
+  // unknown action gets, which is the shape copy-artist-paths already uses:
+  // absence rather than an acknowledgment that the act is there at all.
+  if (body.action === "list-accounts" && options.user && options.user.role === OPERATOR_ROLE) {
+    return { accounts: await openAccounts(options, store).readAccounts() };
+  }
+  if (body.action === "create-account" && options.user && options.user.role === OPERATOR_ROLE) {
+    return { account: await openAccounts(options, store).createAccount(body.name) };
+  }
+  if (body.action === "create-artist" && options.user && options.user.role === OPERATOR_ROLE) {
     const directory = openDirectory(options, store, accountId);
     const created = await directory.createArtist({ name: body.name, identities: body.identities });
     await directory.appendArtistFact({

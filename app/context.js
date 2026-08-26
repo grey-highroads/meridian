@@ -1,9 +1,28 @@
-const DEMO_ACCOUNT_ID = "dierks-bentley";
-const DEMO_TOUR_ID = "off-the-map-2026";
 const params = new URLSearchParams(window.location.search);
 
 export const ACCOUNT_ID = params.get("account") || null;
-export const TOUR_ID = params.get("tour") || (!ACCOUNT_ID || ACCOUNT_ID === DEMO_ACCOUNT_ID ? DEMO_TOUR_ID : null);
+
+// The tour a page works on. A named tour wins. With none named, Meridian asks
+// the account which tours it holds and opens the one it has, so no account
+// carries another account's tour id as a default. An account holding none
+// resolves to nothing and the pages show their empty state.
+async function firstStoredTour() {
+  try {
+    const response = await fetch("/api/tour", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "list-tours", accountId: ACCOUNT_ID }),
+    });
+    if (!response.ok) return null;
+    const body = await response.json();
+    const tours = Array.isArray(body.tours) ? body.tours : [];
+    return tours.length ? tours[0].id : null;
+  } catch {
+    return null;
+  }
+}
+
+export const TOUR_ID = params.get("tour") || await firstStoredTour();
 
 export function scopedBody(body = {}) {
   return { accountId: ACCOUNT_ID, ...body };

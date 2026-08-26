@@ -1,4 +1,5 @@
 import { TOUR_ID, scopedBody } from "./context.js";
+import { showNoTour } from "./no-tour.js";
 
 // The tour home. The tour record and the direction as the director gave it.
 // A reference, not a working surface: nothing is authored here and nothing is
@@ -172,6 +173,10 @@ function supportingReference(tour) {
 }
 
 async function render() {
+  if (!TOUR_ID) {
+    showNoTour(root, locationBar);
+    return;
+  }
   const { tour } = await call("get-tour");
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
       <a href="./tour.html?tour=${escape(TOUR_ID)}">Tour</a>

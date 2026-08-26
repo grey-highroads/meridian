@@ -120,7 +120,7 @@ test("account and Tour context travel through Meridian navigation and requests",
   assert.match(context, /params\.get\("tour"\)/, "the shell does not read the selected Tour");
   assert.match(context, /url\.searchParams\.set\("account", ACCOUNT_ID\)/, "navigation drops the selected account");
   assert.match(context, /url\.searchParams\.set\("tour", TOUR_ID\)/, "navigation drops the selected Tour");
-  assert.match(context, /ACCOUNT_ID === DEMO_ACCOUNT_ID \? DEMO_TOUR_ID : null/, "a non-demo account still substitutes the demo Tour");
+  assert.doesNotMatch(context, /DEMO_TOUR_ID/, "an account with no Tour still substitutes the demo Tour");
   assert.match(context, /MutationObserver/, "links created after shell load do not receive the active context");
 
   for (const name of [

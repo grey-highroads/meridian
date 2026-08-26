@@ -75,6 +75,53 @@ for (const link of document.querySelectorAll(".m-shell a[href^='./']")) {
 
 preserveContextNavigation();
 
+function escape(value) {
+  return String(value === null || value === undefined ? "" : value)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// The account a Higher Roads session is working in. The server already decides
+// what any session may reach, so this selects and reloads and nothing more. It
+// is built only for the Higher Roads role and carries the same attribute the
+// Artist Brain and Admin links carry, so it is hidden by the one rule that
+// hides them. A client reviewer never receives it and gains no way to name
+// another account from here.
+async function mountAccountPicker(active) {
+  const host = document.querySelector(".m-shell__utility");
+  if (!host) return;
+  let accounts = [];
+  try {
+    const response = await fetch("/api/artist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(scopedBody({ action: "list-accounts" })),
+    });
+    if (!response.ok) return;
+    const body = await response.json();
+    accounts = Array.isArray(body.accounts) ? body.accounts : [];
+  } catch {
+    return;
+  }
+  if (!accounts.length) return;
+
+  const field = document.createElement("div");
+  field.className = "m-field";
+  field.setAttribute("data-operator-utility", "");
+  field.innerHTML = `<label class="m-label" for="m-account-picker">Account</label>
+    <select class="m-select" id="m-account-picker">${accounts.map((entry) => `<option value="${escape(entry.id)}"${entry.id === active ? " selected" : ""}>${escape(entry.name || entry.id)}</option>`).join("")}</select>`;
+  host.prepend(field);
+
+  // A different account has different tours and different Scenes, so the ids
+  // naming this one are dropped rather than carried into the next.
+  field.querySelector("select").addEventListener("change", (event) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("account", event.target.value);
+    url.searchParams.delete("tour");
+    url.searchParams.delete("scene");
+    window.location.href = url.href;
+  });
+}
+
 fetch("/api/tour", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -84,4 +131,5 @@ fetch("/api/tour", {
   document.querySelectorAll("[data-operator-utility]").forEach((entry) => {
     entry.hidden = body.user.role !== "higher-roads";
   });
+  if (body.user.role === "higher-roads") void mountAccountPicker(body.actingAccount || ACCOUNT_ID);
 }).catch(() => {});

@@ -14,7 +14,8 @@ import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { CLIENT_ROLE } from "../../src/org/store.js";
 
-// The tour layer's one function. Actions: create-tour, get-tour, get-assignment,
+// The tour layer's one function. Actions: create-tour, get-tour, list-tours,
+// get-assignment,
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
 // issue-brief, get-handoffs, submit-artboard, get-artboards,
@@ -217,6 +218,7 @@ async function atArtboard(body, options) {
 const CLIENT_ACTIONS = new Set([
   "get-me",
   "get-tour",
+  "list-tours",
   "get-assignment",
   "get-artboards",
   "get-artboard-artifact",
@@ -263,6 +265,15 @@ export async function handleAction(body, options = {}) {
   options = { ...options, actingAccount };
 
   if (body.action === "get-me") return { user, actingAccount };
+
+  // Which tours this account holds. A page asks when no tour is named, so an
+  // account with one lands on it and an account with none is told that plainly
+  // instead of asking for a tour that does not exist. The account is the
+  // session's, so this reads one account and never lists another's.
+  if (body.action === "list-tours") {
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    return { tours: await tourStore.readTours() };
+  }
 
   if (body.action === "get-tour") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);

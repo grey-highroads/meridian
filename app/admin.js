@@ -1,10 +1,10 @@
-import { scopedBody, TOUR_ID } from "./context.js";
+import { ACCOUNT_ID, scopedBody, TOUR_ID } from "./context.js";
 
-// Higher Roads maintenance. Two acts today, both of them a copy to the place
-// every account reads from: the artist's stored files, and the tour that still
-// lives as committed markdown. The rest of the acts the accounts spec describes
-// arrive here later. Nothing on this page removes anything, so no confirm step
-// and no new pattern are needed.
+// Higher Roads maintenance. Two acts move work to the place every account reads
+// from: the artist's stored files, and the tour that still lives as committed
+// markdown. Three more make an account exist: an account, an artist inside the
+// account being worked in, and a tour under that artist. Nothing on this page
+// removes anything, so no confirm step and no new pattern are needed.
 
 const ARTIST_ID = new URLSearchParams(window.location.search).get("artist") || "dierks-bentley";
 const TOUR = TOUR_ID || "off-the-map-2026";
@@ -15,17 +15,28 @@ const root = document.getElementById("admin");
 const acts = {
   copy: { working: false, result: null, message: "" },
   seed: { working: false, result: null, message: "" },
+  account: { working: false, result: null, message: "", name: "" },
+  artist: { working: false, result: null, message: "", name: "" },
+  tour: { working: false, result: null, message: "", name: "", artistId: "" },
 };
 
-async function call(action, extra = {}) {
-  const response = await fetch("/api/artist", {
+// Which account these acts land in. A Higher Roads session works in the account
+// it selected, and in its own account when it has selected none.
+const WORKING_ACCOUNT = ACCOUNT_ID || "your signed in account";
+
+async function post(route, payload) {
+  const response = await fetch(route, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(scopedBody({ action, artistId: ARTIST_ID, ...extra })),
+    body: JSON.stringify(scopedBody(payload)),
   });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");
   return body;
+}
+
+async function call(action, extra = {}) {
+  return await post("/api/artist", { action, artistId: ARTIST_ID, ...extra });
 }
 
 function escape(value) {
@@ -38,7 +49,7 @@ function resultBlock(state, label, heading) {
     return `<div class="m-callout m-callout--change"><p class="m-copy">${escape(state.message)}</p></div>`;
   }
   if (!state.result) return "";
-  const lines = state.result.lines.map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
+  const lines = (state.result.lines || []).map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
   return `<div class="m-callout m-callout--approved">
       <span class="m-state m-state--approved">${escape(label)}</span>
       <p class="m-copy">${escape(heading(state.result))}</p>
@@ -49,6 +60,10 @@ function resultBlock(state, label, heading) {
 function copyHeading(result) {
   const moved = result.count === 1 ? "1 file" : `${result.count} files`;
   return result.count ? `${moved} moved. Every copy matched the original.` : "There was nothing left to move.";
+}
+
+function summary(result) {
+  return result.summary;
 }
 
 function seedHeading(result) {
@@ -87,30 +102,116 @@ function render() {
         <span class="m-meta">${escape(TOUR.toUpperCase())}</span>
       </div>
       ${resultBlock(acts.seed, "Seeding finished", seedHeading)}
+    </section>
+    <section class="m-stack" aria-labelledby="account-heading">
+      <h2 id="account-heading" class="m-section-heading">Create an account</h2>
+      <p class="m-copy m-copy--large">An account is one paying organization. It holds its own artists, its own tours, and its own work, and nothing stored in it is readable from another account.</p>
+      <p class="m-copy">Creating one leaves it empty. Switch to it with the account picker, then create an artist and a tour inside it.</p>
+      <div class="m-field">
+        <label class="m-label" for="account-name">Account name</label>
+        <input class="m-input" id="account-name" data-field="account" value="${escape(acts.account.name)}" placeholder="For example, Northstar Live">
+      </div>
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-create-account ${acts.account.working ? "disabled" : ""}>${acts.account.working ? "Creating" : "Create the account"}</button>
+      </div>
+      ${resultBlock(acts.account, "Account created", summary)}
+    </section>
+    <section class="m-stack" aria-labelledby="artist-heading">
+      <h2 id="artist-heading" class="m-section-heading">Create an artist</h2>
+      <p class="m-copy m-copy--large">The artist is the brand every tour is read against. This creates the row in the account being worked in. Its brain stays empty until intake files are imported for it.</p>
+      <div class="m-field">
+        <label class="m-label" for="artist-name">Artist name</label>
+        <input class="m-input" id="artist-name" data-field="artist" value="${escape(acts.artist.name)}" placeholder="For example, Wren Halloway">
+      </div>
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-create-artist ${acts.artist.working ? "disabled" : ""}>${acts.artist.working ? "Creating" : "Create the artist"}</button>
+        <span class="m-meta">${escape(String(WORKING_ACCOUNT).toUpperCase())}</span>
+      </div>
+      ${resultBlock(acts.artist, "Artist created", summary)}
+    </section>
+    <section class="m-stack" aria-labelledby="tour-heading">
+      <h2 id="tour-heading" class="m-section-heading">Create a tour</h2>
+      <p class="m-copy m-copy--large">A tour is one cycle of work under one artist. It starts with no direction and no Scenes, which is what the tour pages show until someone adds them.</p>
+      <div class="m-field">
+        <label class="m-label" for="tour-name">Tour name</label>
+        <input class="m-input" id="tour-name" data-field="tour" value="${escape(acts.tour.name)}" placeholder="For example, Northstar 2027">
+      </div>
+      <div class="m-field">
+        <label class="m-label" for="tour-artist">Artist</label>
+        <input class="m-input" id="tour-artist" data-field="tour-artist" value="${escape(acts.tour.artistId)}" placeholder="The artist name as it was created">
+      </div>
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-create-tour ${acts.tour.working ? "disabled" : ""}>${acts.tour.working ? "Creating" : "Create the tour"}</button>
+        <span class="m-meta">${escape(String(WORKING_ACCOUNT).toUpperCase())}</span>
+      </div>
+      ${resultBlock(acts.tour, "Tour created", summary)}
     </section>`;
 }
 
-function start(state, action, extra) {
+function run(state, work) {
   state.working = true;
   state.message = "";
   state.result = null;
   render();
-  call(action, extra).then((result) => {
+  work().then((result) => {
     state.working = false;
     state.result = result;
     render();
   }).catch((error) => {
+    // A duplicate name and a name that makes no usable id both arrive here and
+    // are shown in the words the server used, in the same place a finished run
+    // reports itself.
     state.working = false;
     state.message = error.message;
     render();
   });
 }
 
+function start(state, action, extra) {
+  run(state, () => call(action, extra));
+}
+
+function sanitized(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+document.addEventListener("input", (event) => {
+  const field = event.target.closest("[data-field]");
+  if (!field) return;
+  const which = field.getAttribute("data-field");
+  if (which === "account") acts.account.name = field.value;
+  if (which === "artist") acts.artist.name = field.value;
+  if (which === "tour") acts.tour.name = field.value;
+  if (which === "tour-artist") acts.tour.artistId = field.value;
+});
+
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
   if (target.hasAttribute("data-copy")) start(acts.copy, "copy-artist-paths", {});
   if (target.hasAttribute("data-seed")) start(acts.seed, "seed-tour-at-shared-path", { tourId: TOUR });
+  if (target.hasAttribute("data-create-account")) {
+    run(acts.account, async () => {
+      const { account } = await post("/api/artist", { action: "create-account", name: acts.account.name });
+      return { summary: `${account.name} is an account now. Switch to it with the account picker to work in it.` };
+    });
+  }
+  if (target.hasAttribute("data-create-artist")) {
+    run(acts.artist, async () => {
+      const { artist } = await post("/api/artist", { action: "create-artist", name: acts.artist.name });
+      return { summary: `${artist.name} is stored in this account. Import intake files for it when they are ready.` };
+    });
+  }
+  if (target.hasAttribute("data-create-tour")) {
+    run(acts.tour, async () => {
+      const { tour } = await post("/api/tour", {
+        action: "create-tour",
+        name: acts.tour.name,
+        artistId: sanitized(acts.tour.artistId),
+      });
+      return { summary: `${tour.name} is stored in this account. Open Home to start it.` };
+    });
+  }
 });
 
 render();
