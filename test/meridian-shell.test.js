@@ -113,6 +113,24 @@ test("the shared shell restores every primary navigation icon", () => {
   assert.match(source, /insertAdjacentHTML\("afterbegin"/, "shell does not add missing icons to live navigation");
 });
 
+test("account and Tour context travel through Meridian navigation and requests", () => {
+  const context = read("app/context.js");
+  assert.match(context, /params\.get\("account"\)/, "the shell does not read the selected account");
+  assert.match(context, /params\.get\("tour"\)/, "the shell does not read the selected Tour");
+  assert.match(context, /url\.searchParams\.set\("account", ACCOUNT_ID\)/, "navigation drops the selected account");
+  assert.match(context, /url\.searchParams\.set\("tour", TOUR_ID\)/, "navigation drops the selected Tour");
+  assert.match(context, /ACCOUNT_ID === DEMO_ACCOUNT_ID \? DEMO_TOUR_ID : null/, "a non-demo account still substitutes the demo Tour");
+  assert.match(context, /MutationObserver/, "links created after shell load do not receive the active context");
+
+  for (const name of [
+    "app/home.js", "app/scenes.js", "app/reviews.js", "app/tour.js",
+    "app/scene.js", "app/review.js", "app/client-review.js", "app/request.js",
+    "app/direction.js", "app/handoff.js", "app/artist.js", "app/shell.js",
+  ]) {
+    assert.match(read(name), /scopedBody\(/, `${name} does not send the selected account`);
+  }
+});
+
 test("a successful login runs the Meridian identity boot sequence once", () => {
   const landing = read("app/landing.html");
   const shell = read("app/shell.js");

@@ -12,7 +12,7 @@ export default async function handler(request, response) {
     return;
   }
   try {
-    const clientId = resolveClientId(request);
+    const clientId = resolveClientId(request, user);
     sendJson(response, 200, { job: await readProductionJob({ productionStore: createVercelBlobProductionStore({ clientId }) }) });
   } catch (error) {
     sendPublicError(response, error);

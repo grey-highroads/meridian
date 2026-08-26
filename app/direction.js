@@ -1,11 +1,11 @@
-const TOUR_ID = new URLSearchParams(window.location.search).get("tour") || "off-the-map-2026";
+import { TOUR_ID, scopedBody } from "./context.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("direction");
 
 const view = { tour: null, words: "", onBehalfOf: "", saved: null, affected: [], message: "", working: false };
 
 async function call(action, extra = {}) {
-  const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, tourId: TOUR_ID, ...extra }) });
+  const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })) });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");
   return body;

@@ -3,13 +3,16 @@ import { join } from "node:path";
 import { parseTourFixture } from "../../src/tour/parse-fixture.js";
 import { assembleContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
-import { createTourStore } from "../../src/tour/store.js";
+import { createTourStore, DEMO_ACCOUNT_ID } from "../../src/tour/store.js";
 import { compileBrief, directionParagraphs, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar, venueExceptions } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
 import { createSceneRecord } from "../../src/tour/scene-record.js";
 import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
 import { createArtistStore } from "../../src/artist/store.js";
+import { createArtistDirectory } from "../../src/org/artists.js";
+import { resolveActingAccount } from "../../src/org/acting-account.js";
+import { uploadPrefix } from "../../src/tour/upload-path.js";
 import { buildArtistView } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { CLIENT_ROLE } from "../../src/org/store.js";
@@ -56,7 +59,8 @@ async function loadTour(tourId, options) {
     // The committed fixture is the demo account's seed. Another account asking
     // for any unstored id gets absence, never the demo tour, and never an
     // acknowledgment that the id exists elsewhere.
-    if (!options.reader && !options.lister && options.actingAccount && options.actingAccount !== "dierks-bentley") {
+    const isDemoFixture = options.actingAccount === DEMO_ACCOUNT_ID && tourId === "off-the-map-2026";
+    if (!options.reader && !options.lister && !isDemoFixture) {
       const error = new Error("No tour is stored under that name.");
       error.status = 404;
       throw error;
@@ -110,7 +114,7 @@ function findAssignment(fixture, assignmentId) {
 }
 
 async function loadBrain(artistId, options) {
-  const store = options.store || createArtistStore();
+  const store = options.store || createArtistStore({ accountId: options.actingAccount });
   const [record, decisions] = await Promise.all([store.readRecord(artistId), store.readDecisions(artistId)]);
   const brain = buildArtistView(record, decisions);
   if (!brain.approved || !brain.counts.inBrain) {
@@ -186,14 +190,20 @@ function optionalText(value) {
   return text || null;
 }
 
-function submissionArtifact(value, tourId, assignmentId) {
+function handoffPath(accountId, tourId, assignmentId, extra = {}) {
+  const params = new URLSearchParams({ account: accountId, tour: tourId, scene: assignmentId });
+  for (const [key, value] of Object.entries(extra)) params.set(key, String(value));
+  return `/handoff.html?${params}`;
+}
+
+function submissionArtifact(value, tourId, assignmentId, accountId) {
   const source = value && typeof value === "object" ? value : {};
   const contentType = optionalText(source.contentType) || "application/octet-stream";
   const name = optionalText(source.name) || "Submitted work";
   const size = Number(source.size) || null;
   const blobPathname = optionalText(source.blobPathname);
   const dataUrl = optionalText(source.dataUrl);
-  const prefix = `brand-world-system/clients/${tourId}/tour/${assignmentId}/uploads/`;
+  const prefix = uploadPrefix(tourId, assignmentId, accountId);
   if (blobPathname && !blobPathname.startsWith(prefix)) {
     const error = new Error("That submitted file is outside this Scene.");
     error.status = 400;
@@ -289,13 +299,11 @@ export async function handleAction(body, options = {}) {
   // The acting account. Everyone acts inside their own account; a Higher
   // Roads session may name another account and that choice is recorded on the
   // facts it writes. Brief 2 of docs/spec-accounts-artists-tours.md.
-  const actingAccount = user.role === CLIENT_ROLE
-    ? (user.accountId || "dierks-bentley")
-    : sanitizeClientId(body.accountId || user.accountId || "dierks-bentley");
+  const actingAccount = resolveActingAccount(user, body.accountId || user.actingAccount);
   const actor = { actor: user.displayName, role: user.roleLabel, account: actingAccount };
   options = { ...options, actingAccount };
 
-  if (body.action === "get-me") return { user };
+  if (body.action === "get-me") return { user, actingAccount };
 
   if (body.action === "get-tour") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
@@ -387,16 +395,24 @@ export async function handleAction(body, options = {}) {
       error.status = 400;
       throw error;
     }
-    if (id === "off-the-map-2026") {
+    if (actingAccount === DEMO_ACCOUNT_ID && id === "off-the-map-2026") {
       const error = new Error("A tour already exists under that name.");
       error.status = 409;
       throw error;
     }
     const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const createdAt = new Date().toISOString();
-    // The artist id is stored as given and not validated against the artist
-    // constant, because artists become stored objects in brief 3 of
-    // docs/spec-accounts-artists-tours.md.
+    const artistDirectory = options.artists || createArtistDirectory({
+      ...((options.store?.backend || options.tourStore?.backend)
+        ? { backend: options.store?.backend || options.tourStore.backend }
+        : {}),
+      accountId: actingAccount,
+    });
+    if (!await artistDirectory.findArtist(artistId)) {
+      const error = new Error("No artist is stored under that name in this account.");
+      error.status = 404;
+      throw error;
+    }
     const document = {
       tour: {
         id,
@@ -708,7 +724,7 @@ export async function handleAction(body, options = {}) {
       recipient: optionalText(body.recipient) || "Media artist",
       dueDate: optionalText(body.dueDate),
       contact: optionalText(body.contact),
-      directPath: `/handoff.html?tour=${encodeURIComponent(fixture.tour.id)}&scene=${encodeURIComponent(assignment.id)}&brief=${brief.briefVersion}`,
+      directPath: handoffPath(actingAccount, fixture.tour.id, assignment.id, { brief: brief.briefVersion }),
       issuedBy: user.displayName,
       issuedAt: new Date().toISOString(),
     };
@@ -845,7 +861,7 @@ export async function handleAction(body, options = {}) {
       briefVersion,
       artboardVersion: wanted,
       status: "received",
-      artifact: submissionArtifact(body.artifact, fixture.tour.id, assignment.id),
+      artifact: submissionArtifact(body.artifact, fixture.tour.id, assignment.id, actingAccount),
       conceptSummary,
       technicalAssumptions: textList(body.technicalAssumptions),
       technicalFindings: textList(body.technicalFindings),
@@ -1019,7 +1035,7 @@ export async function handleAction(body, options = {}) {
       recipient: optionalText(body.recipient) || "Media artist",
       dueDate: optionalText(body.dueDate),
       contact: optionalText(body.contact),
-      directPath: `/handoff.html?tour=${encodeURIComponent(fixture.tour.id)}&scene=${encodeURIComponent(assignment.id)}&revision=${encodeURIComponent(revisionId)}`,
+      directPath: handoffPath(actingAccount, fixture.tour.id, assignment.id, { revision: revisionId }),
       issuedBy: user.displayName,
       issuedAt: revision.sentAt,
     };

@@ -1,3 +1,5 @@
+import { ACCOUNT_ID, TOUR_ID, preserveContextNavigation, scopedBody } from "./context.js";
+
 const BOOT_PENDING_KEY = "meridian:boot-pending";
 const BOOT_OBJECT_URL = new URL("./design/assets/meridian/08-boot-screen-object-4k.svg", import.meta.url);
 const BOOT_FALLBACK_URL = new URL("./design/assets/meridian/01-standalone-symbol.svg", import.meta.url);
@@ -51,9 +53,6 @@ async function mountBootSequence() {
 
 if (takeBootRequest()) void mountBootSequence();
 
-const params = new URLSearchParams(window.location.search);
-const tourId = params.get("tour") || "off-the-map-2026";
-
 const NAV_ICONS = {
   "index.html": '<svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3Z"/></svg>',
   "scenes.html": '<svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>',
@@ -64,7 +63,8 @@ const NAV_ICONS = {
 for (const link of document.querySelectorAll(".m-shell a[href^='./']")) {
   const url = new URL(link.href, window.location.href);
   if (["index.html", "scenes.html", "reviews.html", "tour.html", "artist.html", "request.html", "direction.html"].some((name) => url.pathname.endsWith(`/${name}`))) {
-    url.searchParams.set("tour", tourId);
+    if (ACCOUNT_ID) url.searchParams.set("account", ACCOUNT_ID);
+    if (TOUR_ID) url.searchParams.set("tour", TOUR_ID);
     link.href = url.href;
   }
   const name = Object.keys(NAV_ICONS).find((entry) => url.pathname.endsWith(`/${entry}`));
@@ -73,10 +73,12 @@ for (const link of document.querySelectorAll(".m-shell a[href^='./']")) {
   }
 }
 
+preserveContextNavigation();
+
 fetch("/api/tour", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ action: "get-me", tourId }),
+  body: JSON.stringify(scopedBody({ action: "get-me", tourId: TOUR_ID })),
 }).then((response) => response.ok ? response.json() : null).then((body) => {
   if (!body) return;
   document.querySelectorAll("[data-operator-utility]").forEach((entry) => {

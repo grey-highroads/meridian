@@ -1,5 +1,6 @@
 import { readCookie, readSession, SESSION_COOKIE, sessionSecret } from "../org/session.js";
 import { createOrgStore } from "../org/store.js";
+import { resolveActingAccount, selectedAccountFromRequest } from "../org/acting-account.js";
 
 export function sendJson(response, status, body) {
   response.statusCode = status;
@@ -54,7 +55,9 @@ export async function readSessionUser(request, options = {}) {
   const claim = await readSession(readCookie(request.headers.cookie || "", SESSION_COOKIE), secret);
   if (!claim) return null;
   const store = options.orgStore || createOrgStore(options);
-  return await store.findUser(claim.userId);
+  const user = await store.findUser(claim.userId);
+  if (!user) return null;
+  return { ...user, actingAccount: resolveActingAccount(user, selectedAccountFromRequest(request)) };
 }
 
 // The gate on every route. No session and a session that does not resolve to a
@@ -85,25 +88,9 @@ export function sendPublicError(response, error) {
   sendJson(response, status, { error: message });
 }
 
-// PROTOTYPE ONLY. The active client id is taken from the request and is not
-// checked against the caller's account. It is read by the inherited Brand World
-// routes, which only a Higher Roads session can reach, so no client reviewer
-// passes through here. Closing it means the session deciding which accounts a
-// caller may load. Recorded in docs/deferred-work.md. The id becomes a Blob
-// path segment, so it is sanitized to a safe character set to prevent path
-// traversal.
-export function resolveClientId(request) {
-  const header = request.headers["x-client-id"];
-  if (typeof header === "string" && header.trim()) return sanitizeClientId(header);
-  const cookies = request.headers.cookie || "";
-  const match = cookies.split(";").map((part) => part.trim()).find((part) => part.startsWith("bws_client="));
-  if (match) {
-    try {
-      const value = decodeURIComponent(match.slice("bws_client=".length));
-      if (value) return sanitizeClientId(value);
-    } catch {}
-  }
-  return "default";
+export function resolveClientId(request, user) {
+  if (!user) return sanitizeClientId(selectedAccountFromRequest(request) || "default");
+  return resolveActingAccount(user, selectedAccountFromRequest(request));
 }
 
 export function sanitizeClientId(value) {

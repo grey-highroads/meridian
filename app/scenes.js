@@ -1,11 +1,11 @@
+import { TOUR_ID, scopedBody } from "./context.js";
+
 // The Scenes directory. One tour, the Scenes under it, read from the tour
 // handler. Nothing is stored here and nothing is decided here. A Scene row is
 // the way into the work.
 //
 // The directory is only a way into a Scene. Lifecycle detail belongs on Home,
 // Reviews, and the Scene itself, where a person can act on it.
-
-const TOUR_ID = new URLSearchParams(window.location.search).get("tour") || "off-the-map-2026";
 
 const locationBar = document.getElementById("location");
 const scenes = document.getElementById("scenes");
@@ -59,7 +59,7 @@ async function load() {
     const response = await fetch("/api/tour", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "get-tour", tourId: TOUR_ID }),
+      body: JSON.stringify(scopedBody({ action: "get-tour", tourId: TOUR_ID })),
     });
     body = await response.json();
     if (!response.ok) throw new Error(body.error || "That did not work.");

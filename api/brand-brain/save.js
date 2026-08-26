@@ -12,7 +12,7 @@ export default async function handler(request, response) {
     return;
   }
   try {
-    const clientId = resolveClientId(request);
+    const clientId = resolveClientId(request, user);
     const snapshot = await readJsonBody(request);
     const saved = await saveBrandBrainSnapshot(snapshot, createVercelBlobBrandBrainStore({ clientId }));
     sendJson(response, 200, { savedAt: saved.savedAt });

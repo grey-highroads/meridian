@@ -1,3 +1,5 @@
+import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
+
 // A Scene. The request as it arrived, the Scene direction Higher Roads writes
 // against a named version of the tour direction, what the brain offers when
 // someone asks for it, and the brief that goes to production.
@@ -6,7 +8,6 @@
 // because someone used it and left it in.
 
 const PARAMS = new URLSearchParams(window.location.search);
-const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 
 const locationBar = document.getElementById("location");
 const root = document.getElementById("scene");
@@ -44,7 +45,7 @@ async function call(action, extra = {}) {
     response = await fetch("/api/tour", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, tourId: TOUR_ID, ...extra }),
+      body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })),
     });
   } catch (error) {
     // The browser reports a cut connection as a TypeError with no detail. The
@@ -545,7 +546,7 @@ document.addEventListener("change", (event) => {
 
 async function refreshReferences() {
   try {
-    const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId: SCENE_ID, mode: "reference-list" }) });
+    const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: SCENE_ID, mode: "reference-list" }) });
     if (!response.ok) return;
     const data = await response.json();
     view.references = data.references || [];
@@ -557,12 +558,12 @@ async function refreshReferences() {
 async function uploadReference(file) {
   view.referenceMessage = "Uploading " + file.name + "...";
   render();
-  const authorization = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId: SCENE_ID, filename: file.name, contentType: file.type, size: file.size }) });
+  const authorization = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: SCENE_ID, filename: file.name, contentType: file.type, size: file.size }) });
   const authorized = await authorization.json();
   if (!authorization.ok) { view.referenceMessage = authorized.error || "The reference could not be authorized."; render(); return; }
   const put = await fetch(authorized.presignedUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
   if (!put.ok) { view.referenceMessage = "The reference could not be uploaded."; render(); return; }
-  const recorded = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId: SCENE_ID, mode: "reference-record", pathname: authorized.pathname, filename: file.name, contentType: file.type }) });
+  const recorded = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: SCENE_ID, mode: "reference-record", pathname: authorized.pathname, filename: file.name, contentType: file.type }) });
   if (!recorded.ok) { view.referenceMessage = "The reference uploaded but could not be recorded."; render(); return; }
   view.referenceMessage = "";
   await refreshReferences();

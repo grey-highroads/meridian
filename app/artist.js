@@ -1,3 +1,5 @@
+import { scopedBody } from "./context.js";
+
 // The Artist Brain. The approved findings, grouped by part of the artist, with
 // the evidence one disclosure away. It is a quiet destination: a person comes
 // here to read what the system knows and to maintain it, not to do Scene work.
@@ -35,7 +37,7 @@ async function call(action, extra = {}) {
   const response = await fetch("/api/artist", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, artistId: ARTIST_ID, ...extra }),
+    body: JSON.stringify(scopedBody({ action, artistId: ARTIST_ID, ...extra })),
   });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");

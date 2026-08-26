@@ -1,5 +1,6 @@
+import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
+
 const PARAMS = new URLSearchParams(window.location.search);
-const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 
 const locationBar = document.getElementById("location");
 const workspace = document.getElementById("workspace");
@@ -36,7 +37,7 @@ async function call(action, extra = {}) {
   const response = await fetch("/api/tour", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, tourId: TOUR_ID, ...extra }),
+    body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })),
   });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");
@@ -229,7 +230,7 @@ async function loadArtifacts() {
       const item = await call("get-artboard-artifact", { assignmentId: view.sceneId, artboardVersion: value });
       let src = item.dataUrl || null;
       if (!src && item.blobPathname) {
-        const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "read", tourId: TOUR_ID, assignmentId: view.sceneId, pathname: item.blobPathname }) });
+        const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, mode: "read", tourId: TOUR_ID, assignmentId: view.sceneId, pathname: item.blobPathname }) });
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "That work file could not be opened.");
         src = body.presignedUrl;

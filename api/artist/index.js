@@ -6,6 +6,7 @@ import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/ser
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { OPERATOR_ROLE } from "../../src/org/store.js";
 import { DEMO_ACCOUNT_ID, RECORD_ACTOR, createArtistDirectory } from "../../src/org/artists.js";
+import { resolveActingAccount } from "../../src/org/acting-account.js";
 
 // The artist layer's one function. New operations arrive as actions here
 // rather than as new files, because the hosting tier caps functions and
@@ -106,7 +107,9 @@ export async function handleAction(body, options = {}) {
   // The artist store is bound to the session's account; the demo account maps
   // to the legacy paths. A session from another account reading this account's
   // artist finds absence by construction, never an acknowledgment.
-  const accountId = options.user ? (options.user.accountId || "dierks-bentley") : null;
+  const accountId = options.user
+    ? resolveActingAccount(options.user, body.accountId || options.user.actingAccount)
+    : null;
   const store = options.store || createArtistStore({ accountId });
   const reader = options.reader;
 

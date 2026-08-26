@@ -1,6 +1,9 @@
 import { issueSignedToken, presignUrl } from "@vercel/blob";
-import { randomUUID } from "node:crypto";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../src/server/http.js";
+import { resolveActingAccount } from "../src/org/acting-account.js";
+import { uploadPathFor, uploadPrefix } from "../src/tour/upload-path.js";
+
+export { uploadPathFor, uploadPrefix };
 
 const MAXIMUM_SIZE = 20 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -11,25 +14,6 @@ const ALLOWED_TYPES = new Set([
   "image/svg+xml",
   "image/webp",
 ]);
-
-function safeFilename(value) {
-  const cleaned = String(value || "submitted-work")
-    .replace(/[^A-Za-z0-9._-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return cleaned || "submitted-work";
-}
-
-export function uploadPrefix(tourId, assignmentId, accountId) {
-  // Demo data stays at its legacy path; other accounts get their own
-  // namespace. Brief 2 of docs/spec-accounts-artists-tours.md.
-  if (!accountId || accountId === "dierks-bentley") return `brand-world-system/clients/${sanitizeClientId(tourId)}/tour/${sanitizeClientId(assignmentId)}/uploads/`;
-  return `brand-world-system/clients/${sanitizeClientId(accountId)}/tours/${sanitizeClientId(tourId)}/${sanitizeClientId(assignmentId)}/uploads/`;
-}
-
-export function uploadPathFor(tourId, assignmentId, filename, accountId, id = randomUUID()) {
-  return `${uploadPrefix(tourId, assignmentId, accountId)}${sanitizeClientId(id)}-${safeFilename(filename)}`;
-}
 
 export default async function handler(request, response) {
   const user = await requireUser(request, response);
@@ -43,7 +27,7 @@ export default async function handler(request, response) {
     const body = await readJsonBody(request, 1024 * 1024);
     const tourId = sanitizeClientId(body.tourId || "");
     const assignmentId = sanitizeClientId(body.assignmentId || "");
-    const accountId = user.accountId || null;
+    const accountId = resolveActingAccount(user, body.accountId || user.actingAccount);
     const prefix = uploadPrefix(tourId, assignmentId, accountId);
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     const credentials = token ? { token } : {};

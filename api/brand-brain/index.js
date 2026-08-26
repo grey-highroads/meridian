@@ -22,7 +22,7 @@ export default async function handler(request, response) {
   const user = await requireUser(request, response, { role: OPERATOR_ROLE });
   if (!user) return;
   try {
-    const clientId = resolveClientId(request);
+    const clientId = resolveClientId(request, user);
 
     // GET: read the brain (existing behavior, unchanged).
     if (request.method === "GET") {

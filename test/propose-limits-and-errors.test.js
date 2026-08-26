@@ -155,7 +155,8 @@ function element() {
 // Drive the page with a reply for each action it asks for. `propose` may be a
 // value to return or a function that throws.
 function scenePage(propose) {
-  const source = fs.readFileSync(path.join(rootPath, "app", "scene.js"), "utf8");
+  const source = fs.readFileSync(path.join(rootPath, "app", "scene.js"), "utf8")
+    .replace(/^import .*?;\n\n/, "");
   const elements = { location: element(), scene: element(), actions: element() };
   const handlers = {};
 
@@ -169,6 +170,9 @@ function scenePage(propose) {
     Boolean,
     Object,
     console,
+    ACCOUNT_ID: null,
+    TOUR_ID: TOUR,
+    scopedBody: (body) => ({ accountId: null, ...body }),
     window: { location: { search: `?tour=${TOUR}&scene=${ASSIGNMENT}` } },
     document: {
       getElementById: (id) => elements[id] || element(),

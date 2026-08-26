@@ -277,7 +277,6 @@ The larger design answer is ADR 0016: declared influences reach every render aut
 
 Recorded for completeness. These are not this workstream's to fix.
 
-- **`resolveClientId` still takes the client from the request.** The inherited Brand World routes resolve which client's data to load from a header or cookie, and the session is not consulted. As of 2026-08-23 those routes are reachable only by a Higher Roads session, so no client reviewer passes through here, and the pilot has one account. Closing it means the session deciding which accounts a caller may load, and it belongs with the Brand World routes that read it.
 - **Deterministic composition is specified and not implemented.** The glossary states that a locked asset should never be regenerated when it can be composed deterministically. The live path sends protected assets through the OpenAI edits endpoint, which is model-based placement. This one matters commercially, because "your logo is placed, never redrawn" is the natural thing to say and the implementation does not currently guarantee it.
 - **The 12-function Vercel Hobby ceiling.** Held so far by dispatching new operations through existing handlers. A new serverless function requires freeing a slot or moving to Pro.
 
@@ -422,3 +421,9 @@ Bring them back when: Jim's real system replaces the stand-in and a brief goes o
 Recorded 2026-08-25 at brief 1 of the accounts spec. The Scene record and the new tour-level record write the same fact shape in two modules. Extracting it was skipped on purpose: a refactor of tested code does not belong inside a storage change. Extract when a third writer appears or when either shape needs to change.
 
 Updated 2026-08-25 at brief 3 of the accounts spec. The third writer has appeared: `appendArtistFact` in `src/org/artists.js` writes the same shape a third time, with an `artistId` field the other two do not carry. The named trigger has fired. Extraction was still not done inside brief 3, because the brief covers artist rows and the builder does not widen a brief on its own. This is now a ruling waiting on the architect, not a condition waiting on an event.
+
+## Documentation drift
+
+Recorded 2026-08-25. `docs/meridian-jobs-walkthroughs.md`, the roadmap, and older thesis passages contain assumptions that have drifted from current code and later rulings. Current code and later rulings are authoritative.
+
+Bring it back before a future architecture or design decision relies on those passages. A dated corrections pass is owed first. That corrections pass is not part of this commit.

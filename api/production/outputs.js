@@ -10,7 +10,7 @@ const MAX_SIGNED_IMAGES = 60;
 export default async function handler(request, response) {
   const user = await requireUser(request, response, { role: OPERATOR_ROLE });
   if (!user) return;
-  const clientId = resolveClientId(request);
+  const clientId = resolveClientId(request, user);
   const store = createVercelBlobProductionStore({ clientId });
 
   if (request.method === "GET") {

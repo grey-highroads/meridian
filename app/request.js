@@ -1,10 +1,10 @@
-const TOUR_ID = new URLSearchParams(window.location.search).get("tour") || "off-the-map-2026";
+import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("request");
 const view = { tour: null, request: "", title: "", moment: "", references: "", onBehalfOf: "", images: [], imageMessage: "", saved: null, message: "", working: false };
 
 async function call(action, extra = {}) {
-  const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, tourId: TOUR_ID, ...extra }) });
+  const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })) });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");
   return body;
@@ -50,12 +50,12 @@ async function uploadStagedImages(assignmentId) {
   if (!view.staged || !view.staged.length) return;
   for (const file of view.staged) {
     try {
-      const authorization = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId, filename: file.name, contentType: file.type, size: file.size }) });
+      const authorization = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId, filename: file.name, contentType: file.type, size: file.size }) });
       const authorized = await authorization.json();
       if (!authorization.ok) continue;
       const put = await fetch(authorized.presignedUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
       if (!put.ok) continue;
-      await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tourId: TOUR_ID, assignmentId, mode: "reference-record", pathname: authorized.pathname, filename: file.name, contentType: file.type }) });
+      await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId, mode: "reference-record", pathname: authorized.pathname, filename: file.name, contentType: file.type }) });
     } catch (_error) {
       // A failing image never blocks the Scene request; the Scene page will show whatever landed.
     }

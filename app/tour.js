@@ -1,8 +1,8 @@
+import { TOUR_ID, scopedBody } from "./context.js";
+
 // The tour home. The tour record and the direction as the director gave it.
 // A reference, not a working surface: nothing is authored here and nothing is
 // decided here. Scene work happens on a Scene.
-
-const TOUR_ID = new URLSearchParams(window.location.search).get("tour") || "off-the-map-2026";
 
 const locationBar = document.getElementById("location");
 const root = document.getElementById("tour");
@@ -13,7 +13,7 @@ async function call(action, extra = {}) {
   const response = await fetch("/api/tour", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, tourId: TOUR_ID, ...extra }),
+    body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })),
   });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");

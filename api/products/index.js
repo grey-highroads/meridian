@@ -32,7 +32,7 @@ export default async function handler(request, response) {
   const user = await requireUser(request, response, { role: OPERATOR_ROLE });
   if (!user) return;
   try {
-    const clientId = resolveClientId(request);
+    const clientId = resolveClientId(request, user);
     const productStore = createVercelBlobProductStore({ clientId });
 
     if (request.method === "GET") {
@@ -183,4 +183,3 @@ async function handleApprove(body, productStore, response) {
   const record = await approveProduct({ store: productStore, productId });
   sendJson(response, 200, { record });
 }
-

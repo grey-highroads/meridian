@@ -1,5 +1,6 @@
+import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
+
 const PARAMS = new URLSearchParams(window.location.search);
-const TOUR_ID = PARAMS.get("tour") || "off-the-map-2026";
 const SCENE_ID = PARAMS.get("scene") || "storm-and-lightning";
 const BRIEF_VERSION = Number(PARAMS.get("brief")) || null;
 const REVISION_ID = PARAMS.get("revision") || null;
@@ -27,7 +28,7 @@ async function call(action, extra = {}) {
   const response = await fetch("/api/tour", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, tourId: TOUR_ID, assignmentId: SCENE_ID, ...extra }),
+    body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, assignmentId: SCENE_ID, ...extra })),
   });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work.");
@@ -246,7 +247,7 @@ async function storeFile(file) {
   const authorization = await fetch("/api/tour-upload", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tourId: TOUR_ID, assignmentId: SCENE_ID, filename: file.name, contentType: file.type, size: file.size }),
+    body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: SCENE_ID, filename: file.name, contentType: file.type, size: file.size }),
   });
   const authorized = await authorization.json();
   if (!authorization.ok) throw new Error(authorized.error || "The work upload could not be authorized.");

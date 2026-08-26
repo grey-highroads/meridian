@@ -58,6 +58,8 @@ export function createTourStore(options = {}) {
   }
 
   return {
+    backend,
+
     async readConcept(tourId, assignmentId) {
       return await read(tourId, assignmentId, "concept", null);
     },

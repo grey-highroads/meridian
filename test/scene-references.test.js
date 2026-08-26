@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { uploadPathFor, uploadPrefix } from "../api/tour-upload.js";
+import { uploadPathFor, uploadPrefix } from "../src/tour/upload-path.js";
 
 test("reference upload path is scoped to the acting account", () => {
   assert.equal(uploadPrefix("off-the-map-2026","storm-and-lightning", null), "brand-world-system/clients/off-the-map-2026/tour/storm-and-lightning/uploads/");

@@ -18,7 +18,7 @@ export default async function handler(request, response) {
     return;
   }
   try {
-    const clientId = resolveClientId(request);
+    const clientId = resolveClientId(request, user);
     const body = await readJsonBody(request);
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new Error("OpenAI API key is not configured.");

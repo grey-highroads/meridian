@@ -17,7 +17,7 @@ export default async function handler(request, response) {
     return;
   }
   try {
-    const clientId = resolveClientId(request);
+    const clientId = resolveClientId(request, user);
     const body = await readJsonBody(request);
 
     // Place on background, a side path. A request without this action never
@@ -46,4 +46,3 @@ export default async function handler(request, response) {
     sendPublicError(response, error);
   }
 }
-

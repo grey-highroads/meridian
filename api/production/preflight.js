@@ -15,7 +15,7 @@ export default async function handler(request, response) {
     return;
   }
   try {
-    const clientId = resolveClientId(request);
+    const clientId = resolveClientId(request, user);
     const body = await readJsonBody(request);
     const { generationPackage } = await prepareProductionPackage(body, {
       brainStore: createVercelBlobBrandBrainStore({ clientId }),
@@ -28,4 +28,3 @@ export default async function handler(request, response) {
     sendPublicError(response, error);
   }
 }
-
