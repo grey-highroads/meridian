@@ -148,6 +148,15 @@ test("the Scene workspace keeps the request and applicable direction with the wo
   assert.match(source, /actions\.innerHTML = "";\s*return;/, "returned artboards still put review at the bottom of the page");
 });
 
+test("the Scene workstation lets the center stage scroll independently", () => {
+  const patterns = read("app/design/patterns.css");
+  const desktop = patterns.match(/@media \(min-width: 64\.01rem\) \{([\s\S]*?)\n\}/)?.[1] || "";
+  const stage = desktop.match(/\.m-workstation__stage\s*\{([^}]*)\}/)?.[1] || "";
+
+  assert.match(stage, /min-height:\s*0;/, "the center stage cannot shrink inside the viewport");
+  assert.match(stage, /overflow-y:\s*auto;/, "the center stage clips long Scene content instead of scrolling");
+});
+
 test("the Scene directory is a quiet list and Scene requests require names", () => {
   const directory = read("app/scenes.js");
   assert.doesNotMatch(directory, /WAITING ON|currentVersion|nextAction/, "Scene cards still repeat lifecycle metadata");

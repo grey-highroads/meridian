@@ -1974,6 +1974,11 @@
     height: 100vh;
     overflow: hidden;
   }
+
+  .m-workstation__stage {
+    min-height: 0;
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 64rem) {
