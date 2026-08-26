@@ -48,6 +48,26 @@ Missing state: There is no pattern for a plain result log. The Admin page prints
 
 Where: `app/admin.html`, under the copy action. It will recur on every act the accounts spec adds to that page.
 
+### The rail's utility group sits below the fold
+
+Status: requested
+
+Job: A Higher Roads person reaches Artist Brain, Admin, or Sign out from any page without hunting for them.
+
+Missing state: `m-shell__rail` is a grid item at `min-height: 100vh` with `position: sticky`, so it stretches to the height of the page beside it and never sticks. `m-shell__utility` is pushed to the bottom of that stretched rail by `margin-top: auto`, which puts the whole group below the fold on a normal laptop window. The three links are invisible until a person scrolls to the end of the page, on every page in the app. There is no pattern for a rail whose utility group stays in view while the main column scrolls.
+
+Where: `app/design/patterns.css` lines 214 to 281, reaching every page that uses `m-shell`.
+
+### A maintenance surface has no home in the rail
+
+Status: requested
+
+Job: A Higher Roads person opens the maintenance surface, works in it, and leaves.
+
+Missing state: Admin sits in the utility group beside Sign out, which is where a session ends rather than where work happens. It is there because the utility group was the only place a fifth link fit. There is no pattern for a working surface that belongs to Higher Roads rather than to the tour, and the accounts spec adds four more acts to that surface.
+
+Where: `app/admin.html`, and the rail markup every page repeats.
+
 Use this shape when a real job exposes a gap:
 
 ### Pattern name

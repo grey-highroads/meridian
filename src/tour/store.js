@@ -19,13 +19,21 @@ const ROOT = "brand-world-system/clients";
 // namespace under its id. Brief 2 of docs/spec-accounts-artists-tours.md.
 export const DEMO_ACCOUNT_ID = "dierks-bentley";
 
-export function tourPathFor(tourId, assignmentId, document, accountId) {
-  if (!accountId || accountId === DEMO_ACCOUNT_ID) return `${ROOT}/${tourId}/tour/${assignmentId}/${document}.json`;
+// The uniform layout is the one both helpers already return for every account
+// except the demo one. Passing uniform selects it for the demo account too,
+// which is the only way to reach the shared location while the fork above is
+// still in place. The fork comes out next and this argument goes with it.
+function accountScoped(accountId, uniform) {
+  return Boolean(uniform || (accountId && accountId !== DEMO_ACCOUNT_ID));
+}
+
+export function tourPathFor(tourId, assignmentId, document, accountId, uniform = false) {
+  if (!accountScoped(accountId, uniform)) return `${ROOT}/${tourId}/tour/${assignmentId}/${document}.json`;
   return `${ROOT}/${accountId}/tours/${tourId}/${assignmentId}/${document}.json`;
 }
 
-export function tourDocumentPathFor(tourId, document, accountId) {
-  if (!accountId || accountId === DEMO_ACCOUNT_ID) return `${ROOT}/${tourId}/tour/${document}.json`;
+export function tourDocumentPathFor(tourId, document, accountId, uniform = false) {
+  if (!accountScoped(accountId, uniform)) return `${ROOT}/${tourId}/tour/${document}.json`;
   return `${ROOT}/${accountId}/tours/${tourId}/${document}.json`;
 }
 
@@ -34,31 +42,38 @@ export { createBlobBackend, createMemoryBackend };
 export function createTourStore(options = {}) {
   const backend = options.backend || createBlobBackend(options);
   const accountId = options.accountId || null;
+  // Off by default, so every existing caller reads and writes exactly where it
+  // did before. A caller that asks for the uniform layout has to name the
+  // account, because the account id is the directory it lands in.
+  const uniform = options.uniformPaths === true;
+  if (uniform && !accountId) throw new Error("The uniform tour layout needs an account id.");
 
   async function read(tourId, assignmentId, name, fallback) {
-    const body = await backend.read(tourPathFor(tourId, assignmentId, name, accountId));
+    const body = await backend.read(tourPathFor(tourId, assignmentId, name, accountId, uniform));
     if (body === null || body === undefined) return fallback;
     return JSON.parse(body);
   }
 
   async function write(tourId, assignmentId, name, value) {
-    await backend.write(tourPathFor(tourId, assignmentId, name, accountId), JSON.stringify(value, null, 2));
+    await backend.write(tourPathFor(tourId, assignmentId, name, accountId, uniform), JSON.stringify(value, null, 2));
     return value;
   }
 
   async function readTourDocument(tourId, name, fallback) {
-    const body = await backend.read(tourDocumentPathFor(tourId, name, accountId));
+    const body = await backend.read(tourDocumentPathFor(tourId, name, accountId, uniform));
     if (body === null || body === undefined) return fallback;
     return JSON.parse(body);
   }
 
   async function writeTourDocument(tourId, name, value) {
-    await backend.write(tourDocumentPathFor(tourId, name, accountId), JSON.stringify(value, null, 2));
+    await backend.write(tourDocumentPathFor(tourId, name, accountId, uniform), JSON.stringify(value, null, 2));
     return value;
   }
 
   return {
     backend,
+    accountId,
+    uniform,
 
     async readConcept(tourId, assignmentId) {
       return await read(tourId, assignmentId, "concept", null);

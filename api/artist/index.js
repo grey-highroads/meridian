@@ -3,6 +3,9 @@ import { join } from "node:path";
 import { parseIntake } from "../../src/artist/parse-intake.js";
 import { applyRulings, createArtistStore } from "../../src/artist/store.js";
 import { copyArtistToAccountPath } from "../../scripts/copy-artist-to-account-path.js";
+import { readTourFixture } from "../tour/index.js";
+import { parseTourFixture } from "../../src/tour/parse-fixture.js";
+import { createTourStore, tourDocumentPathFor } from "../../src/tour/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { OPERATOR_ROLE } from "../../src/org/store.js";
@@ -15,7 +18,7 @@ import { resolveActingAccount } from "../../src/org/acting-account.js";
 //
 // The actions are: create-artist, list-artists, import-intake, get-artist,
 // list-findings, approve-brain, remove-finding, restore-finding, get-evidence,
-// copy-artist-paths.
+// copy-artist-paths, seed-tour-at-shared-path.
 // None of them returns the prior. The prior is written at import and read by
 // nothing, because the thesis says it is never shown.
 //
@@ -105,6 +108,53 @@ async function setRemoved(store, artistId, findingId, entry) {
   return { finding: applyRulings(findings, decisions).find((finding) => finding.id === findingId) };
 }
 
+// The demo tour is the last thing that is not stored. It lives as committed
+// markdown and the tour route falls back to it for one account and one id.
+// Seeding writes that same fixture into the tour store at the shared location,
+// through the store's own writers, so the fallback can come out next without
+// the tour disappearing with it. The fixture is left where it is.
+async function seedTourAtSharedPath(store, options, accountId, tourId) {
+  const tours = options.tourStore || createTourStore({
+    backend: store.backend,
+    accountId,
+    uniformPaths: true,
+  });
+  const where = (name) => tourDocumentPathFor(tourId, name, tours.accountId, tours.uniform);
+
+  let texts;
+  try {
+    texts = await readTourFixture(tourId);
+  } catch {
+    const error = new Error("No tour fixture is committed under that name.");
+    error.status = 404;
+    throw error;
+  }
+  const parsed = parseTourFixture(texts);
+
+  // The tour document is the guard. A second run stops here and writes nothing,
+  // because createTour refuses an id it already holds.
+  try {
+    await tours.createTour(parsed.tour.id, { tour: parsed.tour, assignments: [] });
+  } catch (error) {
+    if (error.status === 409) {
+      return { lines: ["A tour is already stored at the shared location for this account. Nothing was written."], count: 0 };
+    }
+    throw error;
+  }
+
+  const lines = [`Tour ${parsed.tour.id} written to ${where("tour")}`];
+  await tours.addDirection(parsed.tour.id, parsed.tour.direction);
+  lines.push(`Direction version ${parsed.tour.direction.version} written to ${where("directions")}`);
+  for (const assignment of parsed.assignments) {
+    await tours.addRequest(parsed.tour.id, assignment);
+    lines.push(`Assignment ${assignment.id} written to ${where("requests")}`);
+  }
+
+  const count = lines.length;
+  lines.push(`Wrote ${count} object${count === 1 ? "" : "s"}. The committed fixture was not touched.`);
+  return { lines, count };
+}
+
 export async function handleAction(body, options = {}) {
   // The artist store is bound to the session's account; the demo account maps
   // to the legacy paths. A session from another account reading this account's
@@ -191,6 +241,11 @@ export async function handleAction(body, options = {}) {
       log: (line) => lines.push(line),
     });
     return { lines, count: result.copied.length };
+  }
+  // The same shape the copy action uses: a Higher Roads act, and a client
+  // session falls past the branch to the answer an unknown action gets.
+  if (body.action === "seed-tour-at-shared-path" && options.user && options.user.role === OPERATOR_ROLE) {
+    return await seedTourAtSharedPath(store, options, accountId || DEMO_ACCOUNT_ID, sanitizeClientId(body.tourId || ""));
   }
   if (body.action === "get-evidence") {
     const record = await store.readRecord(artistId);
