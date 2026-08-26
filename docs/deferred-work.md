@@ -491,6 +491,16 @@ Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Up
 
 Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
+## A deleted account left its name on the page
+
+Recorded 2026-08-26, found by Grey on the live app after deleting a test account. The account list showed one account and the three sections under it were still headed with the deleted one's name, because the address still named it and nothing checked the name against the list. `resolveActingAccount` sanitizes whatever was selected and hands it back, so a Higher Roads session could go on acting inside an account with no row and write documents under it.
+
+Fixed in the same commit as this entry. The admin route reads the account list and refuses an id that is not on it, which makes a deleted account and an account that never existed read the same way. Admin drops the name from the address when a read comes back refused, and drops it outright when the account being worked in is the one deleted. Seven tests in `test/artist-rows.test.js` were acting inside an account with no row and now create it first, which is what the app requires.
+
+What is not covered: `api/tour/index.js` resolves the same way and has no such check. A dead account there reads as an account holding no tours rather than as absence, which is the same answer an empty account gives.
+
+Bring it back when: a tour action needs to tell an empty account from one that is gone. The check is the same three lines and belongs beside the acting account resolution rather than in each route.
+
 ## Admin acts on tour rows and account rows, not on artist rows
 
 Recorded 2026-08-26 with brief 2 of the admin surface and updated 2026-08-26 with brief 3. A tour row can be made the one the account opens and can be deleted. An account row can be opened and deleted. Artist rows and people rows still do nothing.

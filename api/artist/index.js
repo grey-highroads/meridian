@@ -160,6 +160,20 @@ export async function handleAction(body, options = {}) {
   const store = options.store || createArtistStore({ accountId });
   const reader = options.reader;
 
+  // An account that is not on the list is absent, whether it was deleted or
+  // never existed. Without this a Higher Roads session naming a dead account in
+  // the address keeps working inside it: the page reads back the id it sent and
+  // shows lists headed with the name of an account that is gone. A client
+  // cannot reach this, because a client's account is the one on their record.
+  if (options.user && options.user.role === OPERATOR_ROLE) {
+    const known = await openAccounts(options, store).readAccounts();
+    if (!known.some((entry) => entry.id === accountId)) {
+      const error = new Error("No account is stored under that name.");
+      error.status = 404;
+      throw error;
+    }
+  }
+
   // Both of these name an artist by its name or name none at all, so they run
   // before the guard that requires an artist id on the body.
   if (body.action === "list-artists") {

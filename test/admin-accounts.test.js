@@ -476,3 +476,30 @@ test("a client session cannot set an active tour, delete a tour, or delete an ac
   const accounts = await createOrgStore({ backend }).readAccounts();
   assert.deepEqual(accounts.map((entry) => entry.id).sort(), [DEMO, ACCOUNT_B].sort());
 });
+
+test("an account that is not on the list is absent, and Admin drops it from the address", async () => {
+  const backend = createMemoryBackend();
+  await makeAccountB(backend);
+
+  // Deleting the account leaves nothing that answers about it. Naming it again
+  // reads the same as naming one that never existed.
+  await artistAction(
+    { action: "delete-account", accountToDelete: ACCOUNT_B, confirmName: "Northstar Live" },
+    artistOptions(backend, OPERATOR, DEMO),
+  );
+  for (const accountId of [ACCOUNT_B, "never-existed"]) {
+    for (const action of ["list-people", "list-artists", "list-accounts"]) {
+      await assert.rejects(
+        () => artistAction({ action, accountId }, artistOptions(backend, OPERATOR, accountId)),
+        (error) => error.status === 404 && error.message === "No account is stored under that name.",
+        `${action} answered about ${accountId}`,
+      );
+    }
+  }
+
+  // The page stops naming it rather than showing lists headed with an account
+  // nobody can reach.
+  const admin = readSource("app/admin.js", "utf8");
+  assert.match(admin, /window\.location\.replace\("\.\/admin\.html"\)/, "Admin keeps a dead account in the address");
+  assert.match(admin, /namedAccount\(\) === accountToDelete/, "deleting the account being worked in keeps its name");
+});

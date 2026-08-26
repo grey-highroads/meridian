@@ -3,6 +3,7 @@ import test from "node:test";
 import { handleAction as artistAction } from "../api/artist/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { artistRecordPath, artistsPath, createArtistDirectory } from "../src/org/artists.js";
+import { createOrgStore } from "../src/org/store.js";
 
 // Brief 3 of docs/spec-accounts-artists-tours.md. Artists were a constant map
 // in api/artist/index.js and are now rows under the account that owns them.
@@ -30,6 +31,15 @@ const OTHER_OPERATOR = {
 
 function contextFor(backend, user) {
   return { user, store: createArtistStore({ backend, accountId: user.accountId }) };
+}
+
+// The route refuses an account that is not on the list, so a test acting inside
+// one puts it there first. The demo account is on the list from the first read.
+async function accountExists(backend, accountId) {
+  const org = createOrgStore({ backend });
+  const accounts = await org.readAccounts();
+  if (accounts.some((entry) => entry.id === accountId)) return;
+  await org.createAccount(accountId);
 }
 
 test("the demo account with nothing stored reads Dierks Bentley, and a second read changes nothing", async () => {
@@ -63,6 +73,7 @@ test("a second account starts with no artists and never inherits the demo seed",
 
 test("an artist created in one account is visible there and absent from the demo account, one backend", async () => {
   const backend = createMemoryBackend();
+  await accountExists(backend, OTHER);
 
   const created = await artistAction(
     { action: "create-artist", name: "Wren Halloway" },
@@ -84,6 +95,7 @@ test("an artist created in one account is visible there and absent from the demo
 
 test("named identities are stored as given", async () => {
   const backend = createMemoryBackend();
+  await accountExists(backend, OTHER);
   const created = await artistAction(
     { action: "create-artist", name: "Wren Halloway", identities: ["main-stage", "the-quiet-hour", "shared"] },
     contextFor(backend, OTHER_OPERATOR),
@@ -93,6 +105,7 @@ test("named identities are stored as given", async () => {
 
 test("a duplicate create-artist is refused and writes nothing", async () => {
   const backend = createMemoryBackend();
+  await accountExists(backend, OTHER);
   await artistAction({ action: "create-artist", name: "Wren Halloway" }, contextFor(backend, OTHER_OPERATOR));
   const before = new Map(backend.files);
 
@@ -109,6 +122,8 @@ test("a duplicate create-artist is refused and writes nothing", async () => {
 
 test("a name that derives no usable id is refused", async () => {
   const backend = createMemoryBackend();
+  await accountExists(backend, OTHER);
+  const stored = backend.files.size;
   await assert.rejects(
     () => artistAction({ action: "create-artist", name: "!!!" }, contextFor(backend, OTHER_OPERATOR)),
     (error) => error.status === 400 && /usable artist id/.test(error.message),
@@ -117,11 +132,12 @@ test("a name that derives no usable id is refused", async () => {
     () => artistAction({ action: "create-artist", name: "  " }, contextFor(backend, OTHER_OPERATOR)),
     (error) => error.status === 400 && error.message === "Name the artist before creating it.",
   );
-  assert.equal(backend.files.size, 0);
+  assert.equal(backend.files.size, stored, "a refused create wrote something");
 });
 
 test("the created artist's fact carries the account and the actor", async () => {
   const backend = createMemoryBackend();
+  await accountExists(backend, OTHER);
   await artistAction({ action: "create-artist", name: "Wren Halloway" }, contextFor(backend, OTHER_OPERATOR));
 
   const facts = await createArtistDirectory({ backend, accountId: OTHER }).readArtistFacts();
@@ -142,6 +158,8 @@ test("the created artist's fact carries the account and the actor", async () => 
 
 test("import-intake for an id with no stored artist is refused and writes nothing", async () => {
   const backend = createMemoryBackend();
+  await accountExists(backend, OTHER);
+  const stored = backend.files.size;
   // The intake files for this id are committed in the tree, so the refusal is
   // the missing artist row and not a missing file. The second account holds no
   // artist under this id, so intake has nothing to import onto.
@@ -149,7 +167,7 @@ test("import-intake for an id with no stored artist is refused and writes nothin
     () => artistAction({ action: "import-intake", artistId: DEMO }, contextFor(backend, OTHER_OPERATOR)),
     (error) => error.status === 404 && /Create the artist before importing intake files/.test(error.message),
   );
-  assert.equal(backend.files.size, 0, "a refused import wrote something");
+  assert.equal(backend.files.size, stored, "a refused import wrote something");
 });
 
 test("the demo import path still works and still names the artist the way it did", async () => {
@@ -167,6 +185,7 @@ test("the demo import path still works and still names the artist the way it did
 
 test("an artist created in an account can then import intake under that account", async () => {
   const backend = createMemoryBackend();
+  await accountExists(backend, OTHER);
   const context = contextFor(backend, OTHER_OPERATOR);
   // Created under the demo artist's id so the committed intake files are found,
   // with this account's own name on the row.

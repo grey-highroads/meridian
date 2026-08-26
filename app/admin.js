@@ -109,6 +109,11 @@ function accountHref(accountId) {
   return `./admin.html?account=${encodeURIComponent(accountId)}`;
 }
 
+// The account named in the address, which is the one this page is working in.
+function namedAccount() {
+  return new URLSearchParams(window.location.search).get("account");
+}
+
 function resultBlock(state, label) {
   if (state.message) {
     return `<div class="m-callout m-callout--change"><p class="m-copy">${escape(state.message)}</p></div>`;
@@ -228,6 +233,13 @@ async function load() {
     view.people = people.people || [];
     view.admins = people.admins || [];
   } catch (error) {
+    // The address can name an account that is gone, most often the one just
+    // deleted. Meridian drops the name and reads again rather than showing
+    // lists headed with an account nobody can reach.
+    if (namedAccount()) {
+      window.location.replace("./admin.html");
+      return;
+    }
     view.error = error.message;
   }
   view.loading = false;
@@ -309,7 +321,12 @@ document.addEventListener("click", (event) => {
   }
   if (target.hasAttribute("data-delete-account")) {
     const accountToDelete = target.getAttribute("data-delete-account");
-    void act(() => post("/api/artist", { action: "delete-account", accountToDelete, confirmName: view.confirmName }));
+    void act(async () => {
+      await post("/api/artist", { action: "delete-account", accountToDelete, confirmName: view.confirmName });
+      // Deleting the account being worked in leaves the address naming
+      // something that is gone, so the name goes with the account.
+      if (namedAccount() === accountToDelete) window.location.replace("./admin.html");
+    });
     return;
   }
   if (target.hasAttribute("data-make-active")) {
