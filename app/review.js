@@ -1,4 +1,5 @@
-import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
+import { TOUR_ID, scopedBody } from "./context.js";
+import { resolveArtifact } from "./artifact.js";
 
 const PARAMS = new URLSearchParams(window.location.search);
 
@@ -228,15 +229,7 @@ async function loadArtifacts() {
     const value = entry.artboard.artboardVersion;
     try {
       const item = await call("get-artboard-artifact", { assignmentId: view.sceneId, artboardVersion: value });
-      let src = item.dataUrl || null;
-      if (!src && item.blobPathname) {
-        const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, mode: "read", tourId: TOUR_ID, assignmentId: view.sceneId, pathname: item.blobPathname }) });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error || "That work file could not be opened.");
-        src = body.presignedUrl;
-      }
-      if (!src && item.svg) src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(item.svg);
-      artifacts[String(value)] = { src, contentType: item.contentType, name: item.name };
+      artifacts[String(value)] = await resolveArtifact(item, { assignmentId: view.sceneId });
     } catch {
       artifacts[String(value)] = null;
     }

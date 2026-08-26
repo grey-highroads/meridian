@@ -1,4 +1,5 @@
 import { TOUR_ID, preserveContextNavigation, scopedBody } from "./context.js";
+import { resolveArtifact } from "./artifact.js";
 
 // What the client sees. The work, which version it is, a short line saying what
 // it is going for, and two controls.
@@ -46,9 +47,12 @@ function escape(value) {
 }
 
 function frame() {
-  if (!view.artifact) return `<span class="m-artboard__shape"></span>`;
-  const address = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(view.artifact);
-  return `<img src="${escape(address)}" width="880" alt="The work, version ${escape(view.version)}" />`;
+  const work = view.artifact;
+  if (!work || !work.src) return `<span class="m-artboard__shape"></span>`;
+  if (work.contentType === "application/pdf") {
+    return `<a class="m-button" href="${escape(work.src)}" target="_blank" rel="noopener">Open the work</a>`;
+  }
+  return `<img src="${escape(work.src)}" width="880" alt="The work, version ${escape(view.version)}" />`;
 }
 
 function render() {
@@ -111,7 +115,8 @@ async function refresh() {
   const brief = await call("get-brief", { assignmentId: view.sceneId, briefVersion: entry.artboard.briefVersion });
   view.rationale = brief.brief.chosenConcept.idea || brief.brief.chosenConcept.title;
   try {
-    view.artifact = (await call("get-artboard-artifact", { assignmentId: view.sceneId, artboardVersion: view.version })).svg;
+    const item = await call("get-artboard-artifact", { assignmentId: view.sceneId, artboardVersion: view.version });
+    view.artifact = await resolveArtifact(item, { assignmentId: view.sceneId });
   } catch {
     view.artifact = null;
   }
