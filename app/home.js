@@ -66,7 +66,10 @@ function setupLines(tour, assignments) {
       label: "Creative direction",
       filled: Boolean(tour.direction && String(tour.direction.words || "").trim()),
       detail: tour.direction && String(tour.direction.words || "").trim() ? `Direction version ${version(tour.direction.version)} added` : "No creative direction yet",
-      href: `./direction.html?tour=${encodeURIComponent(TOUR_ID)}`,
+      // Tour details, where the direction lives beside the rest of the tour,
+      // rather than the screen that writes a new version. A person following a
+      // suggestion is going to look first.
+      href: `./tour.html?tour=${encodeURIComponent(TOUR_ID)}#direction-heading`,
     },
     {
       label: "Dates and venues",

@@ -174,6 +174,8 @@ test("Home has three shapes and the third one is untouched", () => {
     assert.match(home, new RegExp(line), `the setup lines are missing "${line}"`);
   }
   assert.match(home, /A good next step/, "no line is marked as the most useful next thing");
+  assert.doesNotMatch(home, /direction\.html/, "the direction line drills into the editor instead of Tour details");
+  assert.match(home, /tour\.html\?tour=\$\{encodeURIComponent\(TOUR_ID\)\}#direction-heading/, "the direction line does not open where the direction sits");
   assert.match(home, /lines\.find\(\(line\) => !line\.filled\)/, "the suggestion is not the first unfilled line");
 
   for (const kept of ["You are clear for now", "Give the tour its first Scene", "Welcome,", "m-home__layout"]) {
