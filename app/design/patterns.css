@@ -1979,6 +1979,22 @@
     min-height: 0;
     overflow-y: auto;
   }
+
+  .m-workstation__canvas {
+    display: block;
+    flex: none;
+    min-height: 100%;
+  }
+
+  .m-direction-editor {
+    flex: none;
+    min-height: 100%;
+    width: 100%;
+  }
+
+  .m-direction-editor__body {
+    flex: none;
+  }
 }
 
 @media (max-width: 64rem) {

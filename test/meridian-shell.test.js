@@ -152,9 +152,18 @@ test("the Scene workstation lets the center stage scroll independently", () => {
   const patterns = read("app/design/patterns.css");
   const desktop = patterns.match(/@media \(min-width: 64\.01rem\) \{([\s\S]*?)\n\}/)?.[1] || "";
   const stage = desktop.match(/\.m-workstation__stage\s*\{([^}]*)\}/)?.[1] || "";
+  const canvas = desktop.match(/\.m-workstation__canvas\s*\{([^}]*)\}/)?.[1] || "";
+  const editor = desktop.match(/\.m-direction-editor\s*\{([^}]*)\}/)?.[1] || "";
+  const editorBody = desktop.match(/\.m-direction-editor__body\s*\{([^}]*)\}/)?.[1] || "";
 
   assert.match(stage, /min-height:\s*0;/, "the center stage cannot shrink inside the viewport");
   assert.match(stage, /overflow-y:\s*auto;/, "the center stage clips long Scene content instead of scrolling");
+  assert.match(canvas, /display:\s*block;/, "the canvas still constrains the editor to the scrollport height");
+  assert.match(canvas, /flex:\s*none;/, "the Scene surface is still forced to the viewport height");
+  assert.match(canvas, /min-height:\s*100%;/, "a short Scene no longer fills the center stage");
+  assert.match(editor, /flex:\s*none;/, "the gray editor surface ends before its Scene content");
+  assert.match(editor, /min-height:\s*100%;/, "a short editor no longer fills its canvas");
+  assert.match(editorBody, /flex:\s*none;/, "the editor body overflows its gray surface");
 });
 
 test("the Scene directory is a quiet list and Scene requests require names", () => {
