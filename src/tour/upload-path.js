@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { sanitizeClientId } from "../server/http.js";
-import { DEMO_ACCOUNT_ID } from "./store.js";
 
 function safeFilename(value) {
   const cleaned = String(value || "submitted-work")
@@ -10,9 +9,12 @@ function safeFilename(value) {
   return cleaned || "submitted-work";
 }
 
+// One shape for every account, the same one the tour store writes beside.
 export function uploadPrefix(tourId, assignmentId, accountId) {
-  if (!accountId || accountId === DEMO_ACCOUNT_ID) {
-    return `brand-world-system/clients/${sanitizeClientId(tourId)}/tour/${sanitizeClientId(assignmentId)}/uploads/`;
+  if (!accountId) {
+    const error = new Error("An upload path needs the account it belongs to.");
+    error.status = 400;
+    throw error;
   }
   return `brand-world-system/clients/${sanitizeClientId(accountId)}/tours/${sanitizeClientId(tourId)}/${sanitizeClientId(assignmentId)}/uploads/`;
 }

@@ -6,6 +6,9 @@ import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore, tourPathFor } from "../src/tour/store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { carriesOurWords, compileBrief, directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
+
+const DEMO_ACCOUNT = "dierks-bentley";
 
 
 // Two people, the way the account holds them. The actor on every fact comes
@@ -32,13 +35,14 @@ const CONCEPT = {
 async function ready() {
   const artistBackend = createMemoryBackend();
   const tourBackend = createMemoryBackend();
-  const store = createArtistStore({ backend: artistBackend });
-  const tourStore = createTourStore({ backend: tourBackend });
+  const store = createArtistStore({ backend: artistBackend, accountId: DEMO_ACCOUNT });
+  const tourStore = createTourStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
   // Freezing writes one fact to the Scene record, so the record shares the
   // tour's backend here and every effect lands in one place the test can read.
-  const sceneRecord = createSceneRecord({ backend: tourBackend });
+  const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  await seedTourFromFixture(tourStore, TOUR);
   const options = { store, tourStore, sceneRecord, user: OPERATOR };
   return { artistBackend, tourBackend, options, asClient: { ...options, user: REVIEWER } };
 }
@@ -233,7 +237,7 @@ test("freezing stores the version, and a frozen version is never rewritten", asy
   assert.ok(frozen.brief.frozenAt);
 
   const stored = new Map(tourBackend.files);
-  const briefsPath = tourPathFor(TOUR, ASSIGNMENT, "briefs");
+  const briefsPath = tourPathFor(TOUR, ASSIGNMENT, "briefs", DEMO_ACCOUNT);
   assert.ok(stored.has(briefsPath));
 
   // Changing the concept after a freeze is refused rather than silently
@@ -327,12 +331,13 @@ Written against direction version: 1
 They arrive and the room has to believe them.
 `;
 
-function hckOptions(options) {
-  return {
-    ...options,
-    reader: async (pathname) => (String(pathname).endsWith("tour.md") ? HCK_TOUR : HCK_ASSIGNMENT),
-    lister: async () => ["entrance.md"],
-  };
+// A tour is read from the store and from nothing else, so this one is seeded
+// from the text above the same way the committed files are seeded.
+async function withHckTour(options) {
+  await seedTourFromFixture(options.tourStore, "hck-run-2026", {
+    texts: { tour: HCK_TOUR, assignments: [HCK_ASSIGNMENT] },
+  });
+  return options;
 }
 
 test("a Scene direction saved without asking the brain still carries what the artist avoids", async () => {
@@ -355,7 +360,7 @@ test("a Scene direction saved without asking the brain still carries what the ar
 test("a Scene for the other identity carries only that identity's prohibitions", async () => {
   const { options } = await ready();
   const at = { tourId: "hck-run-2026", assignmentId: "entrance" };
-  const withHck = hckOptions(options);
+  const withHck = await withHckTour(options);
   await tourAction({ action: "choose-concept", ...at, person: "Grey", concept: CONCEPT }, withHck);
   const { brief, document } = await tourAction({ action: "compile-brief", ...at }, withHck);
   const { context } = await tourAction({ action: "assignment-context", ...at }, withHck);

@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import { handleAction } from "../api/artist/index.js";
-import { readTourFixture } from "../api/tour/index.js";
+import { readTourFixture } from "../src/tour/read-fixture.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { parseTourFixture } from "../src/tour/parse-fixture.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "../src/org/store.js";

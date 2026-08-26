@@ -14,66 +14,61 @@ import { createBlobBackend, createMemoryBackend } from "../artist/store.js";
 
 const ROOT = "brand-world-system/clients";
 
-// The demo account's data predates accounts and stays at the legacy paths it
-// has always used, so nothing live moves. Every other account gets its own
-// namespace under its id. Brief 2 of docs/spec-accounts-artists-tours.md.
-export const DEMO_ACCOUNT_ID = "dierks-bentley";
-
-// The uniform layout is the one both helpers already return for every account
-// except the demo one. Passing uniform selects it for the demo account too,
-// which is the only way to reach the shared location while the fork above is
-// still in place. The fork comes out next and this argument goes with it.
-function accountScoped(accountId, uniform) {
-  return Boolean(uniform || (accountId && accountId !== DEMO_ACCOUNT_ID));
+// One shape for every account. The demo account is an account like any other
+// and has no path of its own. Everything stored is scoped account, then tour,
+// which is what makes two accounts naming a tour the same thing separate.
+//
+// An account id is required rather than defaulted. A write with no account
+// would land somewhere two accounts could share, and a default would hide the
+// caller that forgot to resolve a session.
+function requireAccount(accountId) {
+  if (!accountId) {
+    const error = new Error("A tour path needs the account it belongs to.");
+    error.status = 400;
+    throw error;
+  }
+  return accountId;
 }
 
-export function tourPathFor(tourId, assignmentId, document, accountId, uniform = false) {
-  if (!accountScoped(accountId, uniform)) return `${ROOT}/${tourId}/tour/${assignmentId}/${document}.json`;
-  return `${ROOT}/${accountId}/tours/${tourId}/${assignmentId}/${document}.json`;
+export function tourPathFor(tourId, assignmentId, document, accountId) {
+  return `${ROOT}/${requireAccount(accountId)}/tours/${tourId}/${assignmentId}/${document}.json`;
 }
 
-export function tourDocumentPathFor(tourId, document, accountId, uniform = false) {
-  if (!accountScoped(accountId, uniform)) return `${ROOT}/${tourId}/tour/${document}.json`;
-  return `${ROOT}/${accountId}/tours/${tourId}/${document}.json`;
+export function tourDocumentPathFor(tourId, document, accountId) {
+  return `${ROOT}/${requireAccount(accountId)}/tours/${tourId}/${document}.json`;
 }
 
 export { createBlobBackend, createMemoryBackend };
 
 export function createTourStore(options = {}) {
   const backend = options.backend || createBlobBackend(options);
-  const accountId = options.accountId || null;
-  // Off by default, so every existing caller reads and writes exactly where it
-  // did before. A caller that asks for the uniform layout has to name the
-  // account, because the account id is the directory it lands in.
-  const uniform = options.uniformPaths === true;
-  if (uniform && !accountId) throw new Error("The uniform tour layout needs an account id.");
+  const accountId = requireAccount(options.accountId);
 
   async function read(tourId, assignmentId, name, fallback) {
-    const body = await backend.read(tourPathFor(tourId, assignmentId, name, accountId, uniform));
+    const body = await backend.read(tourPathFor(tourId, assignmentId, name, accountId));
     if (body === null || body === undefined) return fallback;
     return JSON.parse(body);
   }
 
   async function write(tourId, assignmentId, name, value) {
-    await backend.write(tourPathFor(tourId, assignmentId, name, accountId, uniform), JSON.stringify(value, null, 2));
+    await backend.write(tourPathFor(tourId, assignmentId, name, accountId), JSON.stringify(value, null, 2));
     return value;
   }
 
   async function readTourDocument(tourId, name, fallback) {
-    const body = await backend.read(tourDocumentPathFor(tourId, name, accountId, uniform));
+    const body = await backend.read(tourDocumentPathFor(tourId, name, accountId));
     if (body === null || body === undefined) return fallback;
     return JSON.parse(body);
   }
 
   async function writeTourDocument(tourId, name, value) {
-    await backend.write(tourDocumentPathFor(tourId, name, accountId, uniform), JSON.stringify(value, null, 2));
+    await backend.write(tourDocumentPathFor(tourId, name, accountId), JSON.stringify(value, null, 2));
     return value;
   }
 
   return {
     backend,
     accountId,
-    uniform,
 
     async readConcept(tourId, assignmentId) {
       return await read(tourId, assignmentId, "concept", null);

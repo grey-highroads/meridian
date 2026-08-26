@@ -22,6 +22,8 @@ import { createBlobBackend, createMemoryBackend } from "../artist/store.js";
 
 const ROOT = "brand-world-system/clients";
 
+// The account the first artist row is seeded into. It names a seed, not a path:
+// every account, this one included, stores its rows at the same shape.
 export const DEMO_ACCOUNT_ID = "dierks-bentley";
 
 // A new artist gets the main stage and the shared bin. The third identity in
@@ -40,12 +42,24 @@ export const DEMO_ARTIST = {
 // it, the same rule the Scene record follows.
 export const RECORD_ACTOR = "Higher Roads";
 
+// One shape for every account. The account id is required rather than
+// defaulted, so a caller that has not resolved a session is told rather than
+// quietly writing into the account that used to be the default.
+function requireAccount(accountId) {
+  if (!accountId) {
+    const error = new Error("An artist list path needs the account it belongs to.");
+    error.status = 400;
+    throw error;
+  }
+  return accountId;
+}
+
 export function artistsPath(accountId) {
-  return `${ROOT}/${accountId || DEMO_ACCOUNT_ID}/org/artists.json`;
+  return `${ROOT}/${requireAccount(accountId)}/org/artists.json`;
 }
 
 export function artistRecordPath(accountId) {
-  return `${ROOT}/${accountId || DEMO_ACCOUNT_ID}/org/artist-record.json`;
+  return `${ROOT}/${requireAccount(accountId)}/org/artist-record.json`;
 }
 
 export function sanitizeArtistId(value) {
@@ -57,7 +71,7 @@ export { createBlobBackend, createMemoryBackend };
 
 export function createArtistDirectory(options = {}) {
   const backend = options.backend || createBlobBackend(options);
-  const accountId = options.accountId || DEMO_ACCOUNT_ID;
+  const accountId = requireAccount(options.accountId);
 
   return {
     accountId,

@@ -23,12 +23,16 @@ import { ownEntry } from "../lookup.js";
 
 const ROOT = "brand-world-system/clients";
 
-// Demo-account data stays at its legacy paths; other accounts get their own
-// namespace. Brief 2 of docs/spec-accounts-artists-tours.md.
-const DEMO_ACCOUNT_ID = "dierks-bentley";
-
+// One shape for every account. The demo account is an account like any other
+// and has no path of its own. The account id is required rather than defaulted,
+// because a default would hide the caller that forgot to resolve a session and
+// would put two accounts' work in the same directory.
 export function pathFor(artistId, document, accountId) {
-  if (!accountId || accountId === DEMO_ACCOUNT_ID) return `${ROOT}/${artistId}/artist/${document}.json`;
+  if (!accountId) {
+    const error = new Error("An artist path needs the account it belongs to.");
+    error.status = 400;
+    throw error;
+  }
   return `${ROOT}/${accountId}/artists/${artistId}/${document}.json`;
 }
 

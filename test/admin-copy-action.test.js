@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { handleAction } from "../api/artist/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
-import { oldPrefix, uniformPrefix } from "../scripts/copy-artist-to-account-path.js";
+import { oldPrefix, uniformPrefix } from "../src/artist/copy-to-account-path.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "../src/org/store.js";
 
 const ACCOUNT = "dierks-bentley";

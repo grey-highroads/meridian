@@ -1,18 +1,22 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { handleAction as tourAction, readTourFixture } from "../api/tour/index.js";
+import { handleAction as tourAction } from "../api/tour/index.js";
+import { readTourFixture } from "../src/tour/read-fixture.js";
 import { createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore } from "../src/tour/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
+
+const DEMO_ACCOUNT = "dierks-bentley";
 
 const OPERATOR = { id: "operator", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
 
 function ready() {
   const tourBackend = createMemoryBackend();
-  const tourStore = createTourStore({ backend: tourBackend });
-  const artboardStore = createArtboardStore({ backend: tourBackend });
-  const sceneRecord = createSceneRecord({ backend: tourBackend });
+  const tourStore = createTourStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const artboardStore = createArtboardStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: DEMO_ACCOUNT });
   return { options: { tourStore, artboardStore, sceneRecord, user: OPERATOR }, tourBackend, tourStore };
 }
 
@@ -51,36 +55,44 @@ test("a name that derives to the default namespace is refused", async () => {
   );
 });
 
-test("the demo id is refused so a stored document cannot shadow the fixture by accident", async () => {
-  const { options } = ready();
+// The seeded demo tour is a stored tour like any other, so a second create
+// under its name is refused by the store rather than by a guard of its own.
+test("creating a tour under a name already stored is refused", async () => {
+  const { options, tourStore } = ready();
+  await seedTourFromFixture(tourStore, "off-the-map-2026");
   await assert.rejects(
     () => tourAction({ action: "create-tour", name: "Off The Map 2026", artistId: "dierks-bentley" }, options),
     (error) => error.status === 409,
   );
 });
 
-test("the demo tour with nothing stored still parses the fixture unchanged", async () => {
-  const { options } = ready();
+test("the seeded demo tour reads back with its direction and its assignments", async () => {
+  const { options, tourStore } = ready();
+  await seedTourFromFixture(tourStore, "off-the-map-2026");
   const result = await tourAction({ action: "get-tour", tourId: "off-the-map-2026" }, options);
   assert.equal(result.tour.id, "off-the-map-2026");
-  assert.ok(result.tour.direction.version >= 1);
-  assert.ok(result.assignments.length >= 1);
-});
-
-test("a stored document wins over the fixture when both exist", async () => {
-  const { options, tourStore } = ready();
-  const document = { tour: { id: "off-the-map-2026", name: "Stored Wins", artistId: "dierks-bentley", playbackSystem: null, productionSetup: null, dates: [], themes: [], direction: { version: 1, words: "Stored words.", setBy: "Test", setOn: "2026-08-25", role: null } }, assignments: [] };
-  await tourStore.createTour("off-the-map-2026", document);
-  const result = await tourAction({ action: "get-tour", tourId: "off-the-map-2026" }, options);
-  assert.equal(result.tour.name, "Stored Wins");
-});
-
-test("an unknown non-demo id returns the existing 404 sentence", async () => {
-  const { options } = ready();
-  await assert.rejects(
-    () => tourAction({ action: "get-tour", tourId: "no-such-tour" }, options),
-    (error) => error.status === 404 && error.message === "No tour is stored under that name.",
+  assert.equal(result.tour.direction.version, 1);
+  assert.equal(result.assignments.length, 1);
+  assert.equal(result.assignments[0].id, "storm-and-lightning");
+  const found = await tourAction(
+    { action: "get-assignment", tourId: "off-the-map-2026", assignmentId: "storm-and-lightning" },
+    options,
   );
+  assert.equal(found.assignment.directionVersion, 1);
+  assert.ok(found.tour.direction.words.length > 0);
+});
+
+// The committed files under tours/ are a seed and nothing more. An id with
+// nothing stored under it is absent for the demo account exactly as it is for
+// any other.
+test("the demo id with nothing stored is absent, and so is any other unknown id", async () => {
+  const { options } = ready();
+  for (const tourId of ["off-the-map-2026", "no-such-tour"]) {
+    await assert.rejects(
+      () => tourAction({ action: "get-tour", tourId }, options),
+      (error) => error.status === 404 && error.message === "No tour is stored under that name.",
+    );
+  }
 });
 
 test("creating a tour appends one attributed fact to the tour record", async () => {

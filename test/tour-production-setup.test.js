@@ -10,6 +10,9 @@ import { createTourStore } from "../src/tour/store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { buildProposalRequest } from "../src/tour/propose.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
+
+const DEMO_ACCOUNT = "dierks-bentley";
 
 // What the show plays on, carried from the tour file through the prompt and
 // into the brief. Every check here asserts the effect: the text a person or
@@ -31,12 +34,13 @@ const CONCEPT = {
 async function ready() {
   const artistBackend = createMemoryBackend();
   const tourBackend = createMemoryBackend();
-  const store = createArtistStore({ backend: artistBackend });
-  const tourStore = createTourStore({ backend: tourBackend });
+  const store = createArtistStore({ backend: artistBackend, accountId: DEMO_ACCOUNT });
+  const tourStore = createTourStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
-  const sceneRecord = createSceneRecord({ backend: tourBackend });
-  const artboardStore = createArtboardStore({ backend: tourBackend });
+  const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  await seedTourFromFixture(tourStore, TOUR);
+  const artboardStore = createArtboardStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
   return { options: { store, tourStore, artboardStore, sceneRecord, user: OPERATOR } };
 }
 
@@ -136,11 +140,11 @@ test("a tour with no production setup still compiles a brief", async () => {
   const { options } = await ready();
   const TOUR_FILE = `# Knights Run\n\nArtist: dierks-bentley\nTour id: hck-run-2026\nPlayback system: One machine, one spare.\n\n## Direction, version 1\n\nSet by: Nadia Rourke, Creative Director\nSet on: 2026-02-02\n\nPlay it straight and never wink at the audience.\n`;
   const ASSIGNMENT_FILE = `# The entrance\n\nAssignment id: entrance\nTour id: hck-run-2026\nIdentity: hot-country-knights\nWritten against direction version: 1\n\n## What we are asking for\n\nThey arrive and the room has to believe them.\n`;
-  const withOldTour = {
-    ...options,
-    reader: async (pathname) => (String(pathname).endsWith("tour.md") ? TOUR_FILE : ASSIGNMENT_FILE),
-    lister: async () => ["entrance.md"],
-  };
+  // Seeded from the text above, the same way the committed files are seeded.
+  await seedTourFromFixture(options.tourStore, "hck-run-2026", {
+    texts: { tour: TOUR_FILE, assignments: [ASSIGNMENT_FILE] },
+  });
+  const withOldTour = options;
   const at = { tourId: "hck-run-2026", assignmentId: "entrance" };
   const { tour } = await tourAction({ action: "get-tour", ...at }, withOldTour);
   assert.equal(tour.productionSetup, null);

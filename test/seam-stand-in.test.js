@@ -10,6 +10,9 @@ import { createTourStore } from "../src/tour/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { artifactPathFor, STAND_IN_LABEL } from "../src/seam/stand-in.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
+
+const DEMO_ACCOUNT = "dierks-bentley";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -37,10 +40,11 @@ const CONCEPT = {
 async function ready() {
   const artistBackend = createMemoryBackend();
   const tourBackend = createMemoryBackend();
-  const store = createArtistStore({ backend: artistBackend });
-  const tourStore = createTourStore({ backend: tourBackend });
-  const artboardStore = createArtboardStore({ backend: tourBackend });
-  const sceneRecord = createSceneRecord({ backend: tourBackend });
+  const store = createArtistStore({ backend: artistBackend, accountId: DEMO_ACCOUNT });
+  const tourStore = createTourStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const artboardStore = createArtboardStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  await seedTourFromFixture(tourStore, TOUR);
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
   const options = { store, tourStore, artboardStore, sceneRecord, user: OPERATOR };
@@ -67,7 +71,7 @@ test("sending a frozen brief stores artboard version 1, a receipt, and the artif
   assert.equal(stored.artboards[0].artboard.artboardVersion, 1);
   assert.ok(stored.artboards[0].receipt.receivedAt);
 
-  const artifactPath = artifactPathFor(TOUR, ASSIGNMENT, 1);
+  const artifactPath = artifactPathFor(TOUR, ASSIGNMENT, 1, DEMO_ACCOUNT);
   const svg = tourBackend.files.get(artifactPath);
   assert.ok(svg, "the artboard artifact is not in storage");
   assert.match(svg, /^<svg /);
@@ -89,18 +93,18 @@ test("sending the same brief version twice is refused in plain words and stores 
   const { tourBackend, options } = await ready();
   await frozenBrief(options);
   await tourAction({ action: "send-brief", ...AT }, options);
-  const before = tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/artboards.json`);
-  const recordBefore = tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/scene-record.json`);
+  const before = tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/artboards.json`);
+  const recordBefore = tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/scene-record.json`);
 
   await assert.rejects(
     () => tourAction({ action: "send-brief", ...AT }, options),
     /That brief version has already gone out/,
   );
 
-  const after = tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/artboards.json`);
+  const after = tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/artboards.json`);
   assert.equal(after, before, "the refused send changed what was stored");
   assert.equal(
-    tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/scene-record.json`),
+    tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/scene-record.json`),
     recordBefore,
     "the refused send wrote a fact",
   );

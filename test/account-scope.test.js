@@ -3,11 +3,15 @@ import test from "node:test";
 import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { uploadPrefix } from "../api/tour-upload.js";
-import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
+import { createArtistStore, createMemoryBackend, pathFor } from "../src/artist/store.js";
 import { createOrgStore } from "../src/org/store.js";
 import { createArtistDirectory } from "../src/org/artists.js";
 import { resolveActingAccount } from "../src/org/acting-account.js";
-import { createTourStore, tourPathFor } from "../src/tour/store.js";
+import { createTourStore, tourDocumentPathFor, tourPathFor } from "../src/tour/store.js";
+import { artifactPathFor } from "../src/seam/stand-in.js";
+import { createArtboardStore } from "../src/seam/artboard-store.js";
+import { artistsPath, artistRecordPath } from "../src/org/artists.js";
+import { usersPath } from "../src/org/store.js";
 
 const DEMO_OPERATOR = { id: "operator", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads", accountId: "dierks-bentley" };
 const OTHER_CLIENT = { id: "client-b", displayName: "Sam Field", role: "client-reviewer", roleLabel: "Client reviewer", accountId: "stagecraft" };
@@ -42,11 +46,19 @@ test("a tour created in one account is invisible from another, both directions",
 });
 
 test("the two accounts write to different paths in the same backend", () => {
-  assert.equal(tourPathFor("t1", "a1", "briefs"), "brand-world-system/clients/t1/tour/a1/briefs.json");
-  assert.equal(tourPathFor("t1", "a1", "briefs", "dierks-bentley"), "brand-world-system/clients/t1/tour/a1/briefs.json");
+  // One shape for every account. The demo account has no path of its own, so
+  // the same tour id in two accounts is two directories.
+  assert.equal(tourPathFor("t1", "a1", "briefs", "dierks-bentley"), "brand-world-system/clients/dierks-bentley/tours/t1/a1/briefs.json");
   assert.equal(tourPathFor("t1", "a1", "briefs", "stagecraft"), "brand-world-system/clients/stagecraft/tours/t1/a1/briefs.json");
-  assert.equal(uploadPrefix("t1", "a1", null), "brand-world-system/clients/t1/tour/a1/uploads/");
+  assert.equal(uploadPrefix("t1", "a1", "dierks-bentley"), "brand-world-system/clients/dierks-bentley/tours/t1/a1/uploads/");
   assert.equal(uploadPrefix("t1", "a1", "stagecraft"), "brand-world-system/clients/stagecraft/tours/t1/a1/uploads/");
+});
+
+test("a path with no account is refused rather than shared between accounts", () => {
+  assert.throws(() => tourPathFor("t1", "a1", "briefs"), /needs the account it belongs to/);
+  assert.throws(() => tourDocumentPathFor("t1", "tour"), /needs the account it belongs to/);
+  assert.throws(() => pathFor("some-artist", "record"), /needs the account it belongs to/);
+  assert.throws(() => artifactPathFor("t1", "a1", 1), /needs the account it belongs to/);
 });
 
 test("another account reading the demo artist finds absence by construction", async () => {
@@ -110,4 +122,54 @@ test("create-tour does not accept an artist with the same id in another account"
     (error) => error.status === 404 && /in this account/.test(error.message),
   );
   assert.equal(await tourStore.readTour("stagecraft-run-2027"), null);
+});
+
+// The demo account is an account like any other. No builder anywhere returns
+// the address these documents were written at before accounts existed.
+test("every path builder puts the demo account under its own account directory", () => {
+  const demo = "dierks-bentley";
+  const built = [
+    tourPathFor("off-the-map-2026", "storm-and-lightning", "briefs", demo),
+    tourDocumentPathFor("off-the-map-2026", "tour", demo),
+    pathFor("dierks-bentley", "record", demo),
+    artistsPath(demo),
+    artistRecordPath(demo),
+    usersPath(demo),
+    uploadPrefix("off-the-map-2026", "storm-and-lightning", demo),
+    artifactPathFor("off-the-map-2026", "storm-and-lightning", 1, demo),
+  ];
+  for (const path of built) {
+    assert.ok(path.startsWith(`brand-world-system/clients/${demo}/`), `${path} is not under the account`);
+    assert.ok(!/\/tour\//.test(path), `${path} still carries the old tour directory`);
+    assert.ok(!/\/artist\//.test(path), `${path} still carries the old artist directory`);
+  }
+});
+
+// Two accounts running a tour under the same name keep separate artboards. The
+// stand-in writes the file, so the account has to reach it.
+test("the same tour and Scene in two accounts read back only their own artboard", async () => {
+  const backend = createMemoryBackend();
+  const tourId = "off-the-map-2026";
+  const sceneId = "storm-and-lightning";
+  const demoPath = artifactPathFor(tourId, sceneId, 1, "dierks-bentley");
+  const otherPath = artifactPathFor(tourId, sceneId, 1, "stagecraft");
+  assert.notEqual(demoPath, otherPath);
+
+  const demoStore = createArtboardStore({ backend, accountId: "dierks-bentley" });
+  const otherStore = createArtboardStore({ backend, accountId: "stagecraft" });
+  const entryFor = (location) => ({
+    receipt: { jobId: "job", receivedAt: "2026-08-26T00:00:00.000Z" },
+    artboard: { artboardVersion: 1, briefVersion: 1, artifact: { type: "artboard", format: "svg", location } },
+  });
+  await demoStore.addArtboard(tourId, sceneId, entryFor(demoPath), "<svg>demo</svg>");
+  await otherStore.addArtboard(tourId, sceneId, entryFor(otherPath), "<svg>stagecraft</svg>");
+
+  assert.equal(await demoStore.readArtifact(demoPath), "<svg>demo</svg>");
+  assert.equal(await otherStore.readArtifact(otherPath), "<svg>stagecraft</svg>");
+  const demoVersions = await demoStore.readArtboards(tourId, sceneId);
+  const otherVersions = await otherStore.readArtboards(tourId, sceneId);
+  assert.equal(demoVersions.length, 1);
+  assert.equal(otherVersions.length, 1);
+  assert.equal(demoVersions[0].artboard.artifact.location, demoPath);
+  assert.equal(otherVersions[0].artboard.artifact.location, otherPath);
 });

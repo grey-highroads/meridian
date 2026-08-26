@@ -6,6 +6,9 @@ import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore } from "../src/tour/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
+
+const DEMO_ACCOUNT = "dierks-bentley";
 
 const OPERATOR = { id: "operator", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
 const CLIENT = { id: "client", displayName: "Nadia Cole", role: "client-reviewer", roleLabel: "Creative director" };
@@ -14,10 +17,11 @@ const TOUR = "off-the-map-2026";
 async function ready() {
   const artistBackend = createMemoryBackend();
   const tourBackend = createMemoryBackend();
-  const store = createArtistStore({ backend: artistBackend });
-  const tourStore = createTourStore({ backend: tourBackend });
-  const artboardStore = createArtboardStore({ backend: tourBackend });
-  const sceneRecord = createSceneRecord({ backend: tourBackend });
+  const store = createArtistStore({ backend: artistBackend, accountId: DEMO_ACCOUNT });
+  const tourStore = createTourStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const artboardStore = createArtboardStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  await seedTourFromFixture(tourStore, TOUR);
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley" }, { store });
   const options = { store, tourStore, artboardStore, sceneRecord, user: OPERATOR, now: () => 1770000000000 };

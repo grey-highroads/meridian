@@ -8,6 +8,7 @@ import { createOrgStore } from "../src/org/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { createTourStore } from "../src/tour/store.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 import { uploadPathFor, uploadPrefix } from "../src/tour/upload-path.js";
 
 const DEMO = "dierks-bentley";
@@ -60,11 +61,13 @@ test("account B completes the Meridian path without reading the demo Tour or Bra
   const demoArtistStore = createArtistStore({ backend, accountId: DEMO });
   await artistAction({ action: "import-intake", artistId: ARTIST }, { store: demoArtistStore });
   await artistAction({ action: "approve-brain", artistId: ARTIST, person: "Grey" }, { store: demoArtistStore });
+  const demoTourStore = createTourStore({ backend, accountId: DEMO });
+  await seedTourFromFixture(demoTourStore, "off-the-map-2026");
   const demoTour = await tourAction(
     { action: "get-tour", tourId: "off-the-map-2026" },
     {
       user: OPERATOR,
-      tourStore: createTourStore({ backend, accountId: DEMO }),
+      tourStore: demoTourStore,
       artboardStore: createArtboardStore({ backend, accountId: DEMO }),
       sceneRecord: createSceneRecord({ backend, accountId: DEMO }),
     },

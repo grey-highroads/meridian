@@ -20,8 +20,17 @@ export const STAND_IN_SOURCE = "Stand-in for Jim's system";
 const CARD_WIDTH = 1280;
 const CARD_HEIGHT = 720;
 
-export function artifactPathFor(tourId, assignmentId, artboardVersion) {
-  return `brand-world-system/clients/${tourId}/tour/${assignmentId}/artboards/v${artboardVersion}.svg`;
+// The artifact sits beside the assignment's documents, in the same account and
+// tour scope they use. Without the account, two accounts naming a tour the same
+// thing would write over each other's artboards and read back the wrong file,
+// so the account is required rather than defaulted.
+export function artifactPathFor(tourId, assignmentId, artboardVersion, accountId) {
+  if (!accountId) {
+    const error = new Error("An artboard path needs the account it belongs to.");
+    error.status = 400;
+    throw error;
+  }
+  return `brand-world-system/clients/${accountId}/tours/${tourId}/${assignmentId}/artboards/v${artboardVersion}.svg`;
 }
 
 function xml(value) {
@@ -136,7 +145,7 @@ export function receiveBrief(brief, options = {}) {
   }
   const artboardVersion = options.artboardVersion || 1;
   const receivedAt = options.receivedAt || new Date().toISOString();
-  const path = artifactPathFor(brief.tourId, brief.assignmentId, artboardVersion);
+  const path = artifactPathFor(brief.tourId, brief.assignmentId, artboardVersion, options.accountId);
   const artboard = artboardFor(brief, {
     artboardVersion,
     artifact: { type: "artboard", format: "svg", location: path, label: STAND_IN_LABEL },
@@ -167,7 +176,7 @@ export function receiveRevision(brief, revision, options = {}) {
     throw error;
   }
   const receivedAt = options.receivedAt || new Date().toISOString();
-  const path = artifactPathFor(brief.tourId, brief.assignmentId, artboardVersion);
+  const path = artifactPathFor(brief.tourId, brief.assignmentId, artboardVersion, options.accountId);
   const base = artboardFor(brief, {
     artboardVersion,
     artifact: { type: "artboard", format: "svg", location: path, label: STAND_IN_LABEL },

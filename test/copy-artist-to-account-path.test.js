@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMemoryBackend, pathFor } from "../src/artist/store.js";
-import { copyArtistToAccountPath, oldPrefix, uniformPrefix } from "../scripts/copy-artist-to-account-path.js";
+import { copyArtistToAccountPath, oldPrefix, uniformPrefix } from "../src/artist/copy-to-account-path.js";
 
 const ACCOUNT = "dierks-bentley";
 const ARTIST = "dierks-bentley";
@@ -32,10 +32,12 @@ async function contents(backend, paths) {
   return out;
 }
 
-test("the uniform target is the shape pathFor already gives every other account", () => {
+test("the target is the shape pathFor gives every account, the demo one included", () => {
   assert.equal(uniformPrefix("other-account", ARTIST) + "record.json", pathFor(ARTIST, "record", "other-account"));
-  // The old shape is what pathFor still returns for the demo account today.
-  assert.equal(OLD + "record.json", pathFor(ARTIST, "record", ACCOUNT));
+  assert.equal(uniformPrefix(ACCOUNT, ARTIST) + "record.json", pathFor(ARTIST, "record", ACCOUNT));
+  // The address these documents were written at before accounts existed is no
+  // longer a shape any path builder returns.
+  assert.notEqual(OLD + "record.json", pathFor(ARTIST, "record", ACCOUNT));
 });
 
 test("every document under the old prefix lands at the uniform path and the old paths are untouched", async () => {

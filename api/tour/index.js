@@ -1,9 +1,6 @@
-import { readFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
-import { parseTourFixture } from "../../src/tour/parse-fixture.js";
 import { assembleContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
-import { createTourStore, DEMO_ACCOUNT_ID } from "../../src/tour/store.js";
+import { createTourStore } from "../../src/tour/store.js";
 import { compileBrief, directionParagraphs, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar, venueExceptions } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
@@ -29,65 +26,27 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
 // above the brain without rewriting it.
 
-export function tourDirectory(tourId) {
-  return join(process.cwd(), "tours", tourId);
-}
-
-export async function readTourFixture(tourId, options = {}) {
-  const reader = options.reader || readFile;
-  const lister = options.lister || readdir;
-  const directory = tourDirectory(tourId);
-  const tour = await reader(join(directory, "tour.md"), "utf8");
-  const names = (await lister(join(directory, "assignments"))).filter((name) => name.endsWith(".md")).sort();
-  const assignments = [];
-  for (const name of names) assignments.push(await reader(join(directory, "assignments", name), "utf8"));
-  return { tour, assignments };
-}
-
+// A tour is read from the store and from nothing else. An id with nothing
+// stored under it is absent for every account, the demo one included. The
+// committed markdown under tours/ is the seed the Admin action reads once; the
+// app never falls back to it, so a tour a person is looking at is a tour
+// somebody stored.
 async function loadTour(tourId, options) {
-  // Stored tours win. The fixture is the demo seed and is only load bearing
-  // when nothing is stored under the id, which in production is true only for
-  // the demo tour. A test that injects its own reader reads what it supplied,
-  // exactly as before.
-  const tourStoreForRead = options.tourStore || (!options.store && !options.reader && !options.lister ? createTourStore({ accountId: options.actingAccount || null }) : null);
-  let fixture = null;
-  if (tourStoreForRead) {
-    const stored = await tourStoreForRead.readTour(tourId);
-    if (stored) fixture = stored;
+  const tourStore = options.tourStore || createTourStore({ accountId: options.actingAccount });
+  const stored = await tourStore.readTour(tourId);
+  if (!stored) {
+    const error = new Error("No tour is stored under that name.");
+    error.status = 404;
+    throw error;
   }
-  if (!fixture) {
-    // The committed fixture is the demo account's seed. Another account asking
-    // for any unstored id gets absence, never the demo tour, and never an
-    // acknowledgment that the id exists elsewhere.
-    const isDemoFixture = options.actingAccount === DEMO_ACCOUNT_ID && tourId === "off-the-map-2026";
-    if (!options.reader && !options.lister && !isDemoFixture) {
-      const error = new Error("No tour is stored under that name.");
-      error.status = 404;
-      throw error;
-    }
-    let texts;
-    try {
-      texts = await readTourFixture(tourId, options);
-    } catch {
-      const error = new Error("No tour is stored under that name.");
-      error.status = 404;
-      throw error;
-    }
-    fixture = parseTourFixture(texts);
-  }
-  // Production reads Tour-level additions from the Tour store. Older focused
-  // tests that pass only an Artist store continue to exercise the fixture in
-  // isolation; tests of these interactions pass the Tour store explicitly.
-  const tourStore = tourStoreForRead;
-  if (!tourStore) return fixture;
   const [directions, requests] = await Promise.all([
-    tourStore.readDirections(fixture.tour.id),
-    tourStore.readRequests(fixture.tour.id),
+    tourStore.readDirections(stored.tour.id),
+    tourStore.readRequests(stored.tour.id),
   ]);
-  const direction = directions.length ? directions[directions.length - 1] : fixture.tour.direction;
+  const direction = directions.length ? directions[directions.length - 1] : stored.tour.direction;
   return {
-    tour: { ...fixture.tour, direction },
-    assignments: [...fixture.assignments, ...requests],
+    tour: { ...stored.tour, direction },
+    assignments: [...(stored.assignments || []), ...requests],
   };
 }
 
@@ -393,11 +352,6 @@ export async function handleAction(body, options = {}) {
       // namespace under the same storage root. Nothing lands there.
       const error = new Error("That name does not make a usable tour id. Use letters or numbers.");
       error.status = 400;
-      throw error;
-    }
-    if (actingAccount === DEMO_ACCOUNT_ID && id === "off-the-map-2026") {
-      const error = new Error("A tour already exists under that name.");
-      error.status = 409;
       throw error;
     }
     const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
@@ -783,7 +737,7 @@ export async function handleAction(body, options = {}) {
       throw error;
     }
 
-    const produced = receiveBrief(brief, { artboardVersion: 1 });
+    const produced = receiveBrief(brief, { artboardVersion: 1, accountId: actingAccount });
     const entry = { receipt: produced.receipt, artboard: produced.artboard };
     await artboardStore.addArtboard(fixture.tour.id, assignment.id, entry, produced.artifactBody);
     await record.appendFact(fixture.tour.id, assignment.id, {
@@ -1112,7 +1066,7 @@ export async function handleAction(body, options = {}) {
       sentBy: user.displayName,
       sentAt: new Date().toISOString(),
     };
-    const produced = receiveRevision(brief, revision, { artboardVersion: source + 1 });
+    const produced = receiveRevision(brief, revision, { artboardVersion: source + 1, accountId: actingAccount });
     await artboardStore.addArtboard(
       fixture.tour.id,
       assignment.id,

@@ -10,6 +10,9 @@ import { createTourStore } from "../src/tour/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { artifactPathFor, STAND_IN_LABEL } from "../src/seam/stand-in.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
+
+const DEMO_ACCOUNT = "dierks-bentley";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -43,10 +46,11 @@ const REVISION = {
 async function ready() {
   const artistBackend = createMemoryBackend();
   const tourBackend = createMemoryBackend();
-  const store = createArtistStore({ backend: artistBackend });
-  const tourStore = createTourStore({ backend: tourBackend });
-  const artboardStore = createArtboardStore({ backend: tourBackend });
-  const sceneRecord = createSceneRecord({ backend: tourBackend });
+  const store = createArtistStore({ backend: artistBackend, accountId: DEMO_ACCOUNT });
+  const tourStore = createTourStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const artboardStore = createArtboardStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  await seedTourFromFixture(tourStore, TOUR);
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
   const options = { store, tourStore, artboardStore, sceneRecord, user: OPERATOR };
@@ -100,7 +104,7 @@ test("a revision against version 1 stores version 2, a receipt, and a second fil
   const { tourBackend, options } = await ready();
   await sent(options);
 
-  const firstPath = artifactPathFor(TOUR, ASSIGNMENT, 1);
+  const firstPath = artifactPathFor(TOUR, ASSIGNMENT, 1, DEMO_ACCOUNT);
   const before = tourBackend.files.get(firstPath);
   assert.ok(before);
 
@@ -111,7 +115,7 @@ test("a revision against version 1 stores version 2, a receipt, and a second fil
   assert.equal(result.receipt.sourceArtboardVersion, 1);
   assert.equal(result.artboard.label, STAND_IN_LABEL);
 
-  const secondPath = artifactPathFor(TOUR, ASSIGNMENT, 2);
+  const secondPath = artifactPathFor(TOUR, ASSIGNMENT, 2, DEMO_ACCOUNT);
   const second = tourBackend.files.get(secondPath);
   assert.ok(second, "the second artboard file is not in storage");
   assert.ok(second.includes("BRIEF V01 / ARTBOARD V02"));
@@ -161,19 +165,19 @@ test("a revision against version 1 once version 2 exists is refused and stores n
   await sent(options);
   await tourAction({ action: "send-revision", ...AT, ...REVISION }, options);
 
-  const artboardsBefore = tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/artboards.json`);
-  const revisionsBefore = tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/revisions.json`);
-  const recordBefore = tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/scene-record.json`);
+  const artboardsBefore = tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/artboards.json`);
+  const revisionsBefore = tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/revisions.json`);
+  const recordBefore = tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/scene-record.json`);
 
   await assert.rejects(
     () => tourAction({ action: "send-revision", ...AT, ...REVISION, revisionId: "rev-2" }, options),
     /A newer version of this artboard already came back/,
   );
 
-  assert.equal(tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/artboards.json`), artboardsBefore);
-  assert.equal(tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/revisions.json`), revisionsBefore);
-  assert.equal(tourBackend.files.get(`brand-world-system/clients/${TOUR}/tour/${ASSIGNMENT}/scene-record.json`), recordBefore);
-  assert.equal(tourBackend.files.get(artifactPathFor(TOUR, ASSIGNMENT, 3)), undefined);
+  assert.equal(tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/artboards.json`), artboardsBefore);
+  assert.equal(tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/revisions.json`), revisionsBefore);
+  assert.equal(tourBackend.files.get(`brand-world-system/clients/${DEMO_ACCOUNT}/tours/${TOUR}/${ASSIGNMENT}/scene-record.json`), recordBefore);
+  assert.equal(tourBackend.files.get(artifactPathFor(TOUR, ASSIGNMENT, 3, DEMO_ACCOUNT)), undefined);
 });
 
 test("a revision needs an identifier and something to change", async () => {

@@ -6,11 +6,13 @@ import { handleAction, intakeDirectory, readIntakeFiles } from "../api/artist/in
 import { createArtistStore, createMemoryBackend, pathFor } from "../src/artist/store.js";
 import { parseIntake } from "../src/artist/parse-intake.js";
 
+const DEMO_ACCOUNT = "dierks-bentley";
+
 const ARTIST = "dierks-bentley";
 
 function freshStore() {
   const backend = createMemoryBackend();
-  return { backend, store: createArtistStore({ backend }) };
+  return { backend, store: createArtistStore({ backend, accountId: DEMO_ACCOUNT }) };
 }
 
 async function importOnce(store) {
@@ -100,8 +102,8 @@ test("taking out one finding removes only that finding and leaves every other ob
 
   // The record and the prior are untouched, byte for byte. A finding is taken
   // out of the brain and is never deleted from the artist's history.
-  assert.equal(backend.files.get(pathFor(ARTIST, "record")), before.get(pathFor(ARTIST, "record")));
-  assert.equal(backend.files.get(pathFor(ARTIST, "prior")), before.get(pathFor(ARTIST, "prior")));
+  assert.equal(backend.files.get(pathFor(ARTIST, "record", DEMO_ACCOUNT)), before.get(pathFor(ARTIST, "record", DEMO_ACCOUNT)));
+  assert.equal(backend.files.get(pathFor(ARTIST, "prior", DEMO_ACCOUNT)), before.get(pathFor(ARTIST, "prior", DEMO_ACCOUNT)));
 
   const view = await handleAction({ action: "get-artist", artistId: ARTIST }, { store });
   assert.equal(view.counts.inBrain, 79);

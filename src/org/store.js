@@ -20,10 +20,10 @@ export { CLIENT_ROLE, OPERATOR_ROLE };
 
 export const ACCOUNT = { id: "dierks-bentley", name: "Dierks Bentley" };
 
-// Accounts are rows. Brief 2 of docs/spec-accounts-artists-tours.md. The demo
-// account above is seeded into the list on first read; its stored data stays
-// at the legacy paths it has always used, and new accounts get their own
-// namespace. No delete; retirement is a later ruling.
+// Accounts are rows. Brief 2 of docs/spec-accounts-artists-tours.md. The
+// account above is seeded into the list on first read. Every account, this one
+// included, stores its work under its own id. No delete; retirement is a later
+// ruling.
 export const ACCOUNTS_PATH = "brand-world-system/org/accounts.json";
 
 export function sanitizeAccountId(value) {

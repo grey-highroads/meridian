@@ -7,7 +7,11 @@ import vm from "node:vm";
 import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
+import { createTourStore } from "../src/tour/store.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 import { PROPOSAL_TOKEN_CAP, proposeConcepts } from "../src/tour/propose.js";
+
+const DEMO_ACCOUNT = "dierks-bentley";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -17,7 +21,7 @@ const ASSIGNMENT = "storm-and-lightning";
 
 async function brainReady() {
   const backend = createMemoryBackend();
-  const store = createArtistStore({ backend });
+  const store = createArtistStore({ backend, accountId: DEMO_ACCOUNT });
   await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
   return { backend, store };
@@ -25,9 +29,13 @@ async function brainReady() {
 
 async function sceneContext() {
   const { store } = await brainReady();
+  // A tour is read from the store and from nothing else, so a test that works
+  // against one puts it there first, the same way the Admin action does.
+  const tourStore = createTourStore({ backend: createMemoryBackend(), accountId: DEMO_ACCOUNT });
+  await seedTourFromFixture(tourStore, TOUR);
   const reply = await tourAction(
     { action: "assignment-context", tourId: TOUR, assignmentId: ASSIGNMENT },
-    { store, user: OPERATOR },
+    { store, tourStore, user: OPERATOR },
   );
   return reply.context;
 }

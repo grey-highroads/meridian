@@ -2,14 +2,13 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseIntake } from "../../src/artist/parse-intake.js";
 import { applyRulings, createArtistStore } from "../../src/artist/store.js";
-import { copyArtistToAccountPath } from "../../scripts/copy-artist-to-account-path.js";
-import { readTourFixture } from "../tour/index.js";
-import { parseTourFixture } from "../../src/tour/parse-fixture.js";
+import { copyArtistToAccountPath } from "../../src/artist/copy-to-account-path.js";
+import { seedTourFromFixture } from "../../src/tour/seed-from-fixture.js";
 import { createTourStore, tourDocumentPathFor } from "../../src/tour/store.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
-import { OPERATOR_ROLE } from "../../src/org/store.js";
-import { DEMO_ACCOUNT_ID, RECORD_ACTOR, createArtistDirectory } from "../../src/org/artists.js";
+import { ACCOUNT, OPERATOR_ROLE } from "../../src/org/store.js";
+import { RECORD_ACTOR, createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 
 // The artist layer's one function. New operations arrive as actions here
@@ -108,60 +107,51 @@ async function setRemoved(store, artistId, findingId, entry) {
   return { finding: applyRulings(findings, decisions).find((finding) => finding.id === findingId) };
 }
 
-// The demo tour is the last thing that is not stored. It lives as committed
-// markdown and the tour route falls back to it for one account and one id.
-// Seeding writes that same fixture into the tour store at the shared location,
-// through the store's own writers, so the fallback can come out next without
-// the tour disappearing with it. The fixture is left where it is.
+// The demo tour arrived as committed markdown, from before a tour was a stored
+// thing. Seeding writes that same fixture into the tour store through the
+// store's own writers, so the tour is an ordinary stored tour like any other
+// account's. The files on disk are left where they are and nothing reads them
+// after this.
 async function seedTourAtSharedPath(store, options, accountId, tourId) {
-  const tours = options.tourStore || createTourStore({
-    backend: store.backend,
-    accountId,
-    uniformPaths: true,
-  });
-  const where = (name) => tourDocumentPathFor(tourId, name, tours.accountId, tours.uniform);
+  const tours = options.tourStore || createTourStore({ backend: store.backend, accountId });
+  const where = (name) => tourDocumentPathFor(tourId, name, tours.accountId);
 
-  let texts;
+  let parsed;
   try {
-    texts = await readTourFixture(tourId);
-  } catch {
-    const error = new Error("No tour fixture is committed under that name.");
-    error.status = 404;
-    throw error;
-  }
-  const parsed = parseTourFixture(texts);
-
-  // The tour document is the guard. A second run stops here and writes nothing,
-  // because createTour refuses an id it already holds.
-  try {
-    await tours.createTour(parsed.tour.id, { tour: parsed.tour, assignments: [] });
+    parsed = await seedTourFromFixture(tours, tourId);
   } catch (error) {
     if (error.status === 409) {
-      return { lines: ["A tour is already stored at the shared location for this account. Nothing was written."], count: 0 };
+      return { lines: ["A tour is already stored under that name for this account. Nothing was written."], count: 0 };
+    }
+    if (error.code === "ENOENT") {
+      const absent = new Error("No tour fixture is committed under that name.");
+      absent.status = 404;
+      throw absent;
     }
     throw error;
   }
 
-  const lines = [`Tour ${parsed.tour.id} written to ${where("tour")}`];
-  await tours.addDirection(parsed.tour.id, parsed.tour.direction);
-  lines.push(`Direction version ${parsed.tour.direction.version} written to ${where("directions")}`);
-  for (const assignment of parsed.assignments) {
-    await tours.addRequest(parsed.tour.id, assignment);
-    lines.push(`Assignment ${assignment.id} written to ${where("requests")}`);
-  }
-
+  const lines = [
+    `Tour ${parsed.tour.id} written to ${where("tour")}`,
+    `Direction version ${parsed.tour.direction.version} written to ${where("directions")}`,
+    ...parsed.assignments.map((assignment) => `Assignment ${assignment.id} written to ${where("requests")}`),
+  ];
   const count = lines.length;
-  lines.push(`Wrote ${count} object${count === 1 ? "" : "s"}. The committed fixture was not touched.`);
+  lines.push(`Wrote ${count} object${count === 1 ? "" : "s"}. The committed files were not touched.`);
   return { lines, count };
 }
 
 export async function handleAction(body, options = {}) {
-  // The artist store is bound to the session's account; the demo account maps
-  // to the legacy paths. A session from another account reading this account's
+  // The artist store is bound to the session's account, and every account uses
+  // the same path shape. A session from another account reading this account's
   // artist finds absence by construction, never an acknowledgment.
+  //
+  // The route itself requires a session. An internal call made without one acts
+  // in the deployment's own account, which is the account a store needs to
+  // resolve a path at all.
   const accountId = options.user
     ? resolveActingAccount(options.user, body.accountId || options.user.actingAccount)
-    : null;
+    : ACCOUNT.id;
   const store = options.store || createArtistStore({ accountId });
   const reader = options.reader;
 
@@ -176,7 +166,7 @@ export async function handleAction(body, options = {}) {
     await directory.appendArtistFact({
       actor: options.user ? options.user.displayName : RECORD_ACTOR,
       role: options.user ? options.user.roleLabel || null : null,
-      account: accountId || DEMO_ACCOUNT_ID,
+      account: accountId,
       action: "Created the artist",
       artistId: created.id,
       onBehalfOf: optionalText(body.onBehalfOf),
@@ -236,7 +226,7 @@ export async function handleAction(body, options = {}) {
     const lines = [];
     const result = await copyArtistToAccountPath({
       backend: store.backend,
-      accountId: accountId || DEMO_ACCOUNT_ID,
+      accountId: accountId,
       artistId,
       log: (line) => lines.push(line),
     });
@@ -245,7 +235,7 @@ export async function handleAction(body, options = {}) {
   // The same shape the copy action uses: a Higher Roads act, and a client
   // session falls past the branch to the answer an unknown action gets.
   if (body.action === "seed-tour-at-shared-path" && options.user && options.user.role === OPERATOR_ROLE) {
-    return await seedTourAtSharedPath(store, options, accountId || DEMO_ACCOUNT_ID, sanitizeClientId(body.tourId || ""));
+    return await seedTourAtSharedPath(store, options, accountId, sanitizeClientId(body.tourId || ""));
   }
   if (body.action === "get-evidence") {
     const record = await store.readRecord(artistId);

@@ -1,15 +1,14 @@
-import { pathToFileURL } from "node:url";
-import { createBlobBackend } from "../src/artist/store.js";
+import { createBlobBackend } from "./store.js";
 
-// One-time script. The demo account stops being a special case and moves to the
-// same storage layout every other account uses. This is the first half of that
-// move: copy, then prove the copy is identical. Nothing is deleted here and the
-// old paths stay exactly where they are, so the running app keeps reading what
-// it reads today. The fork in pathFor comes out in the next commit.
+// The demo account stopped being a special case. This copied its artist
+// documents from the address they were written at before accounts existed to
+// the one shape every account uses now, and proved the copy identical byte for
+// byte. Nothing is deleted here, so the old addresses keep their contents and
+// simply stop being read.
 //
-// Run it against live storage with the account id and the artist id:
-//
-//   node scripts/copy-artist-to-account-path.js dierks-bentley dierks-bentley
+// It lives here rather than in scripts/ because the Admin action imports it and
+// a live action should not reach into a build-tooling folder.
+// scripts/copy-artist-to-account-path.js is the command-line wrapper.
 //
 // Running it a second time copies the same bytes over the same bytes and
 // reports the same result, so a repeat run is harmless.
@@ -77,17 +76,4 @@ export async function copyArtistToAccountPath(options = {}) {
 
   log(`Copied ${copied.length} document${copied.length === 1 ? "" : "s"}. Every comparison matched.`);
   return { from, to, copied };
-}
-
-const invokedDirectly = Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1]).href;
-
-if (invokedDirectly) {
-  const [accountId, artistId] = process.argv.slice(2);
-  try {
-    if (!accountId || !artistId) throw new Error("Usage: node scripts/copy-artist-to-account-path.js <account-id> <artist-id>");
-    await copyArtistToAccountPath({ backend: createBlobBackend(), accountId, artistId });
-  } catch (error) {
-    console.error(error.message);
-    process.exitCode = 1;
-  }
 }
