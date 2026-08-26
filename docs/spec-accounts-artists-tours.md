@@ -10,7 +10,11 @@ One account is a constant in `src/org/store.js`. One artist is a constant map in
 
 ## The rule
 
-An account is the paying organization. It holds users, its artists, and its tours. Everything stored is scoped account, then artist or tour, and no read crosses accounts. Higher Roads administrators work across accounts; everyone else exists inside one. The demo account (Dierks Bentley, Off The Map) is an account like any other, seeded on request and resettable, with two refusal guards: reset refuses when the account has any non-seeded user or any client approval on record.
+An account is the paying organization. It holds users, its artists, and its tours. Everything stored is scoped account, then artist or tour, and no read crosses accounts. Higher Roads administrators work across accounts; everyone else exists inside one. The demo account (Dierks Bentley, Off The Map) is an account like any other, seeded on request.
+
+Ruled 2026-08-26. One storage layout. The demo account is an ordinary account holding content we made up. It gets no special path, no fixture fallback, and no branch in any path builder. Every account stores its tours at `clients/{account}/tours/{tour}/` and its artists at `clients/{account}/artists/{artist}/`. This supersedes the demo carve-out in the paragraph above and the demo-path language in build steps 1 and 2 below, all of which describe a layout the code no longer has. The Dierks Bentley brain was copied to the uniform path and verified byte for byte before the fork was removed.
+
+Ruled 2026-08-26. Reset is not a product feature. It existed to give Grey a clean demo, and once the demo account became ordinary it stopped earning a button, a confirmation pattern, and refusal guards. The refusal guards were removed from the paragraph above, the two reset items were removed from the acceptance list, and the two reset assertions were removed from the test list. The reset demo act named in build step 4 is dropped with them. The brain-survives ruling of 2026-08-25 stands and is unaffected.
 
 ## The brain survives every reset. Ruled 2026-08-25.
 
@@ -33,10 +37,8 @@ Storage backend and client-scoped paths. Login mechanics. The seam, briefs, artb
 
 1. As admin: create a second account with a fictional artist and tour; sign in as its user and see only that account's empty tour.
 2. The demo account still runs the full loop; the Dierks Bentley brain is untouched.
-3. Reset the demo account: Scenes and approvals clear, the seed reloads, the brain persists with its approval and decisions intact.
-4. Reset on an account holding a client approval: refused in plain words.
-5. Signed into each account, nothing anywhere shows the other's names, tours, or work.
+3. Signed into each account, nothing anywhere shows the other's names, tours, or work.
 
 ## Tests, asserting effect
 
-Cross-account reads return absence, not informative errors. Reset on a guarded account writes nothing. Reset clears the tour namespace and a byte-compare shows the artist namespace unchanged. Create-tour then get-tour round-trips with no fixture on disk. The demo fallback never fires for a non-demo id. Facts written by an admin acting in an account carry the on-behalf field.
+Cross-account reads return absence, not informative errors. Create-tour then get-tour round-trips with no fixture on disk. The demo fallback never fires for a non-demo id. Facts written by an admin acting in an account carry the on-behalf field.

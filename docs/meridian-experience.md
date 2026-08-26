@@ -1,5 +1,7 @@
 # Meridian experience principles
 
+Added 2026-08-26. This document is a design system reference showing sample screens. docs/meridian-product-architecture.md is the authority on hierarchy and navigation.
+
 Status: Direction for Meridian V1. These principles guide new screens while workflow details and backend seams are reconciled.
 
 ## Purpose
@@ -34,6 +36,8 @@ Most pages should have one clear next step. A second action is appropriate only 
 Persistent navigation answers two questions: where am I, and where can I go next? It should not repeat the client, artist, tour, Scene, status, and version in several regions.
 
 Scenes, Tour, and Artist Brain are the everyday destinations. Tour is a quiet reference for the active production. Admin is available to Higher Roads as a quiet utility. Page-specific stages do not become permanent navigation.
+
+Corrected 2026-08-26. The sentences above describe destinations in sample screens rather than naming the product's navigation. They were read as an architecture claim this week and produced the wrong build. docs/meridian-product-architecture.md names the navigation.
 
 ### Client views remove operational weight
 

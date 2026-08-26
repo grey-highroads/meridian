@@ -55,6 +55,8 @@ What: real login for the two user types already shaped in step 3. Anything else 
 
 Why: the current system has one shared password. The rebuild button is removed in step 3. Login matters only when a client needs to see something, which is step 5, so it lands here and not earlier. Nothing here carries forward from the BWS single-password model; replace rather than extend.
 
+Corrected 2026-08-26. The passage above says login matters only when a client needs to see something in step 5. Steps 4 and 5 both landed weeks ago and login is live. What is true today: two users exist, both seeded from deployment values, both on the demo account, and the session carries a user and a role but not an account, so a second account cannot yet have its own people.
+
 Done when: two people can log in as different roles and see different things.
 
 ### 5. Run the full loop with a stand-in for Jim (tour layer, at the seam)
@@ -109,6 +111,8 @@ Done when: the fourteen-step loop completes with a real artboard from Jim's work
 - No generic platform layer. Shared code gets pulled out only after two real uses exist.
 - You review the live app, not the code. Push first, then you react.
 - The client never sees the word finding, a score, or a verdict. They see the work, a version, a rationale, and controls. Confidence is the product; the AI is not.
+
+Ruled 2026-08-26. Reset is not a product feature. It existed to give Grey a clean demo, and once the demo account became ordinary it stopped earning a button, a confirmation pattern, and refusal guards. Nothing in this roadmap builds it. The full ruling and the items it removed are in docs/spec-accounts-artists-tours.md. The brain-survives ruling of 2026-08-25 stands and is unaffected.
 
 ## What success looks like to the people we want to win
 

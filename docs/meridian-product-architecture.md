@@ -76,9 +76,13 @@ Roles describe what people do, not what they are locked into. See the attributio
 
 **Higher Roads administrator.** Create and manage client accounts, create or override Tours and Scenes, manage access, maintain Artist Brains, perform any client-side action when necessary, and correct records with a visible audit trail.
 
+Ruled 2026-08-26. Two roles, attribution for the rest. A user is either a Higher Roads admin or a client. Admins can see and do anything, including acting on a client's behalf. All client users on an account carry the same permissions. What distinguishes a manager from a creative director from a production lead is attribution rather than authority: every action records which specific user performed it. The five roles above describe jobs people do, not permission tiers. Named approval authority per tour is not in this version.
+
 ## Approval authority
 
 Approval is explicitly recorded rather than inferred from a broad role. A Tour may name creative approval authority, technical approval authority, and final delivery authority when different; one person may hold several. Naming authorities is available, not required; what is required is the record. Every approval identifies what was approved, the exact version, who approved it, when, and any conditions attached.
+
+Ruled 2026-08-26. Naming approval authorities per tour is not in this version. The text above stands as the shape to return to. Today all client users on an account carry the same permissions, and every approval records the specific user who made it, the exact version, and when.
 
 ## Tour creation
 
