@@ -50,7 +50,7 @@ Meridian mints the link. The admin sends it from their own inbox. No mail provid
 
 What follows from that. The invite state on a person's row records what Meridian knows and never claims delivery: invited, accepted, revoked. Resend mints a fresh link and replaces the one before it. A password reset works the same way and is the only route by which a password changes, because an admin never sets another person's password.
 
-The link's lifetime and whether it survives a second use are settled inside the people brief, against the code that mints it. They are not ruled here.
+A link is good for 30 days. Ruled 2026-08-26. Whether it survives a second use inside that window is settled in the people brief, against the code that mints it.
 
 ## What this supersedes
 
