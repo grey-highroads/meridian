@@ -2,9 +2,10 @@ import { ACCOUNT_ID, scopedBody, TOUR_ID } from "./context.js";
 
 // Higher Roads maintenance. Two acts move work to the place every account reads
 // from: the artist's stored files, and the tour that still lives as committed
-// markdown. Three more make an account exist: an account, an artist inside the
-// account being worked in, and a tour under that artist. Nothing on this page
-// removes anything, so no confirm step and no new pattern are needed.
+// markdown. Two more are ours to perform: an account, and an artist inside the
+// account being worked in. Starting the tour is the client's own first job and
+// lives on Home. Nothing on this page removes anything, so no confirm step and
+// no new pattern are needed.
 
 const ARTIST_ID = new URLSearchParams(window.location.search).get("artist") || "dierks-bentley";
 const TOUR = TOUR_ID || "off-the-map-2026";
@@ -17,7 +18,6 @@ const acts = {
   seed: { working: false, result: null, message: "" },
   account: { working: false, result: null, message: "", name: "" },
   artist: { working: false, result: null, message: "", name: "" },
-  tour: { working: false, result: null, message: "", name: "", artistId: "" },
 };
 
 // Which account these acts land in. A Higher Roads session works in the account
@@ -128,23 +128,6 @@ function render() {
         <span class="m-meta">${escape(String(WORKING_ACCOUNT).toUpperCase())}</span>
       </div>
       ${resultBlock(acts.artist, "Artist created", summary)}
-    </section>
-    <section class="m-stack" aria-labelledby="tour-heading">
-      <h2 id="tour-heading" class="m-section-heading">Create a tour</h2>
-      <p class="m-copy m-copy--large">A tour is one cycle of work under one artist. It starts with no direction and no Scenes, which is what the tour pages show until someone adds them.</p>
-      <div class="m-field">
-        <label class="m-label" for="tour-name">Tour name</label>
-        <input class="m-input" id="tour-name" data-field="tour" value="${escape(acts.tour.name)}" placeholder="For example, Northstar 2027">
-      </div>
-      <div class="m-field">
-        <label class="m-label" for="tour-artist">Artist</label>
-        <input class="m-input" id="tour-artist" data-field="tour-artist" value="${escape(acts.tour.artistId)}" placeholder="The artist name as it was created">
-      </div>
-      <div class="m-cluster">
-        <button class="m-button m-button--primary" type="button" data-create-tour ${acts.tour.working ? "disabled" : ""}>${acts.tour.working ? "Creating" : "Create the tour"}</button>
-        <span class="m-meta">${escape(String(WORKING_ACCOUNT).toUpperCase())}</span>
-      </div>
-      ${resultBlock(acts.tour, "Tour created", summary)}
     </section>`;
 }
 
@@ -171,18 +154,12 @@ function start(state, action, extra) {
   run(state, () => call(action, extra));
 }
 
-function sanitized(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
-}
-
 document.addEventListener("input", (event) => {
   const field = event.target.closest("[data-field]");
   if (!field) return;
   const which = field.getAttribute("data-field");
   if (which === "account") acts.account.name = field.value;
   if (which === "artist") acts.artist.name = field.value;
-  if (which === "tour") acts.tour.name = field.value;
-  if (which === "tour-artist") acts.tour.artistId = field.value;
 });
 
 document.addEventListener("click", (event) => {
@@ -200,16 +177,6 @@ document.addEventListener("click", (event) => {
     run(acts.artist, async () => {
       const { artist } = await post("/api/artist", { action: "create-artist", name: acts.artist.name });
       return { summary: `${artist.name} is stored in this account. Import intake files for it when they are ready.` };
-    });
-  }
-  if (target.hasAttribute("data-create-tour")) {
-    run(acts.tour, async () => {
-      const { tour } = await post("/api/tour", {
-        action: "create-tour",
-        name: acts.tour.name,
-        artistId: sanitized(acts.tour.artistId),
-      });
-      return { summary: `${tour.name} is stored in this account. Open Home to start it.` };
     });
   }
 });

@@ -166,6 +166,49 @@ export function createTourStore(options = {}) {
       return direction;
     },
 
+    // The tour's dates, versioned the way the direction is. A tour seeded from
+    // a fixture carries its dates inside the tour document; the first set
+    // written through the app lands here and the reader takes the later one.
+    // Nothing already written is rewritten, so a route that changed still shows
+    // when it changed and who changed it.
+    async readDateVersions(tourId) {
+      const stored = await readTourDocument(tourId, "dates", { versions: [] });
+      return Array.isArray(stored.versions) ? stored.versions : [];
+    },
+
+    async addDates(tourId, entry) {
+      const versions = await this.readDateVersions(tourId);
+      if (versions.some((stored) => stored.version === entry.version)) {
+        const error = new Error("That dates version already exists.");
+        error.status = 409;
+        throw error;
+      }
+      versions.push(entry);
+      versions.sort((left, right) => left.version - right.version);
+      await writeTourDocument(tourId, "dates", { versions });
+      return entry;
+    },
+
+    // What the show plays on, stored as production gave it and versioned beside
+    // the direction. Same reader rule as the dates.
+    async readSetupVersions(tourId) {
+      const stored = await readTourDocument(tourId, "setups", { versions: [] });
+      return Array.isArray(stored.versions) ? stored.versions : [];
+    },
+
+    async addProductionSetup(tourId, setup) {
+      const versions = await this.readSetupVersions(tourId);
+      if (versions.some((stored) => stored.version === setup.version)) {
+        const error = new Error("That production setup version already exists.");
+        error.status = 409;
+        throw error;
+      }
+      versions.push(setup);
+      versions.sort((left, right) => left.version - right.version);
+      await writeTourDocument(tourId, "setups", { versions });
+      return setup;
+    },
+
     async readRequests(tourId) {
       const stored = await readTourDocument(tourId, "requests", { scenes: [] });
       return Array.isArray(stored.scenes) ? stored.scenes : [];

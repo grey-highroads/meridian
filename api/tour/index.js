@@ -15,7 +15,7 @@ import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError 
 import { CLIENT_ROLE } from "../../src/org/store.js";
 
 // The tour layer's one function. Actions: create-tour, get-tour, list-tours,
-// get-assignment,
+// get-assignment, save-tour-dates, save-production-setup,
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
 // issue-brief, get-handoffs, submit-artboard, get-artboards,
@@ -40,13 +40,19 @@ async function loadTour(tourId, options) {
     error.status = 404;
     throw error;
   }
-  const [directions, requests] = await Promise.all([
+  const [directions, requests, dateVersions, setupVersions] = await Promise.all([
     tourStore.readDirections(stored.tour.id),
     tourStore.readRequests(stored.tour.id),
+    tourStore.readDateVersions(stored.tour.id),
+    tourStore.readSetupVersions(stored.tour.id),
   ]);
   const direction = directions.length ? directions[directions.length - 1] : stored.tour.direction;
+  // The tour document holds what the tour was seeded or created with. A later
+  // version written through the app wins, and the earlier one stays stored.
+  const dates = dateVersions.length ? dateVersions[dateVersions.length - 1].dates : (stored.tour.dates || []);
+  const productionSetup = setupVersions.length ? setupVersions[setupVersions.length - 1] : (stored.tour.productionSetup || null);
   return {
-    tour: { ...stored.tour, direction },
+    tour: { ...stored.tour, direction, dates, productionSetup },
     assignments: [...(stored.assignments || []), ...requests],
   };
 }
@@ -231,6 +237,8 @@ const CLIENT_ACTIONS = new Set([
   "submit-artboard",
   "add-tour-direction",
   "create-tour",
+  "save-tour-dates",
+  "save-production-setup",
   "create-scene-request",
   "get-scene-workspace",
   "save-scene-direction",
@@ -404,6 +412,86 @@ export async function handleAction(body, options = {}) {
       at: createdAt,
     });
     return { tour: document.tour };
+  }
+
+  // The tour's route. A row keeps whatever it has, so a date with no venue yet
+  // is a date and not an error, and a row with nothing in it is dropped rather
+  // than stored empty.
+  if (body.action === "save-tour-dates") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const dates = (Array.isArray(body.dates) ? body.dates : [])
+      .map((entry) => {
+        const source = entry && typeof entry === "object" ? entry : {};
+        return {
+          date: optionalText(source.date),
+          venue: optionalText(source.venue),
+          place: optionalText(source.place),
+        };
+      })
+      .filter((entry) => entry.date || entry.venue || entry.place);
+    if (!dates.length) {
+      const error = new Error("Add at least one date before saving the route.");
+      error.status = 400;
+      throw error;
+    }
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const existing = await tourStore.readDateVersions(fixture.tour.id);
+    const entry = {
+      version: existing.length + 1,
+      dates,
+      setBy: optionalText(body.onBehalfOf) || user.displayName,
+      setOn: new Date().toISOString(),
+      recordedBy: user.displayName,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    };
+    await tourStore.addDates(fixture.tour.id, entry);
+    await tourStore.appendTourFact(fixture.tour.id, {
+      ...actor,
+      action: dates.length === 1 ? "Recorded 1 tour date" : `Recorded ${dates.length} tour dates`,
+      version: `Dates V0${entry.version}`,
+      onBehalfOf: entry.onBehalfOf,
+      at: entry.setOn,
+    });
+    return { dates: entry };
+  }
+
+  // What the show plays on, stored as production gave it. Dates where the rig
+  // differs are carried through from the version before, because this surface
+  // does not edit them and a save must not drop what someone recorded.
+  if (body.action === "save-production-setup") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const words = String(body.words || "").trim();
+    if (!words) {
+      const error = new Error("Write the production setup before saving it.");
+      error.status = 400;
+      throw error;
+    }
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const existing = await tourStore.readSetupVersions(fixture.tour.id);
+    const current = fixture.tour.productionSetup;
+    if (current && words === current.words) {
+      const error = new Error("Those words already are the current production setup.");
+      error.status = 409;
+      throw error;
+    }
+    const setup = {
+      version: (existing.length ? existing[existing.length - 1].version : (current ? current.version : 0)) + 1,
+      words,
+      suppliedBy: optionalText(body.suppliedBy) || optionalText(body.onBehalfOf) || user.displayName,
+      suppliedOn: new Date().toISOString(),
+      venueExceptions: current && Array.isArray(current.venueExceptions) ? current.venueExceptions : [],
+      recordedBy: user.displayName,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    };
+    await tourStore.addProductionSetup(fixture.tour.id, setup);
+    await tourStore.appendTourFact(fixture.tour.id, {
+      ...actor,
+      action: "Recorded the production setup",
+      version: `Setup V0${setup.version}`,
+      onBehalfOf: setup.onBehalfOf,
+      at: setup.suppliedOn,
+    });
+    return { productionSetup: setup };
   }
 
   if (body.action === "create-scene-request") {

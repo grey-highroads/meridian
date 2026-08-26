@@ -227,10 +227,15 @@ test("the demo account no longer holds a tour id any other account falls back to
   assert.doesNotMatch(context, /off-the-map-2026/, "the demo tour is still a fallback in the shell context");
   assert.match(context, /action: "list-tours"/, "the shell never asks the account which tours it holds");
 
-  for (const name of ["app/home.js", "app/scenes.js", "app/reviews.js", "app/tour.js"]) {
+  // Home has a shape of its own for an account with no tour: one sentence and
+  // the act that starts one. The other three keep the shared block.
+  for (const name of ["app/scenes.js", "app/reviews.js", "app/tour.js"]) {
     const source = read(name);
     assert.match(source, /showNoTour\(/, `${name} still asks for a tour that may not exist`);
   }
+  const home = read("app/home.js");
+  assert.match(home, /if \(!TOUR_ID\) \{\s*\n\s*startTour\(\);/, "Home still asks for a tour that may not exist");
+  assert.match(home, /new-tour\.html/, "Home has no way to start the first tour");
 });
 
 test("the account picker is built for the Higher Roads role only", () => {

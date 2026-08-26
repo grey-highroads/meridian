@@ -2,11 +2,16 @@ import { TOUR_ID, scopedBody } from "./context.js";
 import { showNoTour } from "./no-tour.js";
 
 // The tour home. The tour record and the direction as the director gave it.
-// A reference, not a working surface: nothing is authored here and nothing is
-// decided here. Scene work happens on a Scene.
+// The route and the production setup can be written here, each on its own and
+// neither waiting on the other. Direction has its own screen and Scene work
+// happens on a Scene.
 
 const locationBar = document.getElementById("location");
 const root = document.getElementById("tour");
+
+// Which section is open for editing, and what has been typed into it. Nothing
+// here is required before a Scene can be requested.
+const view = { tour: null, editing: null, dates: [], words: "", suppliedBy: "", message: "", working: false };
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
@@ -104,20 +109,51 @@ function dateRow(entry) {
     </li>`;
 }
 
+function editorMessage(which) {
+  return view.editing === which && view.message
+    ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>`
+    : "";
+}
+
+function dateFields(entry, index) {
+  return `<li class="m-field">
+      <label class="m-label" for="date-${index}">Date ${index + 1}</label>
+      <input class="m-input" id="date-${index}" data-date-row="${index}" data-date-field="date" value="${escape(entry.date)}" placeholder="2026-05-04" />
+      <input class="m-input" data-date-row="${index}" data-date-field="venue" value="${escape(entry.venue)}" placeholder="Venue" aria-label="Venue for date ${index + 1}" />
+      <input class="m-input" data-date-row="${index}" data-date-field="place" value="${escape(entry.place)}" placeholder="City" aria-label="City for date ${index + 1}" />
+    </li>`;
+}
+
+function datesEditor() {
+  return `<div class="m-stack">
+      <ol class="m-stack">${view.dates.map(dateFields).join("")}</ol>
+      <div class="m-cluster">
+        <button class="m-button m-button--small" type="button" data-add-date>Add another date</button>
+      </div>
+      ${editorMessage("dates")}
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-save-dates ${view.working ? "disabled" : ""}>${view.working ? "Saving" : "Save the dates"}</button>
+        <button class="m-button m-button--quiet" type="button" data-cancel>Cancel</button>
+      </div>
+    </div>`;
+}
+
 function datesSection(tour) {
   const dates = tour.dates || [];
   const first = dates.slice(0, 2).map(dateRow).join("");
   const rest = dates.slice(2).map(dateRow).join("");
+  const reading = `${dates.length ? `<ol class="m-compact-itinerary">${first}</ol>` : `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Route not added</span><p class="m-copy">Add the dates and venues the media has to work across when the route is known.</p></div>`}
+      ${rest ? `<details class="m-compact-disclosure">
+        <summary>Full itinerary</summary>
+        <ol class="m-compact-itinerary">${rest}</ol>
+      </details>` : ""}
+      <div class="m-cluster"><button class="m-button m-button--small" type="button" data-edit-dates>${dates.length ? "Edit the dates" : "Add the dates"}</button></div>`;
   return `<section class="m-orientation__section" aria-labelledby="tour-run-heading">
       <div class="m-orientation__section-head">
         <h3 id="tour-run-heading" class="m-label">Tour run</h3>
         <span class="m-meta">${escape(dates.length)} ${dates.length === 1 ? "DATE" : "DATES"}</span>
       </div>
-      ${dates.length ? `<ol class="m-compact-itinerary">${first}</ol>` : `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Route not added</span><p class="m-copy">Add the dates and venues the media has to work across when the route is known.</p></div>`}
-      ${rest ? `<details class="m-compact-disclosure">
-        <summary>Full itinerary</summary>
-        <ol class="m-compact-itinerary">${rest}</ol>
-      </details>` : ""}
+      ${view.editing === "dates" ? datesEditor() : reading}
     </section>`;
 }
 
@@ -141,14 +177,33 @@ function setupSection(tour) {
     ? `<dl class="m-compact-definition"><div class="m-compact-definition__row"><dt class="m-label">Playback</dt><dd>${escape(tour.playbackSystem)}</dd></div></dl>`
     : `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Playback not added</span><p class="m-copy">Name the system the finished media must run on.</p></div>`;
   const setupEmpty = !setup ? `<div class="m-empty-inline"><span class="m-label">Setup not added</span><p class="m-copy">Record the standard screen and playback setup when production confirms it.</p></div>` : "";
+  const editor = `<div class="m-stack">
+      <div class="m-field">
+        <label class="m-label" for="setup-words">What the show plays on</label>
+        <textarea class="m-textarea m-authoring__field" id="setup-words" data-field="words">${escape(view.words)}</textarea>
+        <span class="m-help">Stored as production wrote it. Saving keeps the version before this one.</span>
+      </div>
+      <div class="m-field">
+        <label class="m-label" for="setup-by">Supplied by</label>
+        <input class="m-input" id="setup-by" data-field="suppliedBy" value="${escape(view.suppliedBy)}" placeholder="Production designer's name" />
+        <span class="m-help">Optional.</span>
+      </div>
+      ${editorMessage("setup")}
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-save-setup ${view.working ? "disabled" : ""}>${view.working ? "Saving" : "Save the production setup"}</button>
+        <button class="m-button m-button--quiet" type="button" data-cancel>Cancel</button>
+      </div>
+    </div>`;
+  const reading = `${playback}
+      ${setupDetail}
+      ${setupEmpty}
+      <div class="m-cluster"><button class="m-button m-button--small" type="button" data-edit-setup>${setup ? "Edit the production setup" : "Add the production setup"}</button></div>`;
   return `<section class="m-orientation__section" aria-labelledby="setup-heading">
       <div class="m-orientation__section-head">
         <h3 id="setup-heading" class="m-label">Production setup</h3>
         ${setupState}
       </div>
-      ${playback}
-      ${setupDetail}
-      ${setupEmpty}
+      ${view.editing === "setup" ? editor : reading}
     </section>`;
 }
 
@@ -172,12 +227,8 @@ function supportingReference(tour) {
     </aside>`;
 }
 
-async function render() {
-  if (!TOUR_ID) {
-    showNoTour(root, locationBar);
-    return;
-  }
-  const { tour } = await call("get-tour");
+function paint() {
+  const tour = view.tour;
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
       <a href="./tour.html?tour=${escape(TOUR_ID)}">Tour</a>
       <span aria-hidden="true">/</span>
@@ -196,6 +247,84 @@ async function render() {
       ${supportingReference(tour)}
     </div>`;
 }
+
+async function render() {
+  if (!TOUR_ID) {
+    showNoTour(root, locationBar);
+    return;
+  }
+  const { tour } = await call("get-tour");
+  view.tour = tour;
+  paint();
+}
+
+function blankDate() {
+  return { date: "", venue: "", place: "" };
+}
+
+// Typing never repaints the page, so nothing under the cursor moves. The page
+// repaints when a section opens, closes, gains a row, or saves.
+document.addEventListener("input", (event) => {
+  const row = event.target.closest("[data-date-row]");
+  if (row) {
+    const index = Number(row.getAttribute("data-date-row"));
+    if (view.dates[index]) view.dates[index][row.getAttribute("data-date-field")] = event.target.value;
+    return;
+  }
+  const field = event.target.closest("[data-field]");
+  if (field) view[field.getAttribute("data-field")] = field.value;
+});
+
+async function save(action, payload) {
+  view.working = true;
+  paint();
+  try {
+    await call(action, payload);
+    const { tour } = await call("get-tour");
+    view.tour = tour;
+    view.editing = null;
+    view.message = "";
+  } catch (error) {
+    view.message = error.message;
+  }
+  view.working = false;
+  paint();
+}
+
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("button");
+  if (!target || !view.tour) return;
+  if (target.hasAttribute("data-edit-dates")) {
+    const stored = (view.tour.dates || []).map((entry) => ({
+      date: entry.date || "",
+      venue: entry.venue || "",
+      place: entry.place || "",
+    }));
+    view.dates = stored.length ? stored : [blankDate()];
+    view.editing = "dates";
+    view.message = "";
+    paint();
+  }
+  if (target.hasAttribute("data-add-date")) {
+    view.dates = [...view.dates, blankDate()];
+    paint();
+  }
+  if (target.hasAttribute("data-edit-setup")) {
+    const setup = view.tour.productionSetup;
+    view.words = setup ? setup.words || "" : "";
+    view.suppliedBy = setup ? setup.suppliedBy || "" : "";
+    view.editing = "setup";
+    view.message = "";
+    paint();
+  }
+  if (target.hasAttribute("data-cancel")) {
+    view.editing = null;
+    view.message = "";
+    paint();
+  }
+  if (target.hasAttribute("data-save-dates")) void save("save-tour-dates", { dates: view.dates });
+  if (target.hasAttribute("data-save-setup")) void save("save-production-setup", { words: view.words, suppliedBy: view.suppliedBy });
+});
 
 render().catch((error) => {
   locationBar.innerHTML = "";

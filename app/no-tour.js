@@ -17,7 +17,8 @@ export function showNoTour(root, locationBar) {
       <div class="m-empty-state__body">
         <span class="m-label">Nothing here yet</span>
         <h2 id="no-tour-heading" class="m-section-heading">This account has no tour</h2>
-        <p class="m-copy m-copy--large">Scenes, reviews, and tour details all sit under a tour. Higher Roads creates the first one on the Admin page, and this page fills in from there.</p>
+        <p class="m-copy m-copy--large">Scenes, reviews, and tour details all sit under a tour. Start the tour from Home and this page fills in from there.</p>
+        <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./index.html">Go to Home</a></div>
       </div>
     </section>`;
 }

@@ -465,11 +465,11 @@ Recorded 2026-08-26. The instruction for the account acts said a client session 
 
 Bring it back when: Grey rules that tour creation is a Higher Roads act. `create-tour` comes out of `CLIENT_ACTIONS` and the account-scope test moves to a Higher Roads session in the same commit.
 
-## The no-tour state is one shared block, not a page-by-page design
+## The no-tour state is one shared block on three pages
 
-Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Home, Scenes, Reviews, and Tour details now show one shared empty state from `app/no-tour.js` when the account holds no tour. It is a placement, not a design: no page says anything about itself, and the words point at the Admin page because that is where a tour is created today.
+Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Updated 2026-08-26 when tour creation moved to Home. The named condition fired: a tour is now started from Home, so Home has a shape of its own and the shared block from `app/no-tour.js` covers Scenes, Reviews, and Tour details. Those three still say nothing about themselves and now point at Home rather than at Admin.
 
-Bring it back when: Grey reviews the empty state on the live app and says what each page should say in that condition, or a tour becomes creatable from somewhere a person would already be.
+Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
 ## The active tour is the first one the account holds
 
@@ -486,3 +486,15 @@ Named conflicts are recorded here without declaring a core document or the code 
 Recorded 2026-08-26. `docs/meridian-jobs-walkthroughs.md` line 118 says the nine-name region dropdown is friction because it is not a mark on the picture, and line 120 prescribes feedback anchored by pointing. The Design pattern requests section of this register rules that Meridian does not place pins or notes over the work in V1 and prescribes the existing named-region field. `app/review.js` line 30 implements that ruling as the nine-name dropdown.
 
 Status: awaiting Grey's ruling. Resolve nothing until Grey decides whether the Moment 6 walkthrough or the V1 design pattern changes.
+
+## Dates where the rig differs have no surface
+
+Recorded 2026-08-26 with the production setup editor on `app/tour.html`. The editor writes the setup's words and who supplied them. Venue exceptions are carried forward from the version before, so a save never drops them, and nothing in the app can add or change one. The seeded tour's four exceptions came from the fixture.
+
+Bring it back when: someone needs to record a date where the rig differs without editing a fixture. It is a row editor against the same versioned document, and it lands beside the setup editor.
+
+## A tour date is whatever was typed
+
+Recorded 2026-08-26 with the dates editor on `app/tour.html`. Each row is three free text fields, and a row keeps whatever it has, so a date with no venue is a date. `readableDate` in `app/tour.js` formats a row that reads as a plain year, month, and day and shows anything else as it came, which is the rule the fixture reader already followed. Nothing validates the date, orders the route, or notices two rows naming the same night.
+
+Bring it back when: a Scene brief needs to name a specific date, or a tour manager reports a route that reads wrong on the tour page.
