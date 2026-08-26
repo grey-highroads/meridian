@@ -18,6 +18,8 @@ If your change touches the boundary with Jim's system, read `docs/meridian-seam-
 - Assert the current head commit before every push. If head moved, fetch again.
 - Handoff notes and summaries age the moment they are written. The tree is authoritative; read it.
 
+**Core documents outrank the code.** The thesis, roadmap, product architecture, and seam govern what Meridian is, what is being built, how the interface behaves, and what crosses the system boundary. If the implementation conflicts with one of them, do not declare the document stale in favour of the code. Record the named conflict in `docs/deferred-work.md` and wait for Grey's ruling before resolving either side.
+
 ## Pushing
 
 - One concern per commit. Name what changed and why in the message.

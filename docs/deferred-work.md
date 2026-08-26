@@ -277,6 +277,7 @@ The larger design answer is ADR 0016: declared influences reach every render aut
 
 Recorded for completeness. These are not this workstream's to fix.
 
+- **One `resolveClientId` call still has no session user.** The other ten call sites now pass the authenticated user. `api/blob/upload.js` line 45 still calls `resolveClientId(request)` with no user because that route is gated by the shared installation password rather than a session, so there is no user to consult. The resulting id becomes a Blob path segment at line 48. Closing this last call requires deciding how an installation-password route selects an account without weakening its path boundary.
 - **Deterministic composition is specified and not implemented.** The glossary states that a locked asset should never be regenerated when it can be composed deterministically. The live path sends protected assets through the OpenAI edits endpoint, which is model-based placement. This one matters commercially, because "your logo is placed, never redrawn" is the natural thing to say and the implementation does not currently guarantee it.
 - **The 12-function Vercel Hobby ceiling.** Held so far by dispatching new operations through existing handlers. A new serverless function requires freeing a slot or moving to Pro.
 
@@ -422,8 +423,12 @@ Recorded 2026-08-25 at brief 1 of the accounts spec. The Scene record and the ne
 
 Updated 2026-08-25 at brief 3 of the accounts spec. The third writer has appeared: `appendArtistFact` in `src/org/artists.js` writes the same shape a third time, with an `artistId` field the other two do not carry. The named trigger has fired. Extraction was still not done inside brief 3, because the brief covers artist rows and the builder does not widen a brief on its own. This is now a ruling waiting on the architect, not a condition waiting on an event.
 
-## Documentation drift
+## Documentation conflicts awaiting Grey's ruling
 
-Recorded 2026-08-25. `docs/meridian-jobs-walkthroughs.md`, the roadmap, and older thesis passages contain assumptions that have drifted from current code and later rulings. Current code and later rulings are authoritative.
+Named conflicts are recorded here without declaring a core document or the code stale. Each one stays unresolved until Grey rules which side changes.
 
-Bring it back before a future architecture or design decision relies on those passages. A dated corrections pass is owed first. That corrections pass is not part of this commit.
+### Moment 6 region anchoring
+
+Recorded 2026-08-26. `docs/meridian-jobs-walkthroughs.md` line 118 says the nine-name region dropdown is friction because it is not a mark on the picture, and line 120 prescribes feedback anchored by pointing. The Design pattern requests section of this register rules that Meridian does not place pins or notes over the work in V1 and prescribes the existing named-region field. `app/review.js` line 30 implements that ruling as the nine-name dropdown.
+
+Status: awaiting Grey's ruling. Resolve nothing until Grey decides whether the Moment 6 walkthrough or the V1 design pattern changes.
