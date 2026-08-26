@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1600" viewBox="0 0 1000 1000" fill="none">
+  <title>MERIDIAN Horizon Alignment Symbol</title>
+  <desc>Definitive full symbol reconstructed from Option 1 using hairline geometry, local bloom, and four converging paths.</desc>
+  <defs>
+    <linearGradient id="horizonFade" x1="70" y1="0" x2="930" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F2ED" stop-opacity="0"/><stop offset=".18" stop-color="#F3F2ED" stop-opacity=".3"/><stop offset=".5" stop-color="#F3F2ED"/><stop offset=".82" stop-color="#F3F2ED" stop-opacity=".3"/><stop offset="1" stop-color="#F3F2ED" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="axisFade" x1="0" y1="55" x2="0" y2="940" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F2ED" stop-opacity=".06"/><stop offset=".38" stop-color="#F3F2ED" stop-opacity=".55"/><stop offset=".435" stop-color="#F3F2ED"/><stop offset=".57" stop-color="#F3F2ED" stop-opacity=".48"/><stop offset="1" stop-color="#F3F2ED" stop-opacity=".03"/>
+    </linearGradient>
+    <linearGradient id="pathFade" x1="0" y1="440" x2="0" y2="930" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F2ED"/><stop offset=".16" stop-color="#F3F2ED" stop-opacity=".92"/><stop offset="1" stop-color="#F3F2ED" stop-opacity=".3"/>
+    </linearGradient>
+    <filter id="blur12" x="-200%" y="-400%" width="500%" height="900%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="12"/></filter>
+    <filter id="blur4" x="-300%" y="-300%" width="700%" height="700%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+  <g id="atmospheric-glow">
+    <path d="M440 440H560" stroke="#35C8D7" stroke-width="3.5" opacity=".12" filter="url(#blur12)"/>
+    <circle cx="500" cy="440" r="5" fill="#F3F2ED" opacity=".68" filter="url(#blur4)"/>
+  </g>
+  <g id="horizon" stroke-linecap="square">
+    <path d="M70 440H930" stroke="#35C8D7" stroke-width="3" opacity=".06" filter="url(#blur4)"/>
+    <path d="M70 440H930" stroke="url(#horizonFade)" stroke-width="2.2"/>
+  </g>
+  <g id="axis">
+    <path d="M500 55V940" stroke="url(#axisFade)" stroke-width="1.8"/>
+  </g>
+  <g id="paths" stroke="url(#pathFade)" stroke-linecap="square">
+    <path d="M500 440L70 930" stroke-width="1.5" opacity=".46"/>
+    <path d="M500 440L285 930" stroke-width="2.6"/>
+    <path d="M500 440L715 930" stroke-width="2.6"/>
+    <path d="M500 440L930 930" stroke-width="1.5" opacity=".46"/>
+  </g>
+  <g id="alignment-point">
+    <circle cx="500" cy="440" r="1.65" fill="#F3F2ED"/>
+  </g>
+</svg>

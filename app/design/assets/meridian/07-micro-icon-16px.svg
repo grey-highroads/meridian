@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" shape-rendering="geometricPrecision">
+  <title>MERIDIAN 16px Micro Icon</title>
+  <desc>Separately drawn transparent 16px optical mark with simplified spacing and balanced one-pixel alignment.</desc>
+  <g stroke="#F3F2ED" stroke-linecap="square">
+    <path d="M1.5 7.5H14.5M8 1.5V14.5" stroke-width=".72" opacity=".8"/>
+    <path d="M8 7.5L2 14M8 7.5L5.4 14M8 7.5L10.6 14M8 7.5L14 14" stroke-width=".58" opacity=".72"/>
+  </g>
+  <rect x="7.5" y="7" width="1" height="1" fill="#F3F2ED"/>
+</svg>

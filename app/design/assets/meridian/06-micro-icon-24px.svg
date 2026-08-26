@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" shape-rendering="geometricPrecision">
+  <title>MERIDIAN 24px Micro Icon</title>
+  <desc>Dedicated transparent 24px optical drawing; not a scaled copy of the full symbol.</desc>
+  <g stroke="#F3F2ED" stroke-linecap="square">
+    <path d="M2.5 11.5H21.5" stroke-width=".7" opacity=".72"/>
+    <path d="M12 2.5V21.5" stroke-width=".7" opacity=".76"/>
+    <path d="M12 11.5L3 21M12 11.5L8.2 21M12 11.5L15.8 21M12 11.5L21 21" stroke-width=".62" opacity=".72"/>
+  </g>
+  <rect x="11.45" y="10.95" width="1.1" height="1.1" fill="#F3F2ED"/>
+</svg>

@@ -53,7 +53,9 @@ test("every Meridian page loads the design system and no Brand World System file
     const sheets = source.match(/<link[^>]*rel="stylesheet"[^>]*>/g) || [];
     assert.equal(sheets.length, 1, `${name} loads ${sheets.length} stylesheets`);
     assert.match(sheets[0], /\.\/design\/index\.css/, `${name} loads something other than the design system`);
+    assert.match(source, /07-micro-icon-16px\.svg/, `${name} does not use the Meridian browser mark`);
   }
+  assert.match(read("app/landing.html"), /07-micro-icon-16px\.svg/, "the front door does not use the Meridian browser mark");
 });
 
 test("no architecture words reach the pages", () => {
@@ -111,21 +113,27 @@ test("the shared shell restores every primary navigation icon", () => {
   assert.match(source, /insertAdjacentHTML\("afterbegin"/, "shell does not add missing icons to live navigation");
 });
 
-test("a successful login runs the temporary Meridian boot sequence once", () => {
+test("a successful login runs the Meridian identity boot sequence once", () => {
   const landing = read("app/landing.html");
   const shell = read("app/shell.js");
   const patterns = read("app/design/patterns.css");
+  const components = read("app/design/components.css");
 
   assert.match(landing, /browserStore\.setItem\('meridian:boot-pending', '1'\)/, "login does not request the boot sequence");
   assert.match(shell, /sessionStorage\.removeItem\(BOOT_PENDING_KEY\)/, "the boot request can replay during the session");
-  assert.match(shell, /class=\"m-boot__glyph\"/, "the boot sequence has no vector object");
+  assert.match(shell, /08-boot-screen-object-4k\.svg/, "the boot sequence does not load the production identity object");
+  assert.match(shell, /glyph\?\.classList\.add\("m-boot__glyph"\)/, "the boot sequence does not mount the vector object");
   assert.match(shell, /Opening Meridian/, "the boot sequence has no accessible status");
-  assert.match(patterns, /height: min\(80vh, 80vw\)/, "the boot object is not the intended viewport scale");
-  assert.match(patterns, /m-boot-sweep/, "the temporary object has no calibration motion");
-  assert.match(patterns, /var\(--m-motion-boot\)/, "the calibration parts do not share one build duration");
+  assert.match(patterns, /width: min\(92vw, 142\.222vh\)/, "the boot object is not the intended viewport scale");
+  for (const group of ["horizon", "axis", "paths", "atmospheric-glow", "alignment-point"]) {
+    assert.match(patterns, new RegExp(`#${group}`), `the production ${group} group has no motion treatment`);
+  }
+  assert.match(patterns, /var\(--m-motion-boot\)/, "the identity parts do not share one build duration");
   assert.match(read("app/design/tokens.css"), /--m-motion-boot: 2880ms/, "the build is not three times the original duration");
   assert.match(shell, /reducedMotion \? 120 : 3120/, "the full-motion sequence exits before the build resolves");
   assert.doesNotMatch(shell, /\.gif|\.png|\.webp/, "the boot sequence uses a raster asset");
+  assert.match(components, /04-shell-lockup-160-200px\.svg/, "the application shell does not use the production lockup");
+  assert.match(patterns, /07-micro-icon-16px\.svg/, "the narrow shell does not use the optical micro mark");
 });
 
 test("the Scene workspace keeps the request and applicable direction with the work", () => {

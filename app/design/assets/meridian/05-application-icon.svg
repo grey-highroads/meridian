@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <title>MERIDIAN Application Icon</title>
+  <desc>Near-black rounded tile with optically balanced Horizon Alignment geometry and a convergence point at 59.4 percent of frame height.</desc>
+  <defs>
+    <linearGradient id="iconHorizon" x1="185" y1="0" x2="839" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F2ED" stop-opacity="0"/><stop offset=".2" stop-color="#F3F2ED" stop-opacity=".28"/><stop offset=".5" stop-color="#F3F2ED"/><stop offset=".8" stop-color="#F3F2ED" stop-opacity=".28"/><stop offset="1" stop-color="#F3F2ED" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="iconAxis" x1="0" y1="170" x2="0" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F2ED" stop-opacity="0"/><stop offset=".53" stop-color="#F3F2ED" stop-opacity=".5"/><stop offset=".632" stop-color="#F3F2ED"/><stop offset="1" stop-color="#F3F2ED" stop-opacity=".04"/>
+    </linearGradient>
+    <linearGradient id="iconPath" x1="0" y1="608" x2="0" y2="850" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F2ED"/><stop offset=".22" stop-color="#F3F2ED" stop-opacity=".85"/><stop offset="1" stop-color="#F3F2ED" stop-opacity=".22"/>
+    </linearGradient>
+    <filter id="iconBlur6" x="-300%" y="-300%" width="700%" height="700%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect x="70" y="70" width="884" height="884" rx="186" fill="#05070A" stroke="#586067" stroke-width="4" stroke-opacity=".7"/>
+  <g id="atmospheric-glow">
+    <path d="M472 608H552" stroke="#35C8D7" stroke-width="4" opacity=".1" filter="url(#iconBlur6)"/>
+    <circle cx="512" cy="608" r="4.5" fill="#F3F2ED" opacity=".62" filter="url(#iconBlur6)"/>
+  </g>
+  <g id="horizon">
+    <path d="M185 608H839" stroke="#35C8D7" stroke-width="7" opacity=".04" filter="url(#iconBlur6)"/>
+    <path d="M185 608H839" stroke="url(#iconHorizon)" stroke-width="3"/>
+  </g>
+  <g id="axis">
+    <path d="M512 170V860" stroke="url(#iconAxis)" stroke-width="2.6"/>
+  </g>
+  <g id="paths" stroke="url(#iconPath)" stroke-linecap="square">
+    <path d="M512 608L220 838" stroke-width="2" opacity=".5"/>
+    <path d="M512 608L365 838" stroke-width="3.25"/>
+    <path d="M512 608L659 838" stroke-width="3.25"/>
+    <path d="M512 608L804 838" stroke-width="2" opacity=".5"/>
+  </g>
+  <g id="alignment-point"><circle cx="512" cy="608" r="2.4" fill="#F3F2ED"/></g>
+</svg>

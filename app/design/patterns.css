@@ -25,118 +25,86 @@
     z-index: var(--m-layer-boot);
   }
 
-  .m-boot::before,
-  .m-boot::after {
-    background: var(--m-border-soft);
-    content: "";
-    opacity: 0.7;
-    position: absolute;
-  }
-
-  .m-boot::before {
-    height: var(--m-rule-width);
-    left: 0;
-    right: 0;
-    top: 50%;
-  }
-
-  .m-boot::after {
-    bottom: 0;
-    left: 50%;
-    top: 0;
-    width: var(--m-rule-width);
-  }
-
   .m-boot.is-leaving {
     opacity: 0;
     visibility: hidden;
   }
 
+  .m-boot__stage {
+    position: relative;
+    width: min(92vw, 142.222vh);
+  }
+
+  .m-boot__stage::before {
+    background: radial-gradient(circle, color-mix(in srgb, var(--m-signal-instrument) 12%, transparent), transparent 58%);
+    content: "";
+    inset: 28% 26% 8%;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
   .m-boot__glyph {
-    animation: m-boot-resolve var(--m-motion-boot) var(--m-ease-standard) both;
-    color: var(--m-signal-instrument);
-    height: min(80vh, 80vw);
+    display: block;
+    height: auto;
+    opacity: 0;
     overflow: visible;
-    width: min(80vh, 80vw);
+    width: 100%;
   }
 
-  .m-boot__ring,
-  .m-boot__sweep,
-  .m-boot__longitude,
-  .m-boot__latitude,
-  .m-boot__axis,
-  .m-boot__scan,
-  .m-boot__ticks {
-    fill: none;
-    transform-box: fill-box;
-    transform-origin: center;
-    vector-effect: non-scaling-stroke;
+  .m-boot.is-building .m-boot__glyph {
+    animation: m-boot-resolve var(--m-motion-boot) var(--m-ease-standard) both;
   }
 
-  .m-boot__ring {
-    opacity: 0.72;
-    stroke: var(--m-border-strong);
-    stroke-dasharray: 1 3;
-    stroke-width: 0.7;
+  .m-boot.is-building .m-boot__stage::before {
+    animation: m-boot-field var(--m-motion-boot) var(--m-ease-standard) both;
   }
 
-  .m-boot__sweep {
-    animation: m-boot-sweep var(--m-motion-boot) var(--m-ease-standard) both;
-    stroke: var(--m-signal-instrument);
-    stroke-dasharray: 18 82;
-    stroke-linecap: round;
-    stroke-width: 1.1;
+  .m-boot__glyph #horizon,
+  .m-boot__glyph #axis,
+  .m-boot__glyph #alignment-point,
+  .m-boot__glyph #atmospheric-glow {
+    transform-box: view-box;
+    transform-origin: 50% 60.185%;
   }
 
-  .m-boot__longitude {
-    animation: m-boot-longitude var(--m-motion-boot) var(--m-ease-standard) both;
-    opacity: 0.68;
-    stroke: var(--m-signal-instrument-strong);
-    stroke-width: 0.65;
+  .m-boot.is-building .m-boot__glyph #horizon {
+    animation: m-boot-horizon var(--m-motion-boot) var(--m-ease-standard) both;
   }
 
-  .m-boot__latitude {
-    animation: m-boot-latitude var(--m-motion-boot) var(--m-ease-standard) both;
-    opacity: 0.46;
-    stroke: var(--m-text-muted);
-    stroke-width: 0.6;
-  }
-
-  .m-boot__axis {
+  .m-boot.is-building .m-boot__glyph #axis {
     animation: m-boot-axis var(--m-motion-boot) var(--m-ease-standard) both;
-    stroke: var(--m-text-primary);
-    stroke-width: 0.8;
   }
 
-  .m-boot__scan {
-    animation: m-boot-scan var(--m-motion-boot) var(--m-ease-standard) both;
-    stroke: var(--m-signal-instrument-strong);
-    stroke-width: 0.5;
+  .m-boot__glyph #paths path {
+    stroke-dasharray: 2200;
+    stroke-dashoffset: 2200;
   }
 
-  .m-boot__ticks {
-    opacity: 0.8;
-    stroke: var(--m-text-muted);
-    stroke-width: 0.65;
+  .m-boot.is-building .m-boot__glyph #paths path {
+    animation: m-boot-path var(--m-motion-boot) var(--m-ease-standard) both;
   }
 
-  .m-boot__core {
-    animation: m-boot-core var(--m-motion-boot) var(--m-ease-standard) both;
-    fill: var(--m-signal-instrument-strong);
+  .m-boot.is-building .m-boot__glyph #paths path:nth-child(1),
+  .m-boot.is-building .m-boot__glyph #paths path:nth-child(4) {
+    animation-name: m-boot-path-outer;
+  }
+
+  .m-boot.is-building .m-boot__glyph #atmospheric-glow {
+    animation: m-boot-atmosphere var(--m-motion-boot) var(--m-ease-standard) both;
+  }
+
+  .m-boot.is-building .m-boot__glyph #alignment-point {
+    animation: m-boot-point var(--m-motion-boot) var(--m-ease-standard) both;
   }
 
   @keyframes m-boot-resolve {
     0% {
       opacity: 0;
-      transform: scale(0.72);
+      transform: scale(0.985);
     }
-    24% {
+    12% {
       opacity: 1;
-      transform: scale(0.92);
-    }
-    82% {
-      opacity: 1;
-      transform: scale(1.015);
     }
     100% {
       opacity: 1;
@@ -144,104 +112,102 @@
     }
   }
 
-  @keyframes m-boot-sweep {
-    0% {
+  @keyframes m-boot-field {
+    0%, 56% {
       opacity: 0;
-      stroke-dashoffset: 48;
-      transform: rotate(-110deg);
     }
-    18% {
+    86% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 0.36;
+    }
+  }
+
+  @keyframes m-boot-horizon {
+    0%, 10% {
+      opacity: 0;
+      transform: scaleX(0.01);
+    }
+    42% {
       opacity: 1;
-    }
-    76% {
-      stroke-dashoffset: 0;
-      transform: rotate(238deg);
+      transform: scaleX(1);
     }
     100% {
-      opacity: 0.72;
-      stroke-dashoffset: -8;
-      transform: rotate(270deg);
-    }
-  }
-
-  @keyframes m-boot-longitude {
-    0% {
-      opacity: 0;
-      transform: rotate(38deg) scaleX(0.42);
-    }
-    36% {
-      opacity: 0.8;
-      transform: rotate(-24deg) scaleX(0.84);
-    }
-    100% {
-      opacity: 0.68;
-      transform: rotate(0) scaleX(1);
-    }
-  }
-
-  @keyframes m-boot-latitude {
-    0% {
-      opacity: 0;
-      transform: rotate(-32deg) scaleX(0.54);
-    }
-    64% {
-      opacity: 0.72;
-      transform: rotate(12deg) scaleX(1.05);
-    }
-    100% {
-      opacity: 0.46;
-      transform: rotate(0) scaleX(1);
+      opacity: 1;
+      transform: scaleX(1);
     }
   }
 
   @keyframes m-boot-axis {
-    0%, 56% {
+    0%, 24% {
       opacity: 0;
-      stroke-dasharray: 0 100;
+      transform: scaleY(0.01);
     }
-    82% {
+    62% {
       opacity: 1;
-      stroke-dasharray: 86 14;
+      transform: scaleY(1);
     }
     100% {
-      opacity: 0.92;
-      stroke-dasharray: 100 0;
+      opacity: 1;
+      transform: scaleY(1);
     }
   }
 
-  @keyframes m-boot-scan {
-    0%, 12% {
+  @keyframes m-boot-path {
+    0%, 38% {
       opacity: 0;
-      transform: translateY(-34px) scaleX(0.3);
-    }
-    28% {
-      opacity: 0.9;
+      stroke-dashoffset: 2200;
     }
     78% {
-      opacity: 0.72;
-      transform: translateY(31px) scaleX(1);
+      opacity: 1;
+      stroke-dashoffset: 0;
     }
     100% {
-      opacity: 0;
-      transform: translateY(34px) scaleX(0.2);
+      opacity: 1;
+      stroke-dashoffset: 0;
     }
   }
 
-  @keyframes m-boot-core {
-    0%, 68% {
+  @keyframes m-boot-path-outer {
+    0%, 48% {
       opacity: 0;
-      transform: scale(0);
-      transform-origin: center;
+      stroke-dashoffset: 2200;
     }
-    84% {
+    88% {
       opacity: 1;
-      transform: scale(1.8);
-      transform-origin: center;
+      stroke-dashoffset: 0;
+    }
+    100% {
+      opacity: 1;
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes m-boot-atmosphere {
+    0%, 62% {
+      opacity: 0;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes m-boot-point {
+    0%, 72% {
+      opacity: 0;
+      transform: scale(0.15);
+    }
+    90% {
+      opacity: 1;
+      transform: scale(2.4);
     }
     100% {
       opacity: 1;
       transform: scale(1);
-      transform-origin: center;
     }
   }
 
@@ -2070,6 +2036,13 @@
   .m-shell__nav-label,
   .m-shell__nav-count {
     display: none;
+  }
+
+  .m-wordmark {
+    aspect-ratio: 1;
+    background-image: url("./assets/meridian/07-micro-icon-16px.svg");
+    margin-inline: auto;
+    max-width: 2rem;
   }
 
   .m-shell__nav-link {

@@ -1,4 +1,6 @@
 const BOOT_PENDING_KEY = "meridian:boot-pending";
+const BOOT_OBJECT_URL = new URL("./design/assets/meridian/08-boot-screen-object-4k.svg", import.meta.url);
+const BOOT_FALLBACK_URL = new URL("./design/assets/meridian/01-standalone-symbol.svg", import.meta.url);
 
 function takeBootRequest() {
   try {
@@ -10,35 +12,34 @@ function takeBootRequest() {
   }
 }
 
-function mountBootSequence() {
+async function mountBootSequence() {
   const shell = document.querySelector(".m-shell");
   const boot = document.createElement("div");
   boot.className = "m-boot";
   boot.setAttribute("role", "status");
   boot.setAttribute("aria-live", "polite");
   boot.innerHTML = `<span class="m-visually-hidden">Opening Meridian</span>
-    <svg class="m-boot__glyph" aria-hidden="true" viewBox="0 0 100 100">
-      <circle class="m-boot__ring" cx="50" cy="50" r="43" pathLength="100" />
-      <circle class="m-boot__sweep" cx="50" cy="50" r="43" pathLength="100" />
-      <g class="m-boot__longitude">
-        <ellipse cx="50" cy="50" rx="18" ry="43" />
-        <ellipse cx="50" cy="50" rx="31" ry="43" />
-      </g>
-      <g class="m-boot__latitude">
-        <ellipse cx="50" cy="50" rx="43" ry="16" />
-        <ellipse cx="50" cy="50" rx="43" ry="29" />
-      </g>
-      <path class="m-boot__ticks" d="M50 4v6M50 90v6M4 50h6M90 50h6" />
-      <path class="m-boot__axis" pathLength="100" d="M50 7v86" />
-      <path class="m-boot__scan" d="M11 50h78" />
-      <circle class="m-boot__core" cx="50" cy="50" r="1.4" />
-    </svg>`;
+    <div class="m-boot__stage" aria-hidden="true"></div>`;
 
   document.body.classList.add("m-booting");
   shell?.setAttribute("aria-hidden", "true");
   document.body.prepend(boot);
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const stage = boot.querySelector(".m-boot__stage");
+  try {
+    const response = await fetch(BOOT_OBJECT_URL, { signal: AbortSignal.timeout(1200) });
+    if (!response.ok) throw new Error("Meridian boot object unavailable");
+    stage.innerHTML = await response.text();
+    const glyph = stage.querySelector("svg");
+    glyph?.classList.add("m-boot__glyph");
+    glyph?.removeAttribute("width");
+    glyph?.removeAttribute("height");
+  } catch {
+    stage.innerHTML = `<img class="m-boot__glyph" src="${BOOT_FALLBACK_URL}" alt="">`;
+  }
+
+  window.requestAnimationFrame(() => boot.classList.add("is-building"));
   const displayTime = reducedMotion ? 120 : 3120;
   window.setTimeout(() => {
     boot.classList.add("is-leaving");
@@ -48,7 +49,7 @@ function mountBootSequence() {
   }, displayTime);
 }
 
-if (takeBootRequest()) mountBootSequence();
+if (takeBootRequest()) void mountBootSequence();
 
 const params = new URLSearchParams(window.location.search);
 const tourId = params.get("tour") || "off-the-map-2026";

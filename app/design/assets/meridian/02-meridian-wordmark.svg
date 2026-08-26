@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="232" viewBox="-72 -25 1654 150" fill="none">
+  <title>MERIDIAN Wordmark</title>
+  <desc>Custom outlined Option 1 wordmark with production-safe transparent padding and no font dependency.</desc>
+  <g id="meridian-wordmark" transform="translate(0 0)" fill="none" stroke="#F3F2ED" stroke-width="5.2" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M0 100V0L30 55L60 0V100" transform="translate(0 0)"/>
+    <path d="M58 0H0V100H58 M0 50H44" transform="translate(210 0)"/>
+    <path d="M0 100V0H32Q60 0 60 25Q60 50 32 50H0 M32 50L66 100" transform="translate(420 0)"/>
+    <path d="M0 0V100" transform="translate(640 0)"/>
+    <path d="M0 0V100H26Q66 100 66 50Q66 0 26 0H0" transform="translate(810 0)"/>
+    <path d="M0 0V100" transform="translate(1035 0)"/>
+    <path d="M0 100L35 0L70 100 M15 58H55" transform="translate(1210 0)"/>
+    <path d="M0 100V0L70 100V0" transform="translate(1440 0)"/>
+  </g>
+</svg>

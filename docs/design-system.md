@@ -124,9 +124,15 @@ Use `.m-shell__nav-icon` with a visible `.m-shell__nav-label`. Use `.m-shell__na
 
 ### Boot sequence
 
-The temporary boot sequence appears once after a successful login. It uses a native vector object and CSS motion from `app/design/`, fills most of the viewport, and assembles over about three seconds while the real page loads behind it.
+The Horizon Alignment boot sequence appears once after a successful login. It uses the production vector object in `app/design/assets/meridian/`, fills most of the viewport, and assembles over about three seconds while the real page loads behind it.
 
-The sequence creates atmosphere. It does not claim that Meridian is running checks, show fake progress, or delay later navigation. Reduced motion receives a brief static resolve. The calibration object is temporary and must not be reused as the Meridian identity mark without a separate design decision.
+The sequence creates atmosphere. It does not claim that Meridian is running checks, show fake progress, or delay later navigation. Reduced motion receives a brief static resolve. Treat it as an identity moment, not a progress indicator.
+
+### Meridian identity
+
+Production identity assets live in `app/design/assets/meridian/`. Use `.m-wordmark` in the application shell. It displays the strengthened lockup at the full rail width and changes to the dedicated micro mark when the rail narrows. Do not recreate the wordmark with live type or substitute the full symbol at micro sizes.
+
+Use the primary lockup outside the shell when the full signature has room to breathe. Use the application icon only as an application tile. Use the boot object only for the once-after-login sequence, with its named SVG groups animated by `patterns.css`.
 
 ## Home and workflow patterns
 

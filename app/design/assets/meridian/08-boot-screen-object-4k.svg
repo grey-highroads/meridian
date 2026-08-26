@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 1920 1080" fill="none">
+  <title>MERIDIAN 4K Boot-Screen Object</title>
+  <desc>Transparent, animation-ready Option 1 boot geometry with named groups and a convergence point at 60.2 percent of frame height.</desc>
+  <defs>
+    <linearGradient id="bootHorizon" x1="0" y1="0" x2="1920" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#35C8D7" stop-opacity="0"/><stop offset=".16" stop-color="#35C8D7" stop-opacity=".16"/><stop offset=".42" stop-color="#35C8D7" stop-opacity=".7"/><stop offset=".5" stop-color="#F3F2ED" stop-opacity=".96"/><stop offset=".58" stop-color="#35C8D7" stop-opacity=".7"/><stop offset=".84" stop-color="#35C8D7" stop-opacity=".16"/><stop offset="1" stop-color="#35C8D7" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bootAxis" x1="0" y1="40" x2="0" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#35C8D7" stop-opacity="0"/><stop offset=".42" stop-color="#35C8D7" stop-opacity=".22"/><stop offset=".59" stop-color="#F3F2ED" stop-opacity=".9"/><stop offset=".68" stop-color="#F3F2ED" stop-opacity=".2"/><stop offset="1" stop-color="#F3F2ED" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bootPath" x1="0" y1="650" x2="0" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F2ED"/><stop offset=".2" stop-color="#F3F2ED" stop-opacity=".78"/><stop offset="1" stop-color="#F3F2ED" stop-opacity=".26"/>
+    </linearGradient>
+    <filter id="bootBlur8" x="-200%" y="-300%" width="500%" height="700%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+  <g id="atmospheric-glow">
+    <path d="M790 638H1130" stroke="#35C8D7" stroke-width="4" opacity=".35" filter="url(#bootBlur8)"/>
+    <path d="M900 645H1020" stroke="#F3F2ED" stroke-width="2.5" opacity=".45" filter="url(#bootBlur8)"/>
+    <circle cx="960" cy="650" r="4.5" fill="#F3F2ED" opacity=".55" filter="url(#bootBlur8)"/>
+  </g>
+  <g id="horizon">
+    <path d="M115 650H1805" stroke="#35C8D7" stroke-width="5" opacity=".08" filter="url(#bootBlur8)"/>
+    <path d="M0 650H1920" stroke="url(#bootHorizon)" stroke-width="2"/>
+  </g>
+  <g id="axis">
+    <path d="M960 40V1080" stroke="#F3F2ED" stroke-width="4" opacity=".045" filter="url(#bootBlur8)"/>
+    <path d="M960 40V1080" stroke="url(#bootAxis)" stroke-width="1.6"/>
+  </g>
+  <g id="paths" stroke="url(#bootPath)" stroke-linecap="square">
+    <path d="M960 650L0 908" stroke-width="1.3" opacity=".46"/>
+    <path d="M960 650L270 1080" stroke-width="2.2" opacity=".82"/>
+    <path d="M960 650L1650 1080" stroke-width="2.2" opacity=".82"/>
+    <path d="M960 650L1920 908" stroke-width="1.3" opacity=".46"/>
+  </g>
+  <g id="alignment-point">
+    <circle cx="960" cy="650" r="1.8" fill="#F3F2ED"/>
+  </g>
+</svg>

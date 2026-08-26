@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="300" viewBox="-72 -24 1654 238" fill="none">
+  <title>MERIDIAN by Higher Roads Shell Lockup</title>
+  <desc>Optically strengthened lockup for display at 160 to 200 CSS pixels wide. Lettering remains outlined and font independent.</desc>
+  <g id="meridian-wordmark" transform="translate(0 0)" fill="none" stroke="#F3F2ED" stroke-width="7.1" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M0 100V0L30 55L60 0V100" transform="translate(0 0)"/>
+    <path d="M58 0H0V100H58 M0 50H44" transform="translate(210 0)"/>
+    <path d="M0 100V0H32Q60 0 60 25Q60 50 32 50H0 M32 50L66 100" transform="translate(420 0)"/>
+    <path d="M0 0V100" transform="translate(640 0)"/>
+    <path d="M0 0V100H26Q66 100 66 50Q66 0 26 0H0" transform="translate(810 0)"/>
+    <path d="M0 0V100" transform="translate(1035 0)"/>
+    <path d="M0 100L35 0L70 100 M15 58H55" transform="translate(1210 0)"/>
+    <path d="M0 100V0L70 100V0" transform="translate(1440 0)"/>
+  </g>
+  <g id="higher-roads-signature-display" transform="translate(976.4000000000001 148) scale(2.3 1.9)" fill="none" stroke="#F3F2ED" stroke-width="2.05" stroke-linecap="square" stroke-linejoin="round"><path d="M0 20V0H5.5Q10.5 0 10.5 5Q10.5 10 5.5 10H0M5.5 10Q10.5 10 10.5 15Q10.5 20 5.5 20H0" transform="translate(0 0)"/><path d="M0 0L5.5 10L11 0M5.5 10V20" transform="translate(16.5 0)"/><path d="M0 0V20M11 0V20M0 10H11" transform="translate(46.5 0)"/><path d="M1.5 0V20" transform="translate(63.5 0)"/><path d="M11.5 4Q9.5 0 6 0Q0 0 0 10Q0 20 6 20Q10 20 11.5 16V11H7" transform="translate(72.5 0)"/><path d="M0 0V20M11 0V20M0 10H11" transform="translate(90 0)"/><path d="M9.5 0H0V20H9.5M0 10H7.5" transform="translate(107 0)"/><path d="M0 20V0H5Q10.5 0 10.5 5Q10.5 10 5 10H0M5 10L11 20" transform="translate(122.5 0)"/><path d="M0 20V0H5Q10.5 0 10.5 5Q10.5 10 5 10H0M5 10L11 20" transform="translate(152 0)"/><path d="M6 0Q0 0 0 10Q0 20 6 20Q12 20 12 10Q12 0 6 0Z" transform="translate(168.5 0)"/><path d="M0 20L6 0L12 20M2.6 11H9.4" transform="translate(186.5 0)"/><path d="M0 0V20H4Q11 20 11 10Q11 0 4 0H0" transform="translate(204.5 0)"/><path d="M10.5 3Q8.5 0 5.5 0Q0 0 0 5Q0 9 5.5 10Q10.5 11 10.5 15Q10.5 20 5.5 20Q2 20 0 17" transform="translate(221.5 0)"/></g>
+</svg>
