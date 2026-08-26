@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseIntake } from "../../src/artist/parse-intake.js";
 import { applyRulings, createArtistStore } from "../../src/artist/store.js";
+import { copyArtistToAccountPath } from "../../scripts/copy-artist-to-account-path.js";
 import { buildArtistView, evidenceFor, listFindings } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { OPERATOR_ROLE } from "../../src/org/store.js";
@@ -13,7 +14,8 @@ import { resolveActingAccount } from "../../src/org/acting-account.js";
 // retrofitting dispatch later is more work than starting with it.
 //
 // The actions are: create-artist, list-artists, import-intake, get-artist,
-// list-findings, approve-brain, remove-finding, restore-finding, get-evidence.
+// list-findings, approve-brain, remove-finding, restore-finding, get-evidence,
+// copy-artist-paths.
 // None of them returns the prior. The prior is written at import and read by
 // nothing, because the thesis says it is never shown.
 //
@@ -172,6 +174,23 @@ export async function handleAction(body, options = {}) {
   }
   if (body.action === "restore-finding") {
     return await setRemoved(store, artistId, body.findingId, null);
+  }
+  // Moving an artist's stored documents to the path every account uses is a
+  // Higher Roads act. A client session never learns the action exists: it falls
+  // past this branch to the same answer an unknown action gets, which is how
+  // every other cross-account read returns absence rather than an
+  // acknowledgment. The copying and the byte comparison are the script's, which
+  // is why this collects the lines it already reports instead of asking it to
+  // report differently.
+  if (body.action === "copy-artist-paths" && options.user && options.user.role === OPERATOR_ROLE) {
+    const lines = [];
+    const result = await copyArtistToAccountPath({
+      backend: store.backend,
+      accountId: accountId || DEMO_ACCOUNT_ID,
+      artistId,
+      log: (line) => lines.push(line),
+    });
+    return { lines, count: result.copied.length };
   }
   if (body.action === "get-evidence") {
     const record = await store.readRecord(artistId);

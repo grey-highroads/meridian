@@ -38,6 +38,16 @@ Missing state: `m-work-frame` displays a submitted image or PDF as the primary w
 
 Where: The Artboard review job, on `app/review.html`.
 
+### Result log for a maintenance action
+
+Status: requested
+
+Job: A Higher Roads person runs a maintenance act and reads back what it did, file by file, to be sure it did what it said.
+
+Missing state: There is no pattern for a plain result log. The Admin page prints each returned line as a `m-copy` item inside a `m-stack`, which reads as prose rather than as a record. Long storage paths wrap mid-path and two lines are hard to compare against each other.
+
+Where: `app/admin.html`, under the copy action. It will recur on every act the accounts spec adds to that page.
+
 Use this shape when a real job exposes a gap:
 
 ### Pattern name

@@ -22,6 +22,7 @@ export default defineConfig({
         handoff: resolve(__dirname, "app/handoff.html"),
         direction: resolve(__dirname, "app/direction.html"),
         request: resolve(__dirname, "app/request.html"),
+        admin: resolve(__dirname, "app/admin.html"),
       },
     },
   },

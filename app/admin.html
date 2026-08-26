@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="What Meridian knows about an artist, and the evidence behind it" />
-    <title>Artist Brain | Meridian</title>
+    <meta name="description" content="Higher Roads maintenance for Meridian" />
+    <title>Admin | Meridian</title>
     <link rel="icon" href="./design/assets/meridian/07-micro-icon-16px.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./design/index.css" />
   </head>
@@ -24,8 +24,8 @@
           <a class="m-shell__nav-link" href="./tour.html"><span class="m-shell__nav-label">Tour details</span></a>
         </nav>
         <div class="m-shell__utility">
-          <a class="m-shell__nav-link" href="./artist.html" aria-current="page"><span class="m-shell__nav-label">Artist Brain</span></a>
-          <a class="m-shell__nav-link" href="./admin.html" data-operator-utility><span class="m-shell__nav-label">Admin</span></a>
+          <a class="m-shell__nav-link" href="./artist.html" data-operator-utility><span class="m-shell__nav-label">Artist Brain</span></a>
+          <a class="m-shell__nav-link" href="./admin.html" aria-current="page"><span class="m-shell__nav-label">Admin</span></a>
           <a class="m-shell__nav-link" href="/api/auth/login?signout=1">
             <span class="m-shell__nav-label">Sign out</span>
           </a>
@@ -34,10 +34,9 @@
 
       <main class="m-shell__main">
         <header class="m-location" id="location"></header>
-        <article class="m-page m-page--fluid m-intelligence-page" id="artist"></article>
-        <footer class="m-action-bar" id="operator"></footer>
+        <article class="m-page" id="admin"></article>
       </main>
     </div>
-    <script type="module" src="./shell.js"></script><script type="module" src="./artist.js?v=2026-08-24-intelligence-browser"></script>
+    <script type="module" src="./shell.js"></script><script type="module" src="./admin.js?v=2026-08-26-admin"></script>
   </body>
 </html>
