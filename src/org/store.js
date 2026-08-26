@@ -7,11 +7,16 @@ export { CLIENT_ROLE, OPERATOR_ROLE };
 
 // The organization layer, at the size the pilot needs it.
 //
-// One account, the artist's organization. Two people in it, each with a name, a
-// login, a hashed password, and a role. Users are stored under the account and
-// are seeded once from two values on the deployment. There is no signup, no
-// configuration screen, and nothing here a client sets up. Higher Roads
-// operates Meridian for the client.
+// Two kinds of person and two places they are stored. A client belongs to one
+// account and is stored under it. A Higher Roads admin belongs to no account
+// and is stored beside the account list, because an admin who lived inside an
+// account would read as a client of that one. Ruled 2026-08-26 in
+// docs/spec-admin-surface.md.
+//
+// Each person carries a name, a login, a hashed password, and a role. Both
+// lists are seeded once from the two values on the deployment. There is no
+// signup, no configuration screen, and nothing here a client sets up. Higher
+// Roads operates Meridian for the client.
 //
 // The shape is the one the thesis describes: accounts hold users, users carry
 // permissions, and a tour reads those permissions to decide who may do what.
@@ -25,6 +30,9 @@ export const ACCOUNT = { id: "dierks-bentley", name: "Dierks Bentley" };
 // included, stores its work under its own id. No delete; retirement is a later
 // ruling.
 export const ACCOUNTS_PATH = "brand-world-system/org/accounts.json";
+
+// Higher Roads admins, beside the account list rather than inside an account.
+export const ADMINS_PATH = "brand-world-system/org/users.json";
 
 export function sanitizeAccountId(value) {
   const cleaned = String(value).toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
@@ -86,7 +94,9 @@ export function publicUser(user) {
     displayName: user.displayName,
     role: user.role,
     roleLabel: roleLabel(user.role),
-    accountId: user.accountId || ACCOUNT.id,
+    // No default. A client carries the account they belong to and a Higher
+    // Roads admin carries none.
+    accountId: user.accountId === undefined ? null : user.accountId,
   };
 }
 
@@ -97,7 +107,9 @@ export function createOrgStore(options = {}) {
   const env = options.env || process.env;
   const account = options.account || ACCOUNT;
 
-  function seeded() {
+  // Both values are read together, because the cookie is signed with both and a
+  // deployment holding one of them can sign nobody in.
+  function seeds() {
     const operator = parseSeed(env.MERIDIAN_OPERATOR);
     const client = parseSeed(env.MERIDIAN_CLIENT);
     if (!operator || !client) {
@@ -105,17 +117,18 @@ export function createOrgStore(options = {}) {
       error.status = 503;
       throw error;
     }
-    return [
-      { id: "operator", role: OPERATOR_ROLE, ...operator },
-      { id: "client", role: CLIENT_ROLE, ...client },
-    ].map((entry) => ({
-      id: entry.id,
-      login: entry.login,
-      displayName: entry.displayName,
-      role: entry.role,
-      accountId: account.id,
-      password: hashPassword(entry.password),
-    }));
+    return { operator, client };
+  }
+
+  function person(id, role, seed, accountId) {
+    return {
+      id,
+      login: seed.login,
+      displayName: seed.displayName,
+      role,
+      accountId,
+      password: hashPassword(seed.password),
+    };
   }
 
   return {
@@ -123,13 +136,31 @@ export function createOrgStore(options = {}) {
 
     // Written once. A second read returns what is stored and changes nothing,
     // so the hashes stay put and a session signed yesterday still resolves.
-    async readUsers() {
-      const body = await backend.read(usersPath(account.id));
+    async readAdmins() {
+      const body = await backend.read(ADMINS_PATH);
       if (body !== null && body !== undefined) {
         const stored = JSON.parse(body);
         if (Array.isArray(stored.users) && stored.users.length) return stored.users;
       }
-      const users = seeded();
+      const users = [person("operator", OPERATOR_ROLE, seeds().operator, null)];
+      await backend.write(ADMINS_PATH, JSON.stringify({ users }, null, 2));
+      return users;
+    },
+
+    // The account's own people. A deployment written before admins moved out
+    // still holds an admin row in this document. It is filtered here rather
+    // than rewritten, because a scoping change is no place to edit stored
+    // people, and a row nobody reads gives nobody account scope.
+    async readUsers() {
+      const body = await backend.read(usersPath(account.id));
+      if (body !== null && body !== undefined) {
+        const stored = JSON.parse(body);
+        const users = Array.isArray(stored.users)
+          ? stored.users.filter((entry) => entry.role !== OPERATOR_ROLE)
+          : [];
+        if (users.length) return users;
+      }
+      const users = [person("client", CLIENT_ROLE, seeds().client, account.id)];
       await backend.write(usersPath(account.id), JSON.stringify({ account, users }, null, 2));
       return users;
     },
@@ -164,15 +195,21 @@ export function createOrgStore(options = {}) {
       return created;
     },
 
+    // Admins first, then the account's people. The two lists never share an id,
+    // so the order settles nothing except which document is read first.
+    async everyone() {
+      return [...(await this.readAdmins()), ...(await this.readUsers())];
+    },
+
     async findUser(userId) {
-      const users = await this.readUsers();
+      const users = await this.everyone();
       return publicUser(users.find((entry) => entry.id === userId) || null);
     },
 
     // A wrong login and a wrong password fail the same way and say the same
     // thing, so the page never tells someone which half they got right.
     async signIn(login, password) {
-      const users = await this.readUsers();
+      const users = await this.everyone();
       const wanted = String(login || "").trim().toLowerCase();
       const user = users.find((entry) => String(entry.login).toLowerCase() === wanted);
       if (!user) return null;

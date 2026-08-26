@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import middleware from "../middleware.js";
 import {
   ACCOUNT,
+  ADMINS_PATH,
   CLIENT_ROLE,
   createMemoryBackend,
   createOrgStore,
@@ -13,6 +14,7 @@ import {
   parseSeed,
   usersPath,
 } from "../src/org/store.js";
+import { resolveActingAccount } from "../src/org/acting-account.js";
 import { readCookie, SESSION_COOKIE, readSession, sessionCookie, signSession } from "../src/org/session.js";
 import { readSessionUser } from "../src/server/http.js";
 
@@ -33,19 +35,75 @@ function ready() {
 test("the two people are written once and a second read changes nothing", async () => {
   const { backend, store } = ready();
   const first = await store.readUsers();
+  const admins = await store.readAdmins();
   const written = backend.files.get(usersPath());
-  assert.equal(first.length, 2);
+  const writtenAdmins = backend.files.get(ADMINS_PATH);
+
+  // The client belongs to the account and is stored under it. The Higher Roads
+  // admin belongs to none and is stored beside the account list.
+  assert.equal(first.length, 1);
   assert.equal(first[0].accountId, ACCOUNT.id);
+  assert.equal(admins.length, 1);
+  assert.equal(admins[0].accountId, null);
+  assert.notEqual(ADMINS_PATH, usersPath(), "admins are stored inside the account");
+  assert.ok(!ADMINS_PATH.includes("/clients/"), "admins are stored under an account");
 
   const second = await store.readUsers();
   assert.equal(backend.files.get(usersPath()), written, "the second read rewrote the account");
+  assert.equal(backend.files.get(ADMINS_PATH), writtenAdmins, "the second read rewrote the admins");
   assert.deepEqual(second, first);
 
   // A second store over the same storage reads the same people rather than
   // seeding a second set, so a session signed earlier still resolves.
   const again = createOrgStore({ backend, env: ENV });
   assert.deepEqual(await again.readUsers(), first);
+  assert.deepEqual(await again.readAdmins(), admins);
   assert.equal(backend.files.get(usersPath()), written);
+});
+
+test("an admin row left inside an account gives that person no account scope", async () => {
+  const { backend, store } = ready();
+
+  // What a deployment written before admins moved out still holds: both people
+  // in the account's own document.
+  backend.files.set(usersPath(), JSON.stringify({
+    account: ACCOUNT,
+    users: [
+      { id: "operator", login: "ray", displayName: "Ray Mercer", role: OPERATOR_ROLE, accountId: ACCOUNT.id, password: "scrypt$a$b" },
+      { id: "client", login: "dana", displayName: "Dana Whitlock", role: CLIENT_ROLE, accountId: ACCOUNT.id, password: "scrypt$c$d" },
+    ],
+  }));
+
+  const users = await store.readUsers();
+  assert.deepEqual(users.map((entry) => entry.id), ["client"], "the account still holds an admin");
+
+  // The admin still signs in, from the document admins live in now, and comes
+  // back carrying no account.
+  const signedIn = await store.signIn("ray", "one-password");
+  assert.equal(signedIn.role, OPERATOR_ROLE);
+  assert.equal(signedIn.accountId, null);
+  assert.equal(resolveActingAccount(signedIn), null, "an admin resolved into an account of their own");
+  assert.equal(resolveActingAccount(signedIn, "stagecraft"), "stagecraft");
+
+  // The client is unchanged and stays pinned to the account they belong to.
+  const client = await store.findUser("client");
+  assert.equal(client.accountId, ACCOUNT.id);
+  assert.equal(resolveActingAccount(client, "stagecraft"), ACCOUNT.id);
+});
+
+test("an admin naming no account lands in the first account the deployment holds", async () => {
+  const { backend, store } = ready();
+  await store.createAccount("Stagecraft");
+  const token = await signSession({ userId: "operator", role: OPERATOR_ROLE }, SECRET);
+  const request = { headers: { cookie: sessionCookie(token, {}).split(";")[0] } };
+
+  const user = await readSessionUser(request, { orgStore: store, secret: SECRET });
+  assert.equal(user.accountId, null, "the admin record carries an account");
+  assert.equal(user.actingAccount, ACCOUNT.id);
+
+  const accounts = await store.readAccounts();
+  assert.deepEqual(accounts.map((entry) => entry.id), [ACCOUNT.id, "stagecraft"]);
+  assert.ok(backend.files.get(ADMINS_PATH));
 });
 
 test("a seed value states a login, a password, and a name", () => {

@@ -491,6 +491,20 @@ Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Up
 
 Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
+## An admin with no account selected lands in the first one
+
+Recorded 2026-08-26 with brief 1 of the admin surface. A Higher Roads admin belongs to no account, so a request that names none has nothing on the record to act inside. `readSessionUser` in `src/server/http.js` reads the account list and opens the first entry. The demo account is first because it is seeded first, so nothing about the live app changed when the account came off the admin's record.
+
+An account list with several entries would open one of them for no stated reason, the same shape as the tour entry below.
+
+Bring it back when: the account lists land on the admin page. The account an admin was last working in becomes something Meridian remembers, and the picker is the only thing that decides it.
+
+## An admin row sits unread in the demo account's people
+
+Recorded 2026-08-26 with brief 1 of the admin surface. The live deployment's `clients/dierks-bentley/org/users.json` was written when both people lived inside the account. `readUsers` filters admin rows out rather than rewriting the document, because a scoping change is no place to edit stored people. The row gives nobody account scope and a test asserts that effect.
+
+Bring it back when: the people work lands. The document is rewritten to hold the account's own people and the filter comes out in the same commit.
+
 ## The active tour is the first one the account holds
 
 Recorded 2026-08-26 with the `list-tours` action. With no tour named in the address, the shell opens the account's tours sorted by id and takes the first. Every account holds one tour today, so the choice never shows. An account with two would open one of them for no stated reason.

@@ -57,7 +57,13 @@ export async function readSessionUser(request, options = {}) {
   const store = options.orgStore || createOrgStore(options);
   const user = await store.findUser(claim.userId);
   if (!user) return null;
-  return { ...user, actingAccount: resolveActingAccount(user, selectedAccountFromRequest(request)) };
+  const acting = resolveActingAccount(user, selectedAccountFromRequest(request));
+  // A Higher Roads admin belongs to no account, so a request that names none
+  // opens the first account the deployment holds. Which one that is comes from
+  // the order of the account list and is recorded in docs/deferred-work.md.
+  if (acting) return { ...user, actingAccount: acting };
+  const accounts = await store.readAccounts();
+  return { ...user, actingAccount: accounts.length ? accounts[0].id : null };
 }
 
 // The gate on every route. No session and a session that does not resolve to a
