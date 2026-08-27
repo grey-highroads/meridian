@@ -100,7 +100,7 @@ test("the live shell has the four destinations and Home uses the approved patter
   assert.doesNotMatch(script, /Foundation ready|Tour readiness/, "Home exposes architecture instead of tour language");
   assert.match(script, /Request a Scene/, "Home does not offer the primary Scene action independently");
   assert.match(script, /Welcome,/, "Home does not greet the signed-in person");
-  for (const category of ["Tour Direction", "Dates and venues", "Playback system", "Production setup", "Themes"]) {
+  for (const category of ["Creative direction", "Dates and venues", "Playback system", "Production details", "Tour-wide themes"]) {
     assert.match(script, new RegExp(category), `Tour at a glance is missing ${category}`);
   }
   assert.doesNotMatch(script, /m-lifecycle-row__fact/, "Home still splits one Scene state across several columns");
@@ -195,10 +195,10 @@ test("the Scene directory is a quiet list and Scene requests require names", () 
 
 test("an empty decision queue does not hide completed sample reviews", () => {
   const directory = read("app/reviews.js");
-  assert.match(directory, /Past reviews/, "Reviews has no route back into completed work");
+  assert.match(directory, /Completed reviews/, "Reviews has no route back into completed work");
   assert.match(directory, /\["Final approved", "Delivered"\]/, "Reviews does not limit recent work to completed review states");
   assert.doesNotMatch(directory, /Open past work/, "the past-review section still reads like a card action");
-  assert.match(directory, /Artboard or Scene concept needs your decision/, "the empty queue does not name what is clear");
+  assert.match(directory, /Nothing needs your review/, "the empty queue does not name what is clear");
   const review = read("app/review.js");
   assert.match(review, /was approved by the client/, "completed review does not show its exact approved version");
   assert.match(review, /read only/, "completed review still presents itself as an active decision");
@@ -217,16 +217,16 @@ test("empty states name the job and use the shared visual family", () => {
 
 test("empty screens speak to the person holding the work", () => {
   const home = read("app/home.js");
-  assert.match(home, /You are clear for now/, "Home does not reassure a person with no assigned work");
-  assert.match(home, /Give the tour its first Scene/, "Home does not open the first creative job");
+  assert.match(home, /Nothing needs you right now/, "Home does not reassure a person with no assigned work");
+  assert.match(home, /Request the first Scene/, "Home does not open the first creative job");
 
   const scenes = read("app/scenes.js");
   assert.match(scenes, /song, an intro, a transition/, "Scenes does not explain what a Scene can be");
   assert.match(scenes, /One sentence is enough/, "Scenes makes a first request feel heavier than it is");
 
   const tour = read("app/tour.js");
-  assert.match(tour, /Store the director's words as given/, "Tour Direction empty state does not explain why the direction matters");
-  assert.match(tour, /Scenes can still be requested and developed/, "optional themes read like a blocker");
+  assert.match(tour, /What should guide the creative work across the tour/, "Tour Direction empty state does not ask for the direction plainly");
+  assert.match(tour, /You can still request and develop Scenes/, "optional themes read like a blocker");
 
   const scene = read("app/scene.js");
   assert.match(scene, /You can shape this Scene from the request/, "Scene does not explain work before Tour Direction arrives");
@@ -239,7 +239,7 @@ test("empty screens speak to the person holding the work", () => {
   const handoff = read("app/handoff.js");
   assert.match(handoff, /Freeze the brief before handoff/, "handoff does not name the required first step");
   const artist = read("app/artist.js");
-  assert.match(artist, /Build the Brain from real research/, "Artist Brain does not start with the manual research job");
+  assert.match(artist, /Build the Artist Brain/, "Artist Brain does not start with the manual research job");
 });
 
 test("review decisions lead instead of hiding in a footer", () => {

@@ -93,10 +93,10 @@ function stageOf(scene) {
 // stage, and the buttons that carry them, belong to the Scene workspace.
 function jobAt(stage, scene) {
   if (stage === STAGES.delivered) {
-    return { waitingOn: PARTIES.noOne, nextAction: "Nothing is outstanding on this Scene." };
+    return { waitingOn: PARTIES.noOne, nextAction: "Final media has been delivered." };
   }
   if (stage === STAGES.finalApproved) {
-    return { waitingOn: PARTIES.production, nextAction: "Hand the approved version to production." };
+    return { waitingOn: PARTIES.production, nextAction: "Prepare the approved version for final delivery." };
   }
   if (stage === STAGES.productionReview) {
     const artboards = list(scene.artboards);
@@ -105,20 +105,20 @@ function jobAt(stage, scene) {
     const cleared = list((scene.approvals || {}).readyForClient)
       .some((entry) => Number(entry.artboardVersion) === latest);
     return cleared
-      ? { waitingOn: PARTIES.client, nextAction: "Wait for the client's decision on the latest version." }
-      : { waitingOn: PARTIES.higherRoads, nextAction: "Review the latest version." };
+      ? { waitingOn: PARTIES.client, nextAction: "Review the latest version." }
+      : { waitingOn: PARTIES.higherRoads, nextAction: "Review the latest version before it goes to the client." };
   }
   if (stage === STAGES.approvedForProduction) {
-    return { waitingOn: PARTIES.production, nextAction: "Wait for production to send the artboard back." };
+    return { waitingOn: PARTIES.production, nextAction: "The media team is working on the next version." };
   }
   if (stage === STAGES.conceptReview) {
-    return { waitingOn: PARTIES.higherRoads, nextAction: "Send the brief to production." };
+    return { waitingOn: PARTIES.higherRoads, nextAction: "Send the brief to the media team." };
   }
   if (stage === STAGES.conceptInDevelopment) {
-    return { waitingOn: PARTIES.higherRoads, nextAction: "Freeze the brief for the chosen concept." };
+    return { waitingOn: PARTIES.higherRoads, nextAction: "Prepare this Scene for production." };
   }
   if (stage === STAGES.requested) {
-    return { waitingOn: PARTIES.higherRoads, nextAction: "Develop a concept for this Scene." };
+    return { waitingOn: PARTIES.higherRoads, nextAction: "Develop this Scene." };
   }
   return { waitingOn: PARTIES.higherRoads, nextAction: "Finish the request and submit it." };
 }

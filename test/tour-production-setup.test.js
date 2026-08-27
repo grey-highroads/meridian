@@ -159,8 +159,8 @@ test("the tour home shows the setup and says nothing in system vocabulary", () =
   const script = fs.readFileSync(path.join(rootPath, "app/tour.js"), "utf8");
   const markup = fs.readFileSync(path.join(rootPath, "app/tour.html"), "utf8");
   assert.ok(script.includes("Production setup"), "the section is on the page");
-  assert.ok(script.includes("Supplied by"));
-  assert.ok(script.includes("Dates where the rig differs"));
+  assert.ok(script.includes("Added by"));
+  assert.ok(script.includes("Setup changes by venue"));
   const sheets = markup.match(/<link[^>]*rel="stylesheet"[^>]*>/g) || [];
   assert.equal(sheets.length, 1);
   assert.match(sheets[0], /\.\/design\/index\.css/);

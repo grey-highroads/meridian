@@ -153,8 +153,9 @@ test("Admin asks for the artist in the same step and keeps both values on a fail
 test("the tour page agrees with itself and points a Higher Roads reader at the artist", () => {
   const page = read("app/new-tour.js");
   assert.match(page, /<span class="m-label">Start the tour<\/span>/, "the label no longer says start the tour");
-  assert.match(page, /<h1 class="m-heading">Start the tour Meridian works on\.<\/h1>/, "the heading and the label disagree");
+  assert.match(page, /<h1 class="m-heading">Name the tour<\/h1>/, "the page does not lead with the one required action");
   assert.doesNotMatch(page, /Higher Roads adds the artist/, "the page still tells Higher Roads that Higher Roads will do it");
-  assert.match(page, /This account holds no artist yet, and a tour sits under an artist/, "the plain sentence for a client reader is gone");
+  assert.match(page, /Higher Roads needs to add the artist before you can start a tour/, "the client does not get a plain explanation when the artist is missing");
+  assert.match(page, /Add an artist to this account before starting a tour/, "Higher Roads does not get a direct next step when the artist is missing");
   assert.match(page, /view\.role === "higher-roads" \? .*admin\.html/, "a Higher Roads reader gets no way to add the artist");
 });

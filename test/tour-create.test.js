@@ -90,7 +90,7 @@ test("the demo id with nothing stored is absent, and so is any other unknown id"
   for (const tourId of ["off-the-map-2026", "no-such-tour"]) {
     await assert.rejects(
       () => tourAction({ action: "get-tour", tourId }, options),
-      (error) => error.status === 404 && error.message === "No tour is stored under that name.",
+      (error) => error.status === 404 && error.message === "We couldn't find this tour.",
     );
   }
 });

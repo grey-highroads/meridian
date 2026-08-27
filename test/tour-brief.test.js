@@ -244,7 +244,7 @@ test("freezing stores the version, and a frozen version is never rewritten", asy
   // rewriting what someone was handed.
   await assert.rejects(
     () => withConcept(options, { title: "A different idea" }),
-    /A brief is already frozen for this assignment/,
+    /A brief is already frozen for this Scene/,
   );
   assert.equal(tourBackend.files.get(briefsPath), stored.get(briefsPath));
 

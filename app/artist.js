@@ -174,7 +174,7 @@ function reader(groups) {
   const entries = entriesFrom(selected);
   const category = PART_LABELS.find((part) => part.id === view.part);
   const identity = IDENTITY_LABELS.find((entry) => entry.id === view.identity);
-  const title = category ? category.name : "Approved intelligence";
+  const title = category ? category.name : "Approved guidance";
   const scope = view.identity ? identity.name : "Across both identities";
   const initialLimit = 4;
   const visible = entries.slice(0, initialLimit);
@@ -188,7 +188,7 @@ function reader(groups) {
     : `<div class="m-empty-inline"><span class="m-label">No approved guidance here</span><p class="m-copy">This Brain has no ${escape(title.toLowerCase())} guidance for ${escape(scope.toLowerCase())}. Try another category or identity.</p></div>`;
   const provenance = entries.length ? `<details class="m-intelligence-provenance" data-provenance${view.provenance ? " open" : ""}>
       <summary>
-        <span class="m-label">Evidence and provenance</span>
+        <span class="m-label">Evidence and sources</span>
         <span class="m-meta">WHAT THIS RESTS ON</span>
       </summary>
       <div class="m-intelligence-provenance__body">${entries.map(evidenceItem).join("")}</div>
@@ -196,7 +196,7 @@ function reader(groups) {
   return `<section class="m-intelligence-browser__reader" aria-labelledby="selected-intelligence-heading">
       <div class="m-intelligence-reader">
         <header class="m-intelligence-reader__head">
-          <span class="m-label">Selected intelligence</span>
+          <span class="m-label">Approved guidance</span>
           <h2 id="selected-intelligence-heading" class="m-heading">${escape(title)}</h2>
           <span class="m-meta">${escape(scope.toUpperCase())}</span>
         </header>
@@ -224,16 +224,16 @@ function browser(brain, groups) {
 function summaryLine(brain) {
   if (!brain.artist) return "Nothing has been imported for this artist yet.";
   if (!brain.approved) {
-    return `${brain.counts.findings} ready to approve, from ${brain.counts.claims} claims across ${brain.counts.sources} sources. Nothing is in the brain until you approve it.`;
+    return `${brain.counts.findings} findings from ${brain.counts.sources} sources are ready to review. Approve the Brain before it can guide a Scene.`;
   }
   const removed = brain.counts.removed ? `, ${brain.counts.removed} taken out` : "";
-  return `${brain.counts.inBrain} in the brain${removed}, from ${brain.counts.claims} claims across ${brain.counts.sources} sources.`;
+  return `${brain.counts.inBrain} approved findings${removed}, from ${brain.counts.sources} sources.`;
 }
 
 function head(brain) {
   const name = brain.artist ? brain.artist.name : ARTIST_ID;
   const state = brain.approved ? "m-state m-state--approved" : "m-state m-state--current";
-  const stateText = brain.approved ? "Approved intelligence" : "Not approved yet";
+  const stateText = brain.approved ? "Brain approved" : "Needs approval";
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
       <span class="m-breadcrumb__current">Artist Brain</span>
     </nav>
@@ -255,10 +255,10 @@ function actionBar(brain) {
     return;
   }
   const approve = brain.artist
-    ? `<button class="m-button m-button--primary" type="button" data-approve-brain>Approve this brain</button>`
+    ? `<button class="m-button m-button--primary" type="button" data-approve-brain>Approve the Brain</button>`
     : "";
   const context = brain.artist
-    ? "Read what came in, then approve the whole brain and take out what should not be in it."
+    ? "Review the findings, then approve the Brain."
     : "Import the intake files to begin review.";
   operator.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
     <div class="m-action-bar__actions">
@@ -275,8 +275,8 @@ function firstBrain() {
       </div>
       <div class="m-empty-state__body">
         <span class="m-label">Higher Roads research</span>
-        <h2 id="first-brain-heading" class="m-section-heading">Build the Brain from real research</h2>
-        <p class="m-copy m-copy--large">Start with the intake files the team already trusts. Higher Roads reviews and approves the research before it can contribute to a Scene.</p>
+        <h2 id="first-brain-heading" class="m-section-heading">Build the Artist Brain</h2>
+        <p class="m-copy m-copy--large">Import the research Higher Roads has gathered, then review and approve it before it guides a Scene.</p>
         <div class="m-empty-state__actions"><button class="m-button m-button--primary" type="button" data-import>Import intake files</button><span class="m-meta">NOTHING ENTERS AUTOMATICALLY</span></div>
       </div>
     </section>`;
@@ -324,7 +324,7 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       target.disabled = true;
       const result = await call("import-intake");
-      view.message = `Imported ${result.counts.findings} entries, ${result.counts.claims} claims and ${result.counts.sources} sources.`;
+      view.message = `Imported ${result.counts.findings} findings from ${result.counts.sources} sources.`;
       await render();
     });
     return;
@@ -352,7 +352,7 @@ document.addEventListener("click", (event) => {
       target.disabled = true;
       const result = await call("approve-brain");
       view.mode = "brain";
-      view.message = `${result.counts.inBrain} entries are in the brain.`;
+      view.message = `${result.counts.inBrain} findings are now in the Brain.`;
       await render();
     });
     return;

@@ -26,7 +26,7 @@ test("a session from another account asking for the demo tour gets absence, not 
   const tourStore = createTourStore({ backend: createMemoryBackend(), accountId: "stagecraft" });
   await assert.rejects(
     () => tourAction({ action: "get-tour", tourId: "off-the-map-2026" }, { user: OTHER_CLIENT, tourStore }),
-    (error) => error.status === 404 && error.message === "No tour is stored under that name.",
+    (error) => error.status === 404 && error.message === "We couldn't find this tour.",
   );
 });
 

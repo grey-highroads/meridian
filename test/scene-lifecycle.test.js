@@ -57,26 +57,26 @@ const ARTBOARD_ONE = { artboard: { artboardVersion: 1, briefVersion: 1 } };
 
 const SNAPSHOTS = [
   ["draft request", {}, STAGES.draftRequest, null, "Higher Roads", "Finish the request and submit it."],
-  ["requested", { request: REQUEST }, STAGES.requested, null, "Higher Roads", "Develop a concept for this Scene."],
+  ["requested", { request: REQUEST }, STAGES.requested, null, "Higher Roads", "Develop this Scene."],
   [
     "concept in development",
     { request: REQUEST, concept: CONCEPT },
-    STAGES.conceptInDevelopment, null, "Higher Roads", "Freeze the brief for the chosen concept.",
+    STAGES.conceptInDevelopment, null, "Higher Roads", "Prepare this Scene for production.",
   ],
   [
     "concept review",
     { request: REQUEST, concept: CONCEPT, briefs: [FROZEN_BRIEF] },
-    STAGES.conceptReview, "Brief V01", "Higher Roads", "Send the brief to production.",
+    STAGES.conceptReview, "Brief V01", "Higher Roads", "Send the brief to the media team.",
   ],
   [
     "approved for production",
     { request: REQUEST, concept: CONCEPT, briefs: [FROZEN_BRIEF], facts: [SENT_FACT] },
-    STAGES.approvedForProduction, "Brief V01", "production", "Wait for production to send the artboard back.",
+    STAGES.approvedForProduction, "Brief V01", "production", "The media team is working on the next version.",
   ],
   [
     "production review",
     { request: REQUEST, concept: CONCEPT, briefs: [FROZEN_BRIEF], facts: [SENT_FACT], artboards: [ARTBOARD_ONE] },
-    STAGES.productionReview, "Artboard V01", "Higher Roads", "Review the latest version.",
+    STAGES.productionReview, "Artboard V01", "Higher Roads", "Review the latest version before it goes to the client.",
   ],
   [
     "final approved",
@@ -86,7 +86,7 @@ const SNAPSHOTS = [
       artboards: [ARTBOARD_ONE],
       approvals: { readyForClient: [{ artboardVersion: 1 }], clientApprovals: [{ artboardVersion: 1 }] },
     },
-    STAGES.finalApproved, "Artboard V01", "production", "Hand the approved version to production.",
+    STAGES.finalApproved, "Artboard V01", "production", "Prepare the approved version for final delivery.",
   ],
   [
     "delivered",
@@ -97,7 +97,7 @@ const SNAPSHOTS = [
       approvals: { clientApprovals: [{ artboardVersion: 1 }] },
       deliveries: [{ artboardVersion: 1 }],
     },
-    STAGES.delivered, "Artboard V01", "no one", "Nothing is outstanding on this Scene.",
+    STAGES.delivered, "Artboard V01", "no one", "Final media has been delivered.",
   ],
 ];
 
@@ -124,7 +124,7 @@ test("a cleared version moves the party to the client without moving the stage",
   const state = sceneLifecycle(scene);
   assert.equal(state.stage, STAGES.productionReview);
   assert.equal(state.waitingOn, "the client");
-  assert.equal(state.nextAction, "Wait for the client's decision on the latest version.");
+  assert.equal(state.nextAction, "Review the latest version.");
 });
 
 test("the current version is the most advanced Scene object and never the tour's direction version", () => {
@@ -157,7 +157,7 @@ test("real actions produce every state the current stand-in can show", async () 
   scene = await sceneState(options);
   assert.equal(scene.stage, STAGES.conceptReview);
   assert.equal(scene.currentVersion, "Brief V01");
-  assert.equal(scene.nextAction, "Send the brief to production.");
+  assert.equal(scene.nextAction, "Send the brief to the media team.");
 
   await tourAction({ action: "send-brief", ...AT }, options);
   scene = await sceneState(options);
@@ -175,7 +175,7 @@ test("real actions produce every state the current stand-in can show", async () 
   assert.equal(scene.stage, STAGES.finalApproved);
   assert.equal(scene.currentVersion, "Artboard V01");
   assert.equal(scene.waitingOn, "production");
-  assert.equal(scene.nextAction, "Hand the approved version to production.");
+  assert.equal(scene.nextAction, "Prepare the approved version for final delivery.");
 });
 
 // The stand-in stores the first artboard inside the same send action. Approved

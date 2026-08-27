@@ -40,7 +40,7 @@ function artistField() {
     // Higher Roads reads this and can go and do it. A client reads the same
     // sentence without the way in, because the artist is ours to add.
     return `<div class="m-callout m-callout--change">
-        <p class="m-copy">This account holds no artist yet, and a tour sits under an artist. The tour can be started once the artist is there.</p>
+        <p class="m-copy">${view.role === "higher-roads" ? "Add an artist to this account before starting a tour." : "Higher Roads needs to add the artist before you can start a tour."}</p>
         ${view.role === "higher-roads" ? `<div class="m-cluster"><a class="m-button m-button--small" href="./admin.html">Add the artist</a></div>` : ""}
       </div>`;
   }
@@ -55,8 +55,8 @@ function render() {
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./index.html">Home</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Start the tour</span></nav>`;
   root.innerHTML = `<header class="m-form-page__intro">
       <span class="m-label">Start the tour</span>
-      <h1 class="m-heading">Start the tour Meridian works on.</h1>
-      <p class="m-copy m-copy--large">The name is all Meridian needs. Direction, dates, production details, and Scenes all sit under the tour once it exists.</p>
+      <h1 class="m-heading">Name the tour</h1>
+      <p class="m-copy m-copy--large">The tour name is the only required field. Add the rest if you know it.</p>
     </header>
     <div class="m-form-page__work">
       ${artistField()}
@@ -67,18 +67,17 @@ function render() {
       <div class="m-field">
         <label class="m-label" for="approximate-dates">Rough dates</label>
         <input class="m-input" id="approximate-dates" data-field="approximateDates" value="${escape(view.approximateDates)}" placeholder="For example, May to September" />
-        <span class="m-help">Optional. The full route goes in Tour details later.</span>
+        <span class="m-help">Optional. Add the full route in Tour details later.</span>
       </div>
       <div class="m-field">
         <label class="m-label" for="contact">Main contact</label>
-        <input class="m-input" id="contact" data-field="primaryContact" value="${escape(view.primaryContact)}" placeholder="Who Meridian comes back to" />
-        <span class="m-help">Optional. You are filled in here, and anyone else can take it.</span>
+        <input class="m-input" id="contact" data-field="primaryContact" value="${escape(view.primaryContact)}" placeholder="Name" />
+        <span class="m-help">Optional.</span>
       </div>
       ${view.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
       <div class="m-cluster">
         <button class="m-button m-button--primary" type="button" data-create ${view.working || !view.artists.length ? "disabled" : ""}>${view.working ? "Starting" : "Start the tour"}</button>
       </div>
-      <p class="m-copy">Add what you know now, the rest can wait.</p>
     </div>`;
 }
 

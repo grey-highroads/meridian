@@ -18,19 +18,26 @@ function escape(value) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function number(index) {
-  return String(index + 1).padStart(2, "0");
+async function call(action) {
+  const response = await fetch("/api/tour", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID })),
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || "Meridian could not load these Scenes. Refresh the page and try again.");
+  return body;
 }
 
-function sceneRow(entry, index) {
+function sceneRow(entry) {
   const link = `./scene.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(entry.id)}`;
-  const moment = entry.moment ? ` / ${String(entry.moment).toUpperCase()}` : "";
+  const moment = entry.moment ? String(entry.moment).toUpperCase() : "SCENE";
   return `<a class="m-rule-row m-scene-row" href="${escape(link)}">
       <div class="m-stack">
-        <span class="m-meta">SCENE ${number(index)}${escape(moment)}</span>
+        <span class="m-meta">${escape(moment)}</span>
         <span class="m-rule-row__title">${escape(entry.title)}</span>
       </div>
-      <span class="m-scene-row__open" aria-hidden="true">Open</span>
+      <span class="m-scene-row__open" aria-hidden="true">Open Scene</span>
     </a>`;
 }
 
@@ -42,12 +49,10 @@ function firstScene() {
           <path d="M20 32h24M32 20v24"></path>
           <path d="M6 24v-8a4 4 0 0 1 4-4h8M58 40v8a4 4 0 0 1-4 4h-8"></path>
         </svg>
-        <span class="m-empty-state__calibration">Scene register / Open</span>
       </div>
       <div class="m-empty-state__body">
-        <span class="m-label">Start the work</span>
         <h2 id="first-scene-heading" class="m-section-heading">Request the first Scene</h2>
-        <p class="m-copy m-copy--large">A Scene can be a song, an intro, a transition, or any show moment that needs media. Name it and tell us what the moment should do. One sentence is enough.</p>
+        <p class="m-copy m-copy--large">A Scene can be a song, an intro, a transition, or any moment that needs screen content. Name it and tell Higher Roads what it should do. One sentence is enough.</p>
         <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a><span class="m-meta">REFERENCES ARE OPTIONAL</span></div>
       </div>
     </section>`;
@@ -59,16 +64,10 @@ async function load() {
     showNoTour(scenes, locationBar);
     return;
   }
-  scenes.innerHTML = `<p class="m-copy">Reading the tour.</p>`;
+  scenes.innerHTML = `<p class="m-copy">Loading Scenes…</p>`;
   let body;
   try {
-    const response = await fetch("/api/tour", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(scopedBody({ action: "get-tour", tourId: TOUR_ID })),
-    });
-    body = await response.json();
-    if (!response.ok) throw new Error(body.error || "That did not work.");
+    body = await call("get-tour");
   } catch (error) {
     locationBar.innerHTML = "";
     scenes.innerHTML = `<p class="m-copy">${escape(error.message)}</p>`;

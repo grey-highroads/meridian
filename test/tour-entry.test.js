@@ -63,7 +63,7 @@ test("an engaged client can request a thin Scene against the current direction",
   const { assignments } = await tourAction({ action: "get-tour", tourId: TOUR }, options);
   const stored = assignments.find((entry) => entry.id === assignment.id);
   assert.equal(stored.stage, "Requested");
-  assert.equal(stored.nextAction, "Develop a concept for this Scene.");
+  assert.equal(stored.nextAction, "Develop this Scene.");
 
   const scene = await tourAction({ action: "get-assignment", tourId: TOUR, assignmentId: assignment.id }, options);
   assert.equal(scene.assignment.request, assignment.request);

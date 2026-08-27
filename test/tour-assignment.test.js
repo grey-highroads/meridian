@@ -113,11 +113,11 @@ test("a tour that does not exist and an assignment that does not exist both fail
   const { store, tourStore } = await brainReady();
   await assert.rejects(
     () => tourAction({ action: "get-tour", tourId: "no-such-tour" }, { store, tourStore, user: OPERATOR }),
-    /No tour is stored under that name/,
+    /We couldn't find this tour/,
   );
   await assert.rejects(
     () => tourAction({ action: "get-assignment", tourId: TOUR, assignmentId: "no-such-assignment" }, { store, tourStore, user: OPERATOR }),
-    /That assignment was not found on this tour/,
+    /We couldn't find that Scene on this tour/,
   );
 });
 

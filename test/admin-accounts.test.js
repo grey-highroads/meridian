@@ -358,6 +358,17 @@ test("Admin shows the four lists and no longer carries the finished migration ac
   }
 });
 
+test("every destructive Admin row requires a confirmation and keeps a refusal visible", () => {
+  const admin = readSource("app/admin.js", "utf8");
+  for (const field of ["confirm", "confirm-tour", "confirm-person"]) {
+    assert.match(admin, new RegExp(`data-field="${field}"`), `${field} confirmation is missing`);
+  }
+  for (const act of ["data-arm-delete", "data-arm-tour-delete", "data-arm-person-delete"]) {
+    assert.match(admin, new RegExp(act), `${act} does not arm its destructive action`);
+  }
+  assert.match(admin, /if \(failure\) \{\s*view\.error = failure;\s*render\(\);/s, "a destructive refusal disappears when the lists reload");
+});
+
 // The row acts. Ruled 2026-08-26 in docs/spec-admin-surface.md: set which tour
 // is active, delete a tour, delete an account.
 

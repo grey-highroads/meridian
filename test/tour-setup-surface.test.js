@@ -165,12 +165,12 @@ test("saving the route leaves the tour's direction and Scenes alone", async () =
   assert.equal(after.tour.dates.length, 1);
 });
 
-test("Home has three shapes and the third one is untouched", () => {
+test("Home has three shapes and keeps the operational one intact", () => {
   const home = read("app/home.js");
   assert.match(home, /new-tour\.html/, "Home with no tour does not offer to start one");
   assert.doesNotMatch(home, /no-tour\.js/, "Home still shows the shared block instead of its own shape");
 
-  for (const line of ["No creative direction yet", "No dates yet", "No production details yet", "No Scenes yet"]) {
+  for (const line of ["Creative direction", "Dates and venues", "Production details", "Scenes", "Not added", "Not requested"]) {
     assert.match(home, new RegExp(line), `the setup lines are missing "${line}"`);
   }
   assert.match(home, /A good next step/, "no line is marked as the most useful next thing");
@@ -178,7 +178,7 @@ test("Home has three shapes and the third one is untouched", () => {
   assert.match(home, /tour\.html\?tour=\$\{encodeURIComponent\(TOUR_ID\)\}#direction-heading/, "the direction line does not open where the direction sits");
   assert.match(home, /lines\.find\(\(line\) => !line\.filled\)/, "the suggestion is not the first unfilled line");
 
-  for (const kept of ["You are clear for now", "Give the tour its first Scene", "Welcome,", "m-home__layout"]) {
+  for (const kept of ["Nothing needs you right now", "Request the first Scene", "Welcome,", "m-home__layout"]) {
     assert.match(home, new RegExp(kept.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `the operational Home lost "${kept}"`);
   }
 });
@@ -186,7 +186,7 @@ test("Home has three shapes and the third one is untouched", () => {
 test("starting the tour is a client job on its own page and no longer an Admin act", () => {
   const page = read("app/new-tour.js");
   assert.match(page, /action: "create-tour"/, "the tour page does not create the tour");
-  assert.match(page, /Add what you know now, the rest can wait/, "the tour page does not say the rest can wait");
+  assert.match(page, /The tour name is the only required field\. Add the rest if you know it\./, "the tour page does not say the rest can wait");
   assert.match(page, /view\.primaryContact = me\.user\.displayName/, "the signed-in person is not filled in as the contact");
   assert.match(page, /view\.artists\.length === 1/, "the artist is a picker when the account holds one");
   assert.match(page, /view\.message = error\.message;\s*\n\s*render\(\);/, "a refused create loses what was typed");

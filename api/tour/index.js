@@ -37,7 +37,7 @@ async function loadTour(tourId, options) {
   const tourStore = options.tourStore || createTourStore({ accountId: options.actingAccount });
   const stored = await tourStore.readTour(tourId);
   if (!stored) {
-    const error = new Error("No tour is stored under that name.");
+    const error = new Error("We couldn't find this tour.");
     error.status = 404;
     throw error;
   }
@@ -73,7 +73,7 @@ function requestId(title, assignments, at = Date.now()) {
 function findAssignment(fixture, assignmentId) {
   const assignment = fixture.assignments.find((entry) => entry.id === assignmentId);
   if (!assignment) {
-    const error = new Error("That assignment was not found on this tour.");
+    const error = new Error("We couldn't find that Scene on this tour.");
     error.status = 404;
     throw error;
   }
@@ -337,12 +337,12 @@ export async function handleAction(body, options = {}) {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const words = String(body.words || "").trim();
     if (!words) {
-      const error = new Error("Add the director's words before saving Tour Direction.");
+      const error = new Error("Add the tour's direction before saving.");
       error.status = 400;
       throw error;
     }
     if (words === fixture.tour.direction.words) {
-      const error = new Error("Those words already are the current Tour Direction.");
+      const error = new Error("That is already the current direction.");
       error.status = 409;
       throw error;
     }
@@ -638,7 +638,7 @@ export async function handleAction(body, options = {}) {
     }
     const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     if (briefs.some((entry) => entry.status === "frozen")) {
-      const error = new Error("A brief is already frozen for this assignment. Changing the concept now means a new brief version.");
+      const error = new Error("A brief is already frozen for this Scene. Changing the concept now means a new brief version.");
       error.status = 409;
       throw error;
     }

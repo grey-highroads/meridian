@@ -17,20 +17,20 @@ function escape(value) {
 
 function render() {
   if (!token) {
-    root.innerHTML = `<h1 class="m-heading">This link is not complete</h1>
-      <p class="m-copy m-copy--large">Open the link exactly as it was sent to you. If it was cut in half by a mail app, ask for a new one.</p>`;
+    root.innerHTML = `<h1 class="m-heading">This link does not work</h1>
+      <p class="m-copy m-copy--large">Ask Higher Roads for a new link.</p>`;
     return;
   }
   if (state.done) {
-    root.innerHTML = `<h1 class="m-heading">You are set</h1>
+    root.innerHTML = `<h1 class="m-heading">You are ready</h1>
       <p class="m-copy m-copy--large">Your password is saved and you are signed in.</p>
-      <div class="m-cluster"><a class="m-button m-button--primary" href="./index.html">Go to Meridian</a></div>`;
+      <div class="m-cluster"><a class="m-button m-button--primary" href="./index.html">Open Meridian</a></div>`;
     return;
   }
   const short = state.password.length > 0 && state.password.length < 10;
   const mismatch = state.again.length > 0 && state.password !== state.again;
   root.innerHTML = `<h1 class="m-heading">Set your password</h1>
-    <p class="m-copy m-copy--large">Meridian never sets a password for you. Pick one here and it is yours.</p>
+    <p class="m-copy m-copy--large">Choose a password for your Meridian account.</p>
     <div class="m-field">
       <label class="m-label" for="password">Password</label>
       <input class="m-input" id="password" type="password" data-field="password" value="${escape(state.password)}" autocomplete="new-password">
@@ -42,7 +42,7 @@ function render() {
       ${mismatch ? `<span class="m-meta">The two do not match yet.</span>` : ""}
     </div>
     <div class="m-cluster">
-      <button class="m-button m-button--primary" type="button" data-save ${state.working || short || mismatch || !state.password ? "disabled" : ""}>${state.working ? "Saving" : "Save it"}</button>
+      <button class="m-button m-button--primary" type="button" data-save ${state.working || short || mismatch || !state.password ? "disabled" : ""}>${state.working ? "Saving" : "Save password"}</button>
     </div>
     ${state.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(state.message)}</p></div>` : ""}`;
 }
