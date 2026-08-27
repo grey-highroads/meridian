@@ -624,3 +624,9 @@ Bring it back when: a person deciding what to build asks for what the artist's h
 Recorded 2026-08-27 with the Scene page rebuild. A tour date row carries a date, a venue name, and a place, all free text. Screen count, stage geometry, and rig detail live inside the production setup as one block of prose stored as the production designer supplied it. The Scene page shows what exists and says plainly that this is prose rather than fields, because inventing structure that is not there would be worse than the gap.
 
 Bring it back when: a Higher Roads person deciding a concept will not fit a room needs the screen count and stage geometry as fields rather than prose.
+
+## Reference facts carried no name or location until 2026-08-27
+
+Recorded 2026-08-27 as a fix rather than a deferral, kept here because the gap outlived two commits. `appendFact` in `src/tour/scene-record.js` built a fixed entry and dropped `pathname`, `filename`, and `contentType`, while `reference-record` in `api/tour-upload.js` sent all three and `reference-list` read all three back. Every reference ever recorded was stored without a name or a location, so the list returned rows of undefined. Together with the undeclared identifier fixed in `670393e6`, reference images have never worked end to end. Both legs are now covered by tests that assert stored contents.
+
+No condition to bring back. This entry is a record of how long a two-sided gap can sit between a writer and a reader that no test crossed.

@@ -1,13 +1,18 @@
 import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
 
-// A Scene. What the client asked for, the references they attached, what the
-// tour holds that bears on the work, an optional note, and two ways out: ask
-// the client a question, or send the work to production.
+// A Scene, read two ways.
 //
-// Nobody chooses which parts of the tour direction travel. Meridian decides,
-// and all of it travels, because the direction is the governing document and
-// the brief already names the version it was written against. The same rule
-// covers the dates where the rig differs. Ruled 2026-08-27.
+// A client opens a Scene for one reason: Higher Roads asked her something and
+// Home sent her here. So she gets the question first, an answer box under it,
+// one line telling her whether anything else needs her, and her own request as
+// a quiet reference. Nothing else on this page is her job.
+//
+// A Higher Roads person opens a Scene to decide what to do with a request:
+// read it, check it against what the venues can take, jot a reminder, then ask
+// the client something or send it to production.
+//
+// Attaching a reference image happens where the asking happens, on the request
+// screen. Both views show what is attached; neither takes an upload.
 
 const PARAMS = new URLSearchParams(window.location.search);
 
@@ -20,9 +25,9 @@ const view = {
   user: null,
   tour: null,
   assignment: null,
+  state: null,
   context: null,
   references: [],
-  referenceMessage: "",
   concept: null,
   questions: [],
   brief: null,
@@ -76,29 +81,178 @@ function paragraphs(text) {
     .join("");
 }
 
+// A date a person would say out loud. A value that does not read as a date is
+// shown exactly as it was stored, because a guessed date is worse than the
+// text somebody typed.
+function readableDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return text;
+  return parsed.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+}
+
+function openQuestions() {
+  return view.questions.filter((entry) => !entry.answer);
+}
+
+function answeredQuestions() {
+  return view.questions.filter((entry) => entry.answer);
+}
+
 // ---------------------------------------------------------------------------
-// The request, as it arrived, with whatever the client attached to it
+// Questions. A question, an answer, and who said each.
 // ---------------------------------------------------------------------------
 
-function requestWork() {
+function answerBox(entry) {
+  return `<div class="m-field">
+      <label class="m-label" for="answer-${escape(entry.id)}">Your answer</label>
+      <textarea class="m-textarea" id="answer-${escape(entry.id)}" data-answer="${escape(entry.id)}">${escape(view.draft.answers[entry.id] || "")}</textarea>
+      <button class="m-button m-button--primary" type="button" data-send-answer="${escape(entry.id)}">Send answer</button>
+    </div>`;
+}
+
+function questionRow(entry) {
+  const asked = readableDate(entry.askedAt);
+  const answered = entry.answer
+    ? `<div class="m-contribution">
+        <span class="m-contribution__source">${escape(entry.answeredBy)}, ${escape(readableDate(entry.answeredAt))}</span>
+        <p class="m-copy">${escape(entry.answer)}</p>
+      </div>`
+    : isOperator()
+      ? `<p class="m-meta">WAITING ON THE CLIENT</p>`
+      : answerBox(entry);
+  return `<article class="m-contribution">
+      <span class="m-contribution__source">${escape(entry.askedBy)}${asked ? `, ${escape(asked)}` : ""}</span>
+      <p class="m-copy">${escape(entry.text)}</p>
+      ${answered}
+    </article>`;
+}
+
+function questionMessage() {
+  return view.messageAt === "questions" && view.message
+    ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>`
+    : "";
+}
+
+// ---------------------------------------------------------------------------
+// The client's Scene
+// ---------------------------------------------------------------------------
+
+// The question is the reason she is here, so it is the first thing on the page
+// with the box already open under it. Answered ones stay below it so the
+// exchange is still readable with both names on it.
+function clientQuestions() {
+  if (!view.questions.length) return "";
+  const open = openQuestions().map(questionRow).join("");
+  const done = answeredQuestions().map(questionRow).join("");
+  const heading = open.length
+    ? "Higher Roads asked you something"
+    : "What Higher Roads asked you";
+  return `<section class="m-scene-source" aria-labelledby="client-questions-heading">
+      <div class="m-scene-source__head">
+        <h2 id="client-questions-heading" class="m-scene-work-heading">${heading}</h2>
+      </div>
+      <div class="m-stack">${open}${questionMessage()}${done}</div>
+    </section>`;
+}
+
+// One line saying whether anything needs her, in words she would use. No
+// version numbers and no system words.
+function clientStatus() {
+  const state = view.state || {};
+  const stage = state.stage;
+  if (openQuestions().length) {
+    return { line: "Answer the question above when you can. Nothing else is needed from you.", link: null };
+  }
+  if (stage === "Production review" && state.waitingOn === "the client") {
+    return {
+      line: "New work is ready for you to look at.",
+      link: `./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}`,
+    };
+  }
+  if (stage === "Delivered") return { line: "This Scene has been delivered. Nothing is needed from you.", link: null };
+  if (stage === "Final approved") return { line: "You approved this Scene. The media team is finishing it. Nothing is needed from you.", link: null };
+  if (stage === "Production review") return { line: "Higher Roads is looking at the work that came back. Nothing is needed from you.", link: null };
+  if (stage === "Approved for production") return { line: "The media team is building this Scene. Nothing is needed from you.", link: null };
+  if (stage === "Concept review") return { line: "Higher Roads is getting this Scene ready for the media team. Nothing is needed from you.", link: null };
+  if (stage === "Draft request") return { line: "This request has not been sent yet.", link: null };
+  return { line: "Higher Roads is developing this Scene. Nothing is needed from you.", link: null };
+}
+
+function clientStatusSection() {
+  const status = clientStatus();
+  return `<section class="m-scene-source" aria-labelledby="scene-status-heading">
+      <h2 id="scene-status-heading" class="m-scene-work-heading">Where this Scene stands</h2>
+      <p class="m-copy m-copy--large">${escape(status.line)}</p>
+      ${status.link ? `<a class="m-button m-button--primary" href="${status.link}">Look at the work</a>` : ""}
+    </section>`;
+}
+
+function attachedReferences() {
+  const items = view.references || [];
+  if (!items.length) return "";
+  const rows = items.map((entry) => (
+    `<li class="m-copy">${escape(entry.filename || "Reference")}</li>`
+  )).join("");
+  return `<div class="m-stack"><span class="m-label">Attached</span><ul>${rows}</ul></div>`;
+}
+
+// Her own words, quietly, so she can see what she asked for without going
+// looking for it. The page is talking to her, so it says "you".
+function clientRequest() {
   const assignment = view.assignment;
+  const who = assignment.requestedBy ? escape(assignment.requestedBy) : "You";
+  const when = readableDate(assignment.requestedOn);
   const required = (assignment.requiredElements || [])
     .map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
-  const when = assignment.requestedOn ? `, ${escape(assignment.requestedOn)}` : "";
-  return `<section class="m-scene-source" aria-labelledby="client-request-heading">
+  return `<section class="m-scene-source" aria-labelledby="what-you-asked-heading">
       <div class="m-scene-source__head">
-        <h2 id="client-request-heading" class="m-scene-work-heading">Client request</h2>
-        <span class="m-meta">FROM ${escape(String(assignment.requestedBy || "CLIENT TEAM").toUpperCase())}${when}</span>
+        <h2 id="what-you-asked-heading" class="m-scene-work-heading">What you asked for</h2>
+        <span class="m-meta">${who}${when ? `, ${escape(when)}` : ""}</span>
       </div>
       <div class="m-scene-source__copy">${paragraphs(assignment.request)}</div>
-      ${required ? `<div class="m-scene-required"><span class="m-label">Required</span><ul>${required}</ul></div>` : ""}
-      ${referencesSection()}
+      ${required ? `<div class="m-scene-required"><span class="m-label">Must include</span><ul>${required}</ul></div>` : ""}
+      ${attachedReferences()}
+    </section>`;
+}
+
+function clientPage() {
+  return `<section class="m-direction-editor" aria-label="Scene">
+      <div class="m-direction-editor__body">
+        ${clientQuestions()}
+        ${clientStatusSection()}
+        ${clientRequest()}
+      </div>
     </section>`;
 }
 
 // ---------------------------------------------------------------------------
-// What the tour holds that bears on this work
+// The Higher Roads Scene
 // ---------------------------------------------------------------------------
+
+// The request at full weight, with what the client attached and anything
+// already asked and answered about it. All of that is part of what was asked
+// for, so it reads as one block.
+function requestWork() {
+  const assignment = view.assignment;
+  const required = (assignment.requiredElements || [])
+    .map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
+  const when = readableDate(assignment.requestedOn);
+  const exchange = view.questions.length
+    ? `<div class="m-stack"><span class="m-label">Asked about this request</span>${view.questions.map(questionRow).join("")}</div>`
+    : "";
+  return `<section class="m-scene-source" aria-labelledby="client-request-heading">
+      <div class="m-scene-source__head">
+        <h2 id="client-request-heading" class="m-scene-work-heading">Client request</h2>
+        <span class="m-meta">FROM ${escape(String(assignment.requestedBy || "CLIENT TEAM").toUpperCase())}${when ? `, ${escape(when)}` : ""}</span>
+      </div>
+      <div class="m-scene-source__copy">${paragraphs(assignment.request)}</div>
+      ${required ? `<div class="m-scene-required"><span class="m-label">Required</span><ul>${required}</ul></div>` : ""}
+      ${attachedReferences()}
+      ${exchange}
+    </section>`;
+}
 
 function dateRows() {
   const dates = (view.tour && view.tour.dates) || [];
@@ -129,79 +283,37 @@ function rigRows() {
   return `${setupCopy}${differing}`;
 }
 
-function tourWork() {
-  const version = view.context.directionVersion;
+function venuesWork() {
   const setupVersion = view.context.setupVersion ? ` V0${escape(view.context.setupVersion)}` : "";
-  return `<section class="m-scene-source" aria-labelledby="tour-context-heading">
+  return `<section class="m-scene-source" aria-labelledby="venues-heading">
       <div class="m-scene-source__head">
-        <div class="m-stack">
-          <h2 id="tour-context-heading" class="m-scene-work-heading">What the tour holds</h2>
-          <p class="m-copy">The whole tour direction travels with the brief. Nobody picks parts of it.</p>
-        </div>
-        <span class="m-meta">DIRECTION V0${escape(version)}</span>
+        <h2 id="venues-heading" class="m-scene-work-heading">Venues and screens</h2>
+        <span class="m-meta">SETUP${setupVersion}</span>
       </div>
       <div class="m-stack">
-        <span class="m-label">Venues and screens${setupVersion}</span>
         ${dateRows()}
         ${rigRows()}
-        <p class="m-meta">A date row carries a venue and a place. Screen and rig detail is free text on the production setup, not fields.</p>
       </div>
     </section>`;
 }
 
-// ---------------------------------------------------------------------------
-// Questions to the client. A question, an answer, and who said each.
-// ---------------------------------------------------------------------------
-
-function questionRow(entry) {
-  const answer = entry.answer
-    ? `<div class="m-contribution">
-        <span class="m-contribution__source">${escape(entry.answeredBy)}, ${escape(entry.answeredAt)}</span>
-        <p class="m-copy">${escape(entry.answer)}</p>
-      </div>`
-    : isOperator()
-      ? `<p class="m-meta">WAITING ON THE CLIENT</p>`
-      : `<div class="m-field">
-          <label class="m-label" for="answer-${escape(entry.id)}">Your answer</label>
-          <textarea class="m-textarea" id="answer-${escape(entry.id)}" data-answer="${escape(entry.id)}">${escape(view.draft.answers[entry.id] || "")}</textarea>
-          <button class="m-button m-button--small" type="button" data-send-answer="${escape(entry.id)}">Send answer</button>
-        </div>`;
-  return `<article class="m-contribution">
-      <span class="m-contribution__source">${escape(entry.askedBy)}, ${escape(entry.askedAt)}</span>
-      <p class="m-copy">${escape(entry.text)}</p>
-      ${answer}
-    </article>`;
-}
-
-function questionsWork() {
-  const rows = view.questions.map(questionRow).join("");
-  const composer = isOperator()
-    ? `<div class="m-field">
-        <label class="m-label" for="scene-question">Ask the client a question</label>
-        <textarea class="m-textarea" id="scene-question" data-draft="question" placeholder="What do you need from them before this goes to production?">${escape(view.draft.question)}</textarea>
-        <button class="m-button m-button--small" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Ask the client"}</button>
-      </div>`
-    : "";
-  const message = view.messageAt === "questions" && view.message
-    ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>`
-    : "";
-  const empty = rows
-    ? ""
-    : `<div class="m-empty-inline"><p class="m-copy">Nothing has been asked on this Scene.</p></div>`;
-  return `<section class="m-scene-source" aria-labelledby="scene-questions-heading">
+function askWork() {
+  return `<section class="m-scene-source" aria-labelledby="ask-heading">
       <div class="m-scene-source__head">
-        <h2 id="scene-questions-heading" class="m-scene-work-heading">Questions</h2>
-        <span class="m-meta">${escape(view.questions.length)} ASKED</span>
+        <h2 id="ask-heading" class="m-scene-work-heading">Ask the client a question</h2>
       </div>
-      <div class="m-stack">${rows || empty}${message}${composer}</div>
+      <div class="m-stack">
+        <div class="m-field">
+          <label class="m-label" for="scene-question">Your question</label>
+          <textarea class="m-textarea" id="scene-question" data-draft="question" placeholder="What do you need from them before this goes to production?">${escape(view.draft.question)}</textarea>
+          <button class="m-button" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Ask the client"}</button>
+        </div>
+        ${questionMessage()}
+      </div>
     </section>`;
 }
 
-// ---------------------------------------------------------------------------
-// The Scene page
-// ---------------------------------------------------------------------------
-
-function sceneWork() {
+function operatorPage() {
   return `<section class="m-direction-editor" aria-labelledby="scene-heading">
       <div class="m-direction-editor__header">
         <span class="m-label m-direction-editor__label">Scene${view.assignment.moment ? ` / ${escape(view.assignment.moment)}` : ""}</span>
@@ -210,7 +322,7 @@ function sceneWork() {
       <div class="m-direction-editor__body">
         ${view.message && !view.messageAt ? `<div class="m-callout m-callout--current m-direction-editor__notice"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
         ${requestWork()}
-        ${tourWork()}
+        ${venuesWork()}
         <div class="m-field">
           <label class="m-label" for="scene-direction">Note for production, optional</label>
           <textarea class="m-textarea m-textarea--note" id="scene-direction" data-draft="direction" placeholder="Anything worth remembering before this goes to production.">${escape(view.draft.direction)}</textarea>
@@ -219,9 +331,9 @@ function sceneWork() {
           <span>Written by Higher Roads</span>
           <span>Against Tour Direction V0${escape(view.assignment.directionVersion)}</span>
         </div>
-        ${questionsWork()}
         ${briefSection()}
         ${receiptSection()}
+        ${askWork()}
       </div>
     </section>`;
 }
@@ -281,15 +393,14 @@ function download(kind) {
 // Render
 // ---------------------------------------------------------------------------
 
-// One judgement is made here: this is right, send it. Freezing the brief and
-// issuing the handoff happen together, on the newest brief, so the bar carries
-// saving and sending and nothing else.
+// One judgement is made here: this is right, send it. The client has no action
+// bar on this page, because answering is the only thing she came to do and the
+// box for it is at the top.
 function actionBar() {
-  if (view.artboards.length > 0) {
+  if (!isOperator() || view.artboards.length > 0) {
     actions.innerHTML = "";
     return;
   }
-  const operator = view.user && view.user.role === "higher-roads";
   const latestBrief = view.briefs.at(-1);
   const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
   let context;
@@ -300,25 +411,20 @@ function actionBar() {
   } else if (latestBrief) {
     context = `Brief V0${latestBrief.briefVersion} is frozen. Send it to production.`;
     controls = `<button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
-  } else if (!operator) {
-    context = view.concept
-      ? "The Scene direction is saved. Higher Roads sends it to production next."
-      : "Save the Scene direction. Higher Roads sends it to production next.";
-    controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
   } else if (view.concept) {
     context = "Read the compiled brief, then send it to production.";
-    controls = `<button class="m-button" type="button" data-save>Save direction</button>
+    controls = `<button class="m-button" type="button" data-save>Save note</button>
       <button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
   } else {
-    context = "Save the Scene direction before sending it to production.";
-    controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
+    context = "Save the Scene before sending it to production.";
+    controls = `<button class="m-button m-button--primary" type="button" data-save>Save note</button>`;
   }
   actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
     <div class="m-action-bar__actions">${controls}</div>`;
 }
 
 function reviewNotice() {
-  if (!view.user || view.user.role !== "higher-roads" || !view.artboards.length) return "";
+  if (!isOperator() || !view.artboards.length) return "";
   const current = view.artboards.at(-1);
   const value = current && current.artboard ? current.artboard.artboardVersion : null;
   if (!value) return "";
@@ -340,7 +446,7 @@ function render() {
     </nav>`;
   root.innerHTML = `${reviewNotice()}<section class="m-workstation__stage" aria-label="Scene workspace">
       <div class="m-workstation__canvas">
-        ${sceneWork()}
+        ${isOperator() ? operatorPage() : clientPage()}
       </div>
     </section>`;
   actionBar();
@@ -350,7 +456,7 @@ function render() {
 // reading the compiled brief is how a person decides whether to send it. Once a
 // version is frozen, the frozen one is what shows.
 async function readBrief() {
-  if (!view.user || view.user.role !== "higher-roads") return null;
+  if (!isOperator()) return null;
   const frozen = view.briefs.filter((entry) => entry.status === "frozen").at(-1);
   try {
     return frozen
@@ -370,6 +476,9 @@ async function load() {
   const { tour, assignments } = await call("get-tour");
   view.tour = tour;
   if (!view.sceneId && assignments.length) view.sceneId = assignments[0].id;
+  // Where the Scene has got to, read from the same place Home reads it, so the
+  // line a person sees here and the line they saw on Home agree.
+  view.state = assignments.find((entry) => entry.id === view.sceneId) || null;
   const context = isOperator()
     ? await call("assignment-context", { assignmentId: view.sceneId })
     : await call("get-scene-workspace", { assignmentId: view.sceneId });
@@ -379,12 +488,14 @@ async function load() {
   view.concept = isOperator()
     ? (await call("get-concept", { assignmentId: view.sceneId })).concept
     : context.concept;
-  view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
   try {
     view.questions = (await call("get-questions", { assignmentId: view.sceneId })).questions;
   } catch {
     view.questions = [];
   }
+  render();
+  if (!isOperator()) return;
+  view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
   try {
     view.handoffs = (await call("get-handoffs", { assignmentId: view.sceneId })).handoffs;
   } catch {
@@ -426,12 +537,15 @@ async function save() {
     idea: view.draft.direction.trim(),
     cameFrom: "written by Higher Roads",
   };
-  const action = isOperator() ? "choose-concept" : "save-scene-direction";
-  view.concept = (await call(action, { assignmentId: view.sceneId, concept })).concept;
+  view.concept = (await call("choose-concept", { assignmentId: view.sceneId, concept })).concept;
   view.brief = await readBrief();
   view.message = "Saved.";
   view.messageAt = "";
   render();
+}
+
+async function reloadQuestions() {
+  view.questions = (await call("get-questions", { assignmentId: view.sceneId })).questions;
 }
 
 document.addEventListener("click", (event) => {
@@ -444,7 +558,7 @@ document.addEventListener("click", (event) => {
       view.messageAt = "questions";
       render();
       await call("ask-question", { assignmentId: view.sceneId, text: view.draft.question });
-      view.questions = (await call("get-questions", { assignmentId: view.sceneId })).questions;
+      await reloadQuestions();
       view.working = false;
       view.draft.question = "";
       view.message = "The client will see this on their home page.";
@@ -461,9 +575,9 @@ document.addEventListener("click", (event) => {
         questionId,
         text: view.draft.answers[questionId] || "",
       });
-      view.questions = (await call("get-questions", { assignmentId: view.sceneId })).questions;
+      await reloadQuestions();
       delete view.draft.answers[questionId];
-      view.message = "Your answer is on the Scene.";
+      view.message = "Thanks. Higher Roads has your answer.";
       view.messageAt = "questions";
       render();
     }, "questions");
@@ -498,11 +612,8 @@ document.addEventListener("input", (event) => {
   if (field.dataset.answer !== undefined) view.draft.answers[field.dataset.answer] = field.value;
 });
 
-// ---------------------------------------------------------------------------
-// Reference images. They belong with the request, because a client attaching a
-// photo is part of what they asked for.
-// ---------------------------------------------------------------------------
-
+// What the client attached when they asked. Read only on this page; attaching
+// happens on the request screen, where the asking happens.
 async function refreshReferences() {
   try {
     const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: view.sceneId, mode: "reference-list" }) });
@@ -512,43 +623,6 @@ async function refreshReferences() {
   } catch (_error) {
     // A page in a test harness or a failing network never blocks load.
   }
-}
-
-async function uploadReference(file) {
-  view.referenceMessage = "Uploading " + file.name + "...";
-  render();
-  const authorization = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: view.sceneId, filename: file.name, contentType: file.type, size: file.size }) });
-  const authorized = await authorization.json();
-  if (!authorization.ok) { view.referenceMessage = authorized.error || "The reference could not be authorized."; render(); return; }
-  const put = await fetch(authorized.presignedUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-  if (!put.ok) { view.referenceMessage = "The reference could not be uploaded."; render(); return; }
-  const recorded = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: view.sceneId, mode: "reference-record", pathname: authorized.pathname, filename: file.name, contentType: file.type }) });
-  if (!recorded.ok) { view.referenceMessage = "The reference uploaded but could not be recorded."; render(); return; }
-  view.referenceMessage = "";
-  await refreshReferences();
-  render();
-}
-
-document.addEventListener("change", (event) => {
-  const field = event.target;
-  if (field && field.dataset && field.dataset.reference === "input") {
-    const file = field.files && field.files[0];
-    if (file) uploadReference(file);
-  }
-});
-
-function referencesSection() {
-  const items = view.references || [];
-  const rows = items.map((entry) => {
-    const alt = entry.filename || "Reference";
-    const when = entry.addedOn ? new Date(entry.addedOn).toLocaleDateString() : "";
-    return `<li class="m-stack"><span class="m-copy">${escape(alt)}</span><span class="m-meta">Added by ${escape(entry.addedBy)} ${when ? "on " + escape(when) : ""}</span></li>`;
-  }).join("");
-  const list = rows
-    ? `<ul class="m-stack">${rows}</ul>`
-    : `<p class="m-copy">Optional. A photo, a mood image, or a still from another show.</p>`;
-  const message = view.referenceMessage ? `<p class="m-copy">${escape(view.referenceMessage)}</p>` : "";
-  return `<section class="m-stack" aria-label="Reference images"><span class="m-label">Reference images (optional)</span>${list}${message}<label class="m-button m-button--secondary"><input type="file" accept="image/*" data-reference="input" hidden>Add a reference image</label></section>`;
 }
 
 guard(load);

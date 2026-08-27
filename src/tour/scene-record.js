@@ -49,6 +49,14 @@ export function createSceneRecord(options = {}) {
         // establish them. A person's role never fills either one in.
         onBehalfOf: fact.onBehalfOf || null,
         path: fact.path || null,
+        // What a client attached when they asked. A reference fact is the only
+        // record of an uploaded file, and the upload route reads these three
+        // back to list what is on a Scene. They were dropped here, so a
+        // reference has never had a name or a location once stored. Fixed
+        // 2026-08-27. Every other fact carries them empty.
+        pathname: fact.pathname || null,
+        filename: fact.filename || null,
+        contentType: fact.contentType || null,
         at: fact.at || new Date().toISOString(),
       };
       if (!entry.action) {

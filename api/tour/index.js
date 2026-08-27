@@ -1,7 +1,7 @@
 import { assembleContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
 import { createTourStore } from "../../src/tour/store.js";
-import { compileBrief, directionParagraphs, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar, venueExceptions } from "../../src/tour/brief.js";
+import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
 import { createSceneRecord } from "../../src/tour/scene-record.js";
@@ -665,17 +665,16 @@ export async function handleAction(body, options = {}) {
       shapedBy: stored.shapedBy || null,
       shapedAt: stored.shapedAt || null,
     } : null;
+    // The client Scene reads a question, one line of status, and her own
+    // request. The tour direction and the rig detail stay on the Higher Roads
+    // side of the glass, so the route does not send them at all. A page that
+    // hides something is a page; this is what storage listens to. Ruled
+    // 2026-08-27.
     return {
-      tour: fixture.tour,
+      tour: { id: fixture.tour.id, name: fixture.tour.name },
       assignment,
       concept,
-      context: {
-        directionVersion: fixture.tour.direction.version,
-        directionParagraphs: directionParagraphs(fixture.tour.direction),
-        productionSetup: fixture.tour.productionSetup || null,
-        setupVersion: fixture.tour.productionSetup ? fixture.tour.productionSetup.version : null,
-        venueExceptions: venueExceptions(fixture.tour.productionSetup),
-      },
+      context: {},
     };
   }
 

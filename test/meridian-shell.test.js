@@ -161,10 +161,12 @@ test("a successful login runs the Meridian identity boot sequence once", () => {
 test("the Scene page is one column with the request, the tour facts, and two ways out", () => {
   const source = read("app/scene.js");
   assert.match(source, /Client request/, "Scene does not show the request");
-  assert.match(source, /What the tour holds/, "Scene does not show what the tour holds");
+  assert.match(source, /Venues and screens/, "Scene does not show the venue and screen facts");
   assert.match(source, /Note for production, optional/, "Scene does not offer the optional note");
   assert.match(source, /Ask the client a question/, "Scene does not offer the question");
   assert.match(source, /data-send>Send to production/, "Scene does not offer the send");
+  assert.doesNotMatch(source, /travels with the brief|Nobody picks parts of it/, "the interface narrates how briefs are assembled");
+  assert.doesNotMatch(source, /data-reference="input"/, "the Scene page still takes an upload");
   assert.doesNotMatch(source, /Scene direction for production/, "the note still presents itself as the gating step");
   assert.doesNotMatch(source, /m-workstation__inspector/, "the Scene page still carries an inspector");
   assert.doesNotMatch(source, /data-inspector|m-workstation__tabs/, "the Scene page still carries inspector tabs");
@@ -237,7 +239,10 @@ test("empty screens speak to the person holding the work", () => {
   const scene = read("app/scene.js");
   assert.match(scene, /Dates and venues are added on the tour page/, "Scene does not say where missing dates come from");
   assert.match(scene, /Confirmed playback and screen details are added on the tour page/, "missing setup does not say where it comes from");
-  assert.match(scene, /Nothing has been asked on this Scene/, "the questions section has no empty state");
+  assert.match(scene, /Nothing is needed from you/, "the client Scene never says the work is not waiting on them");
+
+  const request = read("app/request.js");
+  assert.match(request, /Attach a photo, a mood image, or a still from another show/, "the request screen does not invite a reference image");
 
   const review = read("app/review.js");
   assert.match(review, /The exact version will appear here when the work comes back/, "internal review does not explain the production handoff");
