@@ -67,6 +67,7 @@ async function ready() {
   await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
   const options = { store, tourStore, artboardStore, sceneRecord, user: OPERATOR };
   const asClient = { ...options, user: REVIEWER };
+  const asSecondClient = { ...options, user: SECOND_REVIEWER };
   const firstPath = uploadPathFor(TOUR, ASSIGNMENT, "first.png", ACCOUNT, "first-version");
   const secondPath = uploadPathFor(TOUR, ASSIGNMENT, "second.png", ACCOUNT, "second-version");
 
@@ -90,6 +91,13 @@ async function ready() {
     departures: ["Make the scene less busy."],
     technicalItems: ["Keep lightning on its own layer."],
   }, options);
+  await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 1 }, options);
+  await tourAction({ action: "client-comment", ...AT, artboardVersion: 1, text: "The build feels right." }, asClient);
+  await tourAction(
+    { action: "client-comment", ...AT, artboardVersion: 1, text: "Please hold the final cloud." },
+    asSecondClient,
+  );
+  await tourAction({ action: "client-approve", ...AT, artboardVersion: 1 }, asClient);
   await tourAction({
     action: "issue-revision",
     ...AT,
@@ -114,15 +122,8 @@ async function ready() {
     artboardVersion: 2,
     departures: ["Move the right PIP farther out."],
   }, options);
-  await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 1 }, options);
-  await tourAction({ action: "client-comment", ...AT, artboardVersion: 1, text: "The build feels right." }, asClient);
-  await tourAction(
-    { action: "client-comment", ...AT, artboardVersion: 1, text: "Please hold the final cloud." },
-    { ...options, user: SECOND_REVIEWER },
-  );
-  await tourAction({ action: "client-approve", ...AT, artboardVersion: 1 }, asClient);
 
-  return { tourBackend, tourStore, artboardStore, options, asClient, firstPath, secondPath };
+  return { tourBackend, tourStore, artboardStore, options, asClient, asSecondClient, firstPath, secondPath };
 }
 
 test("a client receives only presented Artboard version identities while Higher Roads receives the full stored versions", async () => {
@@ -154,16 +155,19 @@ test("a client can read a presented Artboard file and is refused on an unpresent
   assert.equal(internal.blobPathname, secondPath);
 });
 
-test("a client review read contains only that person's comments and approvals while Higher Roads receives internal reviews and revisions unchanged", async () => {
+test("a client review read contains the tour team's attributed client feedback while Higher Roads reviews and revisions remain hidden", async () => {
   const { artboardStore, options, asClient } = await ready();
   const client = await tourAction({ action: "get-reviews", ...AT }, asClient);
-  assert.deepEqual(client.comments.map((entry) => entry.text), ["The build feels right."]);
+  assert.deepEqual(client.comments.map((entry) => [entry.text, entry.writtenBy]), [
+    ["The build feels right.", REVIEWER.displayName],
+    ["Please hold the final cloud.", SECOND_REVIEWER.displayName],
+  ]);
   assert.deepEqual(client.approvals.map((entry) => entry.approvedBy), [REVIEWER.displayName]);
   assert.deepEqual(Object.keys(client).sort(), ["approvals", "comments"]);
   const clientText = JSON.stringify(client);
   assert.ok(!clientText.includes("Make the scene less busy."));
   assert.ok(!clientText.includes("revision-one"));
-  assert.ok(!clientText.includes(SECOND_REVIEWER.displayName));
+  assert.ok(clientText.includes(SECOND_REVIEWER.displayName));
 
   const operator = await tourAction({ action: "get-reviews", ...AT }, options);
   assert.deepEqual(operator, {
@@ -172,19 +176,75 @@ test("a client review read contains only that person's comments and approvals wh
   });
 });
 
-test("a client production-intent read contains presented state and that person's response but never the production intent", async () => {
+test("a client production-intent read contains the team's presented responses but never the production intent", async () => {
   const { artboardStore, options, asClient } = await ready();
   const client = await tourAction({ action: "get-production-intent", ...AT }, asClient);
   assert.deepEqual(client.readyForClient, [{ artboardVersion: 1 }]);
   assert.deepEqual(client.clientApprovals.map((entry) => entry.approvedBy), [REVIEWER.displayName]);
-  assert.deepEqual(client.comments.map((entry) => entry.text), ["The build feels right."]);
+  assert.deepEqual(client.comments.map((entry) => entry.writtenBy), [REVIEWER.displayName, SECOND_REVIEWER.displayName]);
   assert.equal(client.intents, undefined);
-  assert.ok(!JSON.stringify(client).includes(SECOND_REVIEWER.displayName));
+  assert.ok(JSON.stringify(client).includes(SECOND_REVIEWER.displayName));
 
   const approvals = await artboardStore.readApprovals(TOUR, ASSIGNMENT);
   const operator = await tourAction({ action: "get-production-intent", ...AT }, options);
   assert.deepEqual(operator, { ...approvals, intents: await artboardStore.readIntents(TOUR, ASSIGNMENT) });
   assert.equal(operator.intents.length, 1);
+});
+
+test("presenting, approving, and commenting on a superseded version are refused without changing the stored record", async () => {
+  const { artboardStore, options, asClient } = await ready();
+  const beforeApprovals = await artboardStore.readApprovals(TOUR, ASSIGNMENT);
+  const beforeIntents = await artboardStore.readIntents(TOUR, ASSIGNMENT);
+  const refusal = (error) => error.status === 409 && error.message === "A newer version already came back. Work with that one instead.";
+
+  await assert.rejects(
+    () => tourAction({ action: "approve-for-client", ...AT, artboardVersion: 1 }, options),
+    refusal,
+  );
+  await assert.rejects(
+    () => tourAction({ action: "client-approve", ...AT, artboardVersion: 1 }, asClient),
+    refusal,
+  );
+  await assert.rejects(
+    () => tourAction({ action: "client-comment", ...AT, artboardVersion: 1, text: "A stale note." }, asClient),
+    refusal,
+  );
+
+  assert.deepEqual(await artboardStore.readApprovals(TOUR, ASSIGNMENT), beforeApprovals);
+  assert.deepEqual(await artboardStore.readIntents(TOUR, ASSIGNMENT), beforeIntents);
+});
+
+test("presenting, commenting on, and approving the newest version write the attributed client record", async () => {
+  const { artboardStore, options, asClient, asSecondClient } = await ready();
+  const presented = await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 2 }, options);
+  const commented = await tourAction(
+    { action: "client-comment", ...AT, artboardVersion: 2, text: "This resolves the conflict." },
+    asSecondClient,
+  );
+  const approved = await tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, asSecondClient);
+
+  assert.equal(presented.readyForClient.artboardVersion, 2);
+  assert.deepEqual(commented.comment, {
+    artboardVersion: 2,
+    text: "This resolves the conflict.",
+    writtenBy: SECOND_REVIEWER.displayName,
+    writtenAt: commented.comment.writtenAt,
+  });
+  assert.deepEqual(approved.approval, {
+    artboardVersion: 2,
+    approvedBy: SECOND_REVIEWER.displayName,
+    approvedAt: approved.approval.approvedAt,
+  });
+
+  const stored = await artboardStore.readApprovals(TOUR, ASSIGNMENT);
+  assert.deepEqual(stored.readyForClient.map((entry) => entry.artboardVersion), [1, 2]);
+  assert.deepEqual(stored.comments.at(-1), commented.comment);
+  assert.deepEqual(stored.clientApprovals.at(-1), approved.approval);
+  assert.equal((await artboardStore.readIntents(TOUR, ASSIGNMENT)).at(-1).artboardVersion, 2);
+
+  const visibleToFirstClient = await tourAction({ action: "get-production-intent", ...AT }, asClient);
+  assert.deepEqual(visibleToFirstClient.comments.at(-1), commented.comment);
+  assert.deepEqual(visibleToFirstClient.clientApprovals.at(-1), approved.approval);
 });
 
 test("a client gets only the rationale for a presented version while Higher Roads gets the complete brief payload", async () => {

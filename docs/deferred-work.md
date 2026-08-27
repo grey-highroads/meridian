@@ -505,13 +505,13 @@ Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Up
 
 Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
-## A fact names who acted by display name, not by id
+## Facts and approvals name people by display name, not by id
 
-Recorded 2026-08-26 with brief 4 of the admin surface. `src/org/artists.js`, `src/tour/scene-record.js`, `api/tour/index.js`, and `api/tour-upload.js` all write `actor` as the person's display name. Nothing on a fact points back at the person record.
+Recorded 2026-08-26 with brief 4 of the admin surface. Updated 2026-08-27 when the client review boundary began returning the whole tour team's client feedback. `src/org/artists.js`, `src/tour/scene-record.js`, `api/tour/index.js`, and `api/tour-upload.js` all write `actor` as the person's display name. Nothing on a fact points back at the person record. The approvals document also records `approvedBy` and `writtenBy` as display names without person ids.
 
-Two effects. Editing somebody's name leaves earlier facts reading the name they had then, which is right for a record of who decided what and wrong for anyone trying to gather one person's acts. And the delete guard cannot ask whether a person ever acted, which is why brief 4 reads never done anything as never signed in.
+Three effects. Editing somebody's name leaves earlier facts and approvals reading the name they had then, which is right for a record of who decided what and wrong for anyone trying to gather one person's acts. Two people with the same display name cannot be distinguished in the approvals document. And the delete guard cannot ask whether a person ever acted, which is why brief 4 reads never done anything as never signed in.
 
-Bring it back when: something needs one person's acts gathered, such as a page showing what somebody decided, or a delete guard that reads the ruling as written. The change is an `actorId` written beside `actor` at those four call sites, with the display name kept as it is so old facts still read.
+Bring it back when: something needs one person's acts or review decisions gathered, such as a page showing what somebody decided, or a delete guard that reads the ruling as written. The change is stable person ids written beside `actor`, `approvedBy`, and `writtenBy`, with the display names kept as they are so old records still read.
 
 ## Nobody can be invited into an account with no artist
 

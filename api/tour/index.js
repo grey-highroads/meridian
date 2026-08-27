@@ -213,7 +213,7 @@ async function atArtboard(body, options) {
     error.status = 404;
     throw error;
   }
-  return { fixture, assignment, tourStore, artboardStore, record, entry, wanted };
+  return { fixture, assignment, tourStore, artboardStore, record, versions, entry, wanted };
 }
 
 function clientSurfaceError() {
@@ -226,21 +226,29 @@ function presentedVersions(approvals) {
   return new Set((approvals.readyForClient || []).map((entry) => Number(entry.artboardVersion)));
 }
 
-function clientApprovalView(approvals, user) {
+function refuseSupersededArtboard(versions, wanted) {
+  if (versions.some((stored) => stored.artboard.artboardVersion > wanted)) {
+    const error = new Error("A newer version already came back. Work with that one instead.");
+    error.status = 409;
+    throw error;
+  }
+}
+
+function clientApprovalView(approvals) {
   const visible = presentedVersions(approvals);
   return {
     readyForClient: (approvals.readyForClient || [])
       .filter((entry) => visible.has(Number(entry.artboardVersion)))
       .map((entry) => ({ artboardVersion: entry.artboardVersion })),
     clientApprovals: (approvals.clientApprovals || [])
-      .filter((entry) => visible.has(Number(entry.artboardVersion)) && entry.approvedBy === user.displayName)
+      .filter((entry) => visible.has(Number(entry.artboardVersion)))
       .map((entry) => ({
         artboardVersion: entry.artboardVersion,
         approvedBy: entry.approvedBy,
         approvedAt: entry.approvedAt,
       })),
     comments: (approvals.comments || [])
-      .filter((entry) => visible.has(Number(entry.artboardVersion)) && entry.writtenBy === user.displayName)
+      .filter((entry) => visible.has(Number(entry.artboardVersion)))
       .map((entry) => ({
         artboardVersion: entry.artboardVersion,
         text: entry.text,
@@ -1279,7 +1287,7 @@ export async function handleAction(body, options = {}) {
     const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     if (user.role === CLIENT_ROLE) {
       const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
-      const visible = clientApprovalView(approvals, user);
+      const visible = clientApprovalView(approvals);
       return { comments: visible.comments, approvals: visible.clientApprovals };
     }
     return {
@@ -1291,7 +1299,8 @@ export async function handleAction(body, options = {}) {
   // version for the client to see. The client approves the work. Neither is
   // the other, and neither moves anything into the artist layer.
   if (body.action === "approve-for-client") {
-    const { fixture, assignment, artboardStore, record, entry, wanted } = await atArtboard(body, options);
+    const { fixture, assignment, artboardStore, record, versions, entry, wanted } = await atArtboard(body, options);
+    refuseSupersededArtboard(versions, wanted);
     const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
     if (approvals.readyForClient.some((stored) => stored.artboardVersion === wanted)) {
       const error = new Error("That version is already ready for the client.");
@@ -1316,7 +1325,8 @@ export async function handleAction(body, options = {}) {
     return { readyForClient: cleared };
   }
   if (body.action === "client-approve") {
-    const { fixture, assignment, tourStore, artboardStore, record, entry, wanted } = await atArtboard(body, options);
+    const { fixture, assignment, tourStore, artboardStore, record, versions, entry, wanted } = await atArtboard(body, options);
+    refuseSupersededArtboard(versions, wanted);
     const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
     if (!approvals.readyForClient.some((stored) => stored.artboardVersion === wanted)) {
       const error = new Error("That version has not been sent to the client yet.");
@@ -1361,7 +1371,8 @@ export async function handleAction(body, options = {}) {
     return { approval };
   }
   if (body.action === "client-comment") {
-    const { fixture, assignment, artboardStore, record, wanted } = await atArtboard(body, options);
+    const { fixture, assignment, artboardStore, record, versions, wanted } = await atArtboard(body, options);
+    refuseSupersededArtboard(versions, wanted);
     const text = String(body.text || "").trim();
     if (!text) {
       const error = new Error("Write something before you send it.");
@@ -1391,7 +1402,7 @@ export async function handleAction(body, options = {}) {
     const assignment = findAssignment(fixture, body.assignmentId);
     const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
-    if (user.role === CLIENT_ROLE) return clientApprovalView(approvals, user);
+    if (user.role === CLIENT_ROLE) return clientApprovalView(approvals);
     return { ...approvals, intents: await artboardStore.readIntents(fixture.tour.id, assignment.id) };
   }
   if (body.action === "get-scene-activity") {
