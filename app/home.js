@@ -20,11 +20,16 @@ function firstName(user) {
   return String(user.displayName || "").trim().split(/\s+/)[0] || "there";
 }
 
+// Work that needs a decision opens in the Reviews gallery, on the version in
+// question, board first. Both roles land on the same address; what a client
+// may see there is decided by the server. Ruled 2026-08-27.
+function reviewHref(sceneId, artboardVersion) {
+  return `./reviews.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(sceneId)}&version=${encodeURIComponent(artboardVersion)}`;
+}
+
 function sceneHref(scene) {
-  if (scene.stage === "Production review") {
-    return scene.waitingOn === "the client"
-      ? `./client-review.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`
-      : `./review.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`;
+  if (scene.stage === "Production review" && scene.currentArtboardVersion) {
+    return reviewHref(scene.id, scene.currentArtboardVersion);
   }
   return `./scene.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`;
 }

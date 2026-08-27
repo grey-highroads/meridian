@@ -134,8 +134,10 @@ test("the Reviews page is a newest-first lazy gallery with one linkable role-pro
   assert.match(page, /call\("client-comment"/);
   assert.match(page, /call\("client-approve"/);
   assert.doesNotMatch(page, /send-revision|Open client view|side-by-side|compareTo/);
-  assert.ok(fs.existsSync(path.join(rootPath, "app/review.html")));
-  assert.ok(fs.existsSync(path.join(rootPath, "app/client-review.html")));
+  // The two pages the gallery replaced are gone. Ruled 2026-08-27.
+  for (const gone of ["app/review.html", "app/review.js", "app/client-review.html", "app/client-review.js"]) {
+    assert.ok(!fs.existsSync(path.join(rootPath, gone)), `${gone} is still in the tree`);
+  }
 });
 
 function responseRecorder() {

@@ -66,6 +66,15 @@ function briefWentOut(scene) {
 // The most advanced versioned Scene object. Briefs until an artboard exists,
 // then artboards. Never the tour's direction version, which belongs to the
 // tour and not to this Scene.
+// The newest artboard version as a number, or null when none has come back.
+// The gallery is addressed by scene and version, so a link needs the number
+// rather than the label currentVersionOf builds for a reader.
+export function currentArtboardVersionOf(scene) {
+  const artboards = list(scene.artboards);
+  if (!artboards.length) return null;
+  return highest(artboards.map((entry) => Number((entry.artboard || {}).artboardVersion) || 0)) || null;
+}
+
 export function currentVersionOf(scene) {
   const artboards = list(scene.artboards);
   if (artboards.length) {
@@ -125,7 +134,12 @@ function jobAt(stage, scene) {
 
 export function sceneLifecycle(scene = {}) {
   const stage = stageOf(scene);
-  return { stage, currentVersion: currentVersionOf(scene), ...jobAt(stage, scene) };
+  return {
+    stage,
+    currentVersion: currentVersionOf(scene),
+    currentArtboardVersion: currentArtboardVersionOf(scene),
+    ...jobAt(stage, scene),
+  };
 }
 
 // Which route the work took, read from what the concept says it came from. A

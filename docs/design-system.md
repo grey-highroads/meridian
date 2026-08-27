@@ -57,7 +57,7 @@ The real Meridian screens remain job and behavior references while their layouts
 
 - `app/tour.html` and `app/tour.js` define the quiet reference page.
 - `app/scene.html` and `app/scene.js` define the focused Workstation.
-- `app/review.html` and `app/review.js` define the review and decision surface.
+- `app/reviews.html` and `app/reviews.js` define the review and decision surface: a gallery of every Artboard version, and a full view with a drawer that carries the feedback and the decision. `app/review.html` and `app/client-review.html` were removed on 2026-08-27 and every road now points here.
 
 Builders should copy workflow behavior from these screens only when it serves the same job. They should not copy their transitional shell or dense record layouts into another feature.
 
@@ -271,7 +271,7 @@ Use the static screens in `app/design/samples/` as composition references:
 - `request.html` for a client request with a short valid path;
 - `intake.html` for vertical source review;
 - `develop.html` for Scene Direction and contextual Brain contribution;
-- `review.html` for Artboard feedback and version comparison;
+- `reviews.html` for Artboard feedback and the decision, in the full view opened from the gallery;
 - `handoff.html` for the issued record and approved Production Intent.
 
 Stage and status treatments stay restrained: the words carry the meaning. Active stages use the current treatment and completed states use the approved treatment; nobody invents a color per stage. Fixtures demonstrate hierarchy, disclosure, states, and component structure. They do not define backend mechanics, permissions, or data contracts. Read `docs/meridian-experience.md` for the product and experience reasoning behind them.

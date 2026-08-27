@@ -189,7 +189,7 @@ test("the front door turns away anyone without a session and keeps internal surf
     assert.equal((await middleware(at("/scene.html", "made.up"))).status, 302);
 
     const client = await signSession({ userId: "client", role: CLIENT_ROLE }, secret);
-    const refused = await middleware(at("/review.html", client));
+    const refused = await middleware(at("/artist.html", client));
     assert.equal(refused.status, 403);
     const words = await refused.text();
     assert.match(words, /Higher Roads team/);
@@ -203,6 +203,12 @@ test("the front door turns away anyone without a session and keeps internal surf
     assert.equal((await middleware(at("/request.html", client))).status, 200);
     assert.equal((await middleware(at("/direction.html", client))).status, 200);
     assert.equal((await middleware(at("/handoff.html", client))).status, 200);
+    // The gallery is the one review surface and a client reaches it. The page
+    // it replaced is closed to everyone, deleted and unlisted. Ruled 2026-08-27.
+    assert.equal((await middleware(at("/reviews.html", client))).status, 200);
+    assert.equal((await middleware(at("/reviews.js", client))).status, 200);
+    assert.equal((await middleware(at("/client-review.html", client))).status, 403);
+    assert.equal((await middleware(at("/review.html", client))).status, 403);
     assert.equal((await middleware(at("/api/tour-upload", client))).status, 200);
   } finally {
     process.env.MERIDIAN_OPERATOR = saved.operator;
@@ -237,7 +243,7 @@ test("the files a page is built from load for someone who has no session yet", a
     assert.equal((await middleware(at("/api/artist"))).status, 401);
     assert.equal((await middleware(at("/api/auth/people"))).status, 401);
     assert.equal((await middleware(at("/admin.html"))).status, 302);
-    assert.equal((await middleware(at("/review.html"))).status, 302);
+    assert.equal((await middleware(at("/artist.html"))).status, 302);
 
     const client = await signSession({ userId: "client", role: CLIENT_ROLE }, secret);
     assert.equal((await middleware(at("/assets/main-B2Pl9Q6i.js", client))).status, 200);

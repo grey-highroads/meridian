@@ -76,7 +76,7 @@ Job: Higher Roads looks at the work that came back and compares one version agai
 
 Missing state: `m-work-frame` displays a submitted image or PDF as the primary work surface. `m-reference-pair` places an earlier version beside the current one only when a person asks to compare. Meridian uses this deliberate comparison instead of a wipe control in V1.
 
-Where: The Artboard review job, on `app/review.html`.
+Where: The Artboard review job, in the full view opened from `app/reviews.html`. Corrected 2026-08-27 with the commit that removed `app/review.html`.
 
 ### Result log for a maintenance action
 

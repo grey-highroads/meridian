@@ -21,6 +21,7 @@ const SCENE_STATE = {
   waitingOn: "Higher Roads",
   nextAction: "Develop this Scene.",
   currentVersion: null,
+  currentArtboardVersion: null,
   openQuestions: [],
 };
 
@@ -48,7 +49,7 @@ function element() {
 
 // The page's own script, run rather than read, so what the test reads is the
 // markup a person would be looking at and the calls the page actually makes.
-function scenePage({ user = OPERATOR, questions = [], references = [], state = SCENE_STATE, concept = null } = {}) {
+function scenePage({ user = OPERATOR, questions = [], references = [], state = SCENE_STATE, concept = null, artboards = [] } = {}) {
   const source = fs.readFileSync(path.join(rootPath, "app", "scene.js"), "utf8")
     .replace(/^import .*?;\n\n/, "");
   const elements = { location: element(), scene: element(), actions: element() };
@@ -94,7 +95,7 @@ function scenePage({ user = OPERATOR, questions = [], references = [], state = S
     if (sent.action === "compile-brief") return okReply({ brief: { jobId: "j", briefVersion: 1, status: "draft" }, document: "", sidecar: {} });
     if (sent.action === "get-questions") return okReply({ questions });
     if (sent.action === "get-handoffs") return okReply({ handoffs: [] });
-    if (sent.action === "get-artboards") return okReply({ artboards: [] });
+    if (sent.action === "get-artboards") return okReply({ artboards });
     throw new Error(`the page asked for ${sent.action}, which this test does not answer`);
   };
 
@@ -173,7 +174,7 @@ test("with no open question the client sees the status line and her request and 
 });
 
 test("the status line says what needs her before it says anything else", async () => {
-  const waiting = { ...SCENE_STATE, stage: "Production review", waitingOn: "the client", nextAction: "Review the latest version." };
+  const waiting = { ...SCENE_STATE, stage: "Production review", waitingOn: "the client", nextAction: "Review the latest version.", currentArtboardVersion: 2 };
   const page = scenePage({ user: CLIENT, questions: [], state: waiting });
   await page.settle();
   const markup = page.markup();
@@ -270,4 +271,40 @@ test("an attached reference shows on both views and neither view uploads", async
     assert.doesNotMatch(markup, /data-reference="input"/, `${user.role} is offered an uploader on the Scene`);
     assert.equal(page.uploadCalls.filter((entry) => entry.mode === "reference-record").length, 0);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Every road to the work goes to the Reviews gallery. The two pages that used
+// to serve it were removed on 2026-08-27.
+// ---------------------------------------------------------------------------
+
+const ARTBOARDS = [
+  { artboard: { artboardVersion: 1, briefVersion: 1 } },
+  { artboard: { artboardVersion: 2, briefVersion: 1 } },
+];
+
+test("an admin clicking through from a Scene lands on the newest version in the gallery", async () => {
+  const state = { ...SCENE_STATE, stage: "Production review", waitingOn: "Higher Roads", currentArtboardVersion: 2 };
+  const page = scenePage({ artboards: ARTBOARDS, state });
+  await page.settle();
+  const markup = page.markup();
+
+  assert.match(markup, /Artboard V02 is ready for review/, "the Scene does not announce the version that came back");
+  const href = markup.match(/href="([^"]*reviews\.html[^"]*)"/);
+  assert.ok(href, "the Scene has no way through to the gallery");
+  assert.match(href[1], /scene=storm-and-lightning/);
+  assert.match(href[1], /version=2/, "the Scene does not open the newest version");
+  assert.doesNotMatch(markup, /review\.html\?|client-review\.html/, "the Scene still links a removed page");
+});
+
+test("a client's status line opens the presented version in the gallery", async () => {
+  const state = { ...SCENE_STATE, stage: "Production review", waitingOn: "the client", currentArtboardVersion: 2 };
+  const page = scenePage({ user: CLIENT, state, questions: [] });
+  await page.settle();
+  const markup = page.markup();
+
+  const href = markup.match(/href="([^"]*reviews\.html[^"]*)"/);
+  assert.ok(href, "the client has no way through to the work");
+  assert.match(href[1], /version=2/, "the client is not sent to the presented version");
+  assert.doesNotMatch(markup, /client-review\.html/, "the client is still sent to the removed page");
 });

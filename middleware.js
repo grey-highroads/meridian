@@ -24,7 +24,7 @@ const CLIENT_PATHS = new Set([
   "/scenes.html", "/scenes.js", "/reviews.html", "/reviews.js",
   "/tour.html", "/tour.js", "/scene.html", "/scene.js",
   "/request.html", "/request.js", "/direction.html", "/direction.js",
-  "/handoff.html", "/handoff.js", "/client-review.html", "/client-review.js",
+  "/handoff.html", "/handoff.js",
   "/api/tour", "/api/tour-upload", "/api/auth/login",
 ]);
 

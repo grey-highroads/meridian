@@ -132,14 +132,14 @@ Real Meridian screens carry working behavior and the design system together. The
 - `app/index.html` shows the active Scenes directory.
 - `app/tour.html` and `app/tour.js` show the active tour record and governed Tour Direction.
 - `app/scene.html` and `app/scene.js` show the focused Scene Workstation.
-- `app/review.html` and `app/review.js` show Artboard feedback and version comparison.
+- `app/reviews.html` and `app/reviews.js` show every Artboard version, and the full view opened from the gallery carries the feedback and the decision. Corrected 2026-08-27 with the commit that removed `app/review.html` and `app/client-review.html`.
 
 The coded files in `app/design/samples/` are controlled state fixtures:
 
 - `request.html` shows the client request surface.
 - `intake.html` shows preserved source review.
 - `develop.html` shows a Scene authoring fixture.
-- `review.html` shows an Artboard review fixture.
+- `reviews.html` shows the Artboard gallery and its full view.
 - `handoff.html` shows the issued record and Production Intent.
 
 The anonymized Superdesign drafts remain useful as visual process references:

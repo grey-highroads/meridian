@@ -92,6 +92,12 @@ function readableDate(value) {
   return parsed.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 }
 
+// The Reviews gallery, opened on one version of one Scene. Everything the old
+// review pages carried lives in the gallery's drawer.
+function reviewHref(artboardVersion) {
+  return `./reviews.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;version=${escape(artboardVersion)}`;
+}
+
 function openQuestions() {
   return view.questions.filter((entry) => !entry.answer);
 }
@@ -168,7 +174,7 @@ function clientStatus() {
   if (stage === "Production review" && state.waitingOn === "the client") {
     return {
       line: "New work is ready for you to look at.",
-      link: `./client-review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}`,
+      link: reviewHref((view.state || {}).currentArtboardVersion),
     };
   }
   if (stage === "Delivered") return { line: "This Scene has been delivered. Nothing is needed from you.", link: null };
@@ -433,7 +439,7 @@ function reviewNotice() {
         <h2 id="artboard-ready-heading" class="m-scene-work-heading">Artboard V0${escape(value)} is ready for review</h2>
         <p class="m-copy">Compare it with the production brief and decide whether it is ready for the client.</p>
       </div>
-      <a class="m-button m-button--primary" href="./review.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}">Review Artboard V0${escape(value)}</a>
+      <a class="m-button m-button--primary" href="${reviewHref(value)}">Review Artboard V0${escape(value)}</a>
     </section>`;
 }
 

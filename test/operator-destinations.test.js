@@ -31,7 +31,7 @@ function artistOptions(backend, user, accountId = DEMO) {
 
 const SHELL_PAGES = [
   "app/index.html", "app/scenes.html", "app/reviews.html", "app/artist.html",
-  "app/tour.html", "app/scene.html", "app/review.html", "app/request.html",
+  "app/tour.html", "app/scene.html", "app/request.html",
   "app/direction.html", "app/handoff.html", "app/admin.html",
 ];
 

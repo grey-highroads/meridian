@@ -155,27 +155,72 @@ test("a version 3 and a second approval write a second intent, and the first is 
   assert.equal(intents[1].artboardVersion, 3);
 });
 
-test("the client review page says nothing internal to the person reading it", () => {
-  const markup = fs.readFileSync(path.join(rootPath, "app/client-review.html"), "utf8");
-  const sheets = markup.match(/<link[^>]*rel="stylesheet"[^>]*>/g) || [];
-  assert.equal(sheets.length, 1);
-  assert.match(sheets[0], /\.\/design\/index\.css/);
-
-  const script = fs.readFileSync(path.join(rootPath, "app/client-review.js"), "utf8");
-  const stripped = script.replace(/\/\/[^\n]*/g, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
-  const copy = [
+// One file now serves both roles, so scanning the whole gallery cannot tell
+// client copy from Higher Roads copy. What a client reads is decided in two
+// places and both are checked: the branch of the drawer that runs for them, and
+// the server projection from 2481978d that decides what reaches it at all.
+function clientCopy() {
+  const page = fs.readFileSync(path.join(rootPath, "app/reviews.html"), "utf8");
+  // The full view is what a client reads. The rail around the gallery list is
+  // the same chrome they get on every page, wordmark included, and the wordmark
+  // is the product's name rather than anything internal.
+  const opened = page.indexOf("<dialog");
+  assert.ok(opened > -1, "the gallery has no full view");
+  const markup = page.slice(opened);
+  const script = fs.readFileSync(path.join(rootPath, "app/reviews.js"), "utf8");
+  const start = script.indexOf("function clientActions(");
+  assert.ok(start > -1, "the gallery has no client branch");
+  const end = script.indexOf("\nfunction ", start + 1);
+  const branch = script.slice(start, end === -1 ? undefined : end);
+  const stripped = branch.replace(/\/\/[^\n]*/g, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
+  return [
     markup.replace(/<[^>]*>/g, " "),
     (stripped.match(/`[^`]*`|"[^"\n]*"|'[^'\n]*'/g) || [])
       .map((entry) => entry.replace(/\$\{[^{}]*\}/g, " ").replace(/<[^>]*>/g, " ").trim())
       .filter((text) => /\s/.test(text))
       .join(" | "),
   ].join(" | ");
+}
 
+test("the review gallery says nothing internal in the branch a client reads", () => {
+  const markup = fs.readFileSync(path.join(rootPath, "app/reviews.html"), "utf8");
+  const sheets = markup.match(/<link[^>]*rel="stylesheet"[^>]*>/g) || [];
+  assert.equal(sheets.length, 1);
+  assert.match(sheets[0], /\.\/design\/index\.css/);
+
+  const copy = clientCopy();
   for (const word of ["finding", "warning", "score", "governance", "bin", "facet", "candidate", "technical"]) {
-    assert.ok(!new RegExp(`\\b${word}`, "i").test(copy), `the client page says "${word}"`);
+    assert.ok(!new RegExp(`\\b${word}`, "i").test(copy), `the client branch says "${word}"`);
   }
-  assert.ok(!/Higher Roads/i.test(copy), "the client page says Higher Roads");
-  assert.ok(!copy.includes("\u2014"), "the client page carries an em dash");
+  assert.ok(!/Higher Roads/i.test(copy), "the client branch says Higher Roads");
+  assert.ok(!copy.includes("\u2014"), "the client branch carries an em dash");
+});
+
+// The words a client never sees come off the wire, not off the page. The
+// gallery asks get-reviews for every reader; a client is handed comments and
+// their own approvals and nothing else, so an internal review with technical
+// notes on it cannot reach the drawer they read.
+test("the gallery's own request for feedback hands a client nothing internal", async () => {
+  const { options, asClient } = await ready();
+  await atVersionTwo(options);
+  await tourAction({
+    action: "save-review",
+    ...AT,
+    artboardVersion: 2,
+    departures: ["The sky reads too clean."],
+    technicalItems: ["Check the upstage wall resolution."],
+  }, options);
+
+  const internal = await tourAction({ action: "get-reviews", ...AT }, options);
+  assert.equal(internal.reviews.length, 1);
+  assert.ok(internal.reviews[0].technicalItems.length, "the internal review lost its technical notes");
+
+  const seen = await tourAction({ action: "get-reviews", ...AT }, asClient);
+  assert.equal(seen.reviews, undefined, "an internal review reached the client");
+  assert.equal(seen.revisions, undefined, "a revision reached the client");
+  assert.ok(Array.isArray(seen.comments));
+  assert.ok(!JSON.stringify(seen).includes("upstage wall"), "a technical note reached the client");
+  assert.ok(!JSON.stringify(seen).includes("too clean"), "an internal note reached the client");
 });
 
 test("a client session is refused everywhere but their own review, and stores nothing", async () => {

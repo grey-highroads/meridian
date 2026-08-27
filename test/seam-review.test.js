@@ -244,22 +244,22 @@ test("the artboard file is served back for the version that asks for it", async 
   );
 });
 
-test("the review page loads only the design system and says nothing in architecture words", () => {
-  const markup = fs.readFileSync(path.join(rootPath, "app/review.html"), "utf8");
+test("the review gallery loads only the design system and says nothing in architecture words", () => {
+  const markup = fs.readFileSync(path.join(rootPath, "app/reviews.html"), "utf8");
   const sheets = markup.match(/<link[^>]*rel="stylesheet"[^>]*>/g) || [];
   assert.equal(sheets.length, 1);
   assert.match(sheets[0], /\.\/design\/index\.css/);
 
-  const script = fs.readFileSync(path.join(rootPath, "app/review.js"), "utf8");
+  const script = fs.readFileSync(path.join(rootPath, "app/reviews.js"), "utf8");
   const stripped = script.replace(/\/\/[^\n]*/g, " ").replace(/\/\*[\s\S]*?\*\//g, " ");
   const literals = (stripped.match(/`[^`]*`|"[^"\n]*"|'[^'\n]*'/g) || [])
     .map((entry) => entry.replace(/\$\{[^{}]*\}/g, " ").replace(/<[^>]*>/g, " ").trim())
     .filter((text) => /\s/.test(text))
     .join(" | ");
   for (const word of ["bin", "facet", "governance", "candidate", "proposed", "finding-"]) {
-    assert.ok(!new RegExp(`\\b${word}`, "i").test(literals), `the review page says "${word}" to a person`);
+    assert.ok(!new RegExp(`\\b${word}`, "i").test(literals), `the review gallery says "${word}" to a person`);
   }
-  assert.ok(!literals.includes("\u2014"), "the review page carries an em dash");
+  assert.ok(!literals.includes("\u2014"), "the review gallery carries an em dash");
 });
 
 test("the Scene page keeps the receipt and hands the rest to review", () => {
@@ -267,5 +267,6 @@ test("the Scene page keeps the receipt and hands the rest to review", () => {
   assert.ok(script.includes("receiptSection"), "the Scene page lost the receipt");
   assert.ok(!script.includes("artboardSection"), "the Scene page still lists what came back");
   assert.ok(!script.includes("recordSection"), "the Scene page still shows the record");
-  assert.ok(script.includes("./review.html"), "the Scene page has no way through to review");
+  assert.ok(script.includes("./reviews.html?"), "the Scene page has no way through to the review gallery");
+  assert.ok(!script.includes("./review.html") && !script.includes("client-review.html"), "the Scene page still links a removed page");
 });

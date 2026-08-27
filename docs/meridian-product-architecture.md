@@ -242,3 +242,15 @@ The client Scene never shows the tour direction or any mention of it, venue or r
 **The interface never narrates plumbing.** The line "The whole tour direction travels with the brief. Nobody picks parts of it." came off the Higher Roads Scene, along with the sentence explaining that screen detail is prose rather than fields. The direction travels; that is a fact about the system and not something a reader needs told. Architecture vocabulary reaching a reader is a defect under the writing rules in `docs/CONTRIBUTING.md`. The section is now called Venues and screens and shows the dates, the setup, and the dates where the rig differs as facts.
 
 **Attaching happens where the asking happens.** Reference images belong to asking for a Scene, so the upload control lives on the request screen at `app/request.html`, where a client attaches a photo as part of saying what she wants. Both Scene views list what is attached and neither takes an upload.
+
+## One ruling, 2026-08-27, third session
+
+Recorded against the committed tree at `9de17c61`.
+
+**One review surface, and every road points at it.** The Reviews gallery had been live for some time while Home and the Scene still routed people to the two pages it replaced, so the old surface was what a person naturally reached. `app/review.html`, `app/review.js`, `app/client-review.html`, and `app/client-review.js` are removed.
+
+From the Scene, the button announcing work that came back opens the gallery's full view of that Scene's newest version. From Home, a row about work needing a decision opens the same, for either role, at `reviews.html?scene=<id>&version=<n>`, which is the address the gallery already served. The full view opens board first with the drawer closed, and every action the old workstation carried lives in that drawer.
+
+What a client may receive is unchanged. The server projection from `2481978d` is what decides, and this commit did not touch it: `get-reviews` hands a client their own comments and approvals and no internal review or revision, and a deep link to a version nobody presented still gets the refusal the server already gave. The middleware drops the deleted client page from the paths a client may load; the gallery was already on that list, so nothing was opened up.
+
+The build is the check. Whether a road still leads to a removed page is asserted by scanning the built output rather than a list of source files, because a source list goes stale in exactly the way that hides this class of mistake.

@@ -8,12 +8,12 @@ const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 
 const PAGES = [
   "app/index.html", "app/scenes.html", "app/reviews.html", "app/artist.html",
-  "app/tour.html", "app/scene.html", "app/review.html", "app/client-review.html",
+  "app/tour.html", "app/scene.html",
   "app/request.html", "app/direction.html", "app/handoff.html", "app/admin.html",
 ];
 const SCRIPTS = [
   "app/home.js", "app/scenes.js", "app/reviews.js", "app/artist.js",
-  "app/tour.js", "app/scene.js", "app/review.js", "app/client-review.js",
+  "app/tour.js", "app/scene.js",
   "app/request.js", "app/direction.js", "app/handoff.js", "app/shell.js",
   "app/admin.js",
 ];
@@ -125,7 +125,7 @@ test("account and Tour context travel through Meridian navigation and requests",
 
   for (const name of [
     "app/home.js", "app/scenes.js", "app/reviews.js", "app/tour.js",
-    "app/scene.js", "app/review.js", "app/client-review.js", "app/request.js",
+    "app/scene.js", "app/request.js",
     "app/direction.js", "app/handoff.js", "app/artist.js", "app/shell.js",
   ]) {
     assert.match(read(name), /scopedBody\(/, `${name} does not send the selected account`);
@@ -207,9 +207,8 @@ test("Reviews shows every Artboard version as a gallery rather than an attention
   assert.match(directory, /return artboards\.length \? \{ \.\.\.scene, artboards \} : null/, "Scenes without Artboards still create gallery rows");
   assert.match(directory, /Versions will appear here/, "the empty gallery does not explain what will arrive");
   assert.doesNotMatch(directory, /to review|Nothing needs your review|Completed reviews/, "Reviews still reads as an attention queue");
-  const review = read("app/review.js");
-  assert.match(review, /was approved by the client/, "completed review does not show its exact approved version");
-  assert.match(review, /read only/, "completed review still presents itself as an active decision");
+  const gallery = read("app/reviews.js");
+  assert.match(gallery, /Earlier versions are read-only history/, "the gallery does not mark superseded versions as history");
 });
 
 test("empty states name the job and use the shared visual family", () => {
@@ -244,26 +243,23 @@ test("empty screens speak to the person holding the work", () => {
   const request = read("app/request.js");
   assert.match(request, /Attach a photo, a mood image, or a still from another show/, "the request screen does not invite a reference image");
 
-  const review = read("app/review.js");
-  assert.match(review, /The exact version will appear here when the work comes back/, "internal review does not explain the production handoff");
-  const client = read("app/client-review.js");
-  assert.match(client, /You do not need to do anything yet/, "client review does not release the client from an empty queue");
+  const gallery = read("app/reviews.js");
+  assert.match(gallery, /Versions will appear here/, "the gallery does not explain what will arrive");
   const handoff = read("app/handoff.js");
   assert.match(handoff, /Send the brief from the Scene/, "handoff does not name where the brief goes out from");
   const artist = read("app/artist.js");
   assert.match(artist, /Build the Artist Brain/, "Artist Brain does not start with the manual research job");
 });
 
-test("review decisions lead instead of hiding in a footer", () => {
-  const operatorMarkup = read("app/review.html");
-  const operator = read("app/review.js");
-  const clientMarkup = read("app/client-review.html");
-  const client = read("app/client-review.js");
-  assert.doesNotMatch(operatorMarkup, /m-action-bar/, "internal review still reserves the footer for its decision");
-  assert.doesNotMatch(clientMarkup, /m-action-bar/, "client review still reserves the footer for its decision");
-  assert.match(operator, /Decide on Artboard V/, "internal review does not lead with the exact Artboard decision");
-  assert.match(operator, /href="#review-feedback"/, "internal review does not offer feedback near the top");
-  assert.doesNotMatch(client, /Your work/, "client review still spends its headline on a generic phrase");
-  assert.match(client, /Approve Artboard V/, "client review does not offer exact-version approval near the top");
-  assert.match(client, /Feedback on Artboard V/, "client feedback does not name the Artboard it affects");
+// The two review pages were removed on 2026-08-27. Every decision they carried
+// lives in the gallery's drawer, which opens under the board rather than
+// reserving a footer for itself.
+test("review decisions live in the gallery drawer, under the board", () => {
+  const markup = read("app/reviews.html");
+  const gallery = read("app/reviews.js");
+  assert.match(markup, /id="review-drawer"/, "the gallery has no drawer to decide in");
+  assert.match(gallery, /drawer\.open = false/, "opening a version does not lead with the board");
+  assert.match(gallery, /Approve this version/, "the client cannot approve from the drawer");
+  assert.match(gallery, /data-comment/, "the client cannot comment from the drawer");
+  assert.match(gallery, /Feedback on this version/, "feedback does not name the version it affects");
 });
