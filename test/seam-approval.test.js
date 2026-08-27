@@ -57,7 +57,7 @@ async function atVersionTwo(options) {
     ...AT,
     revisionId: "rev-1",
     sourceArtboardVersion: 1,
-    instructions: [{ text: "Hold the break a beat longer.", regionAnchor: "Top right" }],
+    instructions: [{ text: "Hold the break a beat longer." }],
     preserve: [],
   }, options);
 }

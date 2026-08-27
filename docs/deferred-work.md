@@ -18,15 +18,35 @@ This is the only register for missing Meridian UI patterns. Builders use the sys
 
 Each request names the job, the missing state, and where it occurs. Use one of four plain status phrases: requested, being designed, available, or use the existing pattern.
 
-### Region anchor on a feedback note
+### Artboard version gallery
 
-Status: use the existing pattern
+Status: requested
 
-Job: Higher Roads reviews an artboard version and says which part of it needs to change, so the note reaches production attached to a place rather than as a sentence about the whole picture.
+Job: a person scans every Artboard version that exists for each Scene without turning Reviews into another attention queue.
 
-Missing state: Use the existing named-region field when feedback needs a location. The location travels with the instruction and stays beside the feedback composer. Meridian does not place pins or notes over the work in V1.
+Missing state: There is no gallery pattern for rows of arbitrary-ratio images with a per-person unopened stroke. `app/reviews.js` uses `m-reference-grid`, ordinary buttons, `m-client-review__frame`, and `m-button--instrument` as the nearest available pieces.
 
-Where: The Artboard review job, on the review screen built from that sample. The optional anchor is recorded as provisional in section 6 of `docs/meridian-seam-with-jim.md` and whether Jim's side can read one is a discovery question in section 4.
+Where: `app/reviews.html`, for the Reviews gallery. A real thumbnail pipeline becomes necessary when one Scene exceeds 12 versions or the original files entering the viewport exceed 40 MB in total.
+
+### Full-viewport work viewer
+
+Status: requested
+
+Job: a person reads dense Artboard text at the size it needs, switches between fitted and actual-size views, and pans an arbitrary-ratio board without leaving the gallery.
+
+Missing state: There is no full-viewport viewer or fit and actual-size control. `app/reviews.js` uses the dialog, client shell, workstation stage, and segmented control as the nearest pieces, then supplies viewport sizing and image fitting in the page. It deliberately does not use `m-work-frame`, whose widescreen ratio is wrong for square and portrait work.
+
+Where: the full-screen Artboard view opened from `app/reviews.html`.
+
+### Feedback drawer over full-screen work
+
+Status: requested
+
+Job: a person opens only the selected version's rationale, feedback, state, and actions while keeping the Artboard as the main object.
+
+Missing state: There is no drawer pattern. `app/reviews.html` uses a closed `m-disclosure` at the bottom of the full-screen viewer. It is not the fixed workstation inspector, because that pattern permanently reduces the work area.
+
+Where: the full-screen Artboard view opened from `app/reviews.html`.
 
 ### The account switcher under the wordmark
 
@@ -569,15 +589,11 @@ Recorded 2026-08-26 with the `list-tours` action. With no tour named in the addr
 
 Bring it back when: an account holds more than one tour. The tour becomes something a person selects and Meridian remembers, rather than something resolved by sort order.
 
-## Documentation conflicts awaiting Grey's ruling
+## Resolved documentation rulings
 
-Named conflicts are recorded here without declaring a core document or the code stale. Each one stays unresolved until Grey rules which side changes.
+### Moment 6 feedback location
 
-### Moment 6 region anchoring
-
-Recorded 2026-08-26. `docs/meridian-jobs-walkthroughs.md` line 118 says the nine-name region dropdown is friction because it is not a mark on the picture, and line 120 prescribes feedback anchored by pointing. The Design pattern requests section of this register rules that Meridian does not place pins or notes over the work in V1 and prescribes the existing named-region field. `app/review.js` line 30 implements that ruling as the nine-name dropdown.
-
-Status: awaiting Grey's ruling. Resolve nothing until Grey decides whether the Moment 6 walkthrough or the V1 design pattern changes.
+Recorded 2026-08-26 and resolved 2026-08-27. The walkthrough prescribed feedback anchored by pointing while the shipped review used a nine-name region dropdown. Grey ruled that Meridian has no feedback location field and nothing replaces it. New revision instructions carry the words against the named Artboard version. Historical revisions that already carry a location remain readable.
 
 ## Dates where the rig differs have no surface
 

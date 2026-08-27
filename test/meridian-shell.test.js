@@ -192,12 +192,12 @@ test("the Scene directory is a quiet list and Scene requests require names", () 
   assert.match(request, /id="title"[^>]*required/, "Scene name is not required in the request form");
 });
 
-test("an empty decision queue does not hide completed sample reviews", () => {
+test("Reviews shows every Artboard version as a gallery rather than an attention queue", () => {
   const directory = read("app/reviews.js");
-  assert.match(directory, /Completed reviews/, "Reviews has no route back into completed work");
-  assert.match(directory, /\["Final approved", "Delivered"\]/, "Reviews does not limit recent work to completed review states");
-  assert.doesNotMatch(directory, /Open past work/, "the past-review section still reads like a card action");
-  assert.match(directory, /Nothing needs your review/, "the empty queue does not name what is clear");
+  assert.match(directory, /right\.artboard\.artboardVersion - left\.artboard\.artboardVersion/, "the newest Artboard is not first");
+  assert.match(directory, /return artboards\.length \? \{ \.\.\.scene, artboards \} : null/, "Scenes without Artboards still create gallery rows");
+  assert.match(directory, /Versions will appear here/, "the empty gallery does not explain what will arrive");
+  assert.doesNotMatch(directory, /to review|Nothing needs your review|Completed reviews/, "Reviews still reads as an attention queue");
   const review = read("app/review.js");
   assert.match(review, /was approved by the client/, "completed review does not show its exact approved version");
   assert.match(review, /read only/, "completed review still presents itself as an active decision");

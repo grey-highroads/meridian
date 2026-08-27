@@ -123,31 +123,18 @@ export function avoidFor(context, notes) {
   return attached;
 }
 
-// The nine places a person can point at on an artboard. The control that uses
-// this is provisional: the register carries a pattern request for a real region
-// anchor, and this list is the nearest thing the design system supports today.
-export const REGIONS = [
-  "Top left", "Top centre", "Top right",
-  "Middle left", "Centre", "Middle right",
-  "Bottom left", "Bottom centre", "Bottom right",
-];
-
 function textList(value) {
   return (Array.isArray(value) ? value : [])
     .map((entry) => String(entry === null || entry === undefined ? "" : entry).trim())
     .filter(Boolean);
 }
 
-// An instruction carries what to change and, when someone marked one, where.
-// The anchor is stored as given so it round trips to production unchanged, and
-// an anchor that is not one of ours is dropped rather than passed on.
 function instructionList(value) {
   return (Array.isArray(value) ? value : [])
     .map((entry) => {
       const source = entry && typeof entry === "object" ? entry : { text: entry };
       const text = String(source.text === null || source.text === undefined ? "" : source.text).trim();
-      const anchor = String(source.regionAnchor === null || source.regionAnchor === undefined ? "" : source.regionAnchor).trim();
-      return { text, regionAnchor: REGIONS.includes(anchor) ? anchor : null };
+      return { text };
     })
     .filter((entry) => entry.text);
 }
@@ -176,7 +163,7 @@ function submissionArtifact(value, tourId, assignmentId, accountId) {
     error.status = 400;
     throw error;
   }
-  if (dataUrl && !/^data:(image\/(?:gif|jpeg|png|svg\+xml|webp)|application\/pdf);base64,/i.test(dataUrl)) {
+  if (dataUrl && !/^data:image\/(?:jpeg|png);base64,/i.test(dataUrl)) {
     const error = new Error("That submitted file format is not supported.");
     error.status = 400;
     throw error;
@@ -267,6 +254,7 @@ function clientApprovalView(approvals) {
 const CLIENT_ACTIONS = new Set([
   "get-me",
   "mark-introduction-seen",
+  "mark-review-version-seen",
   "get-tour",
   "list-tours",
   "get-assignment",
@@ -327,6 +315,25 @@ export async function handleAction(body, options = {}) {
     const orgStore = options.orgStore || createOrgStore();
     const now = options.now ? new Date(options.now()) : new Date();
     return { user: await orgStore.markIntroductionSeen(user.id, now) };
+  }
+
+  if (body.action === "mark-review-version-seen") {
+    const { fixture, assignment, artboardStore, entry, wanted } = await atArtboard(body, options);
+    if (user.role === CLIENT_ROLE) {
+      const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+      if (!presentedVersions(approvals).has(wanted)) throw clientSurfaceError();
+    }
+    const orgStore = options.orgStore || createOrgStore();
+    const now = options.now ? new Date(options.now()) : new Date();
+    const seen = await orgStore.markReviewVersionSeen(
+      user.id,
+      actingAccount,
+      fixture.tour.id,
+      assignment.id,
+      entry.artboard.artboardVersion,
+      now,
+    );
+    return seen;
   }
 
   // Which tours this account holds. A page asks when no tour is named, so an
@@ -1094,6 +1101,7 @@ export async function handleAction(body, options = {}) {
       error.status = 404;
       throw error;
     }
+    refuseSupersededArtboard(versions, wanted);
     const departures = textList(body.departures);
     const technicalItems = textList(body.technicalItems);
     if (!departures.length && !technicalItems.length) {

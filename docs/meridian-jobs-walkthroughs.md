@@ -103,7 +103,7 @@ Afraid: proposing something the artist would refuse, or the rig cannot do. Confi
 
 **What the screen should be.** Two moments, not a workspace: a handoff page (the brief, its version, files, technical profile, due date, contact, "this is frozen; changes reach you as a new version") and a submit page (drop the work, concept summary as built, technical assumptions, send). Everything else in Meridian is someone else's job and stays out of their way.
 
-Afraid: building against a brief that silently changed; work vanishing into a void after submission. Confidence: the version number on everything; a receipt with their name and time. Minimum: the artifact and a sentence. Done: receipt shown, next step named ("Higher Roads reviews; feedback returns as anchored notes against this version").
+Afraid: building against a brief that silently changed; work vanishing into a void after submission. Confidence: the version number on everything; a receipt with their name and time. Minimum: the artifact and a sentence. Done: receipt shown, next step named ("Higher Roads reviews; feedback returns against this version").
 
 ## Moment 6: Review what came back
 
@@ -113,27 +113,27 @@ Afraid: building against a brief that silently changed; work vanishing into a vo
 
 **What they hold.** Judgment, the brief in memory, the client's last reaction.
 
-**Today.** Mechanics all work: artboard, concept as built, technical items, notes, feedback with region dropdown, side-by-side versions, record, client and handoff sections.
+**Today.** Mechanics all work: artboard, concept as built, technical items, notes, versioned feedback, side-by-side versions, record, client and handoff sections.
 
-**Friction.** The gobbledygook page. The record displays itself: version tables, timestamps, full history at equal weight with the work. The artboard sits at 640 fixed pixels inside the evidence. The governing brief is not on the page. The region control is a dropdown of nine names instead of a mark on the picture. Notes-versus-feedback makes a person classify their own thought.
+**Friction.** The gobbledygook page. The record displays itself: version tables, timestamps, full history at equal weight with the work. The artboard sits at 640 fixed pixels inside the evidence. The governing brief is not on the page. Notes-versus-feedback makes a person classify their own thought.
 
-**What the screen should be.** The work at full size. The brief one glance away. One way to say "change this," anchored by pointing. History behind disclosure. The record catches everything and stops performing.
+**What the screen should be.** The work at full size. The brief one glance away. One way to say "change this" against the exact version. History behind disclosure. The record catches everything and stops performing.
 
-Afraid: sending the client something with a flaw they missed; feedback that produces the wrong fix. Confidence: brief beside work; the departure check; anchored notes. Minimum: a decision, onward or back, with reasons when back. Done: state moved, waiting-on flipped, notified.
+Afraid: sending the client something with a flaw they missed; feedback that produces the wrong fix. Confidence: brief beside work; the departure check; notes tied to the exact version. Minimum: a decision, onward or back, with reasons when back. Done: state moved, waiting-on flipped, notified.
 
 ## Moment 7: Understand feedback and submit the next version
 
 **Who and when.** The media artist, feedback in hand. This is not an edge case; it is the loop.
 
-**What they want.** To see the exact version the feedback applies to, what must change, what must remain, visual anchors when relevant, whether the note is internal or client-approved, what is due, and then return the next version the same way as the first.
+**What they want.** To see the exact version the feedback applies to, what must change, what must remain, whether the note is internal or client-approved, what is due, and then return the next version the same way as the first.
 
 **What they hold.** Version 1 in their tools, and a revision notice.
 
-**Today.** The revision payload carries instructions, preserve list, anchors, and the version. It goes to the stand-in; no person can receive it, and nothing distinguishes internal direction from client-driven direction on its face.
+**Today.** The revision payload carries instructions, a preserve list, and the version. It goes to the stand-in; no person can receive it, and nothing distinguishes internal direction from client-driven direction on its face.
 
 **Friction.** The moment does not exist for a human.
 
-**What the screen should be.** The revision as a governed handoff mirroring the brief: this version, change these things (anchored), preserve these, source of the direction, due date, submit slot for version 2 alongside.
+**What the screen should be.** The revision as a governed handoff mirroring the brief: this version, change these things, preserve these, source of the direction, due date, submit slot for version 2 alongside.
 
 Afraid: fixing the wrong thing; losing what was working; conflicting notes with no priority. Confidence: change and preserve as separate lists against a named version. Minimum: the next version and a sentence on what they did. Done: receipt, version 2 on record, back to waiting.
 

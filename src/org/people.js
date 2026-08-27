@@ -16,6 +16,7 @@ export const INVITED = "invited";
 export const ACTIVE = "active";
 export const DEACTIVATED = "deactivated";
 export const CLIENT_INTRODUCTION = "client-introduction-v1";
+export const REVIEW_VERSION_PREFIX = "review-version-v1";
 
 // Thirty days, ruled 2026-08-26. Single use inside that window: accepting an
 // invite or completing a reset clears the link, so a link read over someone's
@@ -88,6 +89,17 @@ export function recordExperienceSeen(person, experience, now = new Date()) {
   };
 }
 
+export function reviewVersionExperience(accountId, tourId, sceneId, version) {
+  const parts = [accountId, tourId, sceneId].map((value) => encodeURIComponent(String(value || "")));
+  return `${REVIEW_VERSION_PREFIX}:${parts.join(":")}:${Number(version)}`;
+}
+
+export function reviewVersionsSeen(person) {
+  const seen = person && person.experiencesSeen;
+  if (!seen || typeof seen !== "object") return {};
+  return Object.fromEntries(Object.entries(seen).filter(([key]) => key.startsWith(`${REVIEW_VERSION_PREFIX}:`)));
+}
+
 // What an admin reads on a row. No hash and no token leave the store.
 export function publicPerson(person) {
   if (!person) return null;
@@ -106,6 +118,7 @@ export function publicPerson(person) {
     linkExpiresAt: person.link ? person.link.expiresAt : null,
     acceptedAt: person.acceptedAt || null,
     introductionSeenAt: experienceSeenAt(person, CLIENT_INTRODUCTION),
+    reviewVersionsSeen: reviewVersionsSeen(person),
     // Deleting is offered only for a person who has never signed in. Signing in
     // is doing something, and the record has to keep naming whoever acted.
     deletable: !person.password && !person.acceptedAt,

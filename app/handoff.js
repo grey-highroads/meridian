@@ -165,7 +165,7 @@ function submitBlock() {
   const next = view.artboards.length ? Math.max(...view.artboards.map((entry) => entry.artboard.artboardVersion)) + 1 : 1;
   return `<section class="m-work m-stack" aria-labelledby="submit-heading">
       <div class="m-stack"><span class="m-label">Return the work</span><h2 id="submit-heading" class="m-section-heading">Submit artboard V${version(next)}</h2><p class="m-copy">One artifact and one sentence are enough.</p></div>
-      <div class="m-field"><label class="m-label" for="artifact">Artboard image or PDF</label><input class="m-input" id="artifact" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,application/pdf" data-file /><span class="m-help">Up to 20 MB. The file is stored privately.</span></div>
+      <div class="m-field"><label class="m-label" for="artifact">Artboard image</label><input class="m-input" id="artifact" type="file" accept="image/png,image/jpeg" data-file /><span class="m-help">PNG or JPEG, up to 20 MB. The file is stored privately.</span></div>
       <div class="m-field"><label class="m-label" for="summary">How you read the brief</label><textarea class="m-textarea" id="summary" data-draft="summary" placeholder="One clear sentence.">${escape(view.draft.summary)}</textarea></div>
       <details class="m-disclosure"><summary><span class="m-label">Technical notes, optional</span><span class="m-meta">Add only what matters</span></summary><div class="m-disclosure__body m-stack">
         <div class="m-field"><label class="m-label" for="assumptions">Assumptions</label><textarea class="m-textarea" id="assumptions" data-draft="assumptions" placeholder="One per line.">${escape(view.draft.assumptions)}</textarea></div>

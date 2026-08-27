@@ -9,12 +9,8 @@ export { uploadPathFor, uploadPrefix };
 
 const MAXIMUM_SIZE = 20 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
-  "application/pdf",
-  "image/gif",
   "image/jpeg",
   "image/png",
-  "image/svg+xml",
-  "image/webp",
 ]);
 
 function clientSurfaceError() {
@@ -39,6 +35,8 @@ export default async function handler(request, response, options = {}) {
     const prefix = uploadPrefix(tourId, assignmentId, accountId);
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     const credentials = token ? { token } : {};
+    const sign = options.issueSignedToken || issueSignedToken;
+    const presign = options.presignUrl || presignUrl;
 
     if (String(body.mode || "") === "reference-list") {
       const { createSceneRecord } = await import("../src/tour/scene-record.js");
@@ -88,8 +86,6 @@ export default async function handler(request, response, options = {}) {
         if (!presented) throw clientSurfaceError();
       }
       const validUntil = Date.now() + 15 * 60 * 1000;
-      const sign = options.issueSignedToken || issueSignedToken;
-      const presign = options.presignUrl || presignUrl;
       const signedToken = await sign({ ...credentials, pathname, operations: ["get"], validUntil });
       const result = await presign(signedToken, {
         access: "private",
@@ -103,13 +99,17 @@ export default async function handler(request, response, options = {}) {
 
     const contentType = String(body.contentType || "").toLowerCase();
     const size = Number(body.size);
-    if (!ALLOWED_TYPES.has(contentType)) throw new Error("Choose an image or PDF for this submission.");
+    if (!ALLOWED_TYPES.has(contentType)) {
+      const error = new Error("Choose a PNG or JPEG for this submission.");
+      error.status = 400;
+      throw error;
+    }
     if (!Number.isFinite(size) || size <= 0 || size > MAXIMUM_SIZE) {
       throw new Error("Choose one file no larger than 20 MB.");
     }
     const pathname = uploadPathFor(tourId, assignmentId, body.filename, accountId);
     const validUntil = Date.now() + 10 * 60 * 1000;
-    const signedToken = await issueSignedToken({
+    const signedToken = await sign({
       ...credentials,
       pathname,
       operations: ["put"],
@@ -117,7 +117,7 @@ export default async function handler(request, response, options = {}) {
       allowedContentTypes: [contentType],
       maximumSizeInBytes: MAXIMUM_SIZE,
     });
-    const result = await presignUrl(signedToken, {
+    const result = await presign(signedToken, {
       access: "private",
       operation: "put",
       pathname,

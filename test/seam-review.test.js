@@ -39,7 +39,7 @@ const CONCEPT = {
 const REVISION = {
   revisionId: "rev-1",
   sourceArtboardVersion: 1,
-  instructions: [{ text: "Hold the break a beat longer.", regionAnchor: "Top right" }],
+  instructions: [{ text: "Hold the break a beat longer." }],
   preserve: ["The uninterrupted trace across the back wall."],
 };
 
@@ -129,15 +129,20 @@ test("a revision against version 1 stores version 2, a receipt, and a second fil
   assert.equal(stored.artboards[0].artboard.artboardVersion, 1);
 });
 
-test("the region anchor and the preserve list round trip into the stored revision unchanged", async () => {
+test("new revision writes keep the words and preserve list but drop a supplied location", async () => {
   const { options } = await ready();
   await sent(options);
-  await tourAction({ action: "send-revision", ...AT, ...REVISION }, options);
+  await tourAction({
+    action: "send-revision",
+    ...AT,
+    ...REVISION,
+    instructions: [{ text: "Hold the break a beat longer.", regionAnchor: "Top right" }],
+  }, options);
 
   const { revisions } = await tourAction({ action: "get-reviews", ...AT }, options);
   assert.equal(revisions.length, 1);
   assert.deepEqual(revisions[0].instructions, [
-    { text: "Hold the break a beat longer.", regionAnchor: "Top right" },
+    { text: "Hold the break a beat longer." },
   ]);
   assert.deepEqual(revisions[0].preserve, ["The uninterrupted trace across the back wall."]);
   assert.equal(revisions[0].sourceArtboardVersion, 1);
@@ -145,19 +150,17 @@ test("the region anchor and the preserve list round trip into the stored revisio
   assert.equal(revisions[0].sentBy, OPERATOR.displayName);
 });
 
-test("an anchor that is not one of ours is dropped rather than passed on", async () => {
+test("a historical revision carrying a location remains readable", async () => {
   const { options } = await ready();
   await sent(options);
-  await tourAction({
-    action: "send-revision",
-    ...AT,
-    revisionId: "rev-1",
+  await options.artboardStore.addRevision(TOUR, ASSIGNMENT, {
+    revisionId: "historical-rev-1",
     sourceArtboardVersion: 1,
-    instructions: [{ text: "Warm the sky.", regionAnchor: "__proto__" }],
+    instructions: [{ text: "Warm the sky.", regionAnchor: "Top right" }],
     preserve: [],
-  }, options);
+  });
   const { revisions } = await tourAction({ action: "get-reviews", ...AT }, options);
-  assert.equal(revisions[0].instructions[0].regionAnchor, null);
+  assert.equal(revisions[0].instructions[0].regionAnchor, "Top right");
 });
 
 test("a revision against version 1 once version 2 exists is refused and stores nothing", async () => {

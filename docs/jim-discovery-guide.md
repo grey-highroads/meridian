@@ -21,7 +21,7 @@ One rule for the notetaker: every answer is evidence. "It depends" is an answer;
 
 **6. What comes out.** The artboard format, exactly. Whether his system can produce, today or cheaply: a machine-readable sidecar, a concept summary, a job identifier, a version number, a manifest. How the file gets to the client today.
 
-**7. How revisions arrive and are applied.** The form feedback takes today. Whether prior state is preserved when he revises. Whether a revision can be tied to a specific earlier version. What happens when feedback is about one part of the picture: how does he know which part, and would a named region on the instruction help or annoy. This is the region-anchor question from the seam document; ask it against a real revision from the project on the table.
+**7. How revisions arrive and are applied.** The form feedback takes today. Whether prior state is preserved when he revises. Whether a revision can be tied to a specific earlier version. Ask it against a real revision from the project on the table.
 
 **8. From approved artboard to finished media.** What carries forward automatically, what gets re-entered by hand, where drift between approved and delivered has actually happened. Which production steps could reference an immutable approved version if one existed. What he checks before delivery.
 

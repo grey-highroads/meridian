@@ -1,86 +1,440 @@
-import { TOUR_ID, scopedBody } from "./context.js";
+import { ACCOUNT_ID, TOUR_ID, preserveContextNavigation, scopedBody } from "./context.js";
+import { resolveArtifact } from "./artifact.js";
 import { showNoTour } from "./no-tour.js";
+
+preserveContextNavigation();
+
+const params = new URLSearchParams(window.location.search);
 const locationBar = document.getElementById("location");
 const root = document.getElementById("reviews");
+const viewer = document.getElementById("review-viewer");
+const viewerScene = document.getElementById("viewer-scene");
+const viewerTitle = document.getElementById("viewer-title");
+const viewerState = document.getElementById("viewer-state");
+const viewerStage = document.getElementById("viewer-stage");
+const viewerArtifact = document.getElementById("viewer-artifact");
+const viewerContext = document.getElementById("viewer-context");
+const drawer = document.getElementById("review-drawer");
+const drawerSummary = document.getElementById("drawer-summary");
+const drawerBody = document.getElementById("drawer-body");
+
+const view = {
+  user: null,
+  actingAccount: null,
+  tour: null,
+  scenes: [],
+  artifacts: new Map(),
+  selected: null,
+  detail: null,
+  size: "fit",
+  draft: { feedback: "", technical: "", preserve: "", comment: "" },
+  message: "",
+};
+
+let thumbnailQueue = Promise.resolve();
+let thumbnailObserver = null;
 
 async function call(action, extra = {}) {
-  const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })) });
+  const response = await fetch("/api/tour", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })),
+  });
   const body = await response.json();
-  if (!response.ok) throw new Error(body.error || "Meridian could not load reviews. Refresh the page and try again.");
+  if (!response.ok) throw new Error(body.error || "That did not work.");
   return body;
 }
 
-function escape(value) { return String(value === null || value === undefined ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
-
-function needsUser(scene, user) {
-  if (user.role === "higher-roads") return scene.waitingOn === "Higher Roads" && ["Concept review", "Production review"].includes(scene.stage);
-  return scene.waitingOn === "the client";
+function escape(value) {
+  return String(value === null || value === undefined ? "" : value)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function href(scene, user) {
-  if (scene.stage === "Production review") return user.role === "higher-roads"
-    ? `./review.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`
-    : `./client-review.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`;
-  return `./scene.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`;
+function version(value) {
+  return String(value || 0).padStart(2, "0");
 }
 
-function reviewHref(scene, user) {
-  return user.role === "higher-roads"
-    ? `./review.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`
-    : `./client-review.html?tour=${encodeURIComponent(TOUR_ID)}&scene=${encodeURIComponent(scene.id)}`;
+function lines(value) {
+  return String(value || "").split("\n").map((line) => line.trim()).filter(Boolean);
 }
 
-function clearQueue(hasScenes) {
-  const title = hasScenes ? "Nothing needs your review" : "Reviews will appear here";
-  const copy = hasScenes
-    ? "Nothing is waiting on you. Completed reviews stay below."
-    : "Once work is ready, the Scene and version will appear here.";
-  return `<section class="m-empty-state m-empty-state--clear" aria-labelledby="clear-reviews-heading">
+function artifactKey(sceneId, artboardVersion) {
+  return `${sceneId}:${artboardVersion}`;
+}
+
+function seenKey(sceneId, artboardVersion) {
+  const account = view.actingAccount || ACCOUNT_ID || "";
+  const parts = [account, TOUR_ID, sceneId].map((value) => encodeURIComponent(String(value || "")));
+  return `review-version-v1:${parts.join(":")}:${Number(artboardVersion)}`;
+}
+
+function hasOpened(sceneId, artboardVersion) {
+  return Boolean(view.user?.reviewVersionsSeen?.[seenKey(sceneId, artboardVersion)]);
+}
+
+function sceneFor(sceneId) {
+  return view.scenes.find((scene) => scene.id === sceneId) || null;
+}
+
+function selectedEntry() {
+  const scene = view.selected && sceneFor(view.selected.sceneId);
+  return scene ? scene.artboards.find((entry) => entry.artboard.artboardVersion === view.selected.artboardVersion) || null : null;
+}
+
+function newestVersion(scene) {
+  return scene && scene.artboards.length ? scene.artboards[0].artboard.artboardVersion : null;
+}
+
+function emptyGallery() {
+  const client = view.user.role !== "higher-roads";
+  return `<section class="m-empty-state m-empty-state--waiting" aria-labelledby="empty-reviews-heading">
       <div class="m-empty-state__visual" aria-hidden="true">
-        <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor">
-          <circle cx="32" cy="32" r="21"></circle>
-          <path d="m22 32 7 7 14-16"></path>
-          <path d="M32 5v7M32 52v7M5 32h7M52 32h7"></path>
-        </svg>
+        <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><rect x="12" y="15" width="40" height="34" rx="2"></rect><path d="M20 24h24M20 32h16M20 40h10"></path></svg>
+        <span class="m-empty-state__calibration">Reviews / Standing by</span>
       </div>
       <div class="m-empty-state__body">
-        <h2 id="clear-reviews-heading" class="m-section-heading">${title}</h2>
-        <p class="m-copy m-copy--large">${copy}</p>
+        <span class="m-label">No Artboards yet</span>
+        <h2 id="empty-reviews-heading" class="m-section-heading">Versions will appear here</h2>
+        <p class="m-copy m-copy--large">${client ? "Each version appears when it is ready for the tour team." : "A Scene appears here when its first Artboard comes back."}</p>
+        <div class="m-empty-state__actions"><a class="m-button" href="./scenes.html">Open Scenes</a></div>
       </div>
     </section>`;
 }
 
-function queueRows(queue, user, hasScenes) {
-  if (!queue.length) return clearQueue(hasScenes);
-  const rows = queue.map((scene) => {
-    const object = scene.stage === "Production review" ? (scene.currentVersion || "Latest Artboard") : (scene.currentVersion || "Scene concept");
-    const action = scene.stage === "Production review"
-      ? user.role === "higher-roads"
-        ? `Review ${object} before it goes to the client.`
-        : `Approve ${object} or leave feedback.`
-      : `${object} is ready to send to the media team.`;
-    return `<a class="m-rule-row" href="${escape(href(scene, user))}"><div class="m-stack"><span class="m-rule-row__title">${escape(scene.title)}</span><span class="m-meta">${escape(String(object).toUpperCase())}</span></div><div class="m-stack"><span class="m-state m-state--current">Ready for review</span><span class="m-copy">${escape(action)}</span></div></a>`;
-  }).join("");
-  return `<section class="m-directory-section" aria-labelledby="waiting-reviews-heading"><div class="m-directory-section__head"><h2 id="waiting-reviews-heading" class="m-scene-work-heading">Ready for your review</h2></div><div class="m-directory-list m-rule-list">${rows}</div></section>`;
+function thumbnail(scene, entry) {
+  const value = entry.artboard.artboardVersion;
+  const unopened = !hasOpened(scene.id, value);
+  return `<button class="m-button${unopened ? " m-button--instrument" : ""}" type="button" data-open-scene="${escape(scene.id)}" data-open-version="${escape(value)}" aria-label="Open ${escape(scene.title)}, Artboard version ${escape(value)}">
+      <span class="m-stack">
+        <span class="m-work-frame m-client-review__frame" data-thumb-scene="${escape(scene.id)}" data-thumb-version="${escape(value)}" aria-hidden="true"><span class="m-artboard__shape"></span></span>
+        <span class="m-meta">ARTBOARD V${version(value)}</span>
+      </span>
+    </button>`;
 }
 
-function recentRows(recent, user) {
-  if (!recent.length) return "";
-  return `<section class="m-directory-section" aria-labelledby="recent-reviews-heading"><div class="m-directory-section__head"><h2 id="recent-reviews-heading" class="m-scene-work-heading">Completed reviews</h2><p class="m-copy">Open a review to see what was approved and the version it applies to.</p></div><div class="m-directory-list m-rule-list">${recent.map((scene) => `<a class="m-rule-row" href="${escape(reviewHref(scene, user))}"><div class="m-stack"><span class="m-rule-row__title">${escape(scene.title)}</span><span class="m-meta">${escape(String(scene.currentVersion).toUpperCase())}</span></div><span class="m-state m-state--approved">${escape(scene.currentVersion)} approved</span></a>`).join("")}</div></section>`;
+function renderGallery() {
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./index.html">${escape(view.tour.name)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Reviews</span></nav>`;
+  root.innerHTML = view.scenes.length ? view.scenes.map((scene) => `<section class="m-directory-section" aria-labelledby="scene-${escape(scene.id)}">
+      <div class="m-directory-section__head"><h2 class="m-scene-work-heading" id="scene-${escape(scene.id)}">${escape(scene.title)}</h2><a class="m-button m-button--small" href="./scene.html?scene=${encodeURIComponent(scene.id)}">Open Scene</a></div>
+      <div class="m-reference-grid">${scene.artboards.map((entry) => thumbnail(scene, entry)).join("")}</div>
+    </section>`).join("") : emptyGallery();
+  observeThumbnails();
 }
+
+async function loadArtifact(sceneId, artboardVersion) {
+  const key = artifactKey(sceneId, artboardVersion);
+  if (!view.artifacts.has(key)) {
+    view.artifacts.set(key, (async () => {
+      const item = await call("get-artboard-artifact", { assignmentId: sceneId, artboardVersion });
+      return resolveArtifact(item, { assignmentId: sceneId });
+    })().catch(() => null));
+  }
+  return view.artifacts.get(key);
+}
+
+function loadThumbnail(element) {
+  thumbnailQueue = thumbnailQueue.then(async () => {
+    if (!element.isConnected || element.dataset.loaded) return;
+    element.dataset.loaded = "true";
+    const artifact = await loadArtifact(element.dataset.thumbScene, Number(element.dataset.thumbVersion));
+    if (!element.isConnected || !artifact?.src) return;
+    element.innerHTML = `<img src="${escape(artifact.src)}" alt="" />`;
+  });
+}
+
+function observeThumbnails() {
+  thumbnailObserver?.disconnect();
+  thumbnailObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      thumbnailObserver.unobserve(entry.target);
+      loadThumbnail(entry.target);
+    }
+  }, { rootMargin: "160px" });
+  document.querySelectorAll("[data-thumb-scene]").forEach((element) => thumbnailObserver.observe(element));
+}
+
+function list(items, empty = "Nothing recorded for this version.") {
+  if (!items?.length) return `<p class="m-copy">${escape(empty)}</p>`;
+  return `<ul>${items.map((entry) => `<li class="m-copy">${escape(typeof entry === "string" ? entry : entry.text)}</li>`).join("")}</ul>`;
+}
+
+function stateFor(detail) {
+  const value = view.selected.artboardVersion;
+  if (detail.end.clientApprovals?.some((entry) => entry.artboardVersion === value)) return { label: "Client approved", className: "m-state m-state--approved" };
+  if (detail.end.readyForClient?.some((entry) => entry.artboardVersion === value)) return { label: "Presented to client", className: "m-state m-state--current" };
+  if (detail.handoffs?.some((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value)) return { label: "Changes issued", className: "m-state m-state--change" };
+  if (detail.reviews?.some((entry) => entry.artboardVersion === value)) return { label: "Review saved", className: "m-state" };
+  return { label: "Received", className: "m-state" };
+}
+
+function attributedFeedback(detail) {
+  const value = view.selected.artboardVersion;
+  if (view.user.role === "higher-roads") {
+    const reviews = (detail.reviews || []).filter((entry) => entry.artboardVersion === value);
+    const revisions = (detail.revisions || []).filter((entry) => entry.sourceArtboardVersion === value);
+    return `${reviews.map((entry) => `<div class="m-contribution"><span class="m-label">Higher Roads review</span>${list(entry.departures)}${list(entry.technicalItems, "No technical notes.")}<span class="m-meta">${escape(entry.writtenBy)} / ${escape(entry.writtenAt)}</span></div>`).join("")}${revisions.map((entry) => `<div class="m-contribution"><span class="m-label">Revision issued</span>${list(entry.instructions)}<span class="m-meta">${escape(entry.sentBy)} / ${escape(entry.sentAt)}</span></div>`).join("")}`;
+  }
+  const comments = (detail.comments || []).filter((entry) => entry.artboardVersion === value);
+  const approvals = (detail.approvals || []).filter((entry) => entry.artboardVersion === value);
+  return `${comments.map((entry) => `<div class="m-contribution"><p class="m-copy">${escape(entry.text)}</p><span class="m-meta">${escape(entry.writtenBy)} / ${escape(entry.writtenAt)}</span></div>`).join("")}${approvals.map((entry) => `<div class="m-contribution"><p class="m-copy">Approved this version.</p><span class="m-meta">${escape(entry.approvedBy)} / ${escape(entry.approvedAt)}</span></div>`).join("")}`;
+}
+
+function operatorActions(detail, scene) {
+  const value = view.selected.artboardVersion;
+  const latest = value === newestVersion(scene);
+  if (!latest) return `<div class="m-callout"><p class="m-copy">Earlier versions are read-only history.</p></div>`;
+  const review = detail.reviews?.find((entry) => entry.artboardVersion === value);
+  const pending = detail.handoffs?.some((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value);
+  const ready = detail.end.readyForClient?.some((entry) => entry.artboardVersion === value);
+  const approved = detail.end.clientApprovals?.some((entry) => entry.artboardVersion === value);
+  if (approved || pending) return "";
+  const feedback = review ? review.departures.join("\n") : view.draft.feedback;
+  const technical = review ? review.technicalItems.join("\n") : view.draft.technical;
+  return `<section class="m-stack" aria-labelledby="operator-actions-heading">
+      <h2 class="m-scene-work-heading" id="operator-actions-heading">Higher Roads actions</h2>
+      ${review ? "" : `<div class="m-field"><label class="m-label" for="review-feedback">Review notes</label><textarea class="m-textarea" id="review-feedback" data-draft="feedback" placeholder="One note per line.">${escape(feedback)}</textarea></div><div class="m-field"><label class="m-label" for="review-technical">Technical notes, optional</label><textarea class="m-textarea" id="review-technical" data-draft="technical">${escape(technical)}</textarea></div><div class="m-field"><label class="m-label" for="review-preserve">Preserve, optional</label><textarea class="m-textarea" id="review-preserve" data-draft="preserve">${escape(view.draft.preserve)}</textarea></div>`}
+      <div class="m-action-bar__actions">
+        ${review ? "" : `<button class="m-button" type="button" data-save-review>Save review</button>`}
+        ${ready ? "" : `<button class="m-button m-button--primary" type="button" data-present>Present to client</button>`}
+        ${ready ? "" : `<button class="m-button m-button--change" type="button" data-revise>Send back for revision</button>`}
+      </div>
+    </section>`;
+}
+
+function clientActions(detail, scene) {
+  const value = view.selected.artboardVersion;
+  const latest = value === newestVersion(scene);
+  const approved = detail.approvals?.some((entry) => entry.artboardVersion === value);
+  if (!latest) return `<div class="m-callout"><p class="m-copy">Earlier versions are read-only history.</p></div>`;
+  if (approved) return "";
+  return `<section class="m-stack" aria-labelledby="client-actions-heading">
+      <h2 class="m-scene-work-heading" id="client-actions-heading">Your decision</h2>
+      <div class="m-field"><label class="m-label" for="client-comment">Comment</label><textarea class="m-textarea" id="client-comment" data-draft="comment" placeholder="Tell the team what should change or what they should know.">${escape(view.draft.comment)}</textarea></div>
+      <div class="m-action-bar__actions"><button class="m-button" type="button" data-comment>Send comment</button><button class="m-button m-button--primary" type="button" data-approve>Approve this version</button></div>
+    </section>`;
+}
+
+function renderDrawer() {
+  const detail = view.detail;
+  const scene = sceneFor(view.selected.sceneId);
+  const entry = selectedEntry();
+  const feedback = attributedFeedback(detail);
+  const rationale = view.user.role === "higher-roads" ? detail.brief?.brief?.chosenConcept?.idea : detail.brief?.rationale;
+  const briefReference = view.user.role === "higher-roads" && entry?.artboard?.briefVersion
+    ? `<span class="m-meta">BUILT AGAINST BRIEF V${version(entry.artboard.briefVersion)}</span>` : "";
+  drawerSummary.textContent = `Artboard V${version(view.selected.artboardVersion)}`;
+  drawerBody.innerHTML = `<div class="m-stack">
+      ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
+      <div class="m-stack"><span class="m-label">Why this direction</span><p class="m-copy m-copy--large">${escape(rationale || "No rationale was recorded.")}</p>${briefReference}</div>
+      <section class="m-stack" aria-labelledby="feedback-heading"><h2 class="m-scene-work-heading" id="feedback-heading">Feedback on this version</h2>${feedback || `<p class="m-copy">No feedback has been recorded for this version.</p>`}</section>
+      ${view.user.role === "higher-roads" ? operatorActions(detail, scene) : clientActions(detail, scene)}
+    </div>`;
+}
+
+function applyViewerSize() {
+  const image = viewerArtifact.querySelector("img");
+  if (!image) return;
+  if (view.size === "fit") {
+    Object.assign(image.style, { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain" });
+    Object.assign(viewerArtifact.style, { width: "100%", height: "100%", overflow: "hidden" });
+  } else {
+    Object.assign(image.style, { width: "auto", height: "auto", maxWidth: "none", maxHeight: "none", objectFit: "none" });
+    Object.assign(viewerArtifact.style, { width: "max-content", height: "max-content", minWidth: "100%", minHeight: "100%", overflow: "visible" });
+  }
+  document.querySelectorAll("[data-size]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.size === view.size)));
+}
+
+function setViewerFrame() {
+  Object.assign(viewer.style, { inset: "0", width: "100vw", height: "100vh", maxWidth: "none", maxHeight: "none", margin: "0", padding: "0", border: "0", flexDirection: "column", overflow: "hidden" });
+  Object.assign(viewerStage.style, { flex: "1 1 auto", minHeight: "0", overflow: "auto" });
+  Object.assign(drawer.style, { flex: "0 0 auto", maxHeight: "52vh", overflow: "auto", padding: "0 1.5rem" });
+}
+
+async function detailFor(sceneId, artboardVersion) {
+  const entry = selectedEntry();
+  const briefRequest = view.user.role === "higher-roads"
+    ? { assignmentId: sceneId, briefVersion: entry.artboard.briefVersion }
+    : { assignmentId: sceneId, artboardVersion };
+  const [written, end, brief, handoffs] = await Promise.all([
+    call("get-reviews", { assignmentId: sceneId }),
+    call("get-production-intent", { assignmentId: sceneId }),
+    call("get-brief", briefRequest),
+    view.user.role === "higher-roads" ? call("get-handoffs", { assignmentId: sceneId }) : Promise.resolve({ handoffs: [] }),
+  ]);
+  return {
+    reviews: written.reviews || [],
+    revisions: written.revisions || [],
+    comments: written.comments || end.comments || [],
+    approvals: written.approvals || end.clientApprovals || [],
+    end,
+    brief,
+    handoffs: handoffs.handoffs || [],
+  };
+}
+
+async function openVersion(sceneId, artboardVersion, pushAddress = true) {
+  const scene = sceneFor(sceneId);
+  if (!scene || !scene.artboards.some((entry) => entry.artboard.artboardVersion === artboardVersion)) return;
+  view.selected = { sceneId, artboardVersion };
+  view.detail = null;
+  view.message = "";
+  view.size = "fit";
+  drawer.open = false;
+  const address = new URL(window.location.href);
+  address.searchParams.set("scene", sceneId);
+  address.searchParams.set("version", String(artboardVersion));
+  if (pushAddress) history.pushState({}, "", address);
+  setViewerFrame();
+  if (!viewer.open) viewer.showModal();
+  viewer.style.display = "flex";
+  viewerScene.textContent = scene.title;
+  viewerTitle.textContent = `Artboard V${version(artboardVersion)}`;
+  viewerState.innerHTML = `<span class="m-state">Opening version</span>`;
+  viewerContext.textContent = `${scene.title}, Artboard V${version(artboardVersion)}`;
+  viewerArtifact.innerHTML = `<span class="m-artboard__shape"></span>`;
+  const [artifact, detail, seen] = await Promise.all([
+    loadArtifact(sceneId, artboardVersion),
+    detailFor(sceneId, artboardVersion),
+    call("mark-review-version-seen", { assignmentId: sceneId, artboardVersion }),
+  ]);
+  view.detail = detail;
+  view.user = seen.user || view.user;
+  const state = stateFor(detail);
+  viewerState.innerHTML = `<span class="${escape(state.className)}">${escape(state.label)}</span>`;
+  viewerArtifact.innerHTML = artifact?.src
+    ? `<img src="${escape(artifact.src)}" alt="${escape(scene.title)}, Artboard version ${escape(artboardVersion)}" />`
+    : `<div class="m-empty-inline"><span class="m-label">Artboard unavailable</span><p class="m-copy">The stored file could not be opened.</p></div>`;
+  applyViewerSize();
+  renderDrawer();
+  renderGallery();
+}
+
+function closeViewer(pushAddress = true) {
+  if (viewer.open) viewer.close();
+  viewer.style.display = "none";
+  view.selected = null;
+  view.detail = null;
+  if (pushAddress) {
+    const address = new URL(window.location.href);
+    address.searchParams.delete("scene");
+    address.searchParams.delete("version");
+    history.pushState({}, "", address);
+  }
+}
+
+function adjacent(delta) {
+  const scene = sceneFor(view.selected.sceneId);
+  const at = scene.artboards.findIndex((entry) => entry.artboard.artboardVersion === view.selected.artboardVersion);
+  const wanted = scene.artboards[at + delta];
+  if (wanted) openVersion(scene.id, wanted.artboard.artboardVersion);
+}
+
+async function refreshDetail(message) {
+  view.message = message;
+  view.detail = await detailFor(view.selected.sceneId, view.selected.artboardVersion);
+  const state = stateFor(view.detail);
+  viewerState.innerHTML = `<span class="${escape(state.className)}">${escape(state.label)}</span>`;
+  renderDrawer();
+}
+
+async function saveReview() {
+  const departures = lines(view.draft.feedback);
+  const technicalItems = lines(view.draft.technical);
+  if (!departures.length && !technicalItems.length) throw new Error("A review needs at least one note.");
+  await call("save-review", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion, departures, technicalItems });
+  await refreshDetail(`Review saved on Artboard V${version(view.selected.artboardVersion)}.`);
+}
+
+async function issueRevision() {
+  const existing = view.detail.reviews.find((entry) => entry.artboardVersion === view.selected.artboardVersion);
+  const departures = existing ? existing.departures : lines(view.draft.feedback);
+  const technicalItems = existing ? existing.technicalItems : lines(view.draft.technical);
+  if (!departures.length) throw new Error("Say what should change before issuing a revision.");
+  if (!existing) {
+    await call("save-review", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion, departures, technicalItems });
+  }
+  await call("issue-revision", {
+    assignmentId: view.selected.sceneId,
+    sourceArtboardVersion: view.selected.artboardVersion,
+    revisionId: `rev-${view.selected.artboardVersion}-${Date.now()}`,
+    instructions: departures.map((text) => ({ text })),
+    preserve: lines(view.draft.preserve),
+  });
+  view.draft = { feedback: "", technical: "", preserve: "", comment: "" };
+  await refreshDetail(`Revision issued against Artboard V${version(view.selected.artboardVersion)}.`);
+}
+
+async function guard(work) {
+  try {
+    await work();
+  } catch (error) {
+    view.message = error.message;
+    if (view.detail) renderDrawer();
+    else root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`;
+  }
+}
+
+document.addEventListener("input", (event) => {
+  if (event.target.dataset?.draft) view.draft[event.target.dataset.draft] = event.target.value;
+});
+
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("button");
+  if (!target) return;
+  if (target.dataset.openScene) return void guard(() => openVersion(target.dataset.openScene, Number(target.dataset.openVersion)));
+  if (target.hasAttribute("data-close")) return closeViewer();
+  if (target.hasAttribute("data-previous")) return adjacent(-1);
+  if (target.hasAttribute("data-next")) return adjacent(1);
+  if (target.dataset.size) {
+    view.size = target.dataset.size;
+    applyViewerSize();
+    return;
+  }
+  if (target.hasAttribute("data-save-review")) return void guard(saveReview);
+  if (target.hasAttribute("data-revise")) return void guard(issueRevision);
+  if (target.hasAttribute("data-present")) return void guard(async () => {
+    await call("approve-for-client", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion });
+    await refreshDetail(`Artboard V${version(view.selected.artboardVersion)} is ready for the client.`);
+  });
+  if (target.hasAttribute("data-comment")) return void guard(async () => {
+    await call("client-comment", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion, text: view.draft.comment });
+    view.draft.comment = "";
+    await refreshDetail(`Comment sent on Artboard V${version(view.selected.artboardVersion)}.`);
+  });
+  if (target.hasAttribute("data-approve")) return void guard(async () => {
+    await call("client-approve", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion });
+    await refreshDetail(`Artboard V${version(view.selected.artboardVersion)} approved.`);
+  });
+});
+
+window.addEventListener("popstate", () => {
+  const address = new URL(window.location.href);
+  const sceneId = address.searchParams.get("scene");
+  const artboardVersion = Number(address.searchParams.get("version"));
+  if (sceneId && artboardVersion) guard(() => openVersion(sceneId, artboardVersion, false));
+  else closeViewer(false);
+});
 
 async function load() {
   if (!TOUR_ID) {
     showNoTour(root, locationBar);
     return;
   }
-  const [{ user }, { tour, assignments }] = await Promise.all([call("get-me"), call("get-tour")]);
-  document.querySelectorAll("[data-operator-utility]").forEach((entry) => { entry.hidden = user.role !== "higher-roads"; });
-  const queue = assignments.filter((scene) => needsUser(scene, user));
-  const queued = new Set(queue.map((scene) => scene.id));
-  const recent = assignments.filter((scene) => scene.currentVersion && ["Final approved", "Delivered"].includes(scene.stage) && !queued.has(scene.id));
-  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./index.html?tour=${escape(TOUR_ID)}">${escape(tour.name)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Reviews</span></nav>${queue.length ? `<span class="m-state m-state--current">${queue.length} to review</span>` : ""}`;
-  root.innerHTML = `${queueRows(queue, user, Boolean(assignments.length))}${recentRows(recent, user)}`;
+  const [{ user, actingAccount }, { tour, assignments }] = await Promise.all([call("get-me"), call("get-tour")]);
+  view.user = user;
+  view.actingAccount = actingAccount;
+  view.tour = tour;
+  const rows = await Promise.all(assignments.map(async (scene) => {
+    const result = await call("get-artboards", { assignmentId: scene.id });
+    const artboards = (result.artboards || []).slice().sort((left, right) => right.artboard.artboardVersion - left.artboard.artboardVersion);
+    return artboards.length ? { ...scene, artboards } : null;
+  }));
+  view.scenes = rows.filter(Boolean);
+  renderGallery();
+  const sceneId = params.get("scene");
+  const artboardVersion = Number(params.get("version"));
+  if (sceneId && artboardVersion) await openVersion(sceneId, artboardVersion, false);
 }
 
-load().catch((error) => { locationBar.innerHTML = ""; root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`; });
+guard(load);

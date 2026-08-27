@@ -21,10 +21,10 @@ const CONCEPT = {
   cameFrom: "written by Higher Roads",
 };
 const ARTIFACT = {
-  name: "storm-v1.svg",
-  contentType: "image/svg+xml",
-  size: 88,
-  dataUrl: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==",
+  name: "storm-v1.png",
+  contentType: "image/png",
+  size: 68,
+  dataUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nCQAAAAASUVORK5CYII=",
 };
 
 async function ready() {
@@ -106,7 +106,7 @@ test("a governed revision waits for the next human submission", async () => {
     ...AT,
     sourceArtboardVersion: 1,
     revisionId: "rev-human-1",
-    instructions: [{ text: "Hold the final frame longer.", regionAnchor: "Centre" }],
+    instructions: [{ text: "Hold the final frame longer." }],
     preserve: ["Keep the quiet opening."],
     recipient: "Jess Harper",
   }, options);
@@ -118,7 +118,7 @@ test("a governed revision waits for the next human submission", async () => {
     ...AT,
     briefVersion: 1,
     sourceArtboardVersion: 1,
-    artifact: { ...ARTIFACT, name: "storm-v2.svg" },
+    artifact: { ...ARTIFACT, name: "storm-v2.png" },
     conceptSummary: "The final frame now holds through the cue.",
   }, asArtist);
   assert.equal(second.artboard.artboardVersion, 2);

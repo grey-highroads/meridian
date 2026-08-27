@@ -58,6 +58,8 @@ The normal tour workspace has four destinations.
 
 **Reviews.** A user-specific queue of concepts, versions, questions, and approvals requiring action.
 
+Ruled 2026-08-26. Reviews is no longer an attention queue. Home is the attention surface. Reviews is a gallery of the Artboard versions that exist, arranged by Scene with the newest version first. It carries no counts, badges, or notification language. The same gallery and full-screen viewer serve clients and Higher Roads; the signed-in role changes only the server projection and available actions.
+
 **Tour details.** The shared foundation for the work: creative direction, dates and venues, production setup, team, approval authority.
 
 Artist Brain does not appear in the primary client navigation. Higher Roads users receive a separate Admin utility area for client accounts, artists, Artist Brains, access, and system administration. Built 2026-08-26: Admin and Artist Brain are placed in the top right of every page by `app/shell.js` for the Higher Roads role, and no page carries either link in its markup. The route refuses a client session on its own; a link that is not drawn is never the enforcement. Admin tools stay separate from daily tour production, and Higher Roads operational users work through the same Tour and Scene workflows as everyone else.
@@ -155,6 +157,8 @@ Tour Direction and Artist Brain context appear only when they help the current t
 ## Reviews
 
 Reviews are a user-facing queue, not an independent creative object. A review points to a Scene, a specific concept or production version, the requested reviewer, the decision being requested, and the due date when applicable.
+
+Ruled 2026-08-26. The queue description above is superseded. Reviews is a gallery of Artboard versions, one row per Scene and newest first. Opening a version gives the work the viewport, with fitting, actual-size panning, and previous or next movement within the Scene. Feedback and actions for that version live in a drawer that starts closed. An unopened stroke is stored per person and clears when that person opens the version; it is orientation, not a notification count. Earlier versions remain readable history and are not actionable.
 
 Feedback belongs to the version being reviewed. Creating a new version does not rewrite previous feedback or approvals.
 

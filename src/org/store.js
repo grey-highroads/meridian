@@ -14,6 +14,8 @@ import {
   normalizeEmail,
   publicPerson,
   recordExperienceSeen,
+  reviewVersionExperience,
+  reviewVersionsSeen,
   validEmail,
   validRole,
 } from "./people.js";
@@ -114,6 +116,7 @@ export function publicUser(user) {
     accountId: user.accountId === undefined ? null : user.accountId,
     status: user.status || (user.password ? "active" : "invited"),
     introductionSeenAt: user.introductionSeenAt || user.experiencesSeen?.[CLIENT_INTRODUCTION] || null,
+    reviewVersionsSeen: user.reviewVersionsSeen || reviewVersionsSeen(user),
   };
 }
 
@@ -312,6 +315,19 @@ export function createOrgStore(options = {}) {
       const next = recordExperienceSeen(found.person, CLIENT_INTRODUCTION, now);
       if (next !== found.person) await this.writePerson(next, found.path);
       return publicUser(next);
+    },
+
+    async markReviewVersionSeen(personId, accountId, tourId, sceneId, version, now = new Date()) {
+      const found = await this.findPerson(personId);
+      if (!found) {
+        const error = new Error("No person is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      const experience = reviewVersionExperience(accountId, tourId, sceneId, version);
+      const next = recordExperienceSeen(found.person, experience, now);
+      if (next !== found.person) await this.writePerson(next, found.path);
+      return { experience, seenAt: next.experiencesSeen[experience], user: publicUser(next) };
     },
 
     // Inviting somebody. The link is handed back once and never stored, so an

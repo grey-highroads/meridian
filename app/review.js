@@ -23,16 +23,10 @@ const view = {
   brief: null,
   inspector: "brief",
   compareTo: null,
-  draft: { feedback: "", preserve: "", technical: "", anchor: "" },
+  draft: { feedback: "", preserve: "", technical: "" },
   message: "",
   working: false,
 };
-
-const REGIONS = [
-  "Top left", "Top centre", "Top right",
-  "Middle left", "Centre", "Middle right",
-  "Bottom left", "Bottom centre", "Bottom right",
-];
 
 async function call(action, extra = {}) {
   const response = await fetch("/api/tour", {
@@ -126,10 +120,8 @@ function decisionComposer(current) {
   if (written) {
     return `<details class="m-disclosure"><summary><span class="m-label">Internal review saved</span><span class="m-meta">V${version(artboardVersion)}</span></summary><div class="m-disclosure__body m-stack"><div><span class="m-label">Changes</span><ul>${list(written.departures)}</ul></div><div><span class="m-label">Technical notes</span><ul>${list(written.technicalItems)}</ul></div></div></details>`;
   }
-  const options = REGIONS.map((name) => `<option value="${escape(name)}" ${view.draft.anchor === name ? "selected" : ""}>${escape(name)}</option>`).join("");
   return `<section class="m-stack m-review-feedback" id="review-feedback" aria-labelledby="decision-heading">
       <div class="m-stack"><span class="m-label">Feedback on Artboard V${version(artboardVersion)}</span><h2 id="decision-heading" class="m-section-heading">What needs to change?</h2></div>
-      <div class="m-field"><label class="m-label" for="anchor">Where, optional</label><select class="m-select" id="anchor" data-draft="anchor"><option value="">The whole picture</option>${options}</select></div>
       <div class="m-field"><label class="m-label" for="feedback">Change</label><textarea class="m-textarea" id="feedback" data-draft="feedback" placeholder="Say what should change. One note per line.">${escape(view.draft.feedback)}</textarea></div>
       <details class="m-disclosure"><summary><span class="m-label">Preserve or add a technical note</span><span class="m-meta">Optional</span></summary><div class="m-disclosure__body m-stack"><div class="m-field"><label class="m-label" for="preserve">Preserve</label><textarea class="m-textarea" id="preserve" data-draft="preserve" placeholder="What should stay as it is.">${escape(view.draft.preserve)}</textarea></div><div class="m-field"><label class="m-label" for="technical">Technical note</label><textarea class="m-textarea" id="technical" data-draft="technical" placeholder="One note per line.">${escape(view.draft.technical)}</textarea></div></div></details>
       <button class="m-button m-button--change" type="button" data-revise>Issue changes against V${version(artboardVersion)}</button>
@@ -326,10 +318,10 @@ document.addEventListener("click", (event) => {
         assignmentId: view.sceneId,
         sourceArtboardVersion: value,
         revisionId: `rev-${value}-${Date.now()}`,
-        instructions: feedback.map((text) => ({ text, regionAnchor: view.draft.anchor || null })),
+        instructions: feedback.map((text) => ({ text })),
         preserve: lines(view.draft.preserve),
       });
-      view.draft = { feedback: "", preserve: "", technical: "", anchor: "" };
+      view.draft = { feedback: "", preserve: "", technical: "" };
       view.message = `Revision issued against V${version(value)}.`;
       await refresh();
       view.working = false;

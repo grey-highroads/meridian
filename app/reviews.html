@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Decisions and work waiting for review" />
+    <meta name="description" content="Artboard versions for every Scene" />
     <title>Reviews | Meridian</title>
     <link rel="icon" href="./design/assets/meridian/07-micro-icon-16px.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./design/index.css" />
@@ -22,9 +22,29 @@
       </aside>
       <main class="m-shell__main">
         <header class="m-location" id="location"></header>
-        <article class="m-page m-page--fluid m-directory"><header class="m-job-header"><div class="m-job-header__copy"><h1 class="m-section-heading">Reviews</h1><p class="m-copy">See what is ready for your review and return to completed decisions.</p></div></header><div class="m-review-directory" id="reviews"></div></article>
+        <article class="m-page m-page--fluid m-directory"><header class="m-job-header"><div class="m-job-header__copy"><h1 class="m-section-heading">Reviews</h1><p class="m-copy">Open any Artboard version for the work, its feedback, and its decision.</p></div></header><div class="m-review-directory" id="reviews"></div></article>
       </main>
     </div>
+    <dialog class="m-dialog m-client-shell" id="review-viewer" aria-labelledby="viewer-title">
+      <header class="m-client-shell__bar">
+        <div class="m-stack"><span class="m-label" id="viewer-scene">Scene</span><h1 class="m-scene-work-heading" id="viewer-title">Artboard</h1></div>
+        <button class="m-button m-button--quiet" type="button" data-close aria-label="Close review">X</button>
+      </header>
+      <div class="m-client-shell__scope" id="viewer-state"></div>
+      <section class="m-workstation__stage" id="viewer-stage" aria-label="Artboard viewer"><div class="m-client-review__frame" id="viewer-artifact"></div></section>
+      <div class="m-action-bar">
+        <p class="m-action-bar__context" id="viewer-context"></p>
+        <div class="m-action-bar__actions">
+          <button class="m-button m-button--small" type="button" data-previous>Previous</button>
+          <button class="m-button m-button--small" type="button" data-next>Next</button>
+          <div class="m-segmented" aria-label="Artboard size">
+            <button class="m-segmented__item" type="button" data-size="fit" aria-pressed="true">Fit</button>
+            <button class="m-segmented__item" type="button" data-size="actual" aria-pressed="false">Actual size</button>
+          </div>
+        </div>
+      </div>
+      <details class="m-disclosure" id="review-drawer"><summary><span class="m-label">Feedback and actions</span><span class="m-meta" id="drawer-summary">Open</span></summary><div class="m-disclosure__body m-page" id="drawer-body"></div></details>
+    </dialog>
     <script type="module" src="./shell.js"></script><script type="module" src="./reviews.js"></script>
   </body>
 </html>
