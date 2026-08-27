@@ -5,7 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { createMemoryBackend } from "../src/artist/store.js";
-import { createTourStore } from "../src/tour/store.js";
+import { createTourStore, tourDocumentPathFor } from "../src/tour/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
@@ -54,6 +54,42 @@ test("a tour starts with nothing in it and a Scene can still be requested", asyn
   assert.equal(assignment.requestedBy, "Sarah Vance");
   const after = await tourAction({ action: "get-tour", tourId }, options);
   assert.equal(after.assignments.length, 1);
+});
+
+test("Tour details creates the same complete stored tour the standalone form created", async () => {
+  const { options, tourStore } = ready();
+  await tourAction({
+    action: "create-tour",
+    name: "Highway Nights 2027",
+    artistId: "dierks-bentley",
+    approximateDates: "May to September",
+    primaryContact: "Sarah Vance",
+  }, options);
+
+  const stored = JSON.parse(await tourStore.backend.read(
+    tourDocumentPathFor("highway-nights-2027", "tour", DEMO_ACCOUNT),
+  ));
+  assert.deepEqual(stored, {
+    tour: {
+      id: "highway-nights-2027",
+      name: "Highway Nights 2027",
+      artistId: "dierks-bentley",
+      playbackSystem: null,
+      productionSetup: null,
+      dates: [],
+      themes: [],
+      approximateDates: "May to September",
+      primaryContact: "Sarah Vance",
+      direction: { version: 0, words: "", setBy: null, setOn: null, role: null },
+    },
+    assignments: [],
+  });
+  const facts = JSON.parse(await tourStore.backend.read(
+    tourDocumentPathFor("highway-nights-2027", "record", DEMO_ACCOUNT),
+  ));
+  assert.equal(facts.facts.length, 1);
+  assert.equal(facts.facts[0].action, "Created the tour");
+  assert.equal(facts.facts[0].actor, "Sarah Vance");
 });
 
 test("dates written through Tour details read back on the tour and record who wrote them", async () => {
@@ -165,31 +201,35 @@ test("saving the route leaves the tour's direction and Scenes alone", async () =
   assert.equal(after.tour.dates.length, 1);
 });
 
-test("Home has three shapes and keeps the operational one intact", () => {
+test("Home explains its sections before Scenes and keeps the operational Home intact", () => {
   const home = read("app/home.js");
-  assert.match(home, /new-tour\.html/, "Home with no tour does not offer to start one");
   assert.doesNotMatch(home, /no-tour\.js/, "Home still shows the shared block instead of its own shape");
-
-  for (const line of ["Creative direction", "Dates and venues", "Production details", "Scenes", "Not added", "Not requested"]) {
-    assert.match(home, new RegExp(line), `the setup lines are missing "${line}"`);
-  }
-  assert.match(home, /A good next step/, "no line is marked as the most useful next thing");
-  assert.doesNotMatch(home, /direction\.html/, "the direction line drills into the editor instead of Tour details");
-  assert.match(home, /tour\.html\?tour=\$\{encodeURIComponent\(TOUR_ID\)\}#direction-heading/, "the direction line does not open where the direction sits");
-  assert.match(home, /lines\.find\(\(line\) => !line\.filled\)/, "the suggestion is not the first unfilled line");
+  assert.doesNotMatch(home, /setupLines|setupShape|A good next step/, "the old setup scaffold is still on Home");
+  assert.match(home, /explainedHome\(user, null\)/, "an account with no tour does not get the explained Home");
+  assert.match(home, /explainedHome\(user, tour\)/, "a tour with no Scenes does not get the same explained Home");
+  for (const copy of [
+    "Scene requests, current work, and the next step for each Scene will appear here.",
+    "Work waiting for your feedback, changes, or approval will appear here.",
+    "Creative direction, dates, venues, and production details will live here.",
+  ]) assert.match(home, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(home, /Create the tour in Tour details so Meridian has a place/, "the creation action has no reason attached");
+  assert.match(home, /href="\.\/tour\.html"/, "tour creation does not go to Tour details");
 
   for (const kept of ["Nothing needs you right now", "Request the first Scene", "Welcome,", "m-home__layout"]) {
     assert.match(home, new RegExp(kept.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `the operational Home lost "${kept}"`);
   }
 });
 
-test("starting the tour is a client job on its own page and no longer an Admin act", () => {
-  const page = read("app/new-tour.js");
-  assert.match(page, /action: "create-tour"/, "the tour page does not create the tour");
+test("starting the tour is a client job in Tour details and no longer a standalone page or Admin act", () => {
+  const page = read("app/tour.js");
+  assert.match(page, /call\("create-tour"/, "the tour page does not create the tour");
   assert.match(page, /The tour name is the only required field\. Add the rest if you know it\./, "the tour page does not say the rest can wait");
   assert.match(page, /view\.primaryContact = me\.user\.displayName/, "the signed-in person is not filled in as the contact");
   assert.match(page, /view\.artists\.length === 1/, "the artist is a picker when the account holds one");
-  assert.match(page, /view\.message = error\.message;\s*\n\s*render\(\);/, "a refused create loses what was typed");
+  assert.match(page, /view\.message = error\.message;\s*\n\s*paintTourCreation\(\);/, "a refused create loses what was typed");
+  assert.equal(fs.existsSync(path.join(rootPath, "app/new-tour.html")), false, "the standalone HTML page still exists");
+  assert.equal(fs.existsSync(path.join(rootPath, "app/new-tour.js")), false, "the standalone script still exists");
+  assert.doesNotMatch(read("vite.config.js"), /newTour|new-tour/, "the standalone page is still a build entry");
 
   const admin = read("app/admin.js");
   assert.doesNotMatch(admin, /create-tour/, "Admin still creates tours");

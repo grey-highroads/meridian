@@ -181,6 +181,25 @@ function mountOperatorDestinations() {
   new MutationObserver(place).observe(bar, { childList: true });
 }
 
+// Client teams can return to the introduction from the rail on any page. The
+// server decides whether it appears automatically; this link only asks Home to
+// replay it. Higher Roads never receives the link.
+function mountClientIntroduction() {
+  const utility = document.querySelector(".m-shell__utility");
+  if (!utility || utility.querySelector("[data-client-introduction]")) return;
+  const url = new URL("./index.html", window.location.href);
+  url.searchParams.set("introduction", "1");
+  if (ACCOUNT_ID) url.searchParams.set("account", ACCOUNT_ID);
+  if (TOUR_ID) url.searchParams.set("tour", TOUR_ID);
+  const link = document.createElement("a");
+  link.className = "m-shell__nav-link";
+  link.setAttribute("data-client-introduction", "");
+  link.setAttribute("data-keep-href", "");
+  link.href = url.href;
+  link.innerHTML = '<span class="m-shell__nav-label">Introduction</span>';
+  utility.prepend(link);
+}
+
 fetch("/api/tour", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -193,5 +212,7 @@ fetch("/api/tour", {
   if (body.user.role === "higher-roads") {
     mountOperatorDestinations();
     void mountAccountPicker(body.actingAccount || ACCOUNT_ID);
+  } else {
+    mountClientIntroduction();
   }
 }).catch(() => {});

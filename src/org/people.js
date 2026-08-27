@@ -15,6 +15,7 @@ import { CLIENT_ROLE, OPERATOR_ROLE } from "./roles.js";
 export const INVITED = "invited";
 export const ACTIVE = "active";
 export const DEACTIVATED = "deactivated";
+export const CLIENT_INTRODUCTION = "client-introduction-v1";
 
 // Thirty days, ruled 2026-08-26. Single use inside that window: accepting an
 // invite or completing a reset clears the link, so a link read over someone's
@@ -68,6 +69,25 @@ export function validRole(role) {
   return role === OPERATOR_ROLE || role === CLIENT_ROLE ? role : null;
 }
 
+// Experiences a person has completed live on the person, not in a browser.
+// The named version makes the record say what they saw and lets a later,
+// materially different introduction be offered without erasing this one.
+export function experienceSeenAt(person, experience) {
+  const seen = person && person.experiencesSeen;
+  return seen && typeof seen === "object" ? seen[experience] || null : null;
+}
+
+export function recordExperienceSeen(person, experience, now = new Date()) {
+  if (experienceSeenAt(person, experience)) return person;
+  return {
+    ...person,
+    experiencesSeen: {
+      ...((person && person.experiencesSeen) || {}),
+      [experience]: now.toISOString(),
+    },
+  };
+}
+
 // What an admin reads on a row. No hash and no token leave the store.
 export function publicPerson(person) {
   if (!person) return null;
@@ -85,6 +105,7 @@ export function publicPerson(person) {
     invitePending: Boolean(person.link && person.link.purpose === "invite"),
     linkExpiresAt: person.link ? person.link.expiresAt : null,
     acceptedAt: person.acceptedAt || null,
+    introductionSeenAt: experienceSeenAt(person, CLIENT_INTRODUCTION),
     // Deleting is offered only for a person who has never signed in. Signing in
     // is doing something, and the record has to keep naming whoever acted.
     deletable: !person.password && !person.acceptedAt,
@@ -125,6 +146,7 @@ export function buildPerson(fields, accountId, now = new Date()) {
     status: INVITED,
     link: null,
     acceptedAt: null,
+    experiencesSeen: {},
     createdAt: now.toISOString(),
   };
 }

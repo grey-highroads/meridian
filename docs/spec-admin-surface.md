@@ -40,7 +40,7 @@ Set which tour is active when an account holds more than one.
 
 Delete a tour. Delete an account.
 
-**What it does not do.** Creating a tour. That lives in the product on `app/new-tour.html`, and an admin acting for a busy client switches into that account and uses the same screen the client uses. Two ways to create a tour would drift apart.
+**What it does not do.** Creating a tour. That lives in the no-tour state on `app/tour.html`, and an admin acting for a busy client switches into that account and uses the same screen the client uses. Two ways to create a tour would drift apart.
 
 **Attribution when acting on behalf.** When an admin does something inside a client account, the record says Higher Roads acting for that account. It never shows the client as having done it.
 

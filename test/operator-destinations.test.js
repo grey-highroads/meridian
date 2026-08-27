@@ -32,7 +32,7 @@ function artistOptions(backend, user, accountId = DEMO) {
 const SHELL_PAGES = [
   "app/index.html", "app/scenes.html", "app/reviews.html", "app/artist.html",
   "app/tour.html", "app/scene.html", "app/review.html", "app/request.html",
-  "app/direction.html", "app/handoff.html", "app/admin.html", "app/new-tour.html",
+  "app/direction.html", "app/handoff.html", "app/admin.html",
 ];
 
 test("Admin and Artist Brain are built by the shell and live in no page's markup", () => {
@@ -151,8 +151,8 @@ test("Admin asks for the initial artist and keeps both values on a failure", () 
   assert.match(admin, /state\.message = error\.message;\s*\n\s*render\(\);/, "a refused create loses what was typed");
 });
 
-test("the tour page agrees with itself and points a Higher Roads reader at the artist", () => {
-  const page = read("app/new-tour.js");
+test("Tour details names the tour and points a Higher Roads reader at the artist", () => {
+  const page = read("app/tour.js");
   assert.match(page, /<span class="m-label">Start the tour<\/span>/, "the label no longer says start the tour");
   assert.match(page, /<h1 class="m-heading">Name the tour<\/h1>/, "the page does not lead with the one required action");
   assert.doesNotMatch(page, /Higher Roads adds the artist/, "the page still tells Higher Roads that Higher Roads will do it");

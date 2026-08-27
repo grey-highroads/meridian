@@ -90,7 +90,11 @@ Higher Roads creates the client account and invites the client team. An account 
 
 Built 2026-08-26 on `app/new-tour.html`, reached from Home when the account holds no tour. The tour name is the only required value. Rough dates and the main contact are offered and skippable, with the signed in person filled in as the contact. The artist is shown as context while the account holds one and becomes a picker when it holds more. A refused create leaves every typed value on the screen. Creating a tour is the client's own first job and no longer sits on the Higher Roads Admin page.
 
+Ruled 2026-08-26. Tour creation now lives in the no-tour state of Tour details on `app/tour.html`. The standalone creation page is removed. The form and stored tour remain the same, but the work now begins in the section that holds direction, dates, and production details.
+
 Tour setup continues progressively from Home: add Tour Direction, add dates and venues, add production details, assign the team and approval authority, request the first Scene. Dates and production setup are written on `app/tour.html`, each section on its own, neither waiting on the other. Both are stored versioned beside the direction, and every save records who made it and when.
+
+Ruled 2026-08-26. Tour setup no longer continues progressively from Home. A client first receives a short introduction to Meridian. Home then explains the sections that will fill in as the team works, while Tour details holds tour creation, visual direction, dates, and production setup.
 
 Creative work is not blocked because every technical detail is not yet known. Missing information becomes visible when it becomes relevant. A Scene can be requested with no direction, no dates, and no production setup.
 
@@ -103,6 +107,8 @@ Home has three shapes, decided by what the tour holds.
 **A tour with no Scenes yet.** Four lines reporting what the tour holds: creative direction, dates and venues, production details, Scenes. Each line names what is stored rather than what the person owes, derives from the stored tour rather than from anything anyone ticks, and opens the place that thing lives. Exactly one line is marked as a good next step, chosen as the first unfilled one. No progress count, no ticks, no percentage, no wizard. Requesting the first Scene sits beside the lines and needs none of them filled in.
 
 **Scenes underway.** The orientation screen below.
+
+Ruled 2026-08-26. The three Home shapes above are superseded. Before Scenes exist, the same explained Home serves an account with no tour and a tour with no Scenes. It introduces what Scenes, Reviews, and Tour Details will hold and points tour creation into Tour Details. Once Scenes are underway, the operational Home below is unchanged.
 
 Home is an orientation screen, not a project database. Its hierarchy:
 

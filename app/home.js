@@ -1,7 +1,9 @@
-import { TOUR_ID, scopedBody } from "./context.js";
+import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("home");
 const reviewCount = document.getElementById("review-count");
+const params = new URLSearchParams(window.location.search);
+const homeView = { user: null, tour: null, assignments: [], introductionStep: 0, introductionWorking: false, introductionMessage: "" };
 
 async function call(action, extra = {}) {
   const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })) });
@@ -34,75 +36,63 @@ function needsUser(scene, user) {
 
 function emptyGlyph(kind) {
   if (kind === "clear") return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="32" cy="32" r="21"></circle><path d="m22 32 7 7 14-16"></path></svg>`;
-  if (kind === "scene") return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><rect x="10" y="16" width="44" height="32" rx="2"></rect><path d="M20 32h24M32 20v24"></path></svg>`;
+  if (kind === "scene") return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><rect x="10" y="16" width="44" height="32" rx="2"></rect><path d="M20 32h24M32 20v24"></path><path d="M6 24v-8a4 4 0 0 1 4-4h8M58 40v8a4 4 0 0 1-4 4h-8"></path></svg>`;
+  if (kind === "review") return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="32" cy="32" r="21"></circle><path d="m22 32 7 7 14-16"></path><path d="M32 5v7M32 52v7M5 32h7M52 32h7"></path></svg>`;
+  if (kind === "direction") return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="32" cy="32" r="23"></circle><path d="m39 25-4 10-10 4 4-10 10-4Z"></path><path d="M32 5v7M32 52v7M5 32h7M52 32h7"></path></svg>`;
   return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 44h40M16 36h32M22 28h20"></path><circle cx="32" cy="16" r="4"></circle></svg>`;
 }
 
-// Home with no tour in the account. One sentence about what Meridian is for
-// and the one act that changes the situation. Nothing else belongs here,
-// because there is nothing else a person can do yet.
-function startTour() {
+const INTRODUCTION = [
+  { title: "Home", copy: "Your snapshot into everything happening with the tour creative.", kind: "tour", calibration: "Tour / Not started" },
+  { title: "Scenes", copy: "A Scene can be a song, an intro, a transition, or any moment that needs screen content.", kind: "scene", calibration: "Scene register / Open" },
+  { title: "Reviews", copy: "Provide feedback, request changes, or approve the work for final production.", kind: "review", calibration: "Decision queue / Clear" },
+  { title: "Tour Details", copy: "Instructions that guide the creative work across all the scenes of the tour.", kind: "direction", calibration: "Tour direction / Not set" },
+  { title: "Get Started", copy: "Start by adding Tour visual direction and details so the creative process can begin.", kind: "tour", calibration: "Tour / Not started" },
+];
+
+function introduction() {
+  const card = INTRODUCTION[homeView.introductionStep];
+  const last = homeView.introductionStep === INTRODUCTION.length - 1;
   locationBar.innerHTML = "";
-  root.innerHTML = `<section class="m-empty-state m-empty-state--action" aria-labelledby="start-tour-heading">
-      <div class="m-empty-state__visual" aria-hidden="true">${emptyGlyph("tour")}</div>
+  reviewCount.textContent = "";
+  root.innerHTML = `<section class="m-empty-state m-empty-state--action" aria-labelledby="introduction-heading">
+      <div class="m-empty-state__visual" aria-hidden="true">${emptyGlyph(card.kind)}<span class="m-empty-state__calibration">${escape(card.calibration)}</span></div>
       <div class="m-empty-state__body">
         <span class="m-label">Welcome to Meridian</span>
-        <h1 id="start-tour-heading" class="m-heading">Start the tour</h1>
-        <p class="m-copy m-copy--large">Meridian keeps the direction, Scene requests, versions, and approvals for your tour together.</p>
-        <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./new-tour.html">Start the tour</a></div>
+        <h1 id="introduction-heading" class="m-heading">${escape(card.title)}</h1>
+        <p class="m-copy m-copy--large">${escape(card.copy)}</p>
+        ${homeView.introductionMessage ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(homeView.introductionMessage)}</p></div>` : ""}
+        <div class="m-empty-state__actions">
+          <button class="m-button m-button--primary" type="button" ${last ? "data-finish-introduction" : "data-next-introduction"} ${homeView.introductionWorking ? "disabled" : ""}>${last ? "Go to Tour details" : "Next"}</button>
+          <button class="m-button m-button--quiet" type="button" data-skip-introduction ${homeView.introductionWorking ? "disabled" : ""}>Skip introduction</button>
+          <span class="m-meta">${homeView.introductionStep + 1} OF ${INTRODUCTION.length}</span>
+        </div>
       </div>
     </section>`;
 }
 
-// What the tour holds, one line each. A line reports what is stored and never
-// what a person owes, so nothing here is a chore list and nothing is ticked.
-// The suggestion is the first line with nothing in it, and it reads as a
-// suggestion.
-function setupLines(tour, assignments) {
-  const dates = tour.dates || [];
-  const setup = tour.productionSetup;
-  const lines = [
-    {
-      label: "Creative direction",
-      filled: Boolean(tour.direction && String(tour.direction.words || "").trim()),
-      detail: tour.direction && String(tour.direction.words || "").trim() ? `Version ${version(tour.direction.version)} added` : "Not added",
-      // Tour details, where the direction lives beside the rest of the tour,
-      // rather than the screen that writes a new version. A person following a
-      // suggestion is going to look first.
-      href: `./tour.html?tour=${encodeURIComponent(TOUR_ID)}#direction-heading`,
-    },
-    {
-      label: "Dates and venues",
-      filled: dates.length > 0,
-      detail: dates.length ? `${dates.length} ${dates.length === 1 ? "date" : "dates"} added` : "Not added",
-      href: `./tour.html?tour=${encodeURIComponent(TOUR_ID)}#tour-run-heading`,
-    },
-    {
-      label: "Production details",
-      filled: Boolean(setup && String(setup.words || "").trim()),
-      detail: setup && String(setup.words || "").trim() ? "Added" : "Not added",
-      href: `./tour.html?tour=${encodeURIComponent(TOUR_ID)}#setup-heading`,
-    },
-    {
-      label: "Scenes",
-      filled: assignments.length > 0,
-      detail: assignments.length ? `${assignments.length === 1 ? "First Scene requested" : `${assignments.length} Scenes requested`}` : "Not requested",
-      href: `./request.html?tour=${encodeURIComponent(TOUR_ID)}`,
-    },
-  ];
-  const suggested = lines.find((line) => !line.filled) || null;
-  return lines.map((line) => `<a class="m-readiness-row" href="${escape(line.href)}"><div class="m-stack"><strong>${escape(line.label)}</strong><span class="m-meta">${escape(String(line.detail).toUpperCase())}</span></div>${line === suggested ? `<span class="m-state m-state--current">A good next step</span>` : ""}</a>`).join("");
+function explainedCard(id, title, copy, kind, calibration, state = "") {
+  return `<section class="m-empty-state ${state} m-empty-state--compact" aria-labelledby="${escape(id)}">
+      <div class="m-empty-state__visual" aria-hidden="true">${emptyGlyph(kind)}<span class="m-empty-state__calibration">${escape(calibration)}</span></div>
+      <div class="m-empty-state__body"><h2 id="${escape(id)}" class="m-section-heading">${escape(title)}</h2><p class="m-copy">${escape(copy)}</p></div>
+    </section>`;
 }
 
-// Home with a tour and no Scenes yet. What the tour holds, and the one act that
-// starts the creative work.
-function setupShape(user, tour, assignments) {
-  return `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Today</span><h1 class="m-heading">Welcome, ${escape(firstName(user))}</h1><p class="m-copy m-copy--large">${escape(tour.name)} is ready. Add what you know in any order, or request the first Scene now.</p></div><a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a></header>
-    <section class="m-stack" aria-labelledby="tour-holds-heading">
-      <div class="m-section-lead"><div class="m-stack"><span class="m-label">Tour setup</span><h2 id="tour-holds-heading" class="m-section-heading">Add what you know</h2></div></div>
-      <div class="m-readiness-list">${setupLines(tour, assignments)}</div>
-      <p class="m-copy">You can do these in any order. None is required before you request a Scene.</p>
-    </section>`;
+// Before Scenes exist, Home explains the sections that will fill in as the
+// team works. The same three cards appear whether the tour exists or not.
+function explainedHome(user, tour) {
+  const action = tour ? "Open Tour details" : "Start the tour";
+  const reason = tour
+    ? "Add the tour direction and details there so the creative work has a shared foundation."
+    : "Create the tour in Tour details so Meridian has a place for its direction, Scenes, reviews, and production information.";
+  locationBar.innerHTML = tour ? `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(tour.name)}</span>` : "";
+  reviewCount.textContent = "";
+  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Home</span><h1 class="m-heading">Welcome, ${escape(firstName(user))}</h1><p class="m-copy m-copy--large">Home is your snapshot of what needs you and what is moving across the tour creative.</p><p class="m-copy">${escape(reason)}</p></div><a class="m-button m-button--primary" href="./tour.html">${escape(action)}</a></header>
+    <div class="m-stack">
+      ${explainedCard("home-scenes-heading", "Scenes", "Scene requests, current work, and the next step for each Scene will appear here.", "scene", "Scene register / Open", "m-empty-state--action")}
+      ${explainedCard("home-reviews-heading", "Reviews", "Work waiting for your feedback, changes, or approval will appear here.", "review", "Decision queue / Clear", "m-empty-state--clear")}
+      ${explainedCard("home-tour-details-heading", "Tour Details", "Creative direction, dates, venues, and production details will live here.", "direction", "Tour direction / Not set", "m-empty-state--waiting")}
+    </div>`;
 }
 
 function attention(assignments, user) {
@@ -155,17 +145,52 @@ function recent(facts) {
   return `<section class="m-home__activity" aria-labelledby="activity-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Recent activity</span><h2 id="activity-heading" class="m-section-heading">What has happened</h2></div></div><div class="m-activity-list">${rows || empty}</div></section>`;
 }
 
+async function completeIntroduction(destination) {
+  homeView.introductionWorking = true;
+  homeView.introductionMessage = "";
+  introduction();
+  try {
+    await call("mark-introduction-seen");
+    const url = new URL(destination === "tour" ? "./tour.html" : "./index.html", window.location.href);
+    if (ACCOUNT_ID) url.searchParams.set("account", ACCOUNT_ID);
+    if (TOUR_ID) url.searchParams.set("tour", TOUR_ID);
+    window.location.href = url.href;
+  } catch (error) {
+    homeView.introductionWorking = false;
+    homeView.introductionMessage = error.message;
+    introduction();
+  }
+}
+
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("button");
+  if (!target) return;
+  if (target.hasAttribute("data-next-introduction")) {
+    homeView.introductionStep = Math.min(homeView.introductionStep + 1, INTRODUCTION.length - 1);
+    homeView.introductionMessage = "";
+    introduction();
+  }
+  if (target.hasAttribute("data-skip-introduction")) void completeIntroduction("home");
+  if (target.hasAttribute("data-finish-introduction")) void completeIntroduction("tour");
+});
+
 async function load() {
-  if (!TOUR_ID) {
-    startTour();
+  const { user } = await call("get-me");
+  homeView.user = user;
+  document.querySelectorAll("[data-operator-utility]").forEach((entry) => { entry.hidden = user.role !== "higher-roads"; });
+  if (user.role !== "higher-roads" && (params.has("introduction") || !user.introductionSeenAt)) {
+    introduction();
     return;
   }
-  const [{ user }, { tour, assignments }] = await Promise.all([call("get-me"), call("get-tour")]);
-  document.querySelectorAll("[data-operator-utility]").forEach((entry) => { entry.hidden = user.role !== "higher-roads"; });
+  if (!TOUR_ID) {
+    explainedHome(user, null);
+    return;
+  }
+  const { tour, assignments } = await call("get-tour");
+  homeView.tour = tour;
+  homeView.assignments = assignments;
   if (!assignments.length) {
-    reviewCount.textContent = "";
-    locationBar.innerHTML = `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(tour.name)}</span>`;
-    root.innerHTML = setupShape(user, tour, assignments);
+    explainedHome(user, tour);
     return;
   }
   const facts = [];

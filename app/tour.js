@@ -1,5 +1,4 @@
-import { TOUR_ID, scopedBody } from "./context.js";
-import { showNoTour } from "./no-tour.js";
+import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
 
 // The tour home. The tour record and the direction as the director gave it.
 // The route and the production setup can be written here, each on its own and
@@ -11,7 +10,21 @@ const root = document.getElementById("tour");
 
 // Which section is open for editing, and what has been typed into it. Nothing
 // here is required before a Scene can be requested.
-const view = { tour: null, editing: null, dates: [], words: "", suppliedBy: "", message: "", working: false };
+const view = {
+  tour: null,
+  editing: null,
+  dates: [],
+  words: "",
+  suppliedBy: "",
+  message: "",
+  working: false,
+  name: "",
+  approximateDates: "",
+  primaryContact: "",
+  artistId: "",
+  artists: [],
+  role: null,
+};
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
@@ -57,6 +70,52 @@ function paragraphs(text) {
 
 function version(value) {
   return String(value || "").padStart(2, "0");
+}
+
+function artistField() {
+  if (!view.artists.length) {
+    return `<div class="m-callout m-callout--change">
+        <p class="m-copy">${view.role === "higher-roads" ? "Add an artist to this account before starting a tour." : "Higher Roads needs to add the artist before you can start a tour."}</p>
+        ${view.role === "higher-roads" ? '<div class="m-cluster"><a class="m-button m-button--small" href="./admin.html">Add the artist</a></div>' : ""}
+      </div>`;
+  }
+  if (view.artists.length === 1) {
+    return `<div class="m-field"><span class="m-label">Artist</span><p class="m-copy">${escape(view.artists[0].name)}</p></div>`;
+  }
+  const options = view.artists.map((entry) => `<option value="${escape(entry.id)}"${entry.id === view.artistId ? " selected" : ""}>${escape(entry.name)}</option>`).join("");
+  return `<div class="m-field"><label class="m-label" for="artist">Artist</label><select class="m-select" id="artist" data-field="artistId">${options}</select></div>`;
+}
+
+function paintTourCreation() {
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><span class="m-breadcrumb__current">Tour details</span></nav>`;
+  root.innerHTML = `<div class="m-form-page">
+      <header class="m-form-page__intro">
+        <span class="m-label">Start the tour</span>
+        <h1 class="m-heading">Name the tour</h1>
+        <p class="m-copy m-copy--large">The tour name is the only required field. Add the rest if you know it.</p>
+      </header>
+      <div class="m-form-page__work">
+        ${artistField()}
+        <div class="m-field">
+          <label class="m-label" for="name">Tour name</label>
+          <input class="m-input" id="name" data-field="name" value="${escape(view.name)}" placeholder="For example, Off The Map 2026" required />
+        </div>
+        <div class="m-field">
+          <label class="m-label" for="approximate-dates">Rough dates</label>
+          <input class="m-input" id="approximate-dates" data-field="approximateDates" value="${escape(view.approximateDates)}" placeholder="For example, May to September" />
+          <span class="m-help">Optional. Add the full route in Tour details later.</span>
+        </div>
+        <div class="m-field">
+          <label class="m-label" for="contact">Main contact</label>
+          <input class="m-input" id="contact" data-field="primaryContact" value="${escape(view.primaryContact)}" placeholder="Name" />
+          <span class="m-help">Optional.</span>
+        </div>
+        ${view.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
+        <div class="m-cluster">
+          <button class="m-button m-button--primary" type="button" data-create-tour ${view.working || !view.artists.length ? "disabled" : ""}>${view.working ? "Starting" : "Start the tour"}</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function directionSection(tour) {
@@ -244,7 +303,21 @@ function paint() {
 
 async function render() {
   if (!TOUR_ID) {
-    showNoTour(root, locationBar);
+    const [artistsResult, me] = await Promise.all([
+      fetch("/api/artist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scopedBody({ action: "list-artists" })),
+      }).then(async (response) => response.ok ? response.json() : { artists: [] }).catch(() => ({ artists: [] })),
+      call("get-me").catch(() => null),
+    ]);
+    view.artists = Array.isArray(artistsResult.artists) ? artistsResult.artists : [];
+    view.artistId = view.artists.length ? view.artists[0].id : "";
+    if (me && me.user) {
+      view.primaryContact = me.user.displayName || "";
+      view.role = me.user.role || null;
+    }
+    paintTourCreation();
     return;
   }
   const { tour } = await call("get-tour");
@@ -287,7 +360,29 @@ async function save(action, payload) {
 
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
-  if (!target || !view.tour) return;
+  if (!target) return;
+  if (target.hasAttribute("data-create-tour")) {
+    view.working = true;
+    view.message = "";
+    paintTourCreation();
+    call("create-tour", {
+      name: view.name,
+      artistId: view.artistId,
+      approximateDates: view.approximateDates,
+      primaryContact: view.primaryContact,
+    }).then(({ tour }) => {
+      const url = new URL("./tour.html", window.location.href);
+      url.searchParams.set("tour", tour.id);
+      if (ACCOUNT_ID) url.searchParams.set("account", ACCOUNT_ID);
+      window.location.href = url.href;
+    }).catch((error) => {
+      view.working = false;
+      view.message = error.message;
+      paintTourCreation();
+    });
+    return;
+  }
+  if (!view.tour) return;
   if (target.hasAttribute("data-edit-dates")) {
     const stored = (view.tour.dates || []).map((entry) => ({
       date: entry.date || "",

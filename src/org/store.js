@@ -4,6 +4,7 @@ import { ownEntry } from "../lookup.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "./roles.js";
 import {
   ACTIVE,
+  CLIENT_INTRODUCTION,
   DEACTIVATED,
   INVITED,
   buildPerson,
@@ -12,6 +13,7 @@ import {
   mintLink,
   normalizeEmail,
   publicPerson,
+  recordExperienceSeen,
   validEmail,
   validRole,
 } from "./people.js";
@@ -111,6 +113,7 @@ export function publicUser(user) {
     // Roads admin carries none.
     accountId: user.accountId === undefined ? null : user.accountId,
     status: user.status || (user.password ? "active" : "invited"),
+    introductionSeenAt: user.introductionSeenAt || user.experiencesSeen?.[CLIENT_INTRODUCTION] || null,
   };
 }
 
@@ -297,6 +300,18 @@ export function createOrgStore(options = {}) {
 
     async findPerson(personId) {
       return (await this.everyPerson()).find((entry) => entry.person.id === personId) || null;
+    },
+
+    async markIntroductionSeen(personId, now = new Date()) {
+      const found = await this.findPerson(personId);
+      if (!found) {
+        const error = new Error("No person is stored under that name.");
+        error.status = 404;
+        throw error;
+      }
+      const next = recordExperienceSeen(found.person, CLIENT_INTRODUCTION, now);
+      if (next !== found.person) await this.writePerson(next, found.path);
+      return publicUser(next);
     },
 
     // Inviting somebody. The link is handed back once and never stored, so an

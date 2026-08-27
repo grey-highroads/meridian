@@ -224,6 +224,7 @@ async function atArtboard(body, options) {
 // button is a page, and this route is what storage listens to.
 const CLIENT_ACTIONS = new Set([
   "get-me",
+  "mark-introduction-seen",
   "get-tour",
   "list-tours",
   "get-assignment",
@@ -274,6 +275,17 @@ export async function handleAction(body, options = {}) {
   options = { ...options, actingAccount };
 
   if (body.action === "get-me") return { user, actingAccount };
+
+  if (body.action === "mark-introduction-seen") {
+    if (user.role !== CLIENT_ROLE) {
+      const error = new Error("The introduction is for invited client teams.");
+      error.status = 403;
+      throw error;
+    }
+    const orgStore = options.orgStore || createOrgStore();
+    const now = options.now ? new Date(options.now()) : new Date();
+    return { user: await orgStore.markIntroductionSeen(user.id, now) };
+  }
 
   // Which tours this account holds. A page asks when no tour is named, so an
   // account with one lands on it and an account with none is told that plainly
