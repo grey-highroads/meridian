@@ -173,13 +173,10 @@ function directionSection() {
         ${view.message && !view.messageAt ? `<div class="m-callout m-callout--current m-direction-editor__notice"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
         ${requestWork()}
         ${tourDirectionWork()}
-        <section class="m-scene-direction-work" aria-labelledby="production-direction-heading">
-          <div class="m-stack">
-            <h2 id="production-direction-heading" class="m-scene-work-heading">Scene direction for production</h2>
-            <p class="m-copy">Turn the request and selected Tour Direction into the direction production should build.</p>
-          </div>
-          <textarea class="m-direction-editor__textarea" id="scene-direction" data-draft="direction" aria-label="Scene direction for production" placeholder="Describe the direction production should build to.">${escape(view.draft.direction)}</textarea>
-        </section>
+        <div class="m-field">
+          <label class="m-label" for="scene-direction">Note for production, optional</label>
+          <textarea class="m-textarea m-textarea--note" id="scene-direction" data-draft="direction" placeholder="A reminder or two. The request above and the marked Tour Direction already say what to build.">${escape(view.draft.direction)}</textarea>
+        </div>
         <div class="m-direction-editor__meta">
           <span>Written by Higher Roads</span>
           <span>Against Tour Direction V0${escape(version)}</span>
@@ -294,39 +291,37 @@ function download(kind) {
 // Render
 // ---------------------------------------------------------------------------
 
+// One judgement is made here: this is right, send it. Freezing the brief and
+// issuing the handoff happen together, on the newest brief, so the bar carries
+// saving and sending and nothing else.
 function actionBar() {
-  const frozen = view.brief && view.brief.brief.status === "frozen";
-  const hasIssuedBrief = view.briefs.length > 0;
-  let context = "Save the direction before compiling the brief production will receive.";
-  let controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
-  if (view.concept && !view.brief && !hasIssuedBrief) {
-    if (view.user && view.user.role !== "higher-roads") {
-      context = "The Scene direction is saved. Higher Roads prepares the production brief next.";
-      controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
-    } else {
-      context = "Compile the saved direction and accepted context into a production brief.";
-      controls = `<button class="m-button" type="button" data-save>Save direction</button>
-        <button class="m-button m-button--primary" type="button" data-compile>Compile brief</button>`;
-    }
+  if (view.artboards.length > 0) {
+    actions.innerHTML = "";
+    return;
   }
-  if (view.brief && !frozen) {
-    context = "Freeze the exact brief production will build against.";
+  const operator = view.user && view.user.role === "higher-roads";
+  const latestBrief = view.briefs.at(-1);
+  const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
+  let context;
+  let controls;
+  if (handoff) {
+    context = `Brief V0${latestBrief.briefVersion} is with production. The work comes back through the same handoff.`;
+    controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`;
+  } else if (latestBrief) {
+    context = `Brief V0${latestBrief.briefVersion} is frozen. Send it to production.`;
+    controls = `<button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
+  } else if (!operator) {
+    context = view.concept
+      ? "The Scene direction is saved. Higher Roads sends it to production next."
+      : "Save the Scene direction. Higher Roads sends it to production next.";
+    controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
+  } else if (view.concept) {
+    context = "Read the compiled brief, then send it to production.";
     controls = `<button class="m-button" type="button" data-save>Save direction</button>
-      <button class="m-button m-button--primary" type="button" data-freeze>Freeze V0${escape(view.brief.brief.briefVersion)} and send</button>`;
-  }
-  if (frozen || hasIssuedBrief) {
-    const latestBrief = view.briefs.at(-1);
-    const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
-    const work = view.artboards.length > 0;
-    if (work) {
-      actions.innerHTML = "";
-      return;
-    } else {
-      context = handoff
-        ? `Brief V0${escape(latestBrief.briefVersion)} is issued. Production returns the work through the same handoff.`
-        : `Brief V0${escape(latestBrief.briefVersion)} is frozen. Name who receives it and issue the handoff.`;
-      controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">${handoff ? "Open handoff" : "Issue to production"}</a>`;
-    }
+      <button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
+  } else {
+    context = "Save the Scene direction before sending it to production.";
+    controls = `<button class="m-button m-button--primary" type="button" data-save>Save direction</button>`;
   }
   actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
     <div class="m-action-bar__actions">${controls}</div>`;
@@ -377,6 +372,21 @@ function render() {
   actionBar();
 }
 
+// The brief on the page is a read, not a decision. Compiling is free, and
+// reading the compiled brief is how a person decides whether to send it. Once a
+// version is frozen, the frozen one is what shows.
+async function readBrief() {
+  if (!view.user || view.user.role !== "higher-roads") return null;
+  const frozen = view.briefs.filter((entry) => entry.status === "frozen").at(-1);
+  try {
+    return frozen
+      ? await call("get-brief", { assignmentId: view.sceneId, briefVersion: frozen.briefVersion })
+      : (view.concept ? await call("compile-brief", { assignmentId: view.sceneId }) : null);
+  } catch {
+    return null;
+  }
+}
+
 async function load() {
   try {
     view.user = (await call("get-me")).user;
@@ -407,8 +417,12 @@ async function load() {
   } catch {
     view.artboards = [];
   }
+  view.brief = await readBrief();
   if (view.concept) {
-    view.draft.direction = view.concept.idea;
+    // A Scene saved with no note carries the request in its place. The note box
+    // stays empty in that case, because nobody wrote a note.
+    const request = String(view.assignment.request || "").trim();
+    view.draft.direction = view.concept.idea === request ? "" : view.concept.idea;
     view.draft.marked = (view.concept.directionParagraphs || []).slice();
     view.draft.markedVenues = (view.concept.venueExceptions || []).slice();
   }
@@ -431,9 +445,6 @@ async function guard(work, where = "") {
 }
 
 async function save() {
-  if (!view.draft.direction.trim()) {
-    throw new Error("Write the Scene direction before saving it.");
-  }
   const used = view.usedSuggestion;
   const applied = view.suggestions ? view.suggestions.appliedFindings || [] : [];
   const cited = new Set(used ? used.rhymesWith || [] : []);
@@ -453,7 +464,7 @@ async function save() {
   };
   const action = view.user && view.user.role === "higher-roads" ? "choose-concept" : "save-scene-direction";
   view.concept = (await call(action, { assignmentId: view.sceneId, concept })).concept;
-  view.brief = null;
+  view.brief = await readBrief();
   view.message = "Saved.";
   view.messageAt = "";
   render();
@@ -496,20 +507,13 @@ document.addEventListener("click", (event) => {
     guard(save);
     return;
   }
-  if (target.hasAttribute("data-compile")) {
+  if (target.hasAttribute("data-send")) {
     guard(async () => {
-      view.brief = await call("compile-brief", { assignmentId: view.sceneId });
-      view.message = "";
-      view.messageAt = "";
-      render();
-    });
-    return;
-  }
-  if (target.hasAttribute("data-freeze")) {
-    guard(async () => {
-      view.brief = await call("freeze-brief", { assignmentId: view.sceneId });
+      const sent = await call("send-to-production", { assignmentId: view.sceneId });
+      view.brief = { brief: sent.brief, document: sent.document, sidecar: sent.sidecar };
       view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
-      view.message = `V0${view.brief.brief.briefVersion} is frozen. Issue it to the media artist when the recipient is named.`;
+      view.handoffs = (await call("get-handoffs", { assignmentId: view.sceneId })).handoffs;
+      view.message = `Brief V0${sent.brief.briefVersion} is with production.`;
       view.messageAt = "";
       render();
     });

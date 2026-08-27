@@ -159,7 +159,8 @@ test("the Scene workspace keeps the request and applicable direction with the wo
   const source = read("app/scene.js");
   assert.match(source, /Client request/, "Scene main workspace does not show the request");
   assert.match(source, /Tour Direction for this Scene/, "Scene main workspace does not show applicable Tour Direction");
-  assert.match(source, /Scene direction for production/, "Scene main workspace does not name the production direction");
+  assert.match(source, /Note for production, optional/, "Scene main workspace does not offer the optional note");
+  assert.doesNotMatch(source, /Scene direction for production/, "the note still presents itself as the gating step");
   assert.doesNotMatch(source, /tab\("request"|tab\("direction"/, "request or direction still live in the inspector");
   assert.match(source, /tab\("brain".*tab\("setup"/s, "inspector does not contain the optional Brain and Setup tools");
   assert.doesNotMatch(source, /tab\("versions"|Scene versions|What is current/, "Scene versions still occupy the inspector without a job");
@@ -236,7 +237,7 @@ test("empty screens speak to the person holding the work", () => {
   const client = read("app/client-review.js");
   assert.match(client, /You do not need to do anything yet/, "client review does not release the client from an empty queue");
   const handoff = read("app/handoff.js");
-  assert.match(handoff, /Freeze the brief before handoff/, "handoff does not name the required first step");
+  assert.match(handoff, /Send the brief from the Scene/, "handoff does not name where the brief goes out from");
   const artist = read("app/artist.js");
   assert.match(artist, /Build the Artist Brain/, "Artist Brain does not start with the manual research job");
 });

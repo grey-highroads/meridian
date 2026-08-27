@@ -4,6 +4,7 @@ import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore, tourPathFor } from "../src/tour/store.js";
+import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { carriesOurWords, compileBrief, directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
@@ -43,7 +44,8 @@ async function ready() {
   // tour's backend here and every effect lands in one place the test can read.
   const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: DEMO_ACCOUNT });
   await seedTourFromFixture(tourStore, TOUR);
-  const options = { store, tourStore, sceneRecord, user: OPERATOR };
+  const artboardStore = createArtboardStore({ backend: tourBackend, accountId: DEMO_ACCOUNT });
+  const options = { store, tourStore, artboardStore, sceneRecord, user: OPERATOR };
   return { artistBackend, tourBackend, options, asClient: { ...options, user: REVIEWER } };
 }
 
@@ -55,11 +57,91 @@ async function withConcept(options, extra = {}) {
   return await tourAction({ action: "choose-concept", ...AT, person: "Grey", concept: { ...CONCEPT, artistContext, ...extra } }, options);
 }
 
-test("a concept needs a title and an idea", async () => {
+test("a concept needs a title, and the note under it is optional", async () => {
   const { options } = await ready();
   await assert.rejects(
-    () => tourAction({ action: "choose-concept", ...AT, concept: { title: "Only a title" } }, options),
-    /A concept needs a title and an idea/,
+    () => tourAction({ action: "choose-concept", ...AT, concept: { idea: "Only a note" } }, options),
+    /A concept needs a title/,
+  );
+  // The Scene request already said what is wanted, so a concept saved with no
+  // note is saved rather than refused.
+  const { concept } = await tourAction({ action: "choose-concept", ...AT, concept: { title: "Only a title" } }, options);
+  assert.equal(concept.title, "Only a title");
+});
+
+test("a Scene saved with no note stores the request, and one saved with a note stores the note", async () => {
+  const { tourBackend, options } = await ready();
+  const { assignment } = await tourAction({ action: "get-assignment", ...AT }, options);
+  const request = assignment.request.trim();
+  assert.ok(request, "the seeded Scene carries a request");
+
+  await tourAction({ action: "choose-concept", ...AT, concept: { ...CONCEPT, idea: "   " } }, options);
+  const conceptPath = tourPathFor(TOUR, ASSIGNMENT, "concept", DEMO_ACCOUNT);
+  const blank = JSON.parse(tourBackend.files.get(conceptPath));
+  assert.equal(blank.idea, request, "an empty note did not carry the request forward");
+  assert.notEqual(blank.idea.trim(), "", "a blank rationale reached storage");
+
+  // A written note is what gets stored, never the request on top of it.
+  await tourAction({ action: "save-scene-direction", ...AT, concept: { ...CONCEPT, idea: "Hold the break until the last chorus." } }, options);
+  const written = JSON.parse(tourBackend.files.get(conceptPath));
+  assert.equal(written.idea, "Hold the break until the last chorus.");
+});
+
+test("the client reads a rationale back even when nobody wrote a note", async () => {
+  const { options, asClient } = await ready();
+  await tourAction({ action: "choose-concept", ...AT, concept: { ...CONCEPT, idea: "" } }, options);
+  const sent = await tourAction({ action: "send-to-production", ...AT }, options);
+  await tourAction({ action: "submit-artboard", ...AT, briefVersion: sent.brief.briefVersion, artifact: { name: "v1.png", contentType: "image/png", dataUrl: "data:image/png;base64,iVBOR" }, conceptSummary: "Built to the brief." }, options);
+  await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 1, person: "Grey" }, options);
+  const read = await tourAction({ action: "get-brief", ...AT, artboardVersion: 1 }, asClient);
+  assert.ok(String(read.rationale || "").trim(), "the client-facing rationale is empty");
+});
+
+test("sending to production freezes the newest brief and issues the handoff in one action", async () => {
+  const { tourBackend, options } = await ready();
+  await withConcept(options);
+  const briefsPath = tourPathFor(TOUR, ASSIGNMENT, "briefs", DEMO_ACCOUNT);
+  assert.ok(!tourBackend.files.has(briefsPath), "a brief was stored before anyone sent one");
+
+  const sent = await tourAction({ action: "send-to-production", ...AT }, options);
+  assert.equal(sent.brief.status, "frozen");
+  assert.equal(sent.brief.briefVersion, 1);
+  assert.equal(sent.handoff.briefVersion, 1);
+  assert.equal(sent.handoff.kind, "brief");
+  assert.equal(sent.handoff.issuedBy, OPERATOR.displayName);
+
+  // Both facts land, with the same actor and version the two separate actions
+  // recorded before this collapsed into one.
+  const record = await tourAction({ action: "get-scene-record", ...AT }, options);
+  const froze = record.facts.find((entry) => entry.action === "Froze the brief");
+  const out = record.facts.find((entry) => entry.action === "Sent the brief to production");
+  assert.ok(froze, "sending did not record the freeze");
+  assert.ok(out, "sending did not record that the brief went out");
+  assert.equal(froze.version, "Brief V01");
+  assert.equal(out.version, "Brief V01");
+  assert.equal(froze.actor, out.actor);
+
+  // Stored, not just returned.
+  const stored = JSON.parse(tourBackend.files.get(briefsPath));
+  assert.equal(stored.versions.length, 1);
+  assert.equal(stored.versions[0].status, "frozen");
+});
+
+test("sending twice does not produce a second brief", async () => {
+  const { options } = await ready();
+  await withConcept(options);
+  const first = await tourAction({ action: "send-to-production", ...AT }, options);
+  const again = await tourAction({ action: "send-to-production", ...AT }, options);
+  assert.equal(again.brief.briefVersion, first.brief.briefVersion);
+  assert.equal(again.handoff.handoffId, first.handoff.handoffId);
+  const list = await tourAction({ action: "list-briefs", ...AT }, options);
+  assert.deepEqual(list.briefs.map((entry) => entry.briefVersion), [1]);
+  const { handoffs } = await tourAction({ action: "get-handoffs", ...AT }, options);
+  assert.equal(handoffs.filter((entry) => entry.kind === "brief").length, 1);
+  // The refusal that protects a frozen brief still fires after a send.
+  await assert.rejects(
+    () => withConcept(options, { title: "A different idea" }),
+    /A brief is already frozen for this Scene/,
   );
 });
 

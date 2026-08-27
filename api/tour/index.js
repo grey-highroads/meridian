@@ -19,7 +19,7 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // get-assignment, save-tour-dates, save-production-setup,
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
-// issue-brief, get-handoffs, submit-artboard, get-artboards,
+// issue-brief, send-to-production, get-handoffs, submit-artboard, get-artboards,
 // get-artboard-artifact, save-review, issue-revision, send-revision,
 // get-reviews, approve-for-client, client-approve, client-comment,
 // get-production-intent, get-scene-activity, get-scene-record.
@@ -142,6 +142,17 @@ function instructionList(value) {
 function optionalText(value) {
   const text = String(value === null || value === undefined ? "" : value).trim();
   return text || null;
+}
+
+// The note a person writes on a Scene is optional. The request already said what
+// is wanted and the tour direction already governs, so a Scene saved with no
+// note carries the request forward. A client reads this field back as the
+// rationale, so it is never stored blank. Ruled 2026-08-27.
+function sceneIdea(value, assignment) {
+  const written = String(value === null || value === undefined ? "" : value).trim();
+  return written
+    || String((assignment && assignment.request) || "").trim()
+    || String((assignment && assignment.title) || "").trim();
 }
 
 function handoffPath(accountId, tourId, assignmentId, extra = {}) {
@@ -645,8 +656,8 @@ export async function handleAction(body, options = {}) {
     const assignment = findAssignment(fixture, body.assignmentId);
     const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const source = body.concept || {};
-    if (!String(source.title || "").trim() || !String(source.idea || "").trim()) {
-      const error = new Error("A Scene direction needs a name and some direction.");
+    if (!String(source.title || "").trim()) {
+      const error = new Error("A Scene direction needs a name.");
       error.status = 400;
       throw error;
     }
@@ -658,7 +669,7 @@ export async function handleAction(body, options = {}) {
     }
     const concept = {
       title: String(source.title).trim(),
-      idea: String(source.idea).trim(),
+      idea: sceneIdea(source.idea, assignment),
       whyThisArtist: "",
       asksOfProduction: "",
       whereItMightMiss: "",
@@ -692,8 +703,8 @@ export async function handleAction(body, options = {}) {
     const { fixture, assignment, context } = await contextFor(body, options);
     const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const source = body.concept || {};
-    if (!String(source.title || "").trim() || !String(source.idea || "").trim()) {
-      const error = new Error("A concept needs a title and an idea.");
+    if (!String(source.title || "").trim()) {
+      const error = new Error("A concept needs a title.");
       error.status = 400;
       throw error;
     }
@@ -707,7 +718,7 @@ export async function handleAction(body, options = {}) {
     // brain proposed is kept next to what the person made of it.
     const concept = {
       title: String(source.title).trim(),
-      idea: String(source.idea).trim(),
+      idea: sceneIdea(source.idea, assignment),
       whyThisArtist: String(source.whyThisArtist || "").trim(),
       asksOfProduction: String(source.asksOfProduction || "").trim(),
       whereItMightMiss: String(source.whereItMightMiss || "").trim(),
@@ -880,6 +891,66 @@ export async function handleAction(body, options = {}) {
       onBehalfOf: optionalText(body.onBehalfOf),
     });
     return { handoff };
+  }
+
+  // One action for the one judgement a person makes here: this is right, send
+  // it. It freezes the newest brief if nothing is frozen yet and issues the
+  // handoff in the same move, recording both facts exactly as the two separate
+  // actions did. Sending again returns the handoff that already exists rather
+  // than freezing a second brief. Ruled 2026-08-27.
+  if (body.action === "send-to-production") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
+    const concept = await tourStore.readConcept(fixture.tour.id, assignment.id);
+    const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const frozenVersions = versions.filter((entry) => entry.status === "frozen");
+    let brief = frozenVersions[frozenVersions.length - 1] || null;
+    if (!brief) {
+      const compiled = compileBrief({
+        tour: fixture.tour,
+        assignment,
+        concept,
+        artistId: fixture.tour.artistId,
+        briefVersion: nextBriefVersion(versions),
+      });
+      brief = freeze(compiled, user.displayName);
+      await tourStore.addBrief(fixture.tour.id, assignment.id, brief);
+      await record.appendFact(fixture.tour.id, assignment.id, {
+        ...actor,
+        action: "Froze the brief",
+        version: `Brief V0${brief.briefVersion}`,
+        path: conceptPath(concept),
+      });
+    }
+    const handoffs = await artboardStore.readHandoffs(fixture.tour.id, assignment.id);
+    const existing = handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === brief.briefVersion);
+    if (existing) {
+      return { brief, handoff: existing, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
+    }
+    const handoff = {
+      handoffId: `brief-${brief.jobId}-v${brief.briefVersion}`,
+      kind: "brief",
+      jobId: brief.jobId,
+      briefVersion: brief.briefVersion,
+      sourceArtboardVersion: null,
+      recipient: "Media artist",
+      dueDate: null,
+      contact: null,
+      directPath: handoffPath(actingAccount, fixture.tour.id, assignment.id, { brief: brief.briefVersion }),
+      issuedBy: user.displayName,
+      issuedAt: new Date().toISOString(),
+    };
+    await artboardStore.addHandoff(fixture.tour.id, assignment.id, handoff);
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      ...actor,
+      action: SENT_TO_PRODUCTION,
+      version: `Brief V0${brief.briefVersion}`,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { brief, handoff, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
   }
 
   if (body.action === "get-handoffs") {

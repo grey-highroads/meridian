@@ -208,6 +208,10 @@
     resize: vertical;
   }
 
+  .m-textarea--note {
+    min-height: var(--m-space-9);
+  }
+
   .m-input::placeholder,
   .m-textarea::placeholder {
     color: var(--m-text-quiet);

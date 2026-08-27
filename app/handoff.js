@@ -19,7 +19,7 @@ const view = {
   artboards: [],
   receipt: null,
   file: null,
-  draft: { recipient: "", dueDate: "", contact: "", summary: "", assumptions: "", findings: "", onBehalfOf: "" },
+  draft: { summary: "", assumptions: "", findings: "", onBehalfOf: "" },
   message: "",
   working: false,
 };
@@ -81,7 +81,7 @@ function intro() {
     : "Build against this frozen brief and return the first version here.";
   const state = view.receipt
     ? `<span class="m-state m-state--approved">V${version(view.receipt.artboardVersion)} received</span>`
-    : `<span class="m-state m-state--current">${view.handoff ? "Issued" : "Ready to issue"}</span>`;
+    : `<span class="m-state m-state--current">${view.handoff ? "Sent" : "Not sent yet"}</span>`;
   return `<header class="m-form-page__intro">
       <span class="m-label">Production handoff</span>
       <h1 class="m-heading">${escape(heading)}</h1>
@@ -134,19 +134,15 @@ function revisionBlock() {
 function issueBlock() {
   if (view.handoff) {
     return `<section class="m-work m-stack" aria-labelledby="issued-heading">
-        <div class="m-stack"><span class="m-label">Issued to</span><h2 id="issued-heading" class="m-section-heading">${escape(view.handoff.recipient)}</h2></div>
-        <p class="m-copy">${view.handoff.dueDate ? `Due ${escape(formatDate(view.handoff.dueDate))}.` : "No due date was set."}${view.handoff.contact ? ` Contact ${escape(view.handoff.contact)}.` : ""}</p>
+        <div class="m-stack"><span class="m-label">Sent to</span><h2 id="issued-heading" class="m-section-heading">Production</h2></div>
         <button class="m-button m-button--small" type="button" data-copy>Copy direct link</button>
-        <span class="m-meta">ISSUED BY ${escape(String(view.handoff.issuedBy).toUpperCase())} / ${escape(formatDate(view.handoff.issuedAt).toUpperCase())}</span>
+        <span class="m-meta">SENT BY ${escape(String(view.handoff.issuedBy).toUpperCase())} / ${escape(formatDate(view.handoff.issuedAt).toUpperCase())}</span>
       </section>`;
   }
   if (view.revision) return "";
   return `<section class="m-work m-stack" aria-labelledby="issue-heading">
-      <div class="m-stack"><span class="m-label">Before work starts</span><h2 id="issue-heading" class="m-section-heading">Name who receives this brief.</h2></div>
-      <div class="m-field"><label class="m-label" for="recipient">Media artist or team</label><input class="m-input" id="recipient" data-draft="recipient" value="${escape(view.draft.recipient)}" placeholder="Name or team" /></div>
-      <div class="m-field"><label class="m-label" for="due">Due date, optional</label><input class="m-input" id="due" type="date" data-draft="dueDate" value="${escape(view.draft.dueDate)}" /></div>
-      <div class="m-field"><label class="m-label" for="contact">Contact, optional</label><input class="m-input" id="contact" data-draft="contact" value="${escape(view.draft.contact)}" placeholder="Email, phone, or account name" /></div>
-      <button class="m-button m-button--primary" type="button" data-issue ${view.working ? "disabled" : ""}>Issue brief</button>
+      <div class="m-stack"><span class="m-label">Before work starts</span><h2 id="issue-heading" class="m-section-heading">This brief has not gone out yet.</h2></div>
+      <button class="m-button m-button--primary" type="button" data-issue ${view.working ? "disabled" : ""}>Send to production</button>
     </section>`;
 }
 
@@ -192,9 +188,9 @@ function renderNoBrief() {
       </div>
       <div class="m-empty-state__body">
         <span class="m-label">One step comes first</span>
-        <h1 id="handoff-not-ready-heading" class="m-section-heading">Freeze the brief before handoff</h1>
-        <p class="m-copy m-copy--large">Production needs one exact Scene direction, its required elements, and the Tour Direction version behind it. Finish that work in the Scene, then issue it here.</p>
-        <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(SCENE_ID)}">Finish the Scene brief</a></div>
+        <h1 id="handoff-not-ready-heading" class="m-section-heading">Send the brief from the Scene</h1>
+        <p class="m-copy m-copy--large">Production needs one exact Scene direction, its required elements, and the Tour Direction version behind it. Finish that work in the Scene and send it to production from there.</p>
+        <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(SCENE_ID)}">Open the Scene</a></div>
       </div>
     </section>`;
 }
@@ -290,10 +286,10 @@ document.addEventListener("click", (event) => {
   }
   if (target.hasAttribute("data-issue")) {
     guard(async () => {
-      const issued = await call("issue-brief", { briefVersion: view.brief.briefVersion, recipient: view.draft.recipient, dueDate: view.draft.dueDate, contact: view.draft.contact });
+      const issued = await call("issue-brief", { briefVersion: view.brief.briefVersion });
       view.handoff = issued.handoff;
       view.working = false;
-      view.message = "Brief issued. Copy the direct link when you are ready to notify production.";
+      view.message = "Sent to production. Copy the direct link when you are ready to notify them.";
       render();
     });
   }
