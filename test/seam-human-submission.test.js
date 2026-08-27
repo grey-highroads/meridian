@@ -11,7 +11,7 @@ import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 const DEMO_ACCOUNT = "dierks-bentley";
 
 const OPERATOR = { id: "operator", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
-const ARTIST = { id: "artist", displayName: "Jess Harper", role: "client-reviewer", roleLabel: "Media artist" };
+const ARTIST = { id: "artist", displayName: "Jess Harper", role: "higher-roads", roleLabel: "Higher Roads" };
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";
 const AT = { tourId: TOUR, assignmentId: ASSIGNMENT };
@@ -65,7 +65,7 @@ test("issuing a frozen brief records the handoff without pretending work came ba
   assert.equal(scene.waitingOn, "production");
 });
 
-test("an invited media artist submits the same artboard shape and receives an attributed receipt", async () => {
+test("a Higher Roads media artist submits the same artboard shape and receives an attributed receipt", async () => {
   const { options, asArtist } = await ready();
   await tourAction({ action: "issue-brief", ...AT, briefVersion: 1, recipient: "Jess Harper" }, options);
   const result = await tourAction({

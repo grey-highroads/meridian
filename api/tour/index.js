@@ -216,6 +216,40 @@ async function atArtboard(body, options) {
   return { fixture, assignment, tourStore, artboardStore, record, entry, wanted };
 }
 
+function clientSurfaceError() {
+  const error = new Error("That part of Meridian is for the Higher Roads team.");
+  error.status = 403;
+  return error;
+}
+
+function presentedVersions(approvals) {
+  return new Set((approvals.readyForClient || []).map((entry) => Number(entry.artboardVersion)));
+}
+
+function clientApprovalView(approvals, user) {
+  const visible = presentedVersions(approvals);
+  return {
+    readyForClient: (approvals.readyForClient || [])
+      .filter((entry) => visible.has(Number(entry.artboardVersion)))
+      .map((entry) => ({ artboardVersion: entry.artboardVersion })),
+    clientApprovals: (approvals.clientApprovals || [])
+      .filter((entry) => visible.has(Number(entry.artboardVersion)) && entry.approvedBy === user.displayName)
+      .map((entry) => ({
+        artboardVersion: entry.artboardVersion,
+        approvedBy: entry.approvedBy,
+        approvedAt: entry.approvedAt,
+      })),
+    comments: (approvals.comments || [])
+      .filter((entry) => visible.has(Number(entry.artboardVersion)) && entry.writtenBy === user.displayName)
+      .map((entry) => ({
+        artboardVersion: entry.artboardVersion,
+        text: entry.text,
+        writtenBy: entry.writtenBy,
+        writtenAt: entry.writtenAt,
+      })),
+  };
+}
+
 // Client and Higher Roads users share the Tour and Scene workflow. Internal
 // review and Artist Brain evidence remain on the Higher Roads side of the
 // glass. The route enforces that surface boundary even when a page is bypassed.
@@ -759,6 +793,26 @@ export async function handleAction(body, options = {}) {
     const assignment = findAssignment(fixture, body.assignmentId);
     const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    if (user.role === CLIENT_ROLE) {
+      const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+      const [artboards, approvals] = await Promise.all([
+        artboardStore.readArtboards(fixture.tour.id, assignment.id),
+        artboardStore.readApprovals(fixture.tour.id, assignment.id),
+      ]);
+      const visible = presentedVersions(approvals);
+      const artboardVersion = Number(body.artboardVersion);
+      const artboard = artboards.find((entry) => (
+        entry.artboard.artboardVersion === artboardVersion && visible.has(artboardVersion)
+      ));
+      if (!artboard) throw clientSurfaceError();
+      const brief = versions.find((entry) => entry.briefVersion === artboard.artboard.briefVersion);
+      if (!brief) {
+        const error = new Error("That brief version was not found.");
+        error.status = 404;
+        throw error;
+      }
+      return { rationale: brief.chosenConcept.idea || brief.chosenConcept.title };
+    }
     const brief = versions.find((entry) => entry.briefVersion === Number(body.briefVersion));
     if (!brief) {
       const error = new Error("That brief version was not found.");
@@ -872,8 +926,17 @@ export async function handleAction(body, options = {}) {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
     const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const artboards = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    if (user.role === CLIENT_ROLE) {
+      const visible = presentedVersions(await artboardStore.readApprovals(fixture.tour.id, assignment.id));
+      return {
+        artboards: artboards
+          .filter((entry) => visible.has(Number(entry.artboard.artboardVersion)))
+          .map((entry) => ({ artboard: { artboardVersion: entry.artboard.artboardVersion } })),
+      };
+    }
     return {
-      artboards: await artboardStore.readArtboards(fixture.tour.id, assignment.id),
+      artboards,
       label: STAND_IN_LABEL,
     };
   }
@@ -982,6 +1045,10 @@ export async function handleAction(body, options = {}) {
       const error = new Error("That artboard version was not found.");
       error.status = 404;
       throw error;
+    }
+    if (user.role === CLIENT_ROLE) {
+      const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+      if (!presentedVersions(approvals).has(wanted)) throw clientSurfaceError();
     }
     const artifact = entry.artboard.artifact || {};
     if (artifact.dataUrl || artifact.blobPathname) {
@@ -1210,6 +1277,11 @@ export async function handleAction(body, options = {}) {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
     const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    if (user.role === CLIENT_ROLE) {
+      const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+      const visible = clientApprovalView(approvals, user);
+      return { comments: visible.comments, approvals: visible.clientApprovals };
+    }
     return {
       reviews: await artboardStore.readReviews(fixture.tour.id, assignment.id),
       revisions: await artboardStore.readRevisions(fixture.tour.id, assignment.id),
@@ -1319,6 +1391,7 @@ export async function handleAction(body, options = {}) {
     const assignment = findAssignment(fixture, body.assignmentId);
     const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
     const approvals = await artboardStore.readApprovals(fixture.tour.id, assignment.id);
+    if (user.role === CLIENT_ROLE) return clientApprovalView(approvals, user);
     return { ...approvals, intents: await artboardStore.readIntents(fixture.tour.id, assignment.id) };
   }
   if (body.action === "get-scene-activity") {

@@ -485,6 +485,20 @@ Recorded 2026-08-26. The instruction for the account acts said a client session 
 
 Bring it back when: Grey rules that tour creation is a Higher Roads act. `create-tour` comes out of `CLIENT_ACTIONS` and the account-scope test moves to a Higher Roads session in the same commit.
 
+## The client review boundary lived in page markup
+
+Recorded 2026-08-27 when the review boundary moved into the server. Before this commit, the client page displayed only presented work, a rationale, comments, and approvals, but the tour route still returned every Artboard and its storage key, Higher Roads reviews and revision instructions, the full frozen brief, and the production intent to the same client session. The private upload read checked the Scene prefix but did not check whether Higher Roads had presented the version. The page was narrow because it chose not to show the internal payload, not because the server refused it.
+
+Fixed in the same commit as this entry. Client reads now project only presented version identities, presented files, that person's comments and approvals, and the one-sentence rationale for a presented version. The upload read checks both the Scene prefix and presentation. Higher Roads reads are unchanged.
+
+Bring it back when: a new client-facing read is added. Its server response is reviewed as the boundary, even when the page that calls it displays less.
+
+## An external designer is not a client-role person
+
+Recorded 2026-08-27. Grey ruled that Jim is a Higher Roads user and the production handoff is a Higher Roads surface. A person carrying the client role cannot be an external designer, because that role receives the client review projection and never the frozen production brief, revision instructions, or production notes. There is no third role in Meridian today.
+
+Bring it back when: a client invites an external designer who is not working as Higher Roads. That person needs a separate user type and an explicit production-handoff boundary rather than broader access on the client role.
+
 ## The no-tour state is one shared block on three pages
 
 Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Updated 2026-08-26 when tour creation moved to Home. The named condition fired: a tour is now started from Home, so Home has a shape of its own and the shared block from `app/no-tour.js` covers Scenes, Reviews, and Tour details. Those three still say nothing about themselves and now point at Home rather than at Admin.

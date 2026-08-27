@@ -112,8 +112,8 @@ async function refresh() {
   const artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
   const entry = artboards.find((stored) => stored.artboard.artboardVersion === view.version);
   view.label = entry ? entry.artboard.label : "";
-  const brief = await call("get-brief", { assignmentId: view.sceneId, briefVersion: entry.artboard.briefVersion });
-  view.rationale = brief.brief.chosenConcept.idea || brief.brief.chosenConcept.title;
+  const brief = await call("get-brief", { assignmentId: view.sceneId, artboardVersion: view.version });
+  view.rationale = brief.rationale;
   try {
     const item = await call("get-artboard-artifact", { assignmentId: view.sceneId, artboardVersion: view.version });
     view.artifact = await resolveArtifact(item, { assignmentId: view.sceneId });

@@ -1,6 +1,8 @@
 import { issueSignedToken, presignUrl } from "@vercel/blob";
+import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../src/server/http.js";
 import { resolveActingAccount } from "../src/org/acting-account.js";
+import { CLIENT_ROLE } from "../src/org/roles.js";
 import { uploadPathFor, uploadPrefix } from "../src/tour/upload-path.js";
 
 export { uploadPathFor, uploadPrefix };
@@ -15,8 +17,14 @@ const ALLOWED_TYPES = new Set([
   "image/webp",
 ]);
 
-export default async function handler(request, response) {
-  const user = await requireUser(request, response);
+function clientSurfaceError() {
+  const error = new Error("That part of Meridian is for the Higher Roads team.");
+  error.status = 403;
+  return error;
+}
+
+export default async function handler(request, response, options = {}) {
+  const user = options.user || await requireUser(request, response, options);
   if (!user) return;
   try {
     if (request.method !== "POST") {
@@ -66,9 +74,24 @@ export default async function handler(request, response) {
     if (String(body.mode || "") === "read") {
       const pathname = String(body.pathname || "");
       if (!pathname.startsWith(prefix)) throw new Error("That file is outside this Scene.");
+      if (user.role === CLIENT_ROLE) {
+        const artboardStore = options.artboardStore || createArtboardStore({ accountId });
+        const [artboards, approvals] = await Promise.all([
+          artboardStore.readArtboards(tourId, assignmentId),
+          artboardStore.readApprovals(tourId, assignmentId),
+        ]);
+        const visible = new Set(approvals.readyForClient.map((entry) => Number(entry.artboardVersion)));
+        const presented = artboards.some((entry) => (
+          visible.has(Number(entry.artboard.artboardVersion))
+          && entry.artboard.artifact?.blobPathname === pathname
+        ));
+        if (!presented) throw clientSurfaceError();
+      }
       const validUntil = Date.now() + 15 * 60 * 1000;
-      const signedToken = await issueSignedToken({ ...credentials, pathname, operations: ["get"], validUntil });
-      const result = await presignUrl(signedToken, {
+      const sign = options.issueSignedToken || issueSignedToken;
+      const presign = options.presignUrl || presignUrl;
+      const signedToken = await sign({ ...credentials, pathname, operations: ["get"], validUntil });
+      const result = await presign(signedToken, {
         access: "private",
         operation: "get",
         pathname,
