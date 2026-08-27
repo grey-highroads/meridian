@@ -15,7 +15,6 @@ import { CLIENT_ROLE } from "./src/org/roles.js";
 const PUBLIC_PATHS = new Set([
   "/landing.html",
   "/set-password.html",
-  "/set-password.js",
   "/api/blob/upload",
   "/api/auth/login",
 ]);
@@ -35,9 +34,19 @@ function isPage(pathname) {
   return pathname === "/" || pathname.endsWith(".html");
 }
 
+// The build renames every script, stylesheet, and image on a page to a hashed
+// file under /assets/, so those are what the browser asks for. They carry no
+// account data. Everything that does comes from the API routes, and those stay
+// closed. The set-password page has to work for someone with no session, which
+// only happens if these load for anyone.
+function isStaticAsset(pathname) {
+  return pathname.startsWith("/assets/")
+    || pathname.startsWith("/design/")
+    || pathname === "/favicon.ico";
+}
+
 function clientMayLoad(pathname) {
-  if (CLIENT_PATHS.has(pathname)) return true;
-  return pathname.startsWith("/design/") || pathname.startsWith("/assets/");
+  return CLIENT_PATHS.has(pathname);
 }
 
 function plain(message, status) {
@@ -49,6 +58,7 @@ function plain(message, status) {
 
 export default async function middleware(request) {
   const pathname = new URL(request.url).pathname;
+  if (isStaticAsset(pathname)) return next();
   if (PUBLIC_PATHS.has(pathname)) return next();
 
   const claim = await readSession(readCookie(request.headers.get("cookie") || "", SESSION_COOKIE), sessionSecret());

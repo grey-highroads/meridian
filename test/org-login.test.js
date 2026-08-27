@@ -210,6 +210,45 @@ test("the front door turns away anyone without a session and keeps internal surf
   }
 });
 
+test("the files a page is built from load for someone who has no session yet", async () => {
+  const secret = `meridian-session:${ENV.MERIDIAN_OPERATOR}:${ENV.MERIDIAN_CLIENT}`;
+  const saved = { operator: process.env.MERIDIAN_OPERATOR, client: process.env.MERIDIAN_CLIENT };
+  process.env.MERIDIAN_OPERATOR = ENV.MERIDIAN_OPERATOR;
+  process.env.MERIDIAN_CLIENT = ENV.MERIDIAN_CLIENT;
+  try {
+    const at = (pathname, cookie) => new Request(`https://meridian.test${pathname}`, {
+      headers: cookie ? { cookie: `${SESSION_COOKIE}=${cookie}` } : {},
+    });
+
+    // The invitation link is the one page a person opens before they can sign
+    // in. The build gives its script, stylesheet, and icon hashed names under
+    // /assets/, so the page only works if those load with no session.
+    assert.equal((await middleware(at("/set-password.html"))).status, 200);
+    assert.equal((await middleware(at("/assets/setPassword-D7AwGmV9.js"))).status, 200);
+    assert.equal((await middleware(at("/assets/design-DSeG9CRA.css"))).status, 200);
+    assert.equal((await middleware(at("/assets/07-micro-icon-16px-Bhky8iDR.svg"))).status, 200);
+    assert.equal((await middleware(at("/design/index.css"))).status, 200);
+    assert.equal((await middleware(at("/favicon.ico"))).status, 200);
+
+    // Nothing else opened up. Account data still comes from the API routes and
+    // those stay closed, pages that are not public still send a person to sign
+    // in, and a client still cannot reach a Higher Roads page.
+    assert.equal((await middleware(at("/api/tour"))).status, 401);
+    assert.equal((await middleware(at("/api/artist"))).status, 401);
+    assert.equal((await middleware(at("/api/auth/people"))).status, 401);
+    assert.equal((await middleware(at("/admin.html"))).status, 302);
+    assert.equal((await middleware(at("/review.html"))).status, 302);
+
+    const client = await signSession({ userId: "client", role: CLIENT_ROLE }, secret);
+    assert.equal((await middleware(at("/assets/main-B2Pl9Q6i.js", client))).status, 200);
+    assert.equal((await middleware(at("/admin.html", client))).status, 403);
+    assert.equal((await middleware(at("/api/artist", client))).status, 403);
+  } finally {
+    process.env.MERIDIAN_OPERATOR = saved.operator;
+    process.env.MERIDIAN_CLIENT = saved.client;
+  }
+});
+
 test("the sign in page says what a person needs and no system words", () => {
   const page = fs.readFileSync(path.join(rootPath, "app", "landing.html"), "utf8");
   const copy = page.replace(/<[^>]*>/g, " ");
