@@ -68,7 +68,9 @@ function scenePage({ user = OPERATOR, questions = [], references = [], state = S
   const elements = {
     location: element(),
     scene: element(),
+    main: element(),
     "scene-drawer": element(),
+    "scene-drawer-trigger": element(),
     "scene-drawer-body": element(),
   };
   const handlers = {};
@@ -127,6 +129,8 @@ function scenePage({ user = OPERATOR, questions = [], references = [], state = S
     },
     markup: () => elements.scene.innerHTML,
     drawer: () => elements["scene-drawer"],
+    trigger: () => elements["scene-drawer-trigger"],
+    well: () => elements.main,
     drawerMarkup: () => elements["scene-drawer-body"].innerHTML,
     // Words a person reads, with the markup taken out. A class name is not
     // copy, so a rule about what a reader sees is checked against that.
@@ -248,19 +252,19 @@ test("an admin sees an open question waiting rather than a box to answer it in",
 // The drawer. Higher Roads only, over the page rather than beside it.
 // ---------------------------------------------------------------------------
 
-test("the drawer holds the facts, the note, the question, and the send, in that order", async () => {
+test("the drawer leads with the send and the question, and keeps the note and the facts under them", async () => {
   const page = scenePage({ questions: [OPEN_QUESTION], concept: { title: "Storm and lightning", idea: "Hold the break." } });
   await page.settle();
   const drawer = page.drawerMarkup();
 
-  const venues = drawer.indexOf('id="venues-heading"');
-  const note = drawer.indexOf('for="scene-direction"');
-  const ask = drawer.indexOf('id="ask-heading"');
   const send = drawer.indexOf('id="send-heading"');
-  assert.ok(venues > -1, "the venue facts are not in the drawer");
-  assert.ok(note > venues, "the note does not follow the facts");
-  assert.ok(ask > note, "the way to ask a question does not follow the note");
-  assert.ok(send > ask, "the send does not come last");
+  const ask = drawer.indexOf('id="ask-heading"');
+  const note = drawer.indexOf('for="scene-direction"');
+  const venues = drawer.indexOf('id="venues-heading"');
+  assert.ok(send > -1, "the send is not in the drawer");
+  assert.ok(ask > send, "the question does not follow the send");
+  assert.ok(note > ask, "the note is above the actions instead of under them");
+  assert.ok(venues > note, "the venue facts are above the actions instead of under them");
   assert.match(drawer, /Send to production/, "the send is not offered");
 
   assert.match(drawer, /Ruoff Music Center/);
@@ -270,7 +274,7 @@ test("the drawer holds the facts, the note, the question, and the send, in that 
 
 test("the drawer trigger reads in plain words", async () => {
   const source = fs.readFileSync(path.join(rootPath, "app", "scene.html"), "utf8");
-  const summary = source.match(/<summary>([\s\S]*?)<\/summary>/);
+  const summary = source.match(/<summary[^>]*>([\s\S]*?)<\/summary>/);
   assert.ok(summary, "the drawer has no trigger");
   const words = summary[1].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
   assert.equal(words, "Work on this Scene");
@@ -283,30 +287,49 @@ test("a client is given no drawer and no trigger, and is never sent what is in i
 
   assert.equal(page.drawer().present, false, "the client keeps the drawer element");
   assert.equal(page.drawerMarkup(), "", "the drawer was filled before it was taken away");
+  assert.equal(page.well().style.paddingRight, undefined, "the client's work reserves room for a rail they do not have");
   // The server decides what a client receives. The page is not hiding it.
   assert.ok(!page.asked.includes("assignment-context"), "the client asked for the Higher Roads context");
   assert.ok(page.asked.includes("get-scene-workspace"), "the client did not use the client route");
   assert.ok(!page.asked.includes("get-artboards"), "the client asked for operator-only records");
 });
 
-test("the drawer sits over the page, open or closed, so the page beneath cannot move", async () => {
+test("the drawer is a rail down the whole right edge that widens leftward", async () => {
   const page = scenePage({ concept: { title: "Storm and lightning", idea: "Hold the break." } });
   await page.settle();
   const drawer = page.drawer();
+  const trigger = page.trigger();
 
-  // The harness has no layout engine, so this asserts the two things that make
-  // reflow impossible rather than measuring a width: the drawer is taken out of
-  // flow in both states, and opening it does not touch the page beneath.
-  assert.equal(drawer.style.position, "fixed", "the drawer is in the flow of the page while closed");
+  // The harness has no layout engine, so this asserts the values that produce
+  // the rail rather than measuring pixels: it is out of flow, pinned to both
+  // ends of the viewport and to the right edge, and its trigger runs on its
+  // side down the full height.
+  assert.equal(drawer.style.position, "fixed", "the rail is in the flow of the page");
+  assert.equal(drawer.style.top, "0");
+  assert.equal(drawer.style.bottom, "0", "the rail does not run the full height");
+  assert.equal(drawer.style.right, "0", "the rail is not on the right edge");
+  assert.equal(drawer.style.width, "var(--m-space-7)", "the closed rail is not a thin strip");
+  assert.equal(trigger.style.writingMode, "vertical-rl", "the closed trigger does not read down the rail");
+  assert.equal(trigger.style.height, "100%", "the closed trigger does not fill the rail");
+  // The work reserves the rail's width once, and opening never changes it.
+  assert.equal(page.well().style.paddingRight, "var(--m-space-7)", "the work is not clear of the rail");
+
   const before = page.markup();
+  const reserved = page.well().style.paddingRight;
   drawer.open = true;
   drawer.handlers.toggle();
-  assert.equal(drawer.style.position, "fixed", "the drawer joins the flow of the page when it opens");
-  assert.equal(page.markup(), before, "opening the drawer rewrote the page beneath it");
+  assert.equal(drawer.style.position, "fixed", "the open drawer joins the flow of the page");
+  assert.equal(drawer.style.width, "min(26rem, 100vw)", "the drawer does not widen when it opens");
+  assert.equal(drawer.style.right, "0", "the drawer leaves the right edge when it opens");
+  assert.equal(trigger.style.writingMode, "horizontal-tb", "the trigger still reads sideways once open");
+  assert.equal(page.markup(), before, "opening the drawer rewrote the work beneath it");
+  assert.equal(page.well().style.paddingRight, reserved, "opening the drawer changed what the work reserves");
+
   drawer.open = false;
   drawer.handlers.toggle();
-  assert.equal(drawer.style.position, "fixed", "the drawer joins the flow of the page when it closes");
-  assert.equal(page.markup(), before, "closing the drawer rewrote the page beneath it");
+  assert.equal(drawer.style.width, "var(--m-space-7)", "the drawer does not shrink back to the rail");
+  assert.equal(page.markup(), before, "closing the drawer rewrote the work beneath it");
+  assert.equal(page.well().style.paddingRight, reserved, "closing the drawer changed what the work reserves");
 });
 
 test("the drawer carries no direction paragraphs and no sentence about plumbing", async () => {

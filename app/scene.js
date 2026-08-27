@@ -21,6 +21,8 @@ const locationBar = document.getElementById("location");
 const root = document.getElementById("scene");
 let drawer = document.getElementById("scene-drawer");
 let drawerBody = document.getElementById("scene-drawer-body");
+let trigger = document.getElementById("scene-drawer-trigger");
+const well = document.getElementById("main");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
@@ -410,13 +412,15 @@ function sendWork() {
     </section>`;
 }
 
-// The drawer is fixed to the viewport whether it is open or closed, so the page
-// underneath keeps its full width and never reflows when the drawer moves.
-// There is no overlay drawer in app/design/ and builders do not edit that
-// folder, so the frame is set here from tokens, the way the Reviews viewer sets
-// its own.
+// The drawer is a thin rail down the whole right edge. It is fixed to the
+// viewport in both states, so opening it widens it leftward over the work
+// rather than pushing the work aside. There is no rail in app/design/ and
+// builders do not edit that folder, so the frame is set here from tokens, the
+// way the Reviews viewer sets its own.
 const DRAWER_FRAME = {
   position: "fixed",
+  top: "0",
+  bottom: "0",
   right: "0",
   zIndex: "40",
   background: "var(--m-gradient-sidecar)",
@@ -424,12 +428,38 @@ const DRAWER_FRAME = {
   boxShadow: "0 0 var(--m-space-7) var(--m-shadow-floating)",
 };
 
-const DRAWER_OPEN = { top: "0", bottom: "0", width: "min(26rem, 100vw)", overflowY: "auto", padding: "0 var(--m-space-5) var(--m-space-6)" };
-const DRAWER_SHUT = { top: "auto", bottom: "0", width: "auto", overflowY: "visible", padding: "0 var(--m-space-5)" };
+// Closed, the rail is the trigger: its width, turned on its side, running the
+// full height so it is findable from anywhere on the page.
+const RAIL_WIDTH = "var(--m-space-7)";
+const DRAWER_SHUT = { width: RAIL_WIDTH, overflow: "hidden", padding: "0" };
+const DRAWER_OPEN = { width: "min(26rem, 100vw)", overflow: "auto", padding: "0 var(--m-space-5) var(--m-space-6)" };
+
+const TRIGGER_SHUT = {
+  alignItems: "center",
+  display: "flex",
+  height: "100%",
+  justifyContent: "center",
+  minHeight: "0",
+  padding: "0",
+  whiteSpace: "nowrap",
+  writingMode: "vertical-rl",
+};
+const TRIGGER_OPEN = {
+  alignItems: "center",
+  display: "flex",
+  height: "auto",
+  justifyContent: "space-between",
+  minHeight: "var(--m-control-large)",
+  padding: "var(--m-space-4) 0",
+  position: "sticky",
+  top: "0",
+  whiteSpace: "normal",
+  writingMode: "horizontal-tb",
+};
 
 function frameDrawer() {
-  if (!drawer || !drawer.style) return;
-  Object.assign(drawer.style, DRAWER_FRAME, drawer.open ? DRAWER_OPEN : DRAWER_SHUT);
+  if (drawer && drawer.style) Object.assign(drawer.style, DRAWER_FRAME, drawer.open ? DRAWER_OPEN : DRAWER_SHUT);
+  if (trigger && trigger.style) Object.assign(trigger.style, drawer && drawer.open ? TRIGGER_OPEN : TRIGGER_SHUT);
 }
 
 function renderDrawer() {
@@ -440,8 +470,13 @@ function renderDrawer() {
     if (drawer.remove) drawer.remove();
     drawer = null;
     drawerBody = null;
+    trigger = null;
     return;
   }
+  // The rail's own width is reserved once, when the page learns who is reading
+  // it. Opening and closing the drawer never touches this, so the work under it
+  // cannot move.
+  if (well && well.style) well.style.paddingRight = RAIL_WIDTH;
   frameDrawer();
   if (!drawerBody) return;
   const notice = view.message && !view.messageAt
@@ -449,10 +484,10 @@ function renderDrawer() {
     : "";
   drawerBody.innerHTML = `<div class="m-stack">
       ${notice}
-      ${venuesWork()}
-      ${noteWork()}
-      ${askWork()}
       ${sendWork()}
+      ${askWork()}
+      ${noteWork()}
+      ${venuesWork()}
     </div>`;
 }
 
