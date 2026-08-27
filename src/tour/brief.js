@@ -32,6 +32,19 @@ export function venueExceptions(setup) {
   return setup && Array.isArray(setup.venueExceptions) ? setup.venueExceptions : [];
 }
 
+// The direction a stored brief carries. A brief frozen before 2026-08-27 holds
+// the paragraphs someone marked, under the old name, and a frozen brief is
+// never rewritten. So the reader takes either shape and the stored artifact
+// stays exactly as it was frozen. Renaming the field without this is what broke
+// the review page in 670393e6: get-brief re-renders the stored object every
+// time it is read, so an old brief threw on every read.
+export function briefDirectionParagraphs(brief) {
+  const direction = (brief && brief.tourDirection) || {};
+  if (Array.isArray(direction.paragraphs)) return direction.paragraphs;
+  if (Array.isArray(direction.selectedParagraphs)) return direction.selectedParagraphs;
+  return [];
+}
+
 export function jobIdFor(tourId, assignmentId) {
   return `${tourId}--${assignmentId}`;
 }
@@ -197,6 +210,8 @@ export function renderBriefDocument(brief) {
     return `- ${findingSentence(entry.text)}\n  ${sources}.${entry.why ? ` ${entry.why}` : ""}`;
   });
 
+  const direction = briefDirectionParagraphs(brief);
+
   return [
     `# ${brief.assignment.title}`,
     "",
@@ -240,8 +255,8 @@ export function renderBriefDocument(brief) {
     "",
     `Set by ${brief.tourDirection.setBy} on ${brief.tourDirection.setOn}. Version ${brief.tourDirection.version}.`,
     "",
-    brief.tourDirection.paragraphs.length
-      ? brief.tourDirection.paragraphs.join("\n\n")
+    direction.length
+      ? direction.join("\n\n")
       : "The tour has no direction text recorded. The version above is the reference.",
     "",
     "## Latitude",

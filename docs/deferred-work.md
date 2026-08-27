@@ -630,3 +630,9 @@ Bring it back when: a Higher Roads person deciding a concept will not fit a room
 Recorded 2026-08-27 as a fix rather than a deferral, kept here because the gap outlived two commits. `appendFact` in `src/tour/scene-record.js` built a fixed entry and dropped `pathname`, `filename`, and `contentType`, while `reference-record` in `api/tour-upload.js` sent all three and `reference-list` read all three back. Every reference ever recorded was stored without a name or a location, so the list returned rows of undefined. Together with the undeclared identifier fixed in `670393e6`, reference images have never worked end to end. Both legs are now covered by tests that assert stored contents.
 
 No condition to bring back. This entry is a record of how long a two-sided gap can sit between a writer and a reader that no test crossed.
+
+## A frozen brief is re-rendered on every read, so its field names are permanent
+
+Recorded 2026-08-27 after the review page threw on load. `670393e6` renamed `tourDirection.selectedParagraphs` to `tourDirection.paragraphs` in `compileBrief` and in `renderBriefDocument`. A frozen brief is stored exactly as it was compiled and is never rewritten, and `get-brief` re-renders that stored object every time somebody reads it. So every brief frozen before that commit threw `Cannot read properties of undefined` on the first read, the internal review page showed the error and the words "The governing brief could not be found", and no artboard could be decided on. Fixed by `briefDirectionParagraphs` in `src/tour/brief.js`, which takes either shape and rewrites nothing.
+
+Bring it back when: nothing to bring back. The rule it establishes is that any field name inside a frozen brief is permanent once one has been frozen. A rename needs a reader that takes both shapes, in the same commit, with a test that stores the old shape and reads it back.

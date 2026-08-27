@@ -6,7 +6,7 @@ import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore, tourPathFor } from "../src/tour/store.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
-import { carriesOurWords, compileBrief, directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
+import { briefDirectionParagraphs, carriesOurWords, compileBrief, directionParagraphs, findingSentence, jobIdFor, renderBriefDocument } from "../src/tour/brief.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 
 const DEMO_ACCOUNT = "dierks-bentley";
@@ -252,6 +252,50 @@ test("nothing on a stored concept records a direction selection any more", async
   assert.equal(concept.venueExceptions, undefined);
   const read = await tourAction({ action: "get-concept", ...AT }, options);
   assert.equal(read.concept.directionParagraphs, undefined);
+});
+
+// A frozen brief is stored as it was compiled and re-rendered on every read, so
+// renaming a field it carries breaks every brief frozen before the rename.
+// 670393e6 did exactly that and the review page threw on load. Ruled 2026-08-27:
+// the reader takes either shape and nothing stored is rewritten.
+test("a brief frozen before the direction rename still reads back", async () => {
+  const { options } = await ready();
+  await withConcept(options);
+  const { brief } = await tourAction({ action: "compile-brief", ...AT }, options);
+  const paragraphs = brief.tourDirection.paragraphs;
+  assert.ok(paragraphs.length > 1, "the sample direction has several paragraphs");
+
+  // Exactly what addBrief holds for a Scene frozen before 2026-08-27.
+  const stored = {
+    ...brief,
+    status: "frozen",
+    frozenBy: "Ray Mercer",
+    frozenAt: "2026-08-26T12:00:00.000Z",
+    tourDirection: {
+      version: brief.tourDirection.version,
+      setBy: brief.tourDirection.setBy,
+      setOn: brief.tourDirection.setOn,
+      selectedParagraphs: [paragraphs[1]],
+      selectedBy: "Ray Mercer",
+    },
+  };
+  await options.tourStore.addBrief(TOUR, ASSIGNMENT, stored);
+
+  const read = await tourAction({ action: "get-brief", ...AT, briefVersion: stored.briefVersion }, options);
+  assert.ok(read.document.includes(paragraphs[1]), "the marked paragraph no longer reaches the reader");
+  assert.ok(read.document.includes("Version 1."));
+  // The stored artifact is untouched by being read.
+  assert.deepEqual(read.brief.tourDirection, stored.tourDirection);
+  assert.equal(read.brief.tourDirection.paragraphs, undefined);
+});
+
+test("briefDirectionParagraphs takes either shape and nothing else", () => {
+  assert.deepEqual(briefDirectionParagraphs({ tourDirection: { paragraphs: ["a"] } }), ["a"]);
+  assert.deepEqual(briefDirectionParagraphs({ tourDirection: { selectedParagraphs: ["b"] } }), ["b"]);
+  assert.deepEqual(briefDirectionParagraphs({ tourDirection: {} }), []);
+  assert.deepEqual(briefDirectionParagraphs({}), []);
+  // A brief holding both is a new one; the new name wins.
+  assert.deepEqual(briefDirectionParagraphs({ tourDirection: { paragraphs: ["a"], selectedParagraphs: ["b"] } }), ["a"]);
 });
 
 test("a tour whose direction has no paragraphs says so and still names the version", async () => {
