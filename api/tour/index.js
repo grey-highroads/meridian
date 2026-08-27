@@ -22,7 +22,8 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // issue-brief, send-to-production, get-handoffs, submit-artboard, get-artboards,
 // get-artboard-artifact, save-review, issue-revision, send-revision,
 // get-reviews, approve-for-client, client-approve, client-comment,
-// get-production-intent, get-scene-activity, get-scene-record.
+// get-production-intent, get-scene-activity, get-scene-record, ask-question,
+// answer-question, get-questions.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -65,6 +66,19 @@ function requestId(title, assignments, at = Date.now()) {
   const used = new Set(assignments.map((entry) => entry.id));
   while (used.has(value)) {
     value = `${stem}-${Number(at).toString(36)}-${suffix}`;
+    suffix += 1;
+  }
+  return value;
+}
+
+// A question's id. Same shape as a Scene request id and unique inside the one
+// Scene it belongs to.
+function questionId(existing, at = Date.now()) {
+  const used = new Set(existing.map((entry) => entry.id));
+  let value = `question-${Number(at).toString(36)}`;
+  let suffix = 2;
+  while (used.has(value)) {
+    value = `question-${Number(at).toString(36)}-${suffix}`;
     suffix += 1;
   }
   return value;
@@ -214,6 +228,12 @@ async function atArtboard(body, options) {
   return { fixture, assignment, tourStore, artboardStore, record, versions, entry, wanted };
 }
 
+// The two action strings a question writes into the Scene record. They live
+// here because the route writes them and get-scene-activity reads them, and two
+// copies of either would drift.
+export const ASKED_A_QUESTION = "Asked the client a question";
+export const ANSWERED_A_QUESTION = "Answered a question";
+
 function clientSurfaceError() {
   const error = new Error("That part of Meridian is for the Higher Roads team.");
   error.status = 403;
@@ -285,6 +305,8 @@ const CLIENT_ACTIONS = new Set([
   "create-scene-request",
   "get-scene-workspace",
   "save-scene-direction",
+  "get-questions",
+  "answer-question",
   "client-approve",
   "client-comment",
 ]);
@@ -375,12 +397,13 @@ export async function handleAction(body, options = {}) {
     // here compiles a brief, because a draft that exists for the length of one
     // request is not evidence of anything.
     for (const entry of fixture.assignments) {
-      const [concept, briefs, facts, artboards, approvals] = await Promise.all([
+      const [concept, briefs, facts, artboards, approvals, questions] = await Promise.all([
         tourStore.readConcept(fixture.tour.id, entry.id),
         tourStore.readBriefs(fixture.tour.id, entry.id),
         record.readFacts(fixture.tour.id, entry.id),
         artboardStore.readArtboards(fixture.tour.id, entry.id),
         artboardStore.readApprovals(fixture.tour.id, entry.id),
+        tourStore.readQuestions(fixture.tour.id, entry.id),
       ]);
       const state = sceneLifecycle({
         request: entry.requestedBy ? { requestedBy: entry.requestedBy, requestedOn: entry.requestedOn } : null,
@@ -400,6 +423,13 @@ export async function handleAction(body, options = {}) {
         requestedBy: entry.requestedBy,
         requestedOn: entry.requestedOn,
         directionVersion: entry.directionVersion,
+        // Questions nobody has answered yet, so Home can put them where the
+        // person who has to answer is already looking. This does not touch the
+        // stage or who the work waits on; an unanswered question changes
+        // nothing about the work.
+        openQuestions: questions
+          .filter((question) => !question.answer)
+          .map((question) => ({ id: question.id, text: question.text, askedBy: question.askedBy })),
         ...state,
       });
     }
@@ -631,8 +661,6 @@ export async function handleAction(body, options = {}) {
     const concept = stored ? {
       title: stored.title,
       idea: stored.idea,
-      directionParagraphs: stored.directionParagraphs || [],
-      venueExceptions: stored.venueExceptions || [],
       cameFrom: stored.cameFrom || null,
       shapedBy: stored.shapedBy || null,
       shapedAt: stored.shapedAt || null,
@@ -679,10 +707,6 @@ export async function handleAction(body, options = {}) {
       creativeLatitude: [],
       openQuestions: [],
       cameFrom: "written directly",
-      directionParagraphs: (Array.isArray(source.directionParagraphs) ? source.directionParagraphs : []).map(Number).filter((entry) => Number.isInteger(entry) && entry >= 0),
-      venueExceptions: (Array.isArray(source.venueExceptions) ? source.venueExceptions : []).map(Number).filter((entry) => Number.isInteger(entry) && entry >= 0),
-      directionSelectedBy: user.displayName,
-      directionSelectedAt: new Date().toISOString(),
       shapedBy: user.displayName,
       shapedAt: new Date().toISOString(),
     };
@@ -728,23 +752,9 @@ export async function handleAction(body, options = {}) {
       creativeLatitude: Array.isArray(source.creativeLatitude) ? source.creativeLatitude : [],
       openQuestions: Array.isArray(source.openQuestions) ? source.openQuestions : [],
       cameFrom: source.cameFrom || null,
-      // Which paragraphs of the tour direction bear on this Scene, by position,
-      // and who said so. The brief carries those and the version, never the
-      // whole text. Ruled 2026-08-22.
-      directionParagraphs: Array.isArray(source.directionParagraphs)
-        ? source.directionParagraphs
-            .map((entry) => Number(entry))
-            .filter((entry) => Number.isInteger(entry) && entry >= 0)
-        : [],
-      // Which dates the rig differs on that bear on this Scene, by position in
-      // the tour's setup. Same marking pattern as the direction paragraphs.
-      venueExceptions: Array.isArray(source.venueExceptions)
-        ? source.venueExceptions
-            .map((entry) => Number(entry))
-            .filter((entry) => Number.isInteger(entry) && entry >= 0)
-        : [],
-      directionSelectedBy: user.displayName,
-      directionSelectedAt: new Date().toISOString(),
+      // Nothing here records which parts of the tour direction or which dates
+      // bear on this Scene. All of both travel with every brief. Ruled
+      // 2026-08-27.
       shapedBy: user.displayName,
       shapedAt: new Date().toISOString(),
     };
@@ -1497,6 +1507,8 @@ export async function handleAction(body, options = {}) {
       "Approved for the client to see",
       "Approved the work",
       "Left a comment",
+      ASKED_A_QUESTION,
+      ANSWERED_A_QUESTION,
     ]);
     return {
       facts: user.role === CLIENT_ROLE
@@ -1504,6 +1516,64 @@ export async function handleAction(body, options = {}) {
         : facts,
     };
   }
+  // Asking the client something. The Scene does not move: it is still where it
+  // was, because nothing about the work changed. The question shows up on the
+  // client's home page and the answer lands back here.
+  if (body.action === "ask-question") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
+    const text = String(body.text || "").trim();
+    if (!text) {
+      const error = new Error("Write the question before you send it.");
+      error.status = 400;
+      throw error;
+    }
+    const existing = await tourStore.readQuestions(fixture.tour.id, assignment.id);
+    const now = options.now ? new Date(options.now()) : new Date();
+    const question = await tourStore.addQuestion(fixture.tour.id, assignment.id, {
+      id: questionId(existing, now.getTime()),
+      text,
+      askedBy: user.displayName,
+      askedAt: now.toISOString(),
+      answer: null,
+      answeredBy: null,
+      answeredAt: null,
+    });
+    await record.appendFact(fixture.tour.id, assignment.id, { ...actor, action: ASKED_A_QUESTION });
+    return { question };
+  }
+
+  if (body.action === "answer-question") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
+    const text = String(body.text || "").trim();
+    if (!text) {
+      const error = new Error("Write the answer before you send it.");
+      error.status = 400;
+      throw error;
+    }
+    const now = options.now ? new Date(options.now()) : new Date();
+    const question = await tourStore.answerQuestion(
+      fixture.tour.id,
+      assignment.id,
+      String(body.questionId || ""),
+      { answer: text, answeredBy: user.displayName, answeredAt: now.toISOString() },
+    );
+    await record.appendFact(fixture.tour.id, assignment.id, { ...actor, action: ANSWERED_A_QUESTION });
+    return { question };
+  }
+
+  if (body.action === "get-questions") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    return { questions: await tourStore.readQuestions(fixture.tour.id, assignment.id) };
+  }
+
   if (body.action === "get-scene-record") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);

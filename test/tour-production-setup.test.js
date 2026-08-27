@@ -10,6 +10,7 @@ import { createTourStore } from "../src/tour/store.js";
 import { createSceneRecord } from "../src/tour/scene-record.js";
 import { createArtboardStore } from "../src/seam/artboard-store.js";
 import { buildProposalRequest } from "../src/tour/propose.js";
+import { renderBriefDocument } from "../src/tour/brief.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 
 const DEMO_ACCOUNT = "dierks-bentley";
@@ -88,13 +89,16 @@ test("the surfaces and the wording that ties a concept to them sit ahead of the 
   assert.ok(prompt.indexOf("One main wall upstage behind the band") < findings, "the surfaces lead the findings");
 });
 
-test("a brief carries the setup version, the rig, and only the dates that were marked", async () => {
+// Ruled 2026-08-27. Every date where the rig differs travels, marked by nobody,
+// on the same reasoning as the tour direction: a person deciding what to build
+// should not also be deciding which rooms production is told about.
+test("a brief carries the setup version, the rig, and every date where the rig differs", async () => {
   const { options } = await ready();
   const { context } = await tourAction({ action: "assignment-context", ...AT }, options);
   const all = context.venueExceptions;
   assert.equal(all.length, 4);
 
-  await tourAction({ action: "choose-concept", ...AT, concept: { ...CONCEPT, venueExceptions: [1] } }, options);
+  await tourAction({ action: "choose-concept", ...AT, concept: CONCEPT }, options);
   const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
 
   assert.equal(brief.technicalTarget.setupVersion, 1);
@@ -106,22 +110,28 @@ test("a brief carries the setup version, the rig, and only the dates that were m
   assert.ok(document.includes("One main wall upstage behind the band"), "the rig reaches the document");
   assert.ok(document.includes(brief.technicalTarget.playbackSystem));
 
-  // The marked date travels by its text and the rest stay in Meridian.
-  assert.deepEqual(brief.technicalTarget.venueExceptions, [all[1]]);
-  assert.ok(document.includes(all[1].text), "the marked date reaches the document");
-  for (const index of [0, 2, 3]) {
-    assert.ok(!document.includes(all[index].text), `date ${index} was not marked and stays here`);
+  assert.deepEqual(brief.technicalTarget.venueExceptions, all);
+  for (const index of all.keys()) {
+    assert.ok(document.includes(all[index].text), `date ${index} reaches the document`);
   }
 });
 
-test("a Scene saved before the setup existed compiles against version 1 with nothing marked", async () => {
+test("a concept that marked one date still carries all four, because marking is gone", async () => {
   const { options } = await ready();
-  // A concept with no venueExceptions field is what an older save looks like.
-  const { concept } = await tourAction({ action: "choose-concept", ...AT, concept: CONCEPT }, options);
-  assert.deepEqual(concept.venueExceptions, []);
-  const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
-  assert.equal(brief.technicalTarget.setupVersion, 1);
-  assert.deepEqual(brief.technicalTarget.venueExceptions, []);
+  const { context } = await tourAction({ action: "assignment-context", ...AT }, options);
+  const all = context.venueExceptions;
+  const { concept } = await tourAction({ action: "choose-concept", ...AT, concept: { ...CONCEPT, venueExceptions: [1] } }, options);
+  assert.equal(concept.venueExceptions, undefined, "the concept no longer stores a marked subset");
+  const { brief } = await tourAction({ action: "compile-brief", ...AT }, options);
+  assert.deepEqual(brief.technicalTarget.venueExceptions, all);
+});
+
+test("a tour with a setup and no differing dates says so", async () => {
+  const { options } = await ready();
+  await tourAction({ action: "choose-concept", ...AT, concept: CONCEPT }, options);
+  const { brief } = await tourAction({ action: "compile-brief", ...AT }, options);
+  const none = { ...brief, technicalTarget: { ...brief.technicalTarget, venueExceptions: [] } };
+  const document = renderBriefDocument(none);
   assert.ok(document.includes("No date on this tour was marked as differing from the rig above."));
   assert.ok(document.includes("One main wall upstage behind the band"));
 });

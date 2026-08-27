@@ -95,12 +95,25 @@ function explainedHome(user, tour) {
     </div>`;
 }
 
+// A question Higher Roads asked and nobody has answered. It sits beside the
+// Scenes that need this person, because answering is the thing they can do.
+// The Scene itself has not moved, so it keeps whatever stage and next step it
+// already had.
+function openQuestions(assignments, user) {
+  if (user.role === "higher-roads") return [];
+  return assignments.flatMap((scene) => (scene.openQuestions || []).map((question) => ({ scene, question })));
+}
+
 function attention(assignments, user) {
   const waiting = assignments.filter((scene) => needsUser(scene, user));
-  const rows = waiting.map((scene) => `<a class="m-attention-row" href="${escape(sceneHref(scene))}"><div class="m-stack"><span class="m-meta">${escape(String(scene.currentVersion || "Scene").toUpperCase())}</span><strong>${escape(scene.title)}</strong><span class="m-copy">${escape(scene.nextAction)}</span></div><span class="m-button m-button--small">Open Scene</span></a>`).join("");
+  const questions = openQuestions(assignments, user);
+  const sceneRows = waiting.map((scene) => `<a class="m-attention-row" href="${escape(sceneHref(scene))}"><div class="m-stack"><span class="m-meta">${escape(String(scene.currentVersion || "Scene").toUpperCase())}</span><strong>${escape(scene.title)}</strong><span class="m-copy">${escape(scene.nextAction)}</span></div><span class="m-button m-button--small">Open Scene</span></a>`).join("");
+  const questionRows = questions.map(({ scene, question }) => `<a class="m-attention-row" href="./scene.html?tour=${escape(TOUR_ID)}&scene=${escape(scene.id)}"><div class="m-stack"><span class="m-meta">QUESTION FROM ${escape(String(question.askedBy || "HIGHER ROADS").toUpperCase())}</span><strong>${escape(scene.title)}</strong><span class="m-copy">${escape(question.text)}</span></div><span class="m-button m-button--small">Answer</span></a>`).join("");
+  const rows = questionRows + sceneRows;
   const empty = `<div class="m-empty-state m-empty-state--clear m-empty-state--compact"><div class="m-empty-state__visual">${emptyGlyph("clear")}</div><div class="m-empty-state__body"><p class="m-copy">When that changes, you will see the Scene and next step here.</p></div></div>`;
-  const heading = waiting.length === 1 ? "1 thing needs you" : `${waiting.length} things need you`;
-  return `<section class="m-home__attention" aria-labelledby="attention-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Needs your attention</span><h2 id="attention-heading" class="m-section-heading">${waiting.length ? heading : "Nothing needs you right now"}</h2></div></div><div class="m-attention-list">${rows || empty}</div></section>`;
+  const count = waiting.length + questions.length;
+  const heading = count === 1 ? "1 thing needs you" : `${count} things need you`;
+  return `<section class="m-home__attention" aria-labelledby="attention-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label">Needs your attention</span><h2 id="attention-heading" class="m-section-heading">${count ? heading : "Nothing needs you right now"}</h2></div></div><div class="m-attention-list">${rows || empty}</div></section>`;
 }
 
 function progress(assignments, user) {

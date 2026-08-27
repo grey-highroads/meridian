@@ -96,6 +96,48 @@ export function createTourStore(options = {}) {
       return brief;
     },
 
+    // Questions a Higher Roads person asked the client on one Scene, and the
+    // answers that came back. A question, an answer, and who said each. This is
+    // not a message thread and nothing here is edited once written.
+    async readQuestions(tourId, assignmentId) {
+      const stored = await read(tourId, assignmentId, "questions", { questions: [] });
+      return Array.isArray(stored.questions) ? stored.questions : [];
+    },
+
+    async addQuestion(tourId, assignmentId, question) {
+      const questions = await this.readQuestions(tourId, assignmentId);
+      if (questions.some((entry) => entry.id === question.id)) {
+        const error = new Error("That question already exists on this Scene.");
+        error.status = 409;
+        throw error;
+      }
+      questions.push(question);
+      await write(tourId, assignmentId, "questions", { questions });
+      return question;
+    },
+
+    // An answer is written once. A second answer to the same question is
+    // refused rather than replacing the first, because a record someone can
+    // overwrite answers a different question than the one a tour team needs.
+    async answerQuestion(tourId, assignmentId, questionId, answer) {
+      const questions = await this.readQuestions(tourId, assignmentId);
+      const found = questions.find((entry) => entry.id === questionId);
+      if (!found) {
+        const error = new Error("We couldn't find that question on this Scene.");
+        error.status = 404;
+        throw error;
+      }
+      if (found.answer) {
+        const error = new Error("That question has already been answered.");
+        error.status = 409;
+        throw error;
+      }
+      const answered = { ...found, ...answer };
+      questions[questions.indexOf(found)] = answered;
+      await write(tourId, assignmentId, "questions", { questions });
+      return answered;
+    },
+
     async readDirections(tourId) {
       const stored = await readTourDocument(tourId, "directions", { versions: [] });
       return Array.isArray(stored.versions) ? stored.versions : [];

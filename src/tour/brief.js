@@ -2,8 +2,9 @@
 //
 // A brief is the one thing that leaves Higher Roads. It says what was asked,
 // what is required, which concept was chosen and why, what to avoid, the parts
-// of the tour direction someone marked as bearing on this Scene with the
-// version they came from, and what the tour plays back on. Once frozen it is never rewritten. Feedback makes a new version.
+// tour direction it was written against with the version it came from, and what
+// the tour plays back on. Once frozen it is never rewritten. Feedback makes a
+// new version.
 //
 // Order is deliberate. Required elements and the technical target lead;
 // latitude and meaning trail. That comes from a BWS render finding that
@@ -12,9 +13,10 @@
 // Jim's workflow is a different reader. The compiled brief is the cheapest way
 // to ask him: hand him a real one and let him say what sits in the wrong place.
 
-// The director's words split into the paragraphs a person marks against. The
-// whole direction stays in Meridian. A brief carries the paragraphs someone
-// said bear on this Scene, and the version. Ruled 2026-08-22.
+// The director's words split into paragraphs. The whole direction travels with
+// every brief, because it is the governing document and the brief names the
+// version it was written against. Nobody selects parts of it. Ruled 2026-08-27,
+// replacing the 2026-08-22 marking rule.
 export function directionParagraphs(direction) {
   return String((direction && direction.words) || "")
     .split(/\n{2,}/)
@@ -22,36 +24,12 @@ export function directionParagraphs(direction) {
     .filter(Boolean);
 }
 
-// Selection is by position in that list. An index that is out of range or
-// repeated is dropped rather than guessed at. Venue exceptions are marked the
-// same way, so both go through one picker.
-function pickByIndex(all, selection) {
-  const seen = new Set();
-  const picked = [];
-  for (const entry of Array.isArray(selection) ? selection : []) {
-    const index = Number(entry);
-    if (!Number.isInteger(index) || index < 0 || index >= all.length || seen.has(index)) continue;
-    seen.add(index);
-    picked.push(all[index]);
-  }
-  return picked;
-}
-
-export function selectedDirectionParagraphs(direction, selection) {
-  return pickByIndex(directionParagraphs(direction), selection);
-}
-
 // The dates where the rig differs from the standard setup, in the order the
-// tour file lists them.
+// tour file lists them. Every one of them travels with every brief, on the same
+// ruling as the direction: a person deciding what to build should not also be
+// deciding which rooms production is told about. Ruled 2026-08-27.
 export function venueExceptions(setup) {
   return setup && Array.isArray(setup.venueExceptions) ? setup.venueExceptions : [];
-}
-
-// A brief carries the exceptions someone said bear on this Scene. The rest
-// stay on the tour home. A Scene saved before the setup existed marked none of
-// them, and that reads as an empty list rather than as an error.
-export function selectedVenueExceptions(setup, selection) {
-  return pickByIndex(venueExceptions(setup), selection);
 }
 
 export function jobIdFor(tourId, assignmentId) {
@@ -96,7 +74,7 @@ export function compileBrief({ tour, assignment, concept, artistId, briefVersion
       setupVersion: setup ? setup.version : null,
       suppliedBy: setup ? setup.suppliedBy : null,
       standardRig: setup ? setup.words : null,
-      venueExceptions: selectedVenueExceptions(setup, concept.venueExceptions),
+      venueExceptions: venueExceptions(setup),
       // Venue and screen profiles past what the tour supplied sit with Jim in
       // this version. See docs/deferred-work.md for what would bring them here.
       venueProfile: null,
@@ -131,9 +109,8 @@ export function compileBrief({ tour, assignment, concept, artistId, briefVersion
       version: tour.direction.version,
       setBy: tour.direction.setBy,
       setOn: tour.direction.setOn,
-      // The marked paragraphs, carried as given. Never the whole text.
-      selectedParagraphs: selectedDirectionParagraphs(tour.direction, concept.directionParagraphs),
-      selectedBy: concept.directionSelectedBy || null,
+      // The whole direction, carried as given.
+      paragraphs: directionParagraphs(tour.direction),
     },
     creativeLatitude: concept.creativeLatitude || [],
     openQuestions: concept.openQuestions || [],
@@ -259,13 +236,13 @@ export function renderBriefDocument(brief) {
     "",
     context.length ? context.join("\n") : "- None recorded.",
     "",
-    "## The tour's direction, the parts that bear on this Scene",
+    "## The tour's direction",
     "",
     `Set by ${brief.tourDirection.setBy} on ${brief.tourDirection.setOn}. Version ${brief.tourDirection.version}.`,
     "",
-    brief.tourDirection.selectedParagraphs.length
-      ? brief.tourDirection.selectedParagraphs.join("\n\n")
-      : "No part of the direction was marked for this Scene. The version above is the reference.",
+    brief.tourDirection.paragraphs.length
+      ? brief.tourDirection.paragraphs.join("\n\n")
+      : "The tour has no direction text recorded. The version above is the reference.",
     "",
     "## Latitude",
     "",

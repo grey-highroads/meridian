@@ -198,8 +198,8 @@ test("required elements and the technical target lead, meaning trails", async ()
   assert.ok(at("## Required") < at("## Technical target"));
   assert.ok(at("## Technical target") < at("## The concept"));
   assert.ok(at("## The concept") < at("## The artist behind this"));
-  assert.ok(at("## The artist behind this") < at("## The tour's direction, the parts that bear on this Scene"));
-  assert.ok(at("## The tour's direction, the parts that bear on this Scene") < at("## Latitude"));
+  assert.ok(at("## The artist behind this") < at("## The tour's direction"));
+  assert.ok(at("## The tour's direction") < at("## Latitude"));
 });
 
 test("the brief carries the required elements and the playback system as written", async () => {
@@ -214,20 +214,22 @@ test("the brief carries the required elements and the playback system as written
   assert.ok(document.includes(brief.technicalTarget.playbackSystem));
 });
 
-test("the manager's words and the marked direction reach the brief as given", async () => {
+test("the manager's words and the whole tour direction reach the brief as given", async () => {
   const { options } = await ready();
-  await withConcept(options, { directionParagraphs: [1] });
+  await withConcept(options);
   const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
   const { tour, assignment } = await tourAction({ action: "get-assignment", ...AT }, options);
-  const marked = directionParagraphs(tour.direction)[1];
   assert.equal(brief.assignment.request, assignment.request);
   assert.ok(document.includes(assignment.request));
-  // The marked paragraph travels word for word. Nothing paraphrases it.
-  assert.deepEqual(brief.tourDirection.selectedParagraphs, [marked]);
-  assert.ok(document.includes(marked));
+  // Every paragraph travels word for word. Nothing paraphrases it.
+  assert.deepEqual(brief.tourDirection.paragraphs, directionParagraphs(tour.direction));
+  for (const paragraph of directionParagraphs(tour.direction)) assert.ok(document.includes(paragraph));
 });
 
-test("the brief carries the marked paragraphs of the direction and none of the rest", async () => {
+// Ruled 2026-08-27. Nobody marks paragraphs, so a concept that names some is a
+// concept written by an older client and the brief carries the direction whole
+// regardless of what it says.
+test("the brief carries the whole direction whatever a stored concept says", async () => {
   const { options } = await ready();
   await withConcept(options, { directionParagraphs: [1, 4] });
   const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
@@ -235,48 +237,31 @@ test("the brief carries the marked paragraphs of the direction and none of the r
   const all = directionParagraphs(tour.direction);
   assert.ok(all.length > 2, "the sample direction has several paragraphs");
 
-  assert.deepEqual(brief.tourDirection.selectedParagraphs, [all[1], all[4]]);
+  assert.deepEqual(brief.tourDirection.paragraphs, all);
   assert.equal(brief.tourDirection.version, 1);
   assert.ok(document.includes("Written against direction version: 1"));
   assert.ok(document.includes("Version 1."));
-  for (const index of [1, 4]) assert.ok(document.includes(all[index]), `paragraph ${index} reaches the brief`);
-  for (const index of [0, 2, 3, 5]) {
-    assert.ok(!document.includes(all[index]), `paragraph ${index} was not marked and stays in Meridian`);
-  }
-  // The whole direction is never carried, in either artifact form.
-  assert.equal(brief.tourDirection.words, undefined);
-  assert.ok(!document.includes(tour.direction.words));
+  for (const index of all.keys()) assert.ok(document.includes(all[index]), `paragraph ${index} reaches the brief`);
 });
 
-test("a brief with nothing marked carries the direction version and no direction text", async () => {
-  const { options } = await ready();
-  await withConcept(options);
-  const { brief, document } = await tourAction({ action: "compile-brief", ...AT }, options);
-  const { tour } = await tourAction({ action: "get-assignment", ...AT }, options);
-  assert.deepEqual(brief.tourDirection.selectedParagraphs, []);
-  assert.equal(brief.tourDirection.version, 1);
-  assert.ok(document.includes("Version 1."));
-  for (const paragraph of directionParagraphs(tour.direction)) {
-    assert.ok(!document.includes(paragraph), "no part of the direction travels unmarked");
-  }
-});
-
-test("an index that names no paragraph is dropped rather than guessed at", async () => {
-  const { options } = await ready();
-  await withConcept(options, { directionParagraphs: [4, 4, 99, -1, "two"] });
-  const { brief } = await tourAction({ action: "compile-brief", ...AT }, options);
-  const { tour } = await tourAction({ action: "get-assignment", ...AT }, options);
-  assert.deepEqual(brief.tourDirection.selectedParagraphs, [directionParagraphs(tour.direction)[4]]);
-});
-
-test("the Scene direction records what was marked and who marked it", async () => {
+test("nothing on a stored concept records a direction selection any more", async () => {
   const { options } = await ready();
   const { concept } = await withConcept(options, { directionParagraphs: [0, 2] });
-  assert.deepEqual(concept.directionParagraphs, [0, 2]);
-  assert.equal(concept.directionSelectedBy, OPERATOR.displayName);
-  assert.ok(concept.directionSelectedAt);
+  assert.equal(concept.directionParagraphs, undefined);
+  assert.equal(concept.directionSelectedBy, undefined);
+  assert.equal(concept.venueExceptions, undefined);
   const read = await tourAction({ action: "get-concept", ...AT }, options);
-  assert.deepEqual(read.concept.directionParagraphs, [0, 2]);
+  assert.equal(read.concept.directionParagraphs, undefined);
+});
+
+test("a tour whose direction has no paragraphs says so and still names the version", async () => {
+  const { options } = await ready();
+  await withConcept(options);
+  const { brief } = await tourAction({ action: "compile-brief", ...AT }, options);
+  const empty = { ...brief, tourDirection: { ...brief.tourDirection, paragraphs: [] } };
+  const document = renderBriefDocument(empty);
+  assert.ok(document.includes("The tour has no direction text recorded."));
+  assert.ok(document.includes("Version 1."));
 });
 
 test("every artist claim in the brief carries what it rests on", async () => {

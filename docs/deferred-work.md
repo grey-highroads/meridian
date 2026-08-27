@@ -612,3 +612,15 @@ Bring it back when: a Scene brief needs to name a specific date, or a tour manag
 Recorded 2026-08-26 with the persistent Admin and Artist Brain destinations. Every page writes `#location` whole on render, so the shell watches that element and puts the group back when a render drops it. Teaching each page to preserve it would touch eleven files and every future page would have to remember.
 
 Bring it back when: the bar at the top becomes a shell-owned region a page fills through a named slot rather than by writing the whole element. The observer comes out in the same commit.
+
+## The artist brain has no surface that offers ideas against a Scene
+
+Recorded 2026-08-27 with the Scene page rebuild. The Artist Brain panel came out of the Scene page with the rest of the inspector, and it was the only caller of `propose-concepts` in the app. The action still works on the server and nothing in the interface reaches it. A concept saved today carries a title, the optional note, and where it came from, and nothing else; the brief fields that a brain suggestion used to fill read empty.
+
+Bring it back when: a person deciding what to build asks for what the artist's history offers, from wherever that surface ends up living.
+
+## Venue and screen specifications are unstructured
+
+Recorded 2026-08-27 with the Scene page rebuild. A tour date row carries a date, a venue name, and a place, all free text. Screen count, stage geometry, and rig detail live inside the production setup as one block of prose stored as the production designer supplied it. The Scene page shows what exists and says plainly that this is prose rather than fields, because inventing structure that is not there would be worse than the gap.
+
+Bring it back when: a Higher Roads person deciding a concept will not fit a room needs the screen count and stage geometry as fields rather than prose.

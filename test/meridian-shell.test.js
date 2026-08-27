@@ -155,15 +155,21 @@ test("a successful login runs the Meridian identity boot sequence once", () => {
   assert.match(patterns, /07-micro-icon-16px\.svg/, "the narrow shell does not use the optical micro mark");
 });
 
-test("the Scene workspace keeps the request and applicable direction with the work", () => {
+// Ruled 2026-08-27. The Scene page has one column and one job: read what was
+// asked, see it beside what the tour holds, then ask the client something or
+// send the work. No inspector, and nobody picks parts of the direction.
+test("the Scene page is one column with the request, the tour facts, and two ways out", () => {
   const source = read("app/scene.js");
-  assert.match(source, /Client request/, "Scene main workspace does not show the request");
-  assert.match(source, /Tour Direction for this Scene/, "Scene main workspace does not show applicable Tour Direction");
-  assert.match(source, /Note for production, optional/, "Scene main workspace does not offer the optional note");
+  assert.match(source, /Client request/, "Scene does not show the request");
+  assert.match(source, /What the tour holds/, "Scene does not show what the tour holds");
+  assert.match(source, /Note for production, optional/, "Scene does not offer the optional note");
+  assert.match(source, /Ask the client a question/, "Scene does not offer the question");
+  assert.match(source, /data-send>Send to production/, "Scene does not offer the send");
   assert.doesNotMatch(source, /Scene direction for production/, "the note still presents itself as the gating step");
-  assert.doesNotMatch(source, /tab\("request"|tab\("direction"/, "request or direction still live in the inspector");
-  assert.match(source, /tab\("brain".*tab\("setup"/s, "inspector does not contain the optional Brain and Setup tools");
-  assert.doesNotMatch(source, /tab\("versions"|Scene versions|What is current/, "Scene versions still occupy the inspector without a job");
+  assert.doesNotMatch(source, /m-workstation__inspector/, "the Scene page still carries an inspector");
+  assert.doesNotMatch(source, /data-inspector|m-workstation__tabs/, "the Scene page still carries inspector tabs");
+  assert.doesNotMatch(source, /data-paragraph|data-venue/, "the Scene page still asks a person to mark direction or dates");
+  assert.doesNotMatch(source, /propose-concepts|Ask Artist Brain/, "the brain still offers ideas from the Scene page");
   assert.match(source, /Artboard V0.*is ready for review/s, "returned artboards are not announced above the Scene workspace");
   assert.match(source, /actions\.innerHTML = "";\s*return;/, "returned artboards still put review at the bottom of the page");
 });
@@ -229,8 +235,9 @@ test("empty screens speak to the person holding the work", () => {
   assert.match(tour, /You can still request and develop Scenes/, "optional themes read like a blocker");
 
   const scene = read("app/scene.js");
-  assert.match(scene, /You can shape this Scene from the request/, "Scene does not explain work before Tour Direction arrives");
-  assert.match(scene, /You can keep writing the Scene/, "missing setup blocks creative work");
+  assert.match(scene, /Dates and venues are added on the tour page/, "Scene does not say where missing dates come from");
+  assert.match(scene, /Confirmed playback and screen details are added on the tour page/, "missing setup does not say where it comes from");
+  assert.match(scene, /Nothing has been asked on this Scene/, "the questions section has no empty state");
 
   const review = read("app/review.js");
   assert.match(review, /The exact version will appear here when the work comes back/, "internal review does not explain the production handoff");
