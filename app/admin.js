@@ -31,6 +31,7 @@ const view = {
   deletingPerson: null,
   confirmPersonName: "",
   working: false,
+  creatingAccount: false,
   editing: null,
   link: null,
   person: { firstName: "", lastName: "", email: "", phone: "", role: "client-reviewer" },
@@ -61,13 +62,13 @@ function escape(value) {
 // blank where rows would be.
 function rows(items, empty) {
   if (!items.length) return `<p class="m-copy">${escape(empty)}</p>`;
-  return `<div class="m-directory-list m-rule-list">${items.join("")}</div>`;
+  return `<div class="m-admin-list m-rule-list">${items.join("")}</div>`;
 }
 
 function row(title, meta, href, acts = "") {
   const body = `<div class="m-stack"><span class="m-rule-row__title">${escape(title)}</span><span class="m-meta">${escape(meta)}</span></div>`;
-  if (!href) return `<article class="m-rule-row">${body}${acts ? `<div class="m-cluster">${acts}</div>` : ""}</article>`;
-  return `<a class="m-rule-row" data-keep-href href="${escape(href)}">${body}</a>`;
+  if (!href) return `<article class="m-admin-row">${body}${acts ? `<div class="m-cluster">${acts}</div>` : ""}</article>`;
+  return `<a class="m-admin-row" data-keep-href href="${escape(href)}">${body}</a>`;
 }
 
 // An account row carries its own delete, armed by typing the account's name
@@ -77,20 +78,25 @@ function accountRow(entry) {
   const arming = view.deleting === entry.id;
   const armed = view.confirmName.trim() === entry.name;
   const controls = arming
-    ? `<input class="m-input" data-field="confirm" value="${escape(view.confirmName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the account name to delete it">
-       <button class="m-button m-button--primary" type="button" data-delete-account="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete account"}</button>
-       <button class="m-button" type="button" data-cancel-delete>Keep account</button>`
-    : `<button class="m-button" type="button" data-arm-delete="${escape(entry.id)}">Delete account</button>`;
-  return `<article class="m-rule-row">
+    ? `<div class="m-admin-confirm">
+         <p class="m-copy">Deleting ${escape(entry.name)} removes its artists, its brains, its tours, and every approval on record. Nothing brings it back.</p>
+         <div class="m-admin-confirm__actions">
+           <input class="m-input" data-field="confirm" value="${escape(view.confirmName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the account name to delete it">
+           <button class="m-button m-button--change" type="button" data-delete-account="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete account"}</button>
+           <button class="m-button" type="button" data-cancel-delete>Keep account</button>
+         </div>
+       </div>`
+    : "";
+  return `<article class="m-admin-account-row${here ? " is-current" : ""}">
       <div class="m-stack">
-        <span class="m-rule-row__title">${escape(entry.name)}</span>
-        <span class="m-meta">${here ? "Current account" : "Account"}</span>
+        <a class="m-admin-account-row__name" data-keep-href href="${escape(accountHref(entry.id))}" ${here ? 'aria-current="page"' : ""}>${escape(entry.name)}</a>
+        ${here ? '<span class="m-state m-state--current">Current account</span>' : '<span class="m-meta">Account</span>'}
       </div>
-      <div class="m-cluster">
-        <a class="m-button" data-keep-href href="${escape(accountHref(entry.id))}">Open</a>
-        ${controls}
+      <div class="m-admin-account-row__actions">
+        <a class="m-button m-button--small" data-keep-href href="${escape(accountHref(entry.id))}">Open</a>
+        ${arming ? "" : `<button class="m-button m-button--quiet m-button--small" type="button" data-arm-delete="${escape(entry.id)}">Delete account</button>`}
       </div>
-      ${arming ? `<p class="m-copy">Deleting ${escape(entry.name)} removes its artists, its brains, its tours, and every approval on record. Nothing brings it back.</p>` : ""}
+      ${controls}
     </article>`;
 }
 
@@ -99,22 +105,28 @@ function tourRow(entry) {
   const arming = view.deletingTour === entry.id;
   const armed = view.confirmTourName.trim() === entry.name;
   const remove = arming
-    ? `<input class="m-input" data-field="confirm-tour" value="${escape(view.confirmTourName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the tour name to delete it">
-       <button class="m-button m-button--primary" type="button" data-delete-tour="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete tour"}</button>
-       <button class="m-button" type="button" data-cancel-tour-delete>Keep tour</button>`
-    : `<button class="m-button" type="button" data-arm-tour-delete="${escape(entry.id)}">Delete tour</button>`;
+    ? `<div class="m-admin-confirm">
+         <p class="m-copy">Deleting ${escape(entry.name)} removes its Scenes, files, reviews, and approvals. The artist and Artist Brain stay in the account. This cannot be undone.</p>
+         <div class="m-admin-confirm__actions">
+           <input class="m-input" data-field="confirm-tour" value="${escape(view.confirmTourName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the tour name to delete it">
+           <button class="m-button m-button--change" type="button" data-delete-tour="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete tour"}</button>
+           <button class="m-button" type="button" data-cancel-tour-delete>Keep tour</button>
+         </div>
+       </div>`
+    : "";
   const controls = [
-    active ? "" : `<button class="m-button" type="button" data-make-active="${escape(entry.id)}">Open this tour by default</button>`,
-    remove,
+    active ? "" : `<button class="m-button m-button--small" type="button" data-make-active="${escape(entry.id)}">Open this tour by default</button>`,
+    arming ? "" : `<button class="m-button m-button--quiet m-button--small" type="button" data-arm-tour-delete="${escape(entry.id)}">Delete tour</button>`,
   ].join("");
   const artist = view.artists.find((candidate) => candidate.id === entry.artistId);
-  return `<article class="m-rule-row">
+  return `<article class="m-admin-row">
       <div class="m-stack">
         <span class="m-rule-row__title">${escape(entry.name || entry.id)}</span>
-        <span class="m-meta">${escape(active ? "Default tour" : (artist ? artist.name : "Artist not found"))}</span>
+        ${active ? '<span class="m-meta">Default tour</span>' : ""}
+        <span class="m-meta">${escape(artist ? artist.name : "Artist not found")}</span>
       </div>
       <div class="m-cluster">${controls}</div>
-      ${arming ? `<p class="m-copy">Deleting ${escape(entry.name)} removes its Scenes, files, reviews, and approvals. The artist and Artist Brain stay in the account. This cannot be undone.</p>` : ""}
+      ${remove}
     </article>`;
 }
 
@@ -158,11 +170,7 @@ function personRow(entry) {
   const arming = view.deletingPerson === entry.id;
   const armed = view.confirmPersonName.trim() === entry.displayName;
   const remove = entry.deletable
-    ? arming
-      ? `<input class="m-input" data-field="confirm-person" value="${escape(view.confirmPersonName)}" placeholder="Type ${escape(entry.displayName)}" aria-label="Type the person's name to delete them">
-         <button class="m-button m-button--primary" type="button" data-delete-person="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete person"}</button>
-         <button class="m-button" type="button" data-cancel-person-delete>Keep person</button>`
-      : `<button class="m-button" type="button" data-arm-person-delete="${escape(entry.id)}">Delete person</button>`
+    ? `<button class="m-button m-button--quiet m-button--small" type="button" data-arm-person-delete="${escape(entry.id)}">Delete person</button>`
     : "";
   const controls = [
     `<button class="m-button" type="button" data-edit-person="${escape(entry.id)}">Edit</button>`,
@@ -175,14 +183,25 @@ function personRow(entry) {
       : `<button class="m-button" type="button" data-person-act="deactivate-person" data-person="${escape(entry.id)}">Deactivate</button>`,
     remove,
   ].join("");
-  return `<article class="m-rule-row">
+  const confirmation = arming ? `<div class="m-admin-confirm">
+      <p class="m-copy">Deleting ${escape(entry.displayName)} removes the invitation and person record. This cannot be undone.</p>
+      <div class="m-admin-confirm__actions">
+        <input class="m-input" data-field="confirm-person" value="${escape(view.confirmPersonName)}" placeholder="Type ${escape(entry.displayName)}" aria-label="Type the person's name to delete them">
+        <button class="m-button m-button--change" type="button" data-delete-person="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete person"}</button>
+        <button class="m-button" type="button" data-cancel-person-delete>Keep person</button>
+      </div>
+    </div>` : "";
+  return `<article class="m-admin-row">
       <div class="m-stack">
         <span class="m-rule-row__title">${escape(entry.displayName)}</span>
         <span class="m-meta">${escape(entry.email)}${entry.phone ? ` / ${escape(entry.phone)}` : ""}</span>
         <span class="m-meta">${escape(entry.roleLabel || (entry.role === "higher-roads" ? "Higher Roads" : "Client"))}. ${escape(personState(entry))}</span>
       </div>
-      <div class="m-cluster">${controls}</div>
-      ${arming ? `<p class="m-copy">Deleting ${escape(entry.displayName)} removes the invitation and person record. This cannot be undone.</p>` : ""}
+      ${arming ? "" : `<details class="m-admin-manage">
+        <summary class="m-button m-button--small">Manage</summary>
+        <div class="m-admin-manage__actions">${controls}</div>
+      </details>`}
+      ${confirmation}
     </article>`;
 }
 
@@ -195,7 +214,7 @@ function personForm(entry) {
       <label class="m-label" for="person-${name}">${escape(label)}</label>
       <input class="m-input" id="person-${name}" type="${type}" data-person-field="${name}" value="${escape(values[name] || "")}">
     </div>`;
-  return `<article class="m-rule-row">
+  return `<article class="m-admin-row m-admin-row--form">
       <div class="m-stack">
         ${field("firstName", "First name")}
         ${field("lastName", "Last name")}
@@ -233,6 +252,59 @@ function accountName() {
   return view.account ? view.account.name : "this account";
 }
 
+function sectionHead(id, title, count, action = "") {
+  return `<header class="m-admin-section__head">
+      <div class="m-cluster">
+        <h3 id="${escape(id)}" class="m-section-heading">${escape(title)}</h3>
+        <span class="m-meta">${count}</span>
+      </div>
+      ${action}
+    </header>`;
+}
+
+function accountForm() {
+  if (!view.creatingAccount) return "";
+  return `<div class="m-admin-account-form" id="admin-account-form">
+      <p class="m-copy">Create the client account and its first artist together.</p>
+      <div class="m-field">
+        <label class="m-label" for="account-name">Account name</label>
+        <input class="m-input" id="account-name" data-field="account" value="${escape(acts.account.name)}" placeholder="For example, Northstar Live">
+      </div>
+      <div class="m-field">
+        <label class="m-label" for="account-artist">Artist name</label>
+        <input class="m-input" id="account-artist" data-field="account-artist" value="${escape(acts.account.artistName)}" placeholder="For example, Wren Halloway">
+      </div>
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-create-account ${acts.account.working ? "disabled" : ""}>${acts.account.working ? "Creating" : "Create the account"}</button>
+        <button class="m-button" type="button" data-cancel-account-form>Cancel</button>
+      </div>
+      ${resultBlock(acts.account, "Account created")}
+    </div>`;
+}
+
+// An account cannot be worked in without an artist. Artist creation is the
+// empty state itself; once an artist exists, no secondary add action competes
+// with the account's ordinary maintenance.
+function artistContent() {
+  if (view.artists.length) {
+    return rows(
+      view.artists.map((entry) => row(entry.name, (entry.identities || []).join(", ") || "One identity")),
+      "No artists yet.",
+    );
+  }
+  return `<div class="m-admin-empty">
+      <p class="m-copy">Add the artist this account works on.</p>
+      <div class="m-field">
+        <label class="m-label" for="artist-name">Artist name</label>
+        <input class="m-input" id="artist-name" data-field="artist" value="${escape(acts.artist.name)}" placeholder="For example, Wren Halloway">
+      </div>
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-create-artist ${acts.artist.working ? "disabled" : ""}>${acts.artist.working ? "Creating" : "Create the artist"}</button>
+      </div>
+      ${resultBlock(acts.artist, "Artist created")}
+    </div>`;
+}
+
 function render() {
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
       <span class="m-breadcrumb__current">Admin</span>
@@ -244,7 +316,8 @@ function render() {
     return;
   }
 
-  root.innerHTML = `<header class="m-job-header">
+  root.innerHTML = `<div class="m-admin">
+    <header class="m-job-header">
       <div class="m-job-header__copy">
         <span class="m-label">Higher Roads</span>
         <h1 class="m-heading">Admin</h1>
@@ -252,59 +325,52 @@ function render() {
       </div>
     </header>
     ${view.error ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.error)}</p></div>` : ""}
-    <section class="m-stack" aria-labelledby="accounts-heading">
-      <h2 id="accounts-heading" class="m-section-heading">Accounts</h2>
-      ${rows(view.accounts.map(accountRow), "No accounts yet.")}
-    </section>
-    <section class="m-stack" aria-labelledby="artists-heading">
-      <h2 id="artists-heading" class="m-section-heading">Artists in ${escape(accountName())}</h2>
-      ${rows(
-        view.artists.map((entry) => row(entry.name, (entry.identities || []).join(", ") || "One identity")),
-        "No artists yet.",
-      )}
-    </section>
-    <section class="m-stack" aria-labelledby="tours-heading">
-      <h2 id="tours-heading" class="m-section-heading">Tours in ${escape(accountName())}</h2>
-      <p class="m-copy">To start a tour for this client, open the account and use the same setup they would.</p>
-      ${rows(view.tours.map(tourRow), "No tours yet.")}
-    </section>
-    <section class="m-stack" aria-labelledby="people-heading">
-      <h2 id="people-heading" class="m-section-heading">People in ${escape(accountName())}</h2>
-      ${linkBlock()}
-      ${rows(view.people.map(personRow), "No client users yet.")}
-      ${view.editing === "new" ? personForm(null) : `<div class="m-cluster"><button class="m-button m-button--primary" type="button" data-new-person>Invite somebody</button></div>`}
-      <h2 class="m-section-heading">Higher Roads</h2>
-      <p class="m-copy">Higher Roads users can work across every account.</p>
+    <div class="m-admin-workspace">
+      <aside class="m-admin-accounts" aria-labelledby="accounts-heading">
+        <header class="m-admin-accounts__head">
+          <div class="m-cluster">
+            <h2 id="accounts-heading" class="m-section-heading">Accounts</h2>
+            <span class="m-meta">${view.accounts.length}</span>
+          </div>
+          <button class="m-button m-button--primary m-button--small" type="button" data-toggle-account-form aria-expanded="${view.creatingAccount}" aria-controls="admin-account-form">Create account</button>
+        </header>
+        ${accountForm()}
+        ${rows(view.accounts.map(accountRow), "No accounts yet.")}
+      </aside>
+      <section class="m-admin-account" aria-labelledby="selected-account-heading">
+        <header class="m-admin-account__head">
+          <span class="m-label">Account</span>
+          <h2 id="selected-account-heading" class="m-heading">${escape(accountName())}</h2>
+        </header>
+        <div class="m-admin-account__body">
+          <section class="m-admin-section" aria-labelledby="artists-heading">
+            ${sectionHead("artists-heading", "Artists", view.artists.length)}
+            ${artistContent()}
+          </section>
+          <section class="m-admin-section" aria-labelledby="tours-heading">
+            ${sectionHead("tours-heading", "Tours", view.tours.length)}
+            ${rows(view.tours.map(tourRow), "No tours yet.")}
+          </section>
+          <section class="m-admin-section" aria-labelledby="people-heading">
+            ${sectionHead("people-heading", "People", view.people.length, view.editing === "new" ? "" : '<button class="m-button m-button--primary m-button--small" type="button" data-new-person>Invite somebody</button>')}
+            ${linkBlock()}
+            ${view.editing === "new" ? personForm(null) : ""}
+            ${rows(view.people.map(personRow), "No client users yet.")}
+          </section>
+        </div>
+      </section>
+    </div>
+    <section class="m-admin-global" aria-labelledby="higher-roads-heading">
+      <header class="m-admin-section__head">
+        <div class="m-stack">
+          <h2 id="higher-roads-heading" class="m-section-heading">Higher Roads</h2>
+          <p class="m-copy">Higher Roads users can work across every account.</p>
+        </div>
+        <span class="m-meta">${view.admins.length}</span>
+      </header>
       ${rows(view.admins.map(personRow), "No Higher Roads users yet.")}
     </section>
-    <section class="m-stack" aria-labelledby="account-heading">
-      <h2 id="account-heading" class="m-section-heading">Create an account</h2>
-      <p class="m-copy m-copy--large">Create the client account and its first artist together.</p>
-      <div class="m-field">
-        <label class="m-label" for="account-name">Account name</label>
-        <input class="m-input" id="account-name" data-field="account" value="${escape(acts.account.name)}" placeholder="For example, Northstar Live">
-      </div>
-      <div class="m-field">
-        <label class="m-label" for="account-artist">Artist name</label>
-        <input class="m-input" id="account-artist" data-field="account-artist" value="${escape(acts.account.artistName)}" placeholder="For example, Wren Halloway">
-      </div>
-      <div class="m-cluster">
-        <button class="m-button m-button--primary" type="button" data-create-account ${acts.account.working ? "disabled" : ""}>${acts.account.working ? "Creating" : "Create the account"}</button>
-      </div>
-      ${resultBlock(acts.account, "Account created")}
-    </section>
-    <section class="m-stack" aria-labelledby="artist-heading">
-      <h2 id="artist-heading" class="m-section-heading">Add another artist</h2>
-      <p class="m-copy m-copy--large">Add another artist to ${escape(accountName())}. The Artist Brain will be empty until Higher Roads imports and approves its research.</p>
-      <div class="m-field">
-        <label class="m-label" for="artist-name">Artist name</label>
-        <input class="m-input" id="artist-name" data-field="artist" value="${escape(acts.artist.name)}" placeholder="For example, Wren Halloway">
-      </div>
-      <div class="m-cluster">
-        <button class="m-button m-button--primary" type="button" data-create-artist ${acts.artist.working ? "disabled" : ""}>${acts.artist.working ? "Creating" : "Create the artist"}</button>
-      </div>
-      ${resultBlock(acts.artist, "Artist created")}
-    </section>`;
+  </div>`;
 }
 
 // One read of everything the page shows. The account being worked in comes back
@@ -442,6 +508,16 @@ async function act(work) {
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
+  if (target.hasAttribute("data-toggle-account-form")) {
+    view.creatingAccount = !view.creatingAccount;
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-cancel-account-form")) {
+    view.creatingAccount = false;
+    render();
+    return;
+  }
   if (target.hasAttribute("data-arm-delete")) {
     view.deleting = target.getAttribute("data-arm-delete");
     view.confirmName = "";
@@ -577,6 +653,7 @@ document.addEventListener("click", (event) => {
           lines: ["Open the account above and add the artist there."],
         };
       }
+      view.creatingAccount = false;
       return { summary: `${created.account.name} was created with ${created.artist.name}. Open the account above to start the tour.` };
     });
   }

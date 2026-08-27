@@ -139,12 +139,13 @@ test("a half-failed create names the half that failed and keeps the account", as
   assert.ok(accounts.accounts.some((entry) => entry.id === ACCOUNT_B));
 });
 
-test("Admin asks for the artist in the same step and keeps both values on a failure", () => {
+test("Admin asks for the initial artist and keeps both values on a failure", () => {
   const admin = read("app/admin.js");
   assert.match(admin, /artistName: acts\.account\.artistName/, "the account act does not carry the artist name");
   assert.match(admin, /data-field="account-artist"/, "there is no artist field beside the account field");
   assert.match(admin, /if \(!created\.artist\)/, "a half-failed create is reported as a success");
-  assert.match(admin, /Add another artist/, "adding a second artist to an existing account is gone");
+  assert.doesNotMatch(admin, /Add another artist/, "a populated account still offers another artist");
+  assert.match(admin, /if \(view\.artists\.length\)[\s\S]*return rows\([\s\S]*return `<div class="m-admin-empty">/, "artist creation is not confined to the no-artist empty state");
   // run() writes the message and leaves the typed values in state, so a
   // refused create repaints with both of them still there.
   assert.match(admin, /state\.message = error\.message;\s*\n\s*render\(\);/, "a refused create loses what was typed");

@@ -340,14 +340,18 @@ test("a client session asking for the people list learns nothing about anyone", 
   }
 });
 
-test("Admin shows the four lists and no longer carries the finished migration acts", () => {
+test("Admin scopes artists, tours, and people inside the selected account", () => {
   const admin = readSource("app/admin.js", "utf8");
-  for (const heading of ["Accounts", "Artists in ", "Tours in ", "People in "]) {
-    assert.ok(admin.includes(`m-section-heading">${heading}`), `Admin has no ${heading.trim()} list`);
-  }
+  assert.match(admin, /class="m-admin-workspace"/, "Admin has no account workspace");
+  assert.match(admin, /class="m-admin-accounts"/, "accounts are not the workspace scope");
+  assert.match(admin, /sectionHead\("artists-heading", "Artists"/, "Admin has no Artists list");
+  assert.match(admin, /sectionHead\("tours-heading", "Tours"/, "Admin has no Tours list");
+  assert.match(admin, /sectionHead\("people-heading", "People"/, "Admin has no People list");
   assert.match(admin, /action: "list-people"/, "Admin does not read the account's people");
   assert.match(admin, /action: "list-tours"/, "Admin does not read the account's tours");
   assert.match(admin, /action: "list-artists"/, "Admin does not read the account's artists");
+  assert.doesNotMatch(admin, /To start a tour for this client/, "Tours still carries setup instructions");
+  assert.doesNotMatch(admin, /Add another artist/, "a populated account still offers another artist");
 
   // Both migration acts ran and were verified. They are gone from the page and
   // gone from the route.
