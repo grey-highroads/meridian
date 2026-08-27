@@ -1,24 +1,26 @@
 import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
 
-// A Scene, read two ways.
+// One Scene page, read by everyone who can open it.
 //
-// A client opens a Scene for one reason: Higher Roads asked her something and
-// Home sent her here. So she gets the question first, an answer box under it,
-// one line telling her whether anything else needs her, and her own request as
-// a quiet reference. Nothing else on this page is her job.
+// The page answers the question a person came with. Sarah arrives from Home
+// because Higher Roads asked her something, or she taps the Scene to check on
+// it. So the page is the open question with its answer box, one line saying
+// where the Scene stands, and the request in the words it was asked in.
+// Answering is something both sides do, so it sits on the page.
 //
-// A Higher Roads person opens a Scene to decide what to do with a request:
-// read it, check it against what the venues can take, jot a reminder, then ask
-// the client something or send it to production.
+// Everything Higher Roads does about the Scene rather than in it lives in a
+// drawer that slides over the page. Clients never get the drawer, and the
+// server never sends them what is in it.
 //
 // Attaching a reference image happens where the asking happens, on the request
-// screen. Both views show what is attached; neither takes an upload.
+// screen. The page shows what is attached; it takes no upload.
 
 const PARAMS = new URLSearchParams(window.location.search);
 
 const locationBar = document.getElementById("location");
 const root = document.getElementById("scene");
-const actions = document.getElementById("actions");
+let drawer = document.getElementById("scene-drawer");
+let drawerBody = document.getElementById("scene-drawer-body");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
@@ -37,9 +39,10 @@ const view = {
   receipt: null,
   draft: { direction: "", question: "", answers: {} },
   message: "",
-  // Which part of the page the message belongs beside. Empty means the top of
-  // the page. A message about a question belongs next to the box that asked
-  // it, where the person is looking.
+  // Which part of the page the message belongs beside. A message about
+  // answering belongs next to the exchange. A message about asking belongs in
+  // the drawer next to the box that asked. Empty is the operator's general
+  // slot at the top of the drawer.
   messageAt: "",
   working: false,
 };
@@ -106,8 +109,15 @@ function answeredQuestions() {
   return view.questions.filter((entry) => entry.answer);
 }
 
+function latestArtboardVersion() {
+  const current = view.artboards.at(-1);
+  if (current && current.artboard && current.artboard.artboardVersion) return current.artboard.artboardVersion;
+  return (view.state || {}).currentArtboardVersion || null;
+}
+
 // ---------------------------------------------------------------------------
-// Questions. A question, an answer, and who said each.
+// Questions. A question, an answer, and who said each. Answering is shared, so
+// it sits on the page for whoever can do it.
 // ---------------------------------------------------------------------------
 
 function answerBox(entry) {
@@ -141,20 +151,16 @@ function questionMessage() {
     : "";
 }
 
-// ---------------------------------------------------------------------------
-// The client's Scene
-// ---------------------------------------------------------------------------
-
-// The question is the reason she is here, so it is the first thing on the page
-// with the box already open under it. Answered ones stay below it so the
+// The question is the reason anybody is here, so it is the first thing on the
+// page with the box already open under it. Answered ones stay below so the
 // exchange is still readable with both names on it.
-function clientQuestions() {
+function questionsSection() {
   if (!view.questions.length) return "";
   const open = openQuestions().map(questionRow).join("");
   const done = answeredQuestions().map(questionRow).join("");
-  const heading = open.length
-    ? "Higher Roads asked you something"
-    : "What Higher Roads asked you";
+  const heading = isOperator()
+    ? (open.length ? "You asked the client something" : "What you asked the client")
+    : (open.length ? "Higher Roads asked you something" : "What Higher Roads asked you");
   return `<section class="m-scene-source" aria-labelledby="client-questions-heading">
       <div class="m-scene-source__head">
         <h2 id="client-questions-heading" class="m-scene-work-heading">${heading}</h2>
@@ -163,8 +169,11 @@ function clientQuestions() {
     </section>`;
 }
 
-// One line saying whether anything needs her, in words she would use. No
-// version numbers and no system words.
+// ---------------------------------------------------------------------------
+// Where the Scene stands. One line answering "do I need to do anything",
+// written to whoever is reading it.
+// ---------------------------------------------------------------------------
+
 function clientStatus() {
   const state = view.state || {};
   const stage = state.stage;
@@ -174,7 +183,8 @@ function clientStatus() {
   if (stage === "Production review" && state.waitingOn === "the client") {
     return {
       line: "New work is ready for you to look at.",
-      link: reviewHref((view.state || {}).currentArtboardVersion),
+      link: reviewHref(state.currentArtboardVersion),
+      linkLabel: "Look at the work",
     };
   }
   if (stage === "Delivered") return { line: "This Scene has been delivered. Nothing is needed from you.", link: null };
@@ -186,14 +196,35 @@ function clientStatus() {
   return { line: "Higher Roads is developing this Scene. Nothing is needed from you.", link: null };
 }
 
-function clientStatusSection() {
-  const status = clientStatus();
+// Work that came back is the thing an operator has to act on, so it takes the
+// line. Otherwise the next step is the one Home already reads from the tour, so
+// the line here and the line there agree.
+function operatorStatus() {
+  const state = view.state || {};
+  const artboardVersion = latestArtboardVersion();
+  if (view.artboards.length && artboardVersion) {
+    return {
+      line: `Artboard V0${artboardVersion} is ready for review.`,
+      link: reviewHref(artboardVersion),
+      linkLabel: `Review Artboard V0${artboardVersion}`,
+    };
+  }
+  if (state.nextAction) return { line: state.nextAction, link: null };
+  return { line: "Higher Roads is developing this Scene.", link: null };
+}
+
+function statusSection() {
+  const status = isOperator() ? operatorStatus() : clientStatus();
   return `<section class="m-scene-source" aria-labelledby="scene-status-heading">
       <h2 id="scene-status-heading" class="m-scene-work-heading">Where this Scene stands</h2>
       <p class="m-copy m-copy--large">${escape(status.line)}</p>
-      ${status.link ? `<a class="m-button m-button--primary" href="${status.link}">Look at the work</a>` : ""}
+      ${status.link ? `<a class="m-button m-button--primary" href="${status.link}">${escape(status.linkLabel)}</a>` : ""}
     </section>`;
 }
+
+// ---------------------------------------------------------------------------
+// What was asked for, in the words it was asked in.
+// ---------------------------------------------------------------------------
 
 function attachedReferences() {
   const items = view.references || [];
@@ -204,17 +235,16 @@ function attachedReferences() {
   return `<div class="m-stack"><span class="m-label">Attached</span><ul>${rows}</ul></div>`;
 }
 
-// Her own words, quietly, so she can see what she asked for without going
-// looking for it. The page is talking to her, so it says "you".
-function clientRequest() {
+function requestSection() {
   const assignment = view.assignment;
   const who = assignment.requestedBy ? escape(assignment.requestedBy) : "You";
   const when = readableDate(assignment.requestedOn);
+  const heading = isOperator() ? "What the client asked for" : "What you asked for";
   const required = (assignment.requiredElements || [])
     .map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
   return `<section class="m-scene-source" aria-labelledby="what-you-asked-heading">
       <div class="m-scene-source__head">
-        <h2 id="what-you-asked-heading" class="m-scene-work-heading">What you asked for</h2>
+        <h2 id="what-you-asked-heading" class="m-scene-work-heading">${heading}</h2>
         <span class="m-meta">${who}${when ? `, ${escape(when)}` : ""}</span>
       </div>
       <div class="m-scene-source__copy">${paragraphs(assignment.request)}</div>
@@ -223,42 +253,28 @@ function clientRequest() {
     </section>`;
 }
 
-function clientPage() {
+function page() {
+  // The operator's general messages live at the top of the drawer. A client has
+  // no drawer, so anything that reaches them shows above the work.
+  const notice = !isOperator() && view.message && !view.messageAt
+    ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>`
+    : "";
+  // No page title. The breadcrumb already names the Scene, and anything above
+  // the question pushes the answer box off the first screen on a phone.
   return `<section class="m-direction-editor" aria-label="Scene">
       <div class="m-direction-editor__body">
-        ${clientQuestions()}
-        ${clientStatusSection()}
-        ${clientRequest()}
+        ${notice}
+        ${questionsSection()}
+        ${statusSection()}
+        ${requestSection()}
       </div>
     </section>`;
 }
 
 // ---------------------------------------------------------------------------
-// The Higher Roads Scene
+// The drawer. Higher Roads only, in the order of the decision: the facts, the
+// note, the question, the send.
 // ---------------------------------------------------------------------------
-
-// The request at full weight, with what the client attached and anything
-// already asked and answered about it. All of that is part of what was asked
-// for, so it reads as one block.
-function requestWork() {
-  const assignment = view.assignment;
-  const required = (assignment.requiredElements || [])
-    .map((line) => `<li class="m-copy">${escape(line)}</li>`).join("");
-  const when = readableDate(assignment.requestedOn);
-  const exchange = view.questions.length
-    ? `<div class="m-stack"><span class="m-label">Asked about this request</span>${view.questions.map(questionRow).join("")}</div>`
-    : "";
-  return `<section class="m-scene-source" aria-labelledby="client-request-heading">
-      <div class="m-scene-source__head">
-        <h2 id="client-request-heading" class="m-scene-work-heading">Client request</h2>
-        <span class="m-meta">FROM ${escape(String(assignment.requestedBy || "CLIENT TEAM").toUpperCase())}${when ? `, ${escape(when)}` : ""}</span>
-      </div>
-      <div class="m-scene-source__copy">${paragraphs(assignment.request)}</div>
-      ${required ? `<div class="m-scene-required"><span class="m-label">Required</span><ul>${required}</ul></div>` : ""}
-      ${attachedReferences()}
-      ${exchange}
-    </section>`;
-}
 
 function dateRows() {
   const dates = (view.tour && view.tour.dates) || [];
@@ -303,6 +319,19 @@ function venuesWork() {
     </section>`;
 }
 
+function noteWork() {
+  return `<div class="m-stack">
+      <div class="m-field">
+        <label class="m-label" for="scene-direction">Note for production, optional</label>
+        <textarea class="m-textarea m-textarea--note" id="scene-direction" data-draft="direction" placeholder="Anything worth remembering before this goes to production.">${escape(view.draft.direction)}</textarea>
+      </div>
+      <div class="m-direction-editor__meta">
+        <span>Written by Higher Roads</span>
+        <span>Against Tour Direction V0${escape(view.assignment.directionVersion)}</span>
+      </div>
+    </div>`;
+}
+
 function askWork() {
   return `<section class="m-scene-source" aria-labelledby="ask-heading">
       <div class="m-scene-source__head">
@@ -314,40 +343,14 @@ function askWork() {
           <textarea class="m-textarea" id="scene-question" data-draft="question" placeholder="What do you need from them before this goes to production?">${escape(view.draft.question)}</textarea>
           <button class="m-button" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Ask the client"}</button>
         </div>
-        ${questionMessage()}
+        ${view.messageAt === "ask" && view.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
       </div>
     </section>`;
 }
 
-function operatorPage() {
-  return `<section class="m-direction-editor" aria-labelledby="scene-heading">
-      <div class="m-direction-editor__header">
-        <span class="m-label m-direction-editor__label">Scene${view.assignment.moment ? ` / ${escape(view.assignment.moment)}` : ""}</span>
-        <h1 id="scene-heading" class="m-direction-editor__title">${escape(view.assignment.title)}</h1>
-      </div>
-      <div class="m-direction-editor__body">
-        ${view.message && !view.messageAt ? `<div class="m-callout m-callout--current m-direction-editor__notice"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-        ${requestWork()}
-        ${venuesWork()}
-        <div class="m-field">
-          <label class="m-label" for="scene-direction">Note for production, optional</label>
-          <textarea class="m-textarea m-textarea--note" id="scene-direction" data-draft="direction" placeholder="Anything worth remembering before this goes to production.">${escape(view.draft.direction)}</textarea>
-        </div>
-        <div class="m-direction-editor__meta">
-          <span>Written by Higher Roads</span>
-          <span>Against Tour Direction V0${escape(view.assignment.directionVersion)}</span>
-        </div>
-        ${briefSection()}
-        ${receiptSection()}
-        ${askWork()}
-      </div>
-    </section>`;
-}
-
-// ---------------------------------------------------------------------------
-// The brief
-// ---------------------------------------------------------------------------
-
+// The brief here is a read, not a decision. Compiling is free, and reading the
+// compiled brief is how a person decides whether to send it. Once a version is
+// frozen, the frozen one is what shows.
 function briefSection() {
   if (!view.brief) return "";
   const brief = view.brief.brief;
@@ -368,16 +371,88 @@ function briefSection() {
     </details>`;
 }
 
-// ---------------------------------------------------------------------------
-// The receipt. What came back and the record of what happened live on review.
-// ---------------------------------------------------------------------------
-
 function receiptSection() {
   if (!view.receipt) return "";
   return `<div class="m-callout m-callout--current">
       <span class="m-label">Received by production</span>
       <p class="m-copy">Job ${escape(view.receipt.jobId)}, brief V0${escape(view.receipt.briefVersion)}, at ${escape(view.receipt.receivedAt)}.</p>
       <p class="m-meta">${escape(String(view.receipt.label || "").toUpperCase())}</p>
+    </div>`;
+}
+
+// One judgement is made here: this is right, send it.
+function sendWork() {
+  if (view.artboards.length > 0) return "";
+  const latestBrief = view.briefs.at(-1);
+  const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
+  let context;
+  let controls;
+  if (handoff) {
+    context = `Brief V0${latestBrief.briefVersion} is with production. The work comes back through the same handoff.`;
+    controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`;
+  } else if (latestBrief) {
+    context = `Brief V0${latestBrief.briefVersion} is frozen. Send it to production.`;
+    controls = `<button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
+  } else if (view.concept) {
+    context = "Read the compiled brief, then send it to production.";
+    controls = `<button class="m-button" type="button" data-save>Save note</button>
+      <button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
+  } else {
+    context = "Save the Scene before sending it to production.";
+    controls = `<button class="m-button m-button--primary" type="button" data-save>Save note</button>`;
+  }
+  return `<section class="m-stack" aria-labelledby="send-heading">
+      <h2 id="send-heading" class="m-scene-work-heading">Send to production</h2>
+      ${briefSection()}
+      ${receiptSection()}
+      <p class="m-action-bar__context">${escape(context)}</p>
+      <div class="m-action-bar__actions">${controls}</div>
+    </section>`;
+}
+
+// The drawer is fixed to the viewport whether it is open or closed, so the page
+// underneath keeps its full width and never reflows when the drawer moves.
+// There is no overlay drawer in app/design/ and builders do not edit that
+// folder, so the frame is set here from tokens, the way the Reviews viewer sets
+// its own.
+const DRAWER_FRAME = {
+  position: "fixed",
+  right: "0",
+  zIndex: "40",
+  background: "var(--m-gradient-sidecar)",
+  borderLeft: "var(--m-rule-width) solid var(--m-border-strong)",
+  boxShadow: "0 0 var(--m-space-7) var(--m-shadow-floating)",
+};
+
+const DRAWER_OPEN = { top: "0", bottom: "0", width: "min(26rem, 100vw)", overflowY: "auto", padding: "0 var(--m-space-5) var(--m-space-6)" };
+const DRAWER_SHUT = { top: "auto", bottom: "0", width: "auto", overflowY: "visible", padding: "0 var(--m-space-5)" };
+
+function frameDrawer() {
+  if (!drawer || !drawer.style) return;
+  Object.assign(drawer.style, DRAWER_FRAME, drawer.open ? DRAWER_OPEN : DRAWER_SHUT);
+}
+
+function renderDrawer() {
+  if (!drawer) return;
+  if (!isOperator()) {
+    // A client is never handed the trigger, and the server never sends them
+    // what is behind it.
+    if (drawer.remove) drawer.remove();
+    drawer = null;
+    drawerBody = null;
+    return;
+  }
+  frameDrawer();
+  if (!drawerBody) return;
+  const notice = view.message && !view.messageAt
+    ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>`
+    : "";
+  drawerBody.innerHTML = `<div class="m-stack">
+      ${notice}
+      ${venuesWork()}
+      ${noteWork()}
+      ${askWork()}
+      ${sendWork()}
     </div>`;
 }
 
@@ -399,50 +474,6 @@ function download(kind) {
 // Render
 // ---------------------------------------------------------------------------
 
-// One judgement is made here: this is right, send it. The client has no action
-// bar on this page, because answering is the only thing she came to do and the
-// box for it is at the top.
-function actionBar() {
-  if (!isOperator() || view.artboards.length > 0) {
-    actions.innerHTML = "";
-    return;
-  }
-  const latestBrief = view.briefs.at(-1);
-  const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
-  let context;
-  let controls;
-  if (handoff) {
-    context = `Brief V0${latestBrief.briefVersion} is with production. The work comes back through the same handoff.`;
-    controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`;
-  } else if (latestBrief) {
-    context = `Brief V0${latestBrief.briefVersion} is frozen. Send it to production.`;
-    controls = `<button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
-  } else if (view.concept) {
-    context = "Read the compiled brief, then send it to production.";
-    controls = `<button class="m-button" type="button" data-save>Save note</button>
-      <button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
-  } else {
-    context = "Save the Scene before sending it to production.";
-    controls = `<button class="m-button m-button--primary" type="button" data-save>Save note</button>`;
-  }
-  actions.innerHTML = `<p class="m-action-bar__context">${escape(context)}</p>
-    <div class="m-action-bar__actions">${controls}</div>`;
-}
-
-function reviewNotice() {
-  if (!isOperator() || !view.artboards.length) return "";
-  const current = view.artboards.at(-1);
-  const value = current && current.artboard ? current.artboard.artboardVersion : null;
-  if (!value) return "";
-  return `<section class="m-workstation-notice" aria-labelledby="artboard-ready-heading">
-      <div class="m-stack">
-        <h2 id="artboard-ready-heading" class="m-scene-work-heading">Artboard V0${escape(value)} is ready for review</h2>
-        <p class="m-copy">Compare it with the production brief and decide whether it is ready for the client.</p>
-      </div>
-      <a class="m-button m-button--primary" href="${reviewHref(value)}">Review Artboard V0${escape(value)}</a>
-    </section>`;
-}
-
 function render() {
   const assignment = view.assignment;
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
@@ -450,17 +481,14 @@ function render() {
       <span aria-hidden="true">/</span>
       <span class="m-breadcrumb__current">${escape(assignment.title)}</span>
     </nav>`;
-  root.innerHTML = `${reviewNotice()}<section class="m-workstation__stage" aria-label="Scene workspace">
+  root.innerHTML = `<section class="m-workstation__stage" aria-label="Scene workspace">
       <div class="m-workstation__canvas">
-        ${isOperator() ? operatorPage() : clientPage()}
+        ${page()}
       </div>
     </section>`;
-  actionBar();
+  renderDrawer();
 }
 
-// The brief on the page is a read, not a decision. Compiling is free, and
-// reading the compiled brief is how a person decides whether to send it. Once a
-// version is frozen, the frozen one is what shows.
 async function readBrief() {
   if (!isOperator()) return null;
   const frozen = view.briefs.filter((entry) => entry.status === "frozen").at(-1);
@@ -554,6 +582,10 @@ async function reloadQuestions() {
   view.questions = (await call("get-questions", { assignmentId: view.sceneId })).questions;
 }
 
+// Only the drawer's own frame changes when it opens. The page underneath is not
+// re-rendered and not re-measured, so it cannot move.
+if (drawer && drawer.addEventListener) drawer.addEventListener("toggle", frameDrawer);
+
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
@@ -561,16 +593,16 @@ document.addEventListener("click", (event) => {
     guard(async () => {
       view.working = true;
       view.message = "";
-      view.messageAt = "questions";
+      view.messageAt = "ask";
       render();
       await call("ask-question", { assignmentId: view.sceneId, text: view.draft.question });
       await reloadQuestions();
       view.working = false;
       view.draft.question = "";
       view.message = "The client will see this on their home page.";
-      view.messageAt = "questions";
+      view.messageAt = "ask";
       render();
-    }, "questions");
+    }, "ask");
     return;
   }
   if (target.dataset.sendAnswer !== undefined) {

@@ -158,9 +158,12 @@ test("a successful login runs the Meridian identity boot sequence once", () => {
 // Ruled 2026-08-27. The Scene page has one column and one job: read what was
 // asked, see it beside what the tour holds, then ask the client something or
 // send the work. No inspector, and nobody picks parts of the direction.
+// Amended the same day, when the page became one page for every role and the
+// operator's own actions moved into a drawer. The pieces are the same pieces;
+// where each one renders is asserted in test/scene-page.test.js.
 test("the Scene page is one column with the request, the tour facts, and two ways out", () => {
   const source = read("app/scene.js");
-  assert.match(source, /Client request/, "Scene does not show the request");
+  assert.match(source, /What the client asked for/, "Scene does not show the request");
   assert.match(source, /Venues and screens/, "Scene does not show the venue and screen facts");
   assert.match(source, /Note for production, optional/, "Scene does not offer the optional note");
   assert.match(source, /Ask the client a question/, "Scene does not offer the question");
@@ -173,7 +176,7 @@ test("the Scene page is one column with the request, the tour facts, and two way
   assert.doesNotMatch(source, /data-paragraph|data-venue/, "the Scene page still asks a person to mark direction or dates");
   assert.doesNotMatch(source, /propose-concepts|Ask Artist Brain/, "the brain still offers ideas from the Scene page");
   assert.match(source, /Artboard V0.*is ready for review/s, "returned artboards are not announced above the Scene workspace");
-  assert.match(source, /actions\.innerHTML = "";\s*return;/, "returned artboards still put review at the bottom of the page");
+  assert.match(source, /if \(view\.artboards\.length > 0\) return "";/, "returned artboards still leave the send offered at the bottom of the page");
 });
 
 test("the Scene workstation lets the center stage scroll independently", () => {

@@ -38,15 +38,15 @@ Missing state: There is no full-viewport viewer or fit and actual-size control. 
 
 Where: the full-screen Artboard view opened from `app/reviews.html`.
 
-### Feedback drawer over full-screen work
+### Drawer over the work
 
 Status: requested
 
-Job: a person opens only the selected version's rationale, feedback, state, and actions while keeping the Artboard as the main object.
+Job: a person opens a set of facts and actions over the work and closes it again, without the work moving, narrowing, or losing its place.
 
-Missing state: There is no drawer pattern. `app/reviews.html` uses a closed `m-disclosure` at the bottom of the full-screen viewer. It is not the fixed workstation inspector, because that pattern permanently reduces the work area.
+Missing state: There is no drawer pattern. Two surfaces now need one and neither can share the other's code. `app/reviews.html` uses a closed `m-disclosure` at the bottom of the full-screen viewer, laid out by `setViewerFrame` in `app/reviews.js`, so it belongs to that dialog and cannot be lifted out of it. `app/scene.html` copies the approach with its own `m-disclosure`, framed by `frameDrawer` in `app/scene.js`, fixed to the viewport in both states so the page beneath keeps its full width. Neither is the fixed workstation inspector, because that pattern permanently reduces the work area. Both supply their own position, width, surface, and shadow from tokens, because builders do not edit `app/design/`.
 
-Where: the full-screen Artboard view opened from `app/reviews.html`.
+Where: the full-screen Artboard view opened from `app/reviews.html`, and the Higher Roads drawer on `app/scene.html`. A third consumer, or a change to either frame, is the condition that makes one shared pattern worth designing.
 
 ### The account switcher under the wordmark
 

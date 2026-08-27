@@ -33,9 +33,12 @@
       <main class="m-shell__main m-shell__main--workstation">
         <header class="m-location" id="location"></header>
         <div class="m-page m-page--workstation" id="scene"></div>
-        <footer class="m-action-bar" id="actions"></footer>
       </main>
     </div>
-    <script type="module" src="./shell.js"></script><script type="module" src="./scene.js?v=2026-08-27-scene"></script>
+    <details class="m-disclosure" id="scene-drawer">
+      <summary><span class="m-label">Work on this Scene</span></summary>
+      <div class="m-disclosure__body m-stack" id="scene-drawer-body"></div>
+    </details>
+    <script type="module" src="./shell.js"></script><script type="module" src="./scene.js?v=2026-08-27-drawer"></script>
   </body>
 </html>
