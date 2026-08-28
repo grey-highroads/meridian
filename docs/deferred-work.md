@@ -16,7 +16,7 @@ Entries are grouped by what kind of debt they are, since the kinds have differen
 
 This is the only register for missing Meridian UI patterns. Builders use the system in `app/design/` and do not edit that folder.
 
-Each request names the job, the missing state, and where it occurs. Use one of four plain status phrases: requested, being designed, available, or use the existing pattern.
+Each request names the job, the missing state, and where it occurs. Use one of five plain status phrases: requested, being designed, available, use the existing pattern, or closed. A closed entry names the commit that closed it and stays here as the record of what the pattern was asked to do.
 
 ### Artboard version gallery
 
@@ -40,13 +40,13 @@ Where: the full-screen Artboard view opened from `app/reviews.html`.
 
 ### Drawer over the work
 
-Status: available
+Status: closed by `33b1054`
 
 Job: a person opens a set of facts and actions over the work and closes it again, without the work moving, narrowing, or losing its place.
 
-Available state: `m-drawer` is a fixed right-edge rail that widens leftward over the full page. It never reserves page width. `m-drawer__action` keeps a field, action, and result together; `m-drawer__context` keeps supporting facts collapsed under the action they inform. Compact drawer type and control spacing come from shared tokens. Clients receive neither the operator content nor its trigger.
+Closed state: `m-drawer` is a fixed right-edge rail that widens leftward over the full page. It never reserves page width. `m-drawer__action` keeps a field, action, and result together; `m-drawer__context` keeps supporting facts collapsed under the action they inform. Compact drawer type and control spacing come from shared tokens. Clients receive neither the operator content nor its trigger.
 
-Where: the full-screen Artboard view opened from `app/reviews.html`, and the Higher Roads rail on `app/scene.html`.
+Where: the full-screen Artboard view opened from `app/reviews.html`, and the Higher Roads drawer on `app/scene.html`. Tour details carries the inline half of the same grammar and no drawer, because it holds no operator-only work. Grey accepted all three surfaces on the live app on 2026-08-28. The rule that governs when a page gets a drawer is recorded in `docs/meridian-product-architecture.md` under the page and the drawer ruling, and the rules for building one are in `docs/design-system.md`.
 
 ### The account switcher under the wordmark
 
