@@ -405,6 +405,9 @@ export async function handleAction(body, options = {}) {
         artboardStore.readApprovals(fixture.tour.id, entry.id),
         tourStore.readQuestions(fixture.tour.id, entry.id),
       ]);
+      // The role goes in because the sentence coming out is addressed. A
+      // client is told whether anything is needed from her; we are told what we
+      // do next. The stage and who the work waits on are the same either way.
       const state = sceneLifecycle({
         request: entry.requestedBy ? { requestedBy: entry.requestedBy, requestedOn: entry.requestedOn } : null,
         concept,
@@ -415,7 +418,7 @@ export async function handleAction(body, options = {}) {
         // Nothing in this phase records a delivery, so delivered is a stage the
         // module supports and the app cannot yet reach.
         deliveries: [],
-      });
+      }, user.role);
       assignments.push({
         id: entry.id,
         title: entry.title,

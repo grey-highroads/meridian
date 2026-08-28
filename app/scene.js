@@ -176,26 +176,20 @@ function questionsSection() {
 // written to whoever is reading it.
 // ---------------------------------------------------------------------------
 
+// The sentence itself comes from the server, written to whoever is signed in.
+// The page adds the two things only the page knows: an open question outranks
+// the stage, because the answer box above is already the thing to do, and work
+// that is ready for her carries the way through to it.
 function clientStatus() {
   const state = view.state || {};
-  const stage = state.stage;
   if (openQuestions().length) {
     return { line: "Answer the question above when you can. Nothing else is needed from you.", link: null };
   }
-  if (stage === "Production review" && state.waitingOn === "the client") {
-    return {
-      line: "New work is ready for you to look at.",
-      link: reviewHref(state.currentArtboardVersion),
-      linkLabel: "Look at the work",
-    };
+  const line = state.nextAction || "Higher Roads is developing this Scene. Nothing is needed from you.";
+  if (state.stage === "Production review" && state.waitingOn === "the client") {
+    return { line, link: reviewHref(state.currentArtboardVersion), linkLabel: "Look at the work" };
   }
-  if (stage === "Delivered") return { line: "This Scene has been delivered. Nothing is needed from you.", link: null };
-  if (stage === "Final approved") return { line: "You approved this Scene. The media team is finishing it. Nothing is needed from you.", link: null };
-  if (stage === "Production review") return { line: "Higher Roads is looking at the work that came back. Nothing is needed from you.", link: null };
-  if (stage === "Approved for production") return { line: "The media team is building this Scene. Nothing is needed from you.", link: null };
-  if (stage === "Concept review") return { line: "Higher Roads is getting this Scene ready for the media team. Nothing is needed from you.", link: null };
-  if (stage === "Draft request") return { line: "This request has not been sent yet.", link: null };
-  return { line: "Higher Roads is developing this Scene. Nothing is needed from you.", link: null };
+  return { line, link: null };
 }
 
 // Work that came back is the thing an operator has to act on, so it takes the

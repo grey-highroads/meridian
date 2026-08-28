@@ -15,6 +15,8 @@
 // this comment comes out with it. Nothing here says a client approved a
 // concept, because no such approval exists yet.
 
+import { CLIENT_ROLE } from "../org/roles.js";
+
 // The one action string that says a brief went out. It lives here because the
 // lifecycle reads it and the tour route writes it, and two copies of it would
 // drift.
@@ -100,12 +102,28 @@ function stageOf(scene) {
 
 // One job per stage, in the words a tour manager would use. Alternatives at a
 // stage, and the buttons that carry them, belong to the Scene workspace.
+//
+// Two sentences per stage, because two people read them. The stage and who the
+// work waits on are facts and read the same for everyone. The sentence under
+// them is copy, and copy is addressed. Higher Roads is told what we do next.
+// The client is told whether anything is needed from her, in words written to
+// her. Nothing is withheld by this. The same Scene is described to two people
+// who need different things from the description, and the description a client
+// receives is a server decision rather than something a page decides to show.
 function jobAt(stage, scene) {
   if (stage === STAGES.delivered) {
-    return { waitingOn: PARTIES.noOne, nextAction: "Final media has been delivered." };
+    return {
+      waitingOn: PARTIES.noOne,
+      nextAction: "Final media has been delivered.",
+      clientAction: "This Scene has been delivered. Nothing is needed from you.",
+    };
   }
   if (stage === STAGES.finalApproved) {
-    return { waitingOn: PARTIES.production, nextAction: "Prepare the approved version for final delivery." };
+    return {
+      waitingOn: PARTIES.production,
+      nextAction: "Prepare the approved version for final delivery.",
+      clientAction: "You approved this Scene. The media team is finishing it. Nothing is needed from you.",
+    };
   }
   if (stage === STAGES.productionReview) {
     const artboards = list(scene.artboards);
@@ -114,31 +132,64 @@ function jobAt(stage, scene) {
     const cleared = list((scene.approvals || {}).readyForClient)
       .some((entry) => Number(entry.artboardVersion) === latest);
     return cleared
-      ? { waitingOn: PARTIES.client, nextAction: "Review the latest version." }
-      : { waitingOn: PARTIES.higherRoads, nextAction: "Review the latest version before it goes to the client." };
+      ? {
+        waitingOn: PARTIES.client,
+        nextAction: "Review the latest version.",
+        clientAction: "New work is ready for you to look at.",
+      }
+      : {
+        waitingOn: PARTIES.higherRoads,
+        nextAction: "Review the latest version before it goes to the client.",
+        clientAction: "Higher Roads is looking at the work that came back. Nothing is needed from you.",
+      };
   }
   if (stage === STAGES.approvedForProduction) {
-    return { waitingOn: PARTIES.production, nextAction: "The media team is working on the next version." };
+    return {
+      waitingOn: PARTIES.production,
+      nextAction: "The media team is working on the next version.",
+      clientAction: "The media team is building this Scene. Nothing is needed from you.",
+    };
   }
   if (stage === STAGES.conceptReview) {
-    return { waitingOn: PARTIES.higherRoads, nextAction: "Send the brief to the media team." };
+    return {
+      waitingOn: PARTIES.higherRoads,
+      nextAction: "Send the brief to the media team.",
+      clientAction: "Higher Roads is getting this Scene ready for the media team. Nothing is needed from you.",
+    };
   }
   if (stage === STAGES.conceptInDevelopment) {
-    return { waitingOn: PARTIES.higherRoads, nextAction: "Prepare this Scene for production." };
+    return {
+      waitingOn: PARTIES.higherRoads,
+      nextAction: "Prepare this Scene for production.",
+      clientAction: "Higher Roads is developing this Scene. Nothing is needed from you.",
+    };
   }
   if (stage === STAGES.requested) {
-    return { waitingOn: PARTIES.higherRoads, nextAction: "Develop this Scene." };
+    return {
+      waitingOn: PARTIES.higherRoads,
+      nextAction: "Develop this Scene.",
+      clientAction: "Higher Roads is developing this Scene. Nothing is needed from you.",
+    };
   }
-  return { waitingOn: PARTIES.higherRoads, nextAction: "Finish the request and submit it." };
+  return {
+    waitingOn: PARTIES.higherRoads,
+    nextAction: "Finish the request and submit it.",
+    clientAction: "This request has not been sent yet.",
+  };
 }
 
-export function sceneLifecycle(scene = {}) {
+// The reader decides which sentence comes back. A caller that names no role
+// gets the Higher Roads sentence, because everything inside the app that reads
+// a Scene without a session is us.
+export function sceneLifecycle(scene = {}, role = "") {
   const stage = stageOf(scene);
+  const job = jobAt(stage, scene);
   return {
     stage,
     currentVersion: currentVersionOf(scene),
     currentArtboardVersion: currentArtboardVersionOf(scene),
-    ...jobAt(stage, scene),
+    waitingOn: job.waitingOn,
+    nextAction: role === CLIENT_ROLE ? job.clientAction : job.nextAction,
   };
 }
 

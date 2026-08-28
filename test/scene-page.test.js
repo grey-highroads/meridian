@@ -4,6 +4,13 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { handleAction as artistAction } from "../api/artist/index.js";
+import { handleAction as tourAction } from "../api/tour/index.js";
+import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
+import { createTourStore } from "../src/tour/store.js";
+import { createArtboardStore } from "../src/seam/artboard-store.js";
+import { createSceneRecord } from "../src/tour/scene-record.js";
+import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -202,8 +209,11 @@ test("the client's page never shows direction, rig, an uploader, or a version nu
   assert.match(text, /What you asked for/, "the page does not name her request in her words");
 });
 
+// What the route sends a client session for a Scene at this stage.
+const CLIENT_STATE = { ...SCENE_STATE, nextAction: "Higher Roads is developing this Scene. Nothing is needed from you." };
+
 test("with no open question the client sees the status line and her request and nothing else", async () => {
-  const page = scenePage({ user: CLIENT, questions: [] });
+  const page = scenePage({ user: CLIENT, questions: [], state: CLIENT_STATE });
   await page.settle();
   const markup = page.markup();
 
@@ -214,7 +224,10 @@ test("with no open question the client sees the status line and her request and 
 });
 
 test("the status line says what needs her before it says anything else", async () => {
-  const waiting = { ...SCENE_STATE, stage: "Production review", waitingOn: "the client", nextAction: "Review the latest version.", currentArtboardVersion: 2 };
+  // What the route sends a client session at this stage. The sentence a client
+  // receives is decided on the server, so the state a client page is given
+  // never carries the Higher Roads wording in the first place.
+  const waiting = { ...SCENE_STATE, stage: "Production review", waitingOn: "the client", nextAction: "New work is ready for you to look at.", currentArtboardVersion: 2 };
   const page = scenePage({ user: CLIENT, questions: [], state: waiting });
   await page.settle();
   const markup = page.markup();
@@ -399,7 +412,7 @@ test("an admin clicking through from a Scene lands on the newest version in the 
 });
 
 test("a client's status line opens the presented version in the gallery", async () => {
-  const state = { ...SCENE_STATE, stage: "Production review", waitingOn: "the client", currentArtboardVersion: 2 };
+  const state = { ...SCENE_STATE, stage: "Production review", waitingOn: "the client", nextAction: "New work is ready for you to look at.", currentArtboardVersion: 2 };
   const page = scenePage({ user: CLIENT, state, questions: [] });
   await page.settle();
   const markup = page.markup();
@@ -408,4 +421,77 @@ test("a client's status line opens the presented version in the gallery", async 
   assert.ok(href, "the client has no way through to the work");
   assert.match(href[1], /version=2/, "the client is not sent to the presented version");
   assert.doesNotMatch(markup, /client-review\.html/, "the client is still sent to the removed page");
+});
+
+// ---------------------------------------------------------------------------
+// The status line, read by both people, at the stages the seeded tour can
+// reach. The state comes from the route rather than from a literal here, so
+// what the page renders is what a real session would be handed.
+// ---------------------------------------------------------------------------
+
+const ROUTE_OPERATOR = { id: "operator", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
+const ROUTE_CLIENT = { id: "client", displayName: "Sarah Lyle", role: "client-reviewer", roleLabel: "Creative director" };
+
+async function seeded() {
+  const artistBackend = createMemoryBackend();
+  const tourBackend = createMemoryBackend();
+  const store = createArtistStore({ backend: artistBackend, accountId: "dierks-bentley" });
+  const tourStore = createTourStore({ backend: tourBackend, accountId: "dierks-bentley" });
+  const artboardStore = createArtboardStore({ backend: tourBackend, accountId: "dierks-bentley" });
+  const sceneRecord = createSceneRecord({ backend: tourBackend, accountId: "dierks-bentley" });
+  await seedTourFromFixture(tourStore, TOUR);
+  await artistAction({ action: "import-intake", artistId: "dierks-bentley" }, { store });
+  await artistAction({ action: "approve-brain", artistId: "dierks-bentley", person: "Grey" }, { store });
+  return { store, tourStore, artboardStore, sceneRecord };
+}
+
+async function stateFor(stores, user) {
+  const { assignments } = await tourAction({ action: "get-tour", tourId: TOUR }, { ...stores, user });
+  return assignments.find((entry) => entry.id === ASSIGNMENT);
+}
+
+async function linesAt(stores) {
+  const lines = {};
+  for (const [name, user] of [["admin", ROUTE_OPERATOR], ["client", ROUTE_CLIENT]]) {
+    const state = await stateFor(stores, user);
+    const page = scenePage({ user: user.role === "higher-roads" ? OPERATOR : CLIENT, questions: [], state });
+    await page.settle();
+    lines[name] = page.text();
+  }
+  return lines;
+}
+
+test("a requested Scene reads to each person in their own words", async () => {
+  const stores = await seeded();
+  const lines = await linesAt(stores);
+
+  assert.match(lines.admin, /Develop this Scene\./, "the admin is not told what we do next");
+  assert.match(lines.client, /Higher Roads is developing this Scene\. Nothing is needed from you\./);
+  assert.doesNotMatch(lines.client, /Develop this Scene\./, "an instruction to Higher Roads reached the client");
+});
+
+test("a Scene in development tells the client nothing is needed and tells us to prepare it", async () => {
+  const stores = await seeded();
+  await tourAction({
+    action: "choose-concept",
+    tourId: TOUR,
+    assignmentId: ASSIGNMENT,
+    concept: { title: "The front, not the flash", idea: "Weather builds behind the band and clears by the last line.", cameFrom: "written by Higher Roads" },
+  }, { ...stores, user: ROUTE_OPERATOR });
+  const lines = await linesAt(stores);
+
+  assert.match(lines.admin, /Prepare this Scene for production\./, "the admin lost the operator phrasing");
+  assert.match(lines.client, /Higher Roads is developing this Scene\. Nothing is needed from you\./);
+  assert.doesNotMatch(lines.client, /Prepare this Scene for production\./, "an instruction to Higher Roads reached the client");
+});
+
+test("an open question outranks the stage sentence for the client", async () => {
+  const stores = await seeded();
+  const state = await stateFor(stores, ROUTE_CLIENT);
+  const page = scenePage({ user: CLIENT, questions: [OPEN_QUESTION], state });
+  await page.settle();
+  const text = page.text();
+
+  assert.match(text, /Answer the question above when you can\. Nothing else is needed from you\./);
+  assert.doesNotMatch(text, /Nothing is needed from you\./, "the status line contradicts the question above it");
 });

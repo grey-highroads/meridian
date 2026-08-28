@@ -251,6 +251,7 @@ test("the directory says nothing in architecture words", () => {
   for (const [, scene] of SNAPSHOTS) {
     const state = sceneLifecycle(scene);
     strings.push(state.stage, state.waitingOn, state.nextAction, String(state.currentVersion || ""));
+    strings.push(sceneLifecycle(scene, REVIEWER.role).nextAction);
   }
   strings.push(fs.readFileSync(path.join(rootPath, "app/scenes.js"), "utf8"));
   for (const text of strings) {
@@ -259,4 +260,50 @@ test("the directory says nothing in architecture words", () => {
     }
     assert.ok(!text.includes("\u2014"), "an em dash reaches a person");
   }
+});
+
+// The full set of sentences, both readers, in one place. The stage, the party,
+// and the version are facts and read the same for everyone. Only the sentence
+// under them is addressed.
+const CLIENT_LINES = {
+  [STAGES.draftRequest]: "This request has not been sent yet.",
+  [STAGES.requested]: "Higher Roads is developing this Scene. Nothing is needed from you.",
+  [STAGES.conceptInDevelopment]: "Higher Roads is developing this Scene. Nothing is needed from you.",
+  [STAGES.conceptReview]: "Higher Roads is getting this Scene ready for the media team. Nothing is needed from you.",
+  [STAGES.approvedForProduction]: "The media team is building this Scene. Nothing is needed from you.",
+  [STAGES.productionReview]: "Higher Roads is looking at the work that came back. Nothing is needed from you.",
+  [STAGES.finalApproved]: "You approved this Scene. The media team is finishing it. Nothing is needed from you.",
+  [STAGES.delivered]: "This Scene has been delivered. Nothing is needed from you.",
+};
+
+test("every stage hands a client her own sentence and keeps the Higher Roads one out of it", () => {
+  for (const [name, scene, stage, currentVersion, waitingOn, nextAction] of SNAPSHOTS) {
+    const ours = sceneLifecycle(scene, OPERATOR.role);
+    const hers = sceneLifecycle(scene, REVIEWER.role);
+    assert.equal(ours.nextAction, nextAction, name);
+    assert.equal(hers.nextAction, CLIENT_LINES[stage], name);
+    assert.notEqual(hers.nextAction, ours.nextAction, `${name} sends the client the sentence written to us`);
+    assert.equal(hers.stage, stage, name);
+    assert.equal(hers.waitingOn, waitingOn, name);
+    assert.equal(hers.currentVersion, currentVersion, name);
+    assert.ok(
+      !Object.prototype.hasOwnProperty.call(hers, "clientAction"),
+      `${name} carries a second sentence nobody asked for`,
+    );
+  }
+});
+
+test("a cleared version tells the client work is ready and tells us to review it", () => {
+  const scene = {
+    request: REQUEST,
+    briefs: [FROZEN_BRIEF],
+    artboards: [ARTBOARD_ONE],
+    approvals: { readyForClient: [{ artboardVersion: 1 }] },
+  };
+  assert.equal(sceneLifecycle(scene, OPERATOR.role).nextAction, "Review the latest version.");
+  assert.equal(sceneLifecycle(scene, REVIEWER.role).nextAction, "New work is ready for you to look at.");
+});
+
+test("a caller that names no role is treated as Higher Roads", () => {
+  assert.equal(sceneLifecycle({ request: REQUEST }).nextAction, "Develop this Scene.");
 });
