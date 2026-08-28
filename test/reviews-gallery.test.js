@@ -122,12 +122,12 @@ test("the Reviews page is a newest-first lazy gallery with one linkable role-pro
   assert.match(page, /address\.searchParams\.set\("scene"/);
   assert.match(page, /address\.searchParams\.set\("version"/);
   assert.match(page, /m-button--instrument/);
-  assert.match(markup, /<dialog class="m-dialog m-client-shell" id="review-viewer"/);
-  assert.match(markup, /<details class="m-disclosure" id="review-drawer">/);
+  assert.match(markup, /<dialog class="m-dialog m-client-shell m-review-viewer" id="review-viewer"/);
+  assert.match(markup, /<details class="m-drawer" id="review-drawer">/);
   assert.doesNotMatch(markup, /<details[^>]*open/);
-  assert.match(page, /objectFit: "contain"/);
-  assert.match(page, /maxWidth: "none"/);
-  assert.match(markup, /<div class="m-client-review__frame" id="viewer-artifact"><\/div>/);
+  assert.match(page, /viewerArtifact\.dataset\.viewSize = view\.size/);
+  assert.match(markup, /<div class="m-client-review__frame m-review-artifact" id="viewer-artifact" data-view-size="fit"><\/div>/);
+  assert.match(markup, /id="viewer-surface-body"/);
   assert.match(page, /call\("save-review"/);
   assert.match(page, /call\("issue-revision"/);
   assert.match(page, /call\("approve-for-client"/);

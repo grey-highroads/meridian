@@ -270,7 +270,7 @@ test("an admin sees an open question waiting rather than a box to answer it in",
 // The drawer. Higher Roads only, over the page rather than beside it.
 // ---------------------------------------------------------------------------
 
-test("the drawer leads with the send and the question, and keeps the note and the facts under them", async () => {
+test("the drawer leads with complete actions and recruits context under the send", async () => {
   const page = scenePage({ questions: [OPEN_QUESTION], concept: { title: "Storm and lightning", idea: "Hold the break." } });
   await page.settle();
   const drawer = page.drawerMarkup();
@@ -278,11 +278,13 @@ test("the drawer leads with the send and the question, and keeps the note and th
   const send = drawer.indexOf('id="send-heading"');
   const ask = drawer.indexOf('id="ask-heading"');
   const note = drawer.indexOf('for="scene-direction"');
+  const review = drawer.indexOf("Review before sending");
   const venues = drawer.indexOf('id="venues-heading"');
   assert.ok(send > -1, "the send is not in the drawer");
-  assert.ok(ask > send, "the question does not follow the send");
-  assert.ok(note > ask, "the note is above the actions instead of under them");
-  assert.ok(venues > note, "the venue facts are above the actions instead of under them");
+  assert.ok(ask > -1 && ask < send, "the question is not the first complete action");
+  assert.ok(note > send, "the production note is separated from the send it informs");
+  assert.ok(review > note, "supporting context leads instead of staying under the send");
+  assert.ok(venues > review, "the venue facts are not inside the send's collapsed context");
   assert.match(drawer, /Send to production/, "the send is not offered");
 
   assert.match(drawer, /Ruoff Music Center/);
@@ -295,7 +297,8 @@ test("the drawer trigger reads in plain words", async () => {
   const summary = source.match(/<summary[^>]*>([\s\S]*?)<\/summary>/);
   assert.ok(summary, "the drawer has no trigger");
   const words = summary[1].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  assert.equal(words, "Work on this Scene");
+  assert.match(words, /^Work on this Scene/);
+  assert.match(words, /Close$/, "the open drawer has no plain close label");
   assert.doesNotMatch(source, /[Ii]nspector|>\s*Tools\s*</, "the trigger uses a system word");
 });
 
@@ -312,42 +315,29 @@ test("a client is given no drawer and no trigger, and is never sent what is in i
   assert.ok(!page.asked.includes("get-artboards"), "the client asked for operator-only records");
 });
 
-test("the drawer is a rail down the whole right edge that widens leftward", async () => {
+test("the shared drawer overlays the full page and never changes its measure", async () => {
   const page = scenePage({ concept: { title: "Storm and lightning", idea: "Hold the break." } });
   await page.settle();
   const drawer = page.drawer();
-  const trigger = page.trigger();
-
-  // The harness has no layout engine, so this asserts the values that produce
-  // the rail rather than measuring pixels: it is out of flow, pinned to both
-  // ends of the viewport and to the right edge, and its trigger runs on its
-  // side down the full height.
-  assert.equal(drawer.style.position, "fixed", "the rail is in the flow of the page");
-  assert.equal(drawer.style.top, "0");
-  assert.equal(drawer.style.bottom, "0", "the rail does not run the full height");
-  assert.equal(drawer.style.right, "0", "the rail is not on the right edge");
-  assert.equal(drawer.style.width, "var(--m-space-7)", "the closed rail is not a thin strip");
-  assert.equal(trigger.style.writingMode, "vertical-rl", "the closed trigger does not read down the rail");
-  assert.equal(trigger.style.height, "100%", "the closed trigger does not fill the rail");
-  // The work reserves the rail's width once, and opening never changes it.
-  assert.equal(page.well().style.paddingRight, "var(--m-space-7)", "the work is not clear of the rail");
+  const patterns = fs.readFileSync(path.join(rootPath, "app", "design", "patterns.css"), "utf8");
+  const closed = patterns.match(/\.m-drawer\s*\{([^}]*)\}/)?.[1] || "";
+  const open = patterns.match(/\.m-drawer\[open\]\s*\{([^}]*)\}/)?.[1] || "";
+  assert.match(closed, /position:\s*fixed/, "the drawer is in the page flow");
+  assert.match(closed, /top:\s*0/);
+  assert.match(closed, /bottom:\s*0/, "the rail does not run the full height");
+  assert.match(closed, /right:\s*0/, "the rail is not on the right edge");
+  assert.match(closed, /width:\s*var\(--m-drawer-rail-width\)/, "the closed drawer is not a thin rail");
+  assert.match(open, /width:\s*min\(var\(--m-drawer-width\), 100vw\)/, "the open drawer does not cover from the right");
+  assert.equal(page.well().style.paddingRight, undefined, "the page reserves width for an overlay");
 
   const before = page.markup();
-  const reserved = page.well().style.paddingRight;
   drawer.open = true;
-  drawer.handlers.toggle();
-  assert.equal(drawer.style.position, "fixed", "the open drawer joins the flow of the page");
-  assert.equal(drawer.style.width, "min(26rem, 100vw)", "the drawer does not widen when it opens");
-  assert.equal(drawer.style.right, "0", "the drawer leaves the right edge when it opens");
-  assert.equal(trigger.style.writingMode, "horizontal-tb", "the trigger still reads sideways once open");
   assert.equal(page.markup(), before, "opening the drawer rewrote the work beneath it");
-  assert.equal(page.well().style.paddingRight, reserved, "opening the drawer changed what the work reserves");
+  assert.equal(page.well().style.paddingRight, undefined, "opening the drawer narrowed the page");
 
   drawer.open = false;
-  drawer.handlers.toggle();
-  assert.equal(drawer.style.width, "var(--m-space-7)", "the drawer does not shrink back to the rail");
   assert.equal(page.markup(), before, "closing the drawer rewrote the work beneath it");
-  assert.equal(page.well().style.paddingRight, reserved, "closing the drawer changed what the work reserves");
+  assert.equal(page.well().style.paddingRight, undefined, "closing the drawer changed the page measure");
 });
 
 test("the drawer carries no direction paragraphs and no sentence about plumbing", async () => {

@@ -40,13 +40,13 @@ Where: the full-screen Artboard view opened from `app/reviews.html`.
 
 ### Drawer over the work
 
-Status: requested
+Status: available
 
 Job: a person opens a set of facts and actions over the work and closes it again, without the work moving, narrowing, or losing its place.
 
-Missing state: There is no drawer pattern. Two surfaces now need one and neither can share the other's code. `app/reviews.html` uses a closed `m-disclosure` at the bottom of the full-screen viewer, laid out by `setViewerFrame` in `app/reviews.js`, so it belongs to that dialog and cannot be lifted out of it. `app/scene.html` copies the approach with its own `m-disclosure`, framed by `frameDrawer` in `app/scene.js`: a thin rail pinned down the whole right edge that widens leftward over the work, with the trigger turned on its side to fill the closed rail. The work reserves the rail's width once and never again, so opening and closing cannot move it. Neither surface is the fixed workstation inspector, because that pattern permanently reduces the work area. Both supply their own position, width, surface, and shadow from tokens, because builders do not edit `app/design/`.
+Available state: `m-drawer` is a fixed right-edge rail that widens leftward over the full page. It never reserves page width. `m-drawer__action` keeps a field, action, and result together; `m-drawer__context` keeps supporting facts collapsed under the action they inform. Compact drawer type and control spacing come from shared tokens. Clients receive neither the operator content nor its trigger.
 
-Where: the full-screen Artboard view opened from `app/reviews.html`, and the Higher Roads rail on `app/scene.html`. A third consumer, or a change to either frame, is the condition that makes one shared pattern worth designing.
+Where: the full-screen Artboard view opened from `app/reviews.html`, and the Higher Roads rail on `app/scene.html`.
 
 ### The account switcher under the wordmark
 

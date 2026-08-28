@@ -23,8 +23,13 @@ const legacyInlineStyleBaseline = new Map([
   ["app/app.js", 9],
 ]);
 
+const legacyStyleApiBaseline = new Map([
+  ["app/app.js", 2],
+]);
+
 const hexValuePattern = /#[0-9a-f]{3,8}\b/gi;
 const inlineStylePattern = /\bstyle\s*=/gi;
+const styleApiPattern = /\.style\b/g;
 
 async function listFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -61,6 +66,7 @@ export function inspectDesignSource(path, source) {
 
   const hexCount = countMatches(source, hexValuePattern);
   const inlineStyleCount = countMatches(source, inlineStylePattern);
+  const styleApiCount = extension === ".js" || extension === ".mjs" ? countMatches(source, styleApiPattern) : 0;
   const allowedHexCount = path === "app/design/tokens.css"
     ? hexCount
     : legacyHexBaseline.get(path) || 0;
@@ -72,6 +78,11 @@ export function inspectDesignSource(path, source) {
 
   if (inlineStyleCount > allowedInlineStyleCount) {
     violations.push(`${path}: Found ${inlineStyleCount} inline styles. The allowed legacy count is ${allowedInlineStyleCount}. Use a class from app/design/.`);
+  }
+
+  const allowedStyleApiCount = legacyStyleApiBaseline.get(path) || 0;
+  if (styleApiCount > allowedStyleApiCount) {
+    violations.push(`${path}: Found ${styleApiCount} script-owned style changes. The allowed legacy count is ${allowedStyleApiCount}. Put presentation in app/design/ and toggle a class or state attribute.`);
   }
 
   return violations;

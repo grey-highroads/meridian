@@ -21,8 +21,6 @@ const locationBar = document.getElementById("location");
 const root = document.getElementById("scene");
 let drawer = document.getElementById("scene-drawer");
 let drawerBody = document.getElementById("scene-drawer-body");
-let trigger = document.getElementById("scene-drawer-trigger");
-const well = document.getElementById("main");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
@@ -268,8 +266,8 @@ function page() {
 }
 
 // ---------------------------------------------------------------------------
-// The drawer. Higher Roads only, in the order of the decision: the facts, the
-// note, the question, the send.
+// The drawer. Higher Roads only. Each job carries its field, action, result,
+// and the context that informs it.
 // ---------------------------------------------------------------------------
 
 function dateRows() {
@@ -302,12 +300,8 @@ function rigRows() {
 }
 
 function venuesWork() {
-  const setupVersion = view.context.setupVersion ? ` V0${escape(view.context.setupVersion)}` : "";
-  return `<section class="m-scene-source" aria-labelledby="venues-heading">
-      <div class="m-scene-source__head">
-        <h2 id="venues-heading" class="m-scene-work-heading">Venues and screens</h2>
-        <span class="m-meta">SETUP${setupVersion}</span>
-      </div>
+  return `<section class="m-drawer__reference" aria-labelledby="venues-heading">
+      <h3 id="venues-heading" class="m-label">Venues and screens</h3>
       <div class="m-stack">
         ${dateRows()}
         ${rigRows()}
@@ -316,63 +310,44 @@ function venuesWork() {
 }
 
 function noteWork() {
-  return `<div class="m-stack">
-      <div class="m-field">
-        <label class="m-label" for="scene-direction">Note for production, optional</label>
-        <textarea class="m-textarea m-textarea--note" id="scene-direction" data-draft="direction" placeholder="Anything worth remembering before this goes to production.">${escape(view.draft.direction)}</textarea>
-      </div>
-      <div class="m-direction-editor__meta">
-        <span>Written by Higher Roads</span>
-        <span>Against Tour Direction V0${escape(view.assignment.directionVersion)}</span>
-      </div>
+  return `<div class="m-field">
+      <label class="m-label" for="scene-direction">Note for production, optional</label>
+      <textarea class="m-textarea m-textarea--note" id="scene-direction" data-draft="direction" placeholder="Anything production should know.">${escape(view.draft.direction)}</textarea>
     </div>`;
 }
 
 function askWork() {
-  return `<section class="m-scene-source" aria-labelledby="ask-heading">
-      <div class="m-scene-source__head">
-        <h2 id="ask-heading" class="m-scene-work-heading">Ask the client a question</h2>
+  return `<section class="m-drawer__action" aria-labelledby="ask-heading">
+      <h2 id="ask-heading" class="m-drawer__title">Ask the client</h2>
+      <div class="m-field">
+        <label class="m-label" for="scene-question">Your question</label>
+        <textarea class="m-textarea" id="scene-question" data-draft="question" placeholder="What do you need from them?">${escape(view.draft.question)}</textarea>
       </div>
-      <div class="m-stack">
-        <div class="m-field">
-          <label class="m-label" for="scene-question">Your question</label>
-          <textarea class="m-textarea" id="scene-question" data-draft="question" placeholder="What do you need from them before this goes to production?">${escape(view.draft.question)}</textarea>
-          <button class="m-button" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Ask the client"}</button>
-        </div>
-        ${view.messageAt === "ask" && view.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-      </div>
+      <div class="m-drawer__actions"><button class="m-button" type="button" data-ask ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Ask the client"}</button></div>
+      ${view.messageAt === "ask" && view.message ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
     </section>`;
 }
 
-// The brief here is a read, not a decision. Compiling is free, and reading the
-// compiled brief is how a person decides whether to send it. Once a version is
-// frozen, the frozen one is what shows.
+// The brief is supporting context for the send, not a separate drawer job.
 function briefSection() {
   if (!view.brief) return "";
-  const brief = view.brief.brief;
-  const state = brief.status === "frozen" ? "m-state m-state--approved" : "m-state m-state--current";
-  const stateText = brief.status === "frozen" ? `Brief V0${brief.briefVersion} frozen` : `Brief V0${brief.briefVersion} draft`;
-  return `<details class="m-disclosure m-brief-disclosure">
-      <summary>
-        <span class="m-label">View compiled brief</span>
-        <span class="${state}">${escape(stateText)}</span>
-      </summary>
-      <div class="m-disclosure__body m-stack">
+  return `<section class="m-drawer__reference" aria-labelledby="brief-heading">
+      <h3 id="brief-heading" class="m-label">Brief</h3>
+      <div class="m-stack">
         <div class="m-cluster">
           <button class="m-button m-button--small" type="button" data-download="document">Download document</button>
           <button class="m-button m-button--small" type="button" data-download="sidecar">Download machine readable file</button>
         </div>
         <pre>${escape(view.brief.document)}</pre>
       </div>
-    </details>`;
+    </section>`;
 }
 
 function receiptSection() {
   if (!view.receipt) return "";
-  return `<div class="m-callout m-callout--current">
+  return `<div class="m-drawer__result">
       <span class="m-label">Received by production</span>
-      <p class="m-copy">Job ${escape(view.receipt.jobId)}, brief V0${escape(view.receipt.briefVersion)}, at ${escape(view.receipt.receivedAt)}.</p>
-      <p class="m-meta">${escape(String(view.receipt.label || "").toUpperCase())}</p>
+      <p class="m-copy">Received ${escape(view.receipt.receivedAt)}.</p>
     </div>`;
 }
 
@@ -381,79 +356,26 @@ function sendWork() {
   if (view.artboards.length > 0) return "";
   const latestBrief = view.briefs.at(-1);
   const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
-  let context;
   let controls;
   if (handoff) {
-    context = `Brief V0${latestBrief.briefVersion} is with production. The work comes back through the same handoff.`;
     controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`;
-  } else if (latestBrief) {
-    context = `Brief V0${latestBrief.briefVersion} is frozen. Send it to production.`;
-    controls = `<button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
-  } else if (view.concept) {
-    context = "Read the compiled brief, then send it to production.";
-    controls = `<button class="m-button" type="button" data-save>Save note</button>
-      <button class="m-button m-button--primary" type="button" data-send>Send to production</button>`;
   } else {
-    context = "Save the Scene before sending it to production.";
-    controls = `<button class="m-button m-button--primary" type="button" data-save>Save note</button>`;
+    controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send to production"}</button>`;
   }
-  return `<section class="m-stack" aria-labelledby="send-heading">
-      <h2 id="send-heading" class="m-scene-work-heading">Send to production</h2>
-      ${briefSection()}
+  return `<section class="m-drawer__action" aria-labelledby="send-heading">
+      <h2 id="send-heading" class="m-drawer__title">Send to production</h2>
+      ${handoff ? "" : noteWork()}
       ${receiptSection()}
-      <p class="m-action-bar__context">${escape(context)}</p>
-      <div class="m-action-bar__actions">${controls}</div>
+      ${view.messageAt === "send" && view.message ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
+      <div class="m-drawer__actions">${controls}</div>
+      <details class="m-drawer__context">
+        <summary>Review before sending</summary>
+        <div class="m-drawer__context-body">
+          ${briefSection()}
+          ${venuesWork()}
+        </div>
+      </details>
     </section>`;
-}
-
-// The drawer is a thin rail down the whole right edge. It is fixed to the
-// viewport in both states, so opening it widens it leftward over the work
-// rather than pushing the work aside. There is no rail in app/design/ and
-// builders do not edit that folder, so the frame is set here from tokens, the
-// way the Reviews viewer sets its own.
-const DRAWER_FRAME = {
-  position: "fixed",
-  top: "0",
-  bottom: "0",
-  right: "0",
-  zIndex: "40",
-  background: "var(--m-gradient-sidecar)",
-  borderLeft: "var(--m-rule-width) solid var(--m-border-strong)",
-  boxShadow: "0 0 var(--m-space-7) var(--m-shadow-floating)",
-};
-
-// Closed, the rail is the trigger: its width, turned on its side, running the
-// full height so it is findable from anywhere on the page.
-const RAIL_WIDTH = "var(--m-space-7)";
-const DRAWER_SHUT = { width: RAIL_WIDTH, overflow: "hidden", padding: "0" };
-const DRAWER_OPEN = { width: "min(26rem, 100vw)", overflow: "auto", padding: "0 var(--m-space-5) var(--m-space-6)" };
-
-const TRIGGER_SHUT = {
-  alignItems: "center",
-  display: "flex",
-  height: "100%",
-  justifyContent: "center",
-  minHeight: "0",
-  padding: "0",
-  whiteSpace: "nowrap",
-  writingMode: "vertical-rl",
-};
-const TRIGGER_OPEN = {
-  alignItems: "center",
-  display: "flex",
-  height: "auto",
-  justifyContent: "space-between",
-  minHeight: "var(--m-control-large)",
-  padding: "var(--m-space-4) 0",
-  position: "sticky",
-  top: "0",
-  whiteSpace: "normal",
-  writingMode: "horizontal-tb",
-};
-
-function frameDrawer() {
-  if (drawer && drawer.style) Object.assign(drawer.style, DRAWER_FRAME, drawer.open ? DRAWER_OPEN : DRAWER_SHUT);
-  if (trigger && trigger.style) Object.assign(trigger.style, drawer && drawer.open ? TRIGGER_OPEN : TRIGGER_SHUT);
 }
 
 function renderDrawer() {
@@ -464,25 +386,13 @@ function renderDrawer() {
     if (drawer.remove) drawer.remove();
     drawer = null;
     drawerBody = null;
-    trigger = null;
     return;
   }
-  // The rail's own width is reserved once, when the page learns who is reading
-  // it. Opening and closing the drawer never touches this, so the work under it
-  // cannot move.
   drawer.hidden = false;
-  if (well && well.style) well.style.paddingRight = RAIL_WIDTH;
-  frameDrawer();
   if (!drawerBody) return;
-  const notice = view.message && !view.messageAt
-    ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>`
-    : "";
-  drawerBody.innerHTML = `<div class="m-stack">
-      ${notice}
-      ${sendWork()}
+  drawerBody.innerHTML = `<div class="m-drawer__stack">
       ${askWork()}
-      ${noteWork()}
-      ${venuesWork()}
+      ${sendWork()}
     </div>`;
 }
 
@@ -594,26 +504,9 @@ async function guard(work, where = "") {
   }
 }
 
-async function save() {
-  const concept = {
-    title: view.assignment.title,
-    idea: view.draft.direction.trim(),
-    cameFrom: "written by Higher Roads",
-  };
-  view.concept = (await call("choose-concept", { assignmentId: view.sceneId, concept })).concept;
-  view.brief = await readBrief();
-  view.message = "Saved.";
-  view.messageAt = "";
-  render();
-}
-
 async function reloadQuestions() {
   view.questions = (await call("get-questions", { assignmentId: view.sceneId })).questions;
 }
-
-// Only the drawer's own frame changes when it opens. The page underneath is not
-// re-rendered and not re-measured, so it cannot move.
-if (drawer && drawer.addEventListener) drawer.addEventListener("toggle", frameDrawer);
 
 document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
@@ -650,20 +543,29 @@ document.addEventListener("click", (event) => {
     }, "questions");
     return;
   }
-  if (target.hasAttribute("data-save")) {
-    guard(save);
-    return;
-  }
   if (target.hasAttribute("data-send")) {
     guard(async () => {
+      view.working = true;
+      view.message = "";
+      view.messageAt = "send";
+      render();
+      if (!view.concept || view.concept.idea !== view.draft.direction.trim()) {
+        const concept = {
+          title: view.assignment.title,
+          idea: view.draft.direction.trim(),
+          cameFrom: "written by Higher Roads",
+        };
+        view.concept = (await call("choose-concept", { assignmentId: view.sceneId, concept })).concept;
+      }
       const sent = await call("send-to-production", { assignmentId: view.sceneId });
       view.brief = { brief: sent.brief, document: sent.document, sidecar: sent.sidecar };
       view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
       view.handoffs = (await call("get-handoffs", { assignmentId: view.sceneId })).handoffs;
-      view.message = `Brief V0${sent.brief.briefVersion} is with production.`;
-      view.messageAt = "";
+      view.working = false;
+      view.message = "Production has the Scene.";
+      view.messageAt = "send";
       render();
-    });
+    }, "send");
     return;
   }
   if (target.dataset.download) download(target.dataset.download);

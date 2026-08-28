@@ -68,10 +68,6 @@ function paragraphs(text) {
     .join("");
 }
 
-function version(value) {
-  return String(value || "").padStart(2, "0");
-}
-
 function artistField() {
   if (!view.artists.length) {
     return `<div class="m-callout m-callout--change">
@@ -138,8 +134,8 @@ function directionSection(tour) {
   }
   return `<section class="m-orientation__primary" aria-labelledby="direction-heading">
       <header class="m-orientation__object-head">
-        <h2 id="direction-heading" class="m-section-heading">Creative direction</h2>
-        <span class="m-state m-state--current">Version V${escape(version(direction.version))}</span>
+        <div class="m-stack"><h2 id="direction-heading" class="m-section-heading">Creative direction</h2><span class="m-state m-state--current">Current direction</span></div>
+        <a class="m-button m-button--small" href="./direction.html?tour=${escape(TOUR_ID)}">Revise direction</a>
       </header>
       <div class="m-orientation__reading">
         <div class="m-source-copy">${paragraphs(direction.words)}</div>
@@ -149,7 +145,6 @@ function directionSection(tour) {
         <div><span class="m-label">Set on</span><p class="m-meta">${escape(String(direction.setOn || "").toUpperCase())}</p></div>
         <span class="m-meta">SAVED EXACTLY AS ENTERED</span>
       </footer>
-      <a class="m-button" href="./direction.html?tour=${escape(TOUR_ID)}">Revise direction</a>
     </section>`;
 }
 
@@ -200,12 +195,11 @@ function datesSection(tour) {
       ${rest ? `<details class="m-compact-disclosure">
         <summary>Full itinerary</summary>
         <ol class="m-compact-itinerary">${rest}</ol>
-      </details>` : ""}
-      <div class="m-cluster"><button class="m-button m-button--small" type="button" data-edit-dates>${dates.length ? "Edit the dates" : "Add the dates"}</button></div>`;
+      </details>` : ""}`;
   return `<section class="m-orientation__section" aria-labelledby="tour-run-heading">
       <div class="m-orientation__section-head">
-        <h3 id="tour-run-heading" class="m-label">Dates and venues</h3>
-        ${dates.length ? `<span class="m-meta">${escape(dates.length)} ${dates.length === 1 ? "DATE" : "DATES"}</span>` : ""}
+        <div class="m-stack"><h3 id="tour-run-heading" class="m-label">Dates and venues</h3>${dates.length ? `<span class="m-meta">${escape(dates.length)} ${dates.length === 1 ? "DATE" : "DATES"}</span>` : ""}</div>
+        ${view.editing === "dates" ? "" : `<button class="m-button m-button--small" type="button" data-edit-dates>${dates.length ? "Edit the dates" : "Add the dates"}</button>`}
       </div>
       ${view.editing === "dates" ? datesEditor() : reading}
     </section>`;
@@ -213,7 +207,7 @@ function datesSection(tour) {
 
 function setupSection(tour) {
   const setup = tour.productionSetup;
-  const setupState = setup ? `<span class="m-state m-state--current">Version V${escape(version(setup.version))}</span>` : "";
+  const setupState = setup ? `<span class="m-state m-state--current">Current setup</span>` : "";
   const exceptions = (setup && setup.venueExceptions || []).map((entry) => `<div class="m-setup-exception">
       <span class="m-meta">${escape(readableDate(entry.date))} / ${escape(entry.venue)}</span>
       <p class="m-copy">${escape(entry.text)}</p>
@@ -250,12 +244,11 @@ function setupSection(tour) {
     </div>`;
   const reading = `${playback}
       ${setupDetail}
-      ${setupEmpty}
-      <div class="m-cluster"><button class="m-button m-button--small" type="button" data-edit-setup>${setup ? "Edit the production setup" : "Add the production setup"}</button></div>`;
+      ${setupEmpty}`;
   return `<section class="m-orientation__section" aria-labelledby="setup-heading">
       <div class="m-orientation__section-head">
-        <h3 id="setup-heading" class="m-label">Production details</h3>
-        ${setupState}
+        <div class="m-stack"><h3 id="setup-heading" class="m-label">Production details</h3>${setupState}</div>
+        ${view.editing === "setup" ? "" : `<button class="m-button m-button--small" type="button" data-edit-setup>${setup ? "Edit the production setup" : "Add the production setup"}</button>`}
       </div>
       ${view.editing === "setup" ? editor : reading}
     </section>`;

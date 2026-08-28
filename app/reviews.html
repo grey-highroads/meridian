@@ -25,13 +25,16 @@
         <article class="m-page m-page--fluid m-directory"><header class="m-job-header"><div class="m-job-header__copy"><h1 class="m-section-heading">Reviews</h1><p class="m-copy">Open any Artboard version for the work, its feedback, and its decision.</p></div></header><div class="m-review-directory" id="reviews"></div></article>
       </main>
     </div>
-    <dialog class="m-dialog m-client-shell" id="review-viewer" aria-labelledby="viewer-title">
+    <dialog class="m-dialog m-client-shell m-review-viewer" id="review-viewer" aria-labelledby="viewer-title">
       <header class="m-client-shell__bar">
         <div class="m-stack"><span class="m-label" id="viewer-scene">Scene</span><h1 class="m-scene-work-heading" id="viewer-title">Artboard</h1></div>
         <button class="m-button m-button--quiet" type="button" data-close aria-label="Close review">X</button>
       </header>
       <div class="m-client-shell__scope" id="viewer-state"></div>
-      <section class="m-workstation__stage" id="viewer-stage" aria-label="Artboard viewer"><div class="m-client-review__frame" id="viewer-artifact"></div></section>
+      <div class="m-review-surface">
+        <section class="m-workstation__stage m-review-surface__stage" id="viewer-stage" aria-label="Artboard viewer"><div class="m-client-review__frame m-review-artifact" id="viewer-artifact" data-view-size="fit"></div></section>
+        <div class="m-review-surface__body" id="viewer-surface-body"></div>
+      </div>
       <div class="m-action-bar">
         <p class="m-action-bar__context" id="viewer-context"></p>
         <div class="m-action-bar__actions">
@@ -43,7 +46,7 @@
           </div>
         </div>
       </div>
-      <details class="m-disclosure" id="review-drawer"><summary><span class="m-label">Feedback and actions</span><span class="m-meta" id="drawer-summary">Open</span></summary><div class="m-disclosure__body m-page" id="drawer-body"></div></details>
+      <details class="m-drawer" id="review-drawer"><summary><span class="m-label">Work on this Artboard</span><span class="m-drawer__close">Close</span></summary><div class="m-drawer__body" id="drawer-body"></div></details>
     </dialog>
     <script type="module" src="./shell.js"></script><script type="module" src="./reviews.js"></script>
   </body>

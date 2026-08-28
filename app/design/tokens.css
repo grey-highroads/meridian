@@ -69,8 +69,11 @@
   --m-leading-copy: 1.55;
   --m-tracking-tight: -0.04em;
   --m-tracking-label: 0.16em;
+  --m-tracking-control: 0.1em;
   --m-type-label: 0.625rem;
   --m-type-meta: 0.75rem;
+  --m-type-drawer-copy: 0.8125rem;
+  --m-type-drawer-title: 0.9375rem;
   --m-type-copy: 1rem;
   --m-type-object: 1.25rem;
   --m-type-section: clamp(1.5rem, 2.2vw, 2.125rem);
@@ -100,6 +103,8 @@
   --m-target-minimum: 2.75rem;
   --m-rail-width: 13.5rem;
   --m-inspector-width: 21rem;
+  --m-drawer-width: 28rem;
+  --m-drawer-rail-width: 2.75rem;
   --m-work-width: 58rem;
   --m-page-width: 76rem;
   --m-copy-width: 44rem;

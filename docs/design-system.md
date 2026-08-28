@@ -228,6 +228,18 @@ Use `.m-field`, `.m-label`, `.m-input`, `.m-select`, `.m-textarea`, and `.m-help
 
 Use `.m-disclosure` for optional detail on the same page. Use `.m-dialog` when the detail needs focus and a clear close action.
 
+## Operator drawer
+
+Use `.m-drawer` only for work an operator does about the shared object. It is a fixed overlay: the page keeps its full measure while the closed rail widens leftward over it. A page with no operator-only work has no drawer or trigger.
+
+- Lead with `.m-drawer__action`. Each action keeps its field, button, and result in one group.
+- Put supporting facts in `.m-drawer__context` inside the action they inform. Keep it closed until requested.
+- Use `.m-drawer__reference` only inside that recruited context.
+- Keep shared comments, approvals, and attributed feedback on the object surface.
+- Do not use an Inspector as a drawer. An Inspector permanently changes the work area.
+
+Drawer copy is intentionally smaller and tighter than page copy. Do not counteract that density with page-scale headings, nested cards, or local spacing.
+
 Use Lucide outline icons only. Apply `.m-icon`, with a small or large variant when needed. An icon does not replace the label for an action, state, or decision.
 
 ## State
@@ -252,7 +264,7 @@ Controls keep a minimum target of 44 pixels. Focus remains visible. Motion respe
 
 - new stylesheets live in `app/design/`;
 - color hex values live in `app/design/tokens.css`;
-- visual decisions use classes, not inline styles.
+- visual decisions use classes, not inline attributes or script-owned `.style` changes.
 
 The inherited prototype has a frozen allowance for violations that existed when this foundation landed. The guard rejects any increase. The allowance is not permission to copy a legacy pattern.
 

@@ -166,8 +166,8 @@ test("the Scene page is one column with the request, the tour facts, and two way
   assert.match(source, /What the client asked for/, "Scene does not show the request");
   assert.match(source, /Venues and screens/, "Scene does not show the venue and screen facts");
   assert.match(source, /Note for production, optional/, "Scene does not offer the optional note");
-  assert.match(source, /Ask the client a question/, "Scene does not offer the question");
-  assert.match(source, /data-send>Send to production/, "Scene does not offer the send");
+  assert.match(source, /Ask the client/, "Scene does not offer the question");
+  assert.match(source, /data-send[^>]*>.*Send to production/, "Scene does not offer the send");
   assert.doesNotMatch(source, /travels with the brief|Nobody picks parts of it/, "the interface narrates how briefs are assembled");
   assert.doesNotMatch(source, /data-reference="input"/, "the Scene page still takes an upload");
   assert.doesNotMatch(source, /Scene direction for production/, "the note still presents itself as the gating step");
@@ -254,15 +254,26 @@ test("empty screens speak to the person holding the work", () => {
   assert.match(artist, /Build the Artist Brain/, "Artist Brain does not start with the manual research job");
 });
 
-// The two review pages were removed on 2026-08-27. Every decision they carried
-// lives in the gallery's drawer, which opens under the board rather than
-// reserving a footer for itself.
-test("review decisions live in the gallery drawer, under the board", () => {
+// Amended 2026-08-28. Client work is part of the shared Artboard surface. Only
+// Higher Roads work belongs in the overlay drawer.
+test("review decisions stay with the person and object they belong to", () => {
   const markup = read("app/reviews.html");
   const gallery = read("app/reviews.js");
-  assert.match(markup, /id="review-drawer"/, "the gallery has no drawer to decide in");
+  assert.match(markup, /id="viewer-surface-body"/, "the gallery has no shared Artboard surface");
+  assert.match(markup, /class="m-drawer" id="review-drawer"/, "Higher Roads has no overlay drawer");
   assert.match(gallery, /drawer\.open = false/, "opening a version does not lead with the board");
-  assert.match(gallery, /Approve this version/, "the client cannot approve from the drawer");
-  assert.match(gallery, /data-comment/, "the client cannot comment from the drawer");
-  assert.match(gallery, /Feedback on this version/, "feedback does not name the version it affects");
+  assert.match(gallery, /function clientActions[\s\S]*Approve this version/, "the client cannot approve on the surface");
+  assert.match(gallery, /function clientActions[\s\S]*data-comment/, "the client cannot comment on the surface");
+  assert.match(gallery, /drawer\.remove\(\)/, "the client keeps an operator drawer trigger");
+  assert.match(gallery, /Client feedback/, "the attributed client thread is missing from the surface");
+  assert.match(gallery, /Request changes/, "the operator drawer has no change request");
+  assert.match(gallery, /Present to client/, "the operator drawer has no presentation action");
+});
+
+test("Tour details earns no drawer and leads its shared sections with edit controls", () => {
+  const markup = read("app/tour.html");
+  const page = read("app/tour.js");
+  assert.doesNotMatch(`${markup} ${page}`, /m-drawer|tour-drawer/, "Tour details manufactures an operator panel");
+  assert.match(page, /m-orientation__section-head[\s\S]*data-edit-dates[\s\S]*view\.editing === "dates"/, "the dates edit control trails the section");
+  assert.match(page, /m-orientation__section-head[\s\S]*data-edit-setup[\s\S]*view\.editing === "setup"/, "the setup edit control trails the section");
 });

@@ -11,12 +11,11 @@ const viewer = document.getElementById("review-viewer");
 const viewerScene = document.getElementById("viewer-scene");
 const viewerTitle = document.getElementById("viewer-title");
 const viewerState = document.getElementById("viewer-state");
-const viewerStage = document.getElementById("viewer-stage");
 const viewerArtifact = document.getElementById("viewer-artifact");
 const viewerContext = document.getElementById("viewer-context");
-const drawer = document.getElementById("review-drawer");
-const drawerSummary = document.getElementById("drawer-summary");
-const drawerBody = document.getElementById("drawer-body");
+const viewerSurfaceBody = document.getElementById("viewer-surface-body");
+let drawer = document.getElementById("review-drawer");
+let drawerBody = document.getElementById("drawer-body");
 
 const view = {
   user: null,
@@ -29,6 +28,7 @@ const view = {
   size: "fit",
   draft: { feedback: "", technical: "", preserve: "", comment: "" },
   message: "",
+  messageAt: "",
 };
 
 let thumbnailQueue = Promise.resolve();
@@ -168,38 +168,49 @@ function stateFor(detail) {
   return { label: "Received", className: "m-state" };
 }
 
-function attributedFeedback(detail) {
+function clientFeedback(detail) {
   const value = view.selected.artboardVersion;
-  if (view.user.role === "higher-roads") {
-    const reviews = (detail.reviews || []).filter((entry) => entry.artboardVersion === value);
-    const revisions = (detail.revisions || []).filter((entry) => entry.sourceArtboardVersion === value);
-    return `${reviews.map((entry) => `<div class="m-contribution"><span class="m-label">Higher Roads review</span>${list(entry.departures)}${list(entry.technicalItems, "No technical notes.")}<span class="m-meta">${escape(entry.writtenBy)} / ${escape(entry.writtenAt)}</span></div>`).join("")}${revisions.map((entry) => `<div class="m-contribution"><span class="m-label">Revision issued</span>${list(entry.instructions)}<span class="m-meta">${escape(entry.sentBy)} / ${escape(entry.sentAt)}</span></div>`).join("")}`;
-  }
   const comments = (detail.comments || []).filter((entry) => entry.artboardVersion === value);
   const approvals = (detail.approvals || []).filter((entry) => entry.artboardVersion === value);
   return `${comments.map((entry) => `<div class="m-contribution"><p class="m-copy">${escape(entry.text)}</p><span class="m-meta">${escape(entry.writtenBy)} / ${escape(entry.writtenAt)}</span></div>`).join("")}${approvals.map((entry) => `<div class="m-contribution"><p class="m-copy">Approved this version.</p><span class="m-meta">${escape(entry.approvedBy)} / ${escape(entry.approvedAt)}</span></div>`).join("")}`;
 }
 
+function internalReviewHistory(detail) {
+  const value = view.selected.artboardVersion;
+  const reviews = (detail.reviews || []).filter((entry) => entry.artboardVersion === value);
+  const revisions = (detail.revisions || []).filter((entry) => entry.sourceArtboardVersion === value);
+  return `${reviews.map((entry) => `<div class="m-contribution"><span class="m-label">Review notes</span>${list(entry.departures)}${list(entry.technicalItems, "No technical notes.")}<span class="m-meta">${escape(entry.writtenBy)} / ${escape(entry.writtenAt)}</span></div>`).join("")}${revisions.map((entry) => `<div class="m-contribution"><span class="m-label">Changes requested</span>${list(entry.instructions)}<span class="m-meta">${escape(entry.sentBy)} / ${escape(entry.sentAt)}</span></div>`).join("")}`;
+}
+
 function operatorActions(detail, scene) {
   const value = view.selected.artboardVersion;
   const latest = value === newestVersion(scene);
-  if (!latest) return `<div class="m-callout"><p class="m-copy">Earlier versions are read-only history.</p></div>`;
   const review = detail.reviews?.find((entry) => entry.artboardVersion === value);
   const pending = detail.handoffs?.some((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value);
   const ready = detail.end.readyForClient?.some((entry) => entry.artboardVersion === value);
   const approved = detail.end.clientApprovals?.some((entry) => entry.artboardVersion === value);
-  if (approved || pending) return "";
   const feedback = review ? review.departures.join("\n") : view.draft.feedback;
   const technical = review ? review.technicalItems.join("\n") : view.draft.technical;
-  return `<section class="m-stack" aria-labelledby="operator-actions-heading">
-      <h2 class="m-scene-work-heading" id="operator-actions-heading">Higher Roads actions</h2>
-      ${review ? "" : `<div class="m-field"><label class="m-label" for="review-feedback">Review notes</label><textarea class="m-textarea" id="review-feedback" data-draft="feedback" placeholder="One note per line.">${escape(feedback)}</textarea></div><div class="m-field"><label class="m-label" for="review-technical">Technical notes, optional</label><textarea class="m-textarea" id="review-technical" data-draft="technical">${escape(technical)}</textarea></div><div class="m-field"><label class="m-label" for="review-preserve">Preserve, optional</label><textarea class="m-textarea" id="review-preserve" data-draft="preserve">${escape(view.draft.preserve)}</textarea></div>`}
-      <div class="m-action-bar__actions">
-        ${review ? "" : `<button class="m-button" type="button" data-save-review>Save review</button>`}
-        ${ready ? "" : `<button class="m-button m-button--primary" type="button" data-present>Present to client</button>`}
-        ${ready ? "" : `<button class="m-button m-button--change" type="button" data-revise>Send back for revision</button>`}
-      </div>
-    </section>`;
+  const history = internalReviewHistory(detail);
+  const briefVersion = selectedEntry()?.artboard?.briefVersion;
+  const revisionResult = view.messageAt === "revision" && view.message
+    ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : "";
+  const presentResult = view.messageAt === "present" && view.message
+    ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : "";
+  return `<div class="m-drawer__stack">
+      <section class="m-drawer__action" aria-labelledby="request-changes-heading">
+        <h2 class="m-drawer__title" id="request-changes-heading">Request changes</h2>
+        ${!latest ? `<p class="m-copy">Earlier Artboards are read-only history.</p>` : approved ? `<p class="m-copy">The client approved this Artboard.</p>` : pending ? `<p class="m-copy">Production has the change request.</p>` : `<div class="m-field"><label class="m-label" for="review-feedback">What should change</label><textarea class="m-textarea" id="review-feedback" data-draft="feedback" placeholder="One change per line.">${escape(feedback)}</textarea></div><div class="m-field"><label class="m-label" for="review-technical">Technical notes, optional</label><textarea class="m-textarea m-textarea--note" id="review-technical" data-draft="technical">${escape(technical)}</textarea></div><div class="m-field"><label class="m-label" for="review-preserve">Keep, optional</label><textarea class="m-textarea m-textarea--note" id="review-preserve" data-draft="preserve">${escape(view.draft.preserve)}</textarea></div><div class="m-drawer__actions"><button class="m-button m-button--change" type="button" data-revise>Request changes</button></div>`}
+        ${revisionResult}
+        <details class="m-drawer__context"><summary>Review history</summary><div class="m-drawer__context-body">${history || `<p class="m-copy">No internal review has been recorded for this Artboard.</p>`}</div></details>
+      </section>
+      <section class="m-drawer__action" aria-labelledby="present-heading">
+        <h2 class="m-drawer__title" id="present-heading">Present to client</h2>
+        ${!latest ? `<p class="m-copy">Only the latest Artboard can be presented.</p>` : approved ? `<p class="m-copy">The client approved this Artboard.</p>` : ready ? `<p class="m-copy">The client can now review this Artboard.</p>` : `<p class="m-copy">Make this Artboard available for the client's decision.</p><div class="m-drawer__actions"><button class="m-button m-button--primary" type="button" data-present>Present to client</button></div>`}
+        ${presentResult}
+        <details class="m-drawer__context"><summary>Brief used for this Artboard</summary><div class="m-drawer__context-body"><p class="m-copy">${briefVersion ? `Brief V${version(briefVersion)}` : "No brief reference was recorded."}</p></div></details>
+      </section>
+    </div>`;
 }
 
 function clientActions(detail, scene) {
@@ -208,47 +219,46 @@ function clientActions(detail, scene) {
   const approved = detail.approvals?.some((entry) => entry.artboardVersion === value);
   if (!latest) return `<div class="m-callout"><p class="m-copy">Earlier versions are read-only history.</p></div>`;
   if (approved) return "";
-  return `<section class="m-stack" aria-labelledby="client-actions-heading">
+  return `<section class="m-review-surface__section" aria-labelledby="client-actions-heading">
       <h2 class="m-scene-work-heading" id="client-actions-heading">Your decision</h2>
       <div class="m-field"><label class="m-label" for="client-comment">Comment</label><textarea class="m-textarea" id="client-comment" data-draft="comment" placeholder="Tell the team what should change or what they should know.">${escape(view.draft.comment)}</textarea></div>
       <div class="m-action-bar__actions"><button class="m-button" type="button" data-comment>Send comment</button><button class="m-button m-button--primary" type="button" data-approve>Approve this version</button></div>
+      ${view.message && ["comment", "approve"].includes(view.messageAt) ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
     </section>`;
 }
 
-function renderDrawer() {
+function renderSurface() {
   const detail = view.detail;
   const scene = sceneFor(view.selected.sceneId);
-  const entry = selectedEntry();
-  const feedback = attributedFeedback(detail);
   const rationale = view.user.role === "higher-roads" ? detail.brief?.brief?.chosenConcept?.idea : detail.brief?.rationale;
-  const briefReference = view.user.role === "higher-roads" && entry?.artboard?.briefVersion
-    ? `<span class="m-meta">BUILT AGAINST BRIEF V${version(entry.artboard.briefVersion)}</span>` : "";
-  drawerSummary.textContent = `Artboard V${version(view.selected.artboardVersion)}`;
-  drawerBody.innerHTML = `<div class="m-stack">
-      ${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
-      <div class="m-stack"><span class="m-label">Why this direction</span><p class="m-copy m-copy--large">${escape(rationale || "No rationale was recorded.")}</p>${briefReference}</div>
-      <section class="m-stack" aria-labelledby="feedback-heading"><h2 class="m-scene-work-heading" id="feedback-heading">Feedback on this version</h2>${feedback || `<p class="m-copy">No feedback has been recorded for this version.</p>`}</section>
-      ${view.user.role === "higher-roads" ? operatorActions(detail, scene) : clientActions(detail, scene)}
-    </div>`;
+  const feedback = clientFeedback(detail);
+  viewerSurfaceBody.innerHTML = `<section class="m-review-surface__section" aria-labelledby="rationale-heading">
+      <span class="m-label">Why this direction</span>
+      <h2 class="m-scene-work-heading" id="rationale-heading">The thinking behind the Artboard</h2>
+      <p class="m-copy m-copy--large">${escape(rationale || "No rationale was recorded.")}</p>
+    </section>
+    <section class="m-review-surface__section" aria-labelledby="feedback-heading">
+      <h2 class="m-scene-work-heading" id="feedback-heading">Client feedback</h2>
+      ${feedback || `<p class="m-copy">No client feedback yet.</p>`}
+    </section>
+    ${view.user.role === "higher-roads" ? "" : clientActions(detail, scene)}`;
+}
+
+function renderDrawer() {
+  if (!drawer) return;
+  if (view.user.role !== "higher-roads") {
+    drawer.remove();
+    drawer = null;
+    drawerBody = null;
+    return;
+  }
+  drawer.hidden = false;
+  drawerBody.innerHTML = operatorActions(view.detail, sceneFor(view.selected.sceneId));
 }
 
 function applyViewerSize() {
-  const image = viewerArtifact.querySelector("img");
-  if (!image) return;
-  if (view.size === "fit") {
-    Object.assign(image.style, { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain" });
-    Object.assign(viewerArtifact.style, { width: "100%", height: "100%", overflow: "hidden" });
-  } else {
-    Object.assign(image.style, { width: "auto", height: "auto", maxWidth: "none", maxHeight: "none", objectFit: "none" });
-    Object.assign(viewerArtifact.style, { width: "max-content", height: "max-content", minWidth: "100%", minHeight: "100%", overflow: "visible" });
-  }
+  viewerArtifact.dataset.viewSize = view.size;
   document.querySelectorAll("[data-size]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.size === view.size)));
-}
-
-function setViewerFrame() {
-  Object.assign(viewer.style, { inset: "0", width: "100vw", height: "100vh", maxWidth: "none", maxHeight: "none", margin: "0", padding: "0", border: "0", flexDirection: "column", overflow: "hidden" });
-  Object.assign(viewerStage.style, { flex: "1 1 auto", minHeight: "0", overflow: "auto" });
-  Object.assign(drawer.style, { flex: "0 0 auto", maxHeight: "52vh", overflow: "auto", padding: "0 1.5rem" });
 }
 
 async function detailFor(sceneId, artboardVersion) {
@@ -279,15 +289,14 @@ async function openVersion(sceneId, artboardVersion, pushAddress = true) {
   view.selected = { sceneId, artboardVersion };
   view.detail = null;
   view.message = "";
+  view.messageAt = "";
   view.size = "fit";
-  drawer.open = false;
+  if (drawer) drawer.open = false;
   const address = new URL(window.location.href);
   address.searchParams.set("scene", sceneId);
   address.searchParams.set("version", String(artboardVersion));
   if (pushAddress) history.pushState({}, "", address);
-  setViewerFrame();
   if (!viewer.open) viewer.showModal();
-  viewer.style.display = "flex";
   viewerScene.textContent = scene.title;
   viewerTitle.textContent = `Artboard V${version(artboardVersion)}`;
   viewerState.innerHTML = `<span class="m-state">Opening version</span>`;
@@ -306,13 +315,13 @@ async function openVersion(sceneId, artboardVersion, pushAddress = true) {
     ? `<img src="${escape(artifact.src)}" alt="${escape(scene.title)}, Artboard version ${escape(artboardVersion)}" />`
     : `<div class="m-empty-inline"><span class="m-label">Artboard unavailable</span><p class="m-copy">The stored file could not be opened.</p></div>`;
   applyViewerSize();
+  renderSurface();
   renderDrawer();
   renderGallery();
 }
 
 function closeViewer(pushAddress = true) {
   if (viewer.open) viewer.close();
-  viewer.style.display = "none";
   view.selected = null;
   view.detail = null;
   if (pushAddress) {
@@ -330,20 +339,14 @@ function adjacent(delta) {
   if (wanted) openVersion(scene.id, wanted.artboard.artboardVersion);
 }
 
-async function refreshDetail(message) {
+async function refreshDetail(message, where = "") {
   view.message = message;
+  view.messageAt = where;
   view.detail = await detailFor(view.selected.sceneId, view.selected.artboardVersion);
   const state = stateFor(view.detail);
   viewerState.innerHTML = `<span class="${escape(state.className)}">${escape(state.label)}</span>`;
+  renderSurface();
   renderDrawer();
-}
-
-async function saveReview() {
-  const departures = lines(view.draft.feedback);
-  const technicalItems = lines(view.draft.technical);
-  if (!departures.length && !technicalItems.length) throw new Error("A review needs at least one note.");
-  await call("save-review", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion, departures, technicalItems });
-  await refreshDetail(`Review saved on Artboard V${version(view.selected.artboardVersion)}.`);
 }
 
 async function issueRevision() {
@@ -362,7 +365,7 @@ async function issueRevision() {
     preserve: lines(view.draft.preserve),
   });
   view.draft = { feedback: "", technical: "", preserve: "", comment: "" };
-  await refreshDetail(`Revision issued against Artboard V${version(view.selected.artboardVersion)}.`);
+  await refreshDetail("Production has the change request.", "revision");
 }
 
 async function guard(work) {
@@ -370,7 +373,10 @@ async function guard(work) {
     await work();
   } catch (error) {
     view.message = error.message;
-    if (view.detail) renderDrawer();
+    if (view.detail) {
+      renderSurface();
+      renderDrawer();
+    }
     else root.innerHTML = `<div class="m-callout m-callout--change"><p class="m-copy">${escape(error.message)}</p></div>`;
   }
 }
@@ -391,20 +397,19 @@ document.addEventListener("click", (event) => {
     applyViewerSize();
     return;
   }
-  if (target.hasAttribute("data-save-review")) return void guard(saveReview);
   if (target.hasAttribute("data-revise")) return void guard(issueRevision);
   if (target.hasAttribute("data-present")) return void guard(async () => {
     await call("approve-for-client", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion });
-    await refreshDetail(`Artboard V${version(view.selected.artboardVersion)} is ready for the client.`);
+    await refreshDetail("The client can now review this Artboard.", "present");
   });
   if (target.hasAttribute("data-comment")) return void guard(async () => {
     await call("client-comment", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion, text: view.draft.comment });
     view.draft.comment = "";
-    await refreshDetail(`Comment sent on Artboard V${version(view.selected.artboardVersion)}.`);
+    await refreshDetail("Your comment was sent.", "comment");
   });
   if (target.hasAttribute("data-approve")) return void guard(async () => {
     await call("client-approve", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion });
-    await refreshDetail(`Artboard V${version(view.selected.artboardVersion)} approved.`);
+    await refreshDetail("You approved this Artboard.", "approve");
   });
 });
 
