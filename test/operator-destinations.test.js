@@ -35,17 +35,17 @@ const SHELL_PAGES = [
   "app/direction.html", "app/handoff.html", "app/admin.html",
 ];
 
-test("Admin and Artist Intelligence are built by the shell and live in no page's markup", () => {
+test("Admin and Intelligence are built by the shell and live in no page's markup", () => {
   for (const page of SHELL_PAGES) {
     const source = read(page);
     assert.match(source, /shell\.js/, `${page} does not load the shell`);
     assert.doesNotMatch(source, /href="\.\/admin\.html"/, `${page} still hard-codes the Admin link`);
-    assert.doesNotMatch(source, /href="\.\/intelligence\.html"/, `${page} still hard-codes the Artist Intelligence link`);
+    assert.doesNotMatch(source, /href="\.\/intelligence\.html"/, `${page} still hard-codes the Intelligence link`);
   }
 
   const shell = read("app/shell.js");
   assert.match(shell, /page: "admin\.html", label: "Admin"/, "the shell does not build Admin");
-  assert.match(shell, /Artist Intelligence/, "the shell does not build Artist Intelligence");
+  assert.match(shell, /m-shell__nav-label">Intelligence</, "the shell does not build Intelligence");
   // The reference view moved out of the corner and is reached from the one
   // home the artist's intelligence now has. Ruled 2026-08-28.
   assert.doesNotMatch(shell, /label: "Artist Brain"/, "the corner still carries the reference view");

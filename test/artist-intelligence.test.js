@@ -10,11 +10,12 @@ import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore } from "../src/tour/store.js";
 import { createAnalysisStore, analysisPathFor, SCENE_IDEAS } from "../src/intelligence/analysis.js";
 import { renderConceptPacket } from "../src/intelligence/concept-packet.js";
+import { renderIdeas } from "../src/intelligence/ideas-view.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "../src/org/store.js";
 import { SESSION_COOKIE, signSession } from "../src/org/session.js";
 
-// Job one of Artist Intelligence, checked by what it stored and what a reader
+// Job one of Intelligence, checked by what it stored and what a reader
 // receives rather than by what a call returned.
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -157,29 +158,155 @@ test("asking again chains a second run and leaves the first exactly as it was", 
   assert.equal(read.analyses.length, 2);
 });
 
-test("the packet carries every field it promises and never calls itself a brief", async () => {
+test("a packet holds one idea and carries the whole run's lineage with it", async () => {
   const context = await ready();
   await tourAction({ action: "run-scene-ideas", tourId: TOUR, assignmentId: SCENE }, options(context, OPERATOR, modelReply()));
-  const packet = await tourAction({ action: "get-concept-packet", tourId: TOUR, assignmentId: SCENE }, options(context));
   const analysis = storedAnalyses(context)[0];
 
-  assert.match(packet.filename, /^concept-packet-storm-and-lightning-run-01\.txt$/);
-  assert.match(packet.document, /Concept packet/);
-  assert.match(packet.document, /Scene: /);
-  assert.match(packet.document, /Tour direction version: V01/);
-  assert.match(packet.document, new RegExp(`Generated: ${analysis.ranAt.slice(0, 10)}`));
-  assert.match(packet.document, new RegExp(`Artist knowledge approved: ${analysis.brainApprovedAt.slice(0, 10)}`));
-  assert.match(packet.document, /A front that arrives/);
-  assert.match(packet.document, /The road at night/);
-  assert.match(packet.document, /independent sources/);
-  assert.match(packet.document, /Nothing that reads as arena rock/);
-  assert.match(packet.document, /Which dates are indoors\?/);
-  assert.ok(!/brief/i.test(packet.document), "the packet calls itself a brief");
-  assert.ok(!/brief/i.test(packet.filename), "the filename calls it a brief");
-  assert.ok(!packet.document.includes("\u2014"), "the packet carries an em dash");
+  const first = await tourAction(
+    { action: "get-concept-packet", tourId: TOUR, assignmentId: SCENE, directionIndex: 0 },
+    options(context),
+  );
+  const second = await tourAction(
+    { action: "get-concept-packet", tourId: TOUR, assignmentId: SCENE, directionIndex: 1 },
+    options(context),
+  );
 
-  // The document is rendered from the stored run and from nothing else.
-  assert.equal(renderConceptPacket(analysis), packet.document);
+  // One idea per file, and the other one is not in it.
+  assert.match(first.document, /A front that arrives/);
+  assert.ok(!first.document.includes("The road at night"), "the file carries an idea nobody asked for");
+  assert.match(second.document, /The road at night/);
+  assert.ok(!second.document.includes("A front that arrives"), "the file carries an idea nobody asked for");
+  assert.match(first.document, /Idea 01 of 02/);
+  assert.match(second.document, /Idea 02 of 02/);
+  assert.notEqual(first.filename, second.filename);
+
+  // Full lineage on each one.
+  for (const packet of [first, second]) {
+    assert.match(packet.document, /Concept packet/);
+    assert.match(packet.document, /Scene: /);
+    assert.match(packet.document, /Tour direction version: V01/);
+    assert.match(packet.document, new RegExp(`Generated: ${analysis.ranAt.slice(0, 10)}`));
+    assert.match(packet.document, new RegExp(`Artist knowledge approved: ${analysis.brainApprovedAt.slice(0, 10)}`));
+    assert.match(packet.document, /Run: 01/);
+    assert.ok(!/brief/i.test(packet.document), "the packet calls itself a brief");
+    assert.ok(!/brief/i.test(packet.filename), "the filename calls it a brief");
+    assert.ok(!packet.document.includes("\u2014"), "the packet carries an em dash");
+  }
+
+  // The evidence counts travel with the idea that cites them.
+  assert.match(first.document, /independent sources/);
+  assert.match(first.filename, /^concept-packet-storm-and-lightning-run-01-01-a-front-that-arrives\.txt$/);
+
+  // Rendered from the stored run and from nothing else.
+  assert.equal(renderConceptPacket(analysis, 0), first.document);
+
+  // An idea nobody stored is a refusal rather than an empty file.
+  await assert.rejects(
+    () => tourAction({ action: "get-concept-packet", tourId: TOUR, assignmentId: SCENE, directionIndex: 7 }, options(context)),
+    (error) => error.status === 404,
+  );
+});
+
+// The composition, checked against the markup a person receives rather than
+// against strings in the page source. The first version of this view passed a
+// source-matching test and was still a two-column layout with a label printed
+// over nothing.
+const RUN = {
+  run: 2,
+  runId: "run-1",
+  ranAt: "2026-08-28T10:00:00.000Z",
+  directionVersion: 1,
+  brainApprovedAt: "2026-08-20T10:00:00.000Z",
+  subject: { sceneTitle: "Storm and Lightning", sceneId: SCENE, tourId: TOUR },
+  result: {
+    directions: [
+      {
+        title: "A front that arrives",
+        idea: "The weather comes in over the lawn.",
+        whyThisArtist: "He built his live reputation on sheds.",
+        asksOfProduction: "Rehearsal time.",
+        whereItMightMiss: "It could read as spectacle.",
+        rhymesWith: ["finding-1", "finding-2"],
+      },
+      { title: "The road at night", idea: "Headlights and county roads.", rhymesWith: [] },
+    ],
+    avoidNotes: ["Nothing that reads as arena rock."],
+    openQuestions: [],
+  },
+  evidence: [
+    // One finding with a supporting sentence behind its lead, and one with
+    // nothing behind it but its counts and tiers.
+    { findingId: "finding-1", text: "**He plays sheds.** Twelve of the last fifteen runs were amphitheatres.", independentSourceCount: 4, tiers: [1, 2], why: "It bears on the request." },
+    { findingId: "finding-2", text: "**The aviation staging returns.**", independentSourceCount: 3, tiers: [1], why: "The Scene asks for height." },
+  ],
+};
+
+test("each idea renders its own two actions and nothing carries a run-wide export", () => {
+  const html = renderIdeas(RUN);
+  for (const index of [0, 1]) {
+    assert.ok(html.includes(`data-idea-download="${index}"`), `idea ${index} has no download`);
+    assert.ok(html.includes(`data-idea-copy="${index}"`), `idea ${index} has no copy`);
+  }
+  assert.equal((html.match(/data-idea-download=/g) || []).length, 2);
+  assert.equal((html.match(/data-idea-copy=/g) || []).length, 2);
+  assert.ok(!html.includes("data-packet"), "the run-level export is still on the page");
+  assert.ok(!/Download the concept packet/.test(html), "the run-level button is still on the page");
+});
+
+test("no label renders over a void, and a disclosure opens onto something", () => {
+  const html = renderIdeas(RUN);
+  // finding-1 has a sentence behind its lead, so it earns a disclosure.
+  assert.match(html, /<details class="m-evidence-item">/);
+  assert.match(html, /Twelve of the last fifteen runs were amphitheatres/);
+  // finding-2 has only counts and tiers, so it is one quiet line and no label.
+  assert.match(html, /<span class="m-meta">3 INDEPENDENT SOURCES, FROM TIER 1<\/span>/);
+  assert.equal((html.match(/<details/g) || []).length, 1, "a disclosure was written over nothing");
+  // Open questions is empty, so its heading does not render at all.
+  assert.ok(!/OPEN QUESTIONS/.test(html), "an empty section printed its heading");
+  assert.match(html, /WHAT THIS ARTIST STAYS AWAY FROM/, "a section with content did not render");
+});
+
+test("the ideas stack in one column and their titles are the largest text", () => {
+  const html = renderIdeas(RUN);
+  // The system's one-column reading pattern, not the two-column orientation
+  // grid. The measure belongs to the page, so the asks above the ideas and the
+  // ideas share one left edge rather than sitting at two.
+  const markup = read("app/intelligence.html");
+  assert.match(markup, /class="m-intelligence-reader m-directory"/, "the surface has no single measure");
+  assert.ok(!/m-intelligence-reader"/.test(html), "the run opens a second measure inside the page");
+  assert.match(html, /class="m-intelligence-reader__head"/);
+  assert.match(html, /class="m-intelligence-principles"/);
+  assert.ok(!/m-orientation/.test(html), "the ideas are back in the two-column grid");
+
+  // An idea's title is the only thing at section scale inside the run.
+  assert.equal((html.match(/m-intelligence-principle__heading/g) || []).length, 2);
+  assert.ok(!/m-section-heading/.test(html), "something in the run competes with an idea title");
+  assert.ok(!/m-heading/.test(html.replace(/m-intelligence-principle__heading/g, "")), "the run header shouts");
+
+  // The run and its lineage are context, carried at meta scale.
+  assert.match(html, /RUN 02 \/ 2026-08-28 \/ TOUR DIRECTION V01 \/ ARTIST KNOWLEDGE APPROVED 2026-08-20/);
+
+  // And the surface does not run the full width of the window.
+  assert.doesNotMatch(markup, /m-page--fluid/, "the page runs the full width of the window");
+});
+
+test("emphasis comes from the hierarchy, never from weight inside running text", () => {
+  const html = renderIdeas(RUN);
+  assert.ok(!html.includes("<strong>"), "bold is back inside running text");
+  assert.ok(!html.includes("<b>"), "bold is back inside running text");
+  // The intake file's own asterisks never reach a reader either.
+  assert.ok(!html.includes("**"), "the intake file's markup reached the page");
+  assert.match(html, /<p class="m-copy">He plays sheds\.<\/p>/);
+});
+
+test("the nav reads Intelligence, one word, and no page hard-codes it", () => {
+  const shell = read("app/shell.js");
+  assert.match(shell, /m-shell__nav-label">Intelligence</, "the rail does not read Intelligence");
+  assert.ok(!/Artist Intelligence/.test(shell), "the two-word name survives in the shell");
+  assert.ok(!/Artist Intelligence/.test(read("app/intelligence.js")), "the two-word name survives on the page");
+  assert.ok(!/Artist Intelligence/.test(read("app/intelligence.html")), "the two-word name survives in the markup");
+  assert.ok(!/Artist Intelligence/.test(read("docs/meridian-brain-reintegration.md")), "the orientation document still disagrees with the app");
 });
 
 test("the packet source and the record name nothing a brief", () => {
@@ -254,7 +381,7 @@ test("the rail destination is built for a Higher Roads session and the brain has
   const shell = read("app/shell.js");
   const guard = shell.match(/if \(body\.user\.role === "higher-roads"\) \{[\s\S]*?\n  \}/)?.[0] || "";
   assert.match(guard, /mountIntelligenceDestination\(\)/, "the rail link is built before the role is known");
-  assert.match(shell, /Artist Intelligence/, "the shell does not build the destination");
+  assert.match(shell, /Intelligence/, "the shell does not build the destination");
   assert.doesNotMatch(shell, /label: "Artist Brain"/, "the corner still carries the reference view");
   assert.match(shell, /data-operator-utility/, "the rail link is outside the rule that hides operator things");
 

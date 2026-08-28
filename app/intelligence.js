@@ -1,6 +1,7 @@
 import { TOUR_ID, scopedBody } from "./context.js";
+import { escape, pad, renderIdeas } from "../src/intelligence/ideas-view.js";
 
-// Artist Intelligence. Four things a Higher Roads person can ask about the
+// Intelligence. Four things a Higher Roads person can ask about the
 // artist, and the research they draw on underneath.
 //
 // The old home for this was a panel on the Scene page that held the content and
@@ -35,40 +36,6 @@ async function call(action, extra = {}) {
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "That did not work. Try again.");
   return body;
-}
-
-function escape(value) {
-  return String(value === null || value === undefined ? "" : value)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function pad(value) {
-  return String(Number(value) || 0).padStart(2, "0");
-}
-
-function day(value) {
-  const parsed = new Date(value);
-  if (!value || Number.isNaN(parsed.getTime())) return "not recorded";
-  return parsed.toISOString().slice(0, 10);
-}
-
-// The intake file writes the lead sentence of an entry in bold. It reads as the
-// headline; the rest is the supporting sentence.
-function leadAndBody(text) {
-  const value = String(text || "").trim();
-  const marked = value.match(/^\*\*(.+?)\*\*\s*(.*)$/s);
-  if (marked) return { lead: marked[1], body: marked[2] };
-  const sentence = value.match(/^(.+?[.!?])(?:\s+|$)(.*)$/s);
-  if (sentence) return { lead: sentence[1], body: sentence[2] };
-  return { lead: value, body: "" };
-}
-
-function sourceLine(entry) {
-  if (!entry || !entry.independentSourceCount) return "Source count not recorded";
-  const plural = entry.independentSourceCount === 1 ? "source" : "sources";
-  const tiers = (entry.tiers || []).join(", ");
-  const count = `${entry.independentSourceCount} independent ${plural}`;
-  return tiers ? `${count}, from tier ${tiers}` : count;
 }
 
 // A Scene can be asked about once it has been submitted. A draft request has
@@ -128,46 +95,6 @@ function asks() {
     </section>`;
 }
 
-function evidenceEntry(entry) {
-  const parts = leadAndBody(entry.text);
-  return `<div class="m-stack">
-      <p class="m-copy"><strong>${escape(parts.lead)}</strong></p>
-      ${entry.why ? `<p class="m-copy">${escape(entry.why)}</p>` : ""}
-      <details class="m-evidence-item">
-        <summary><span class="m-meta">WHAT THIS RESTS ON</span></summary>
-        <div class="m-evidence-item__body">
-          <p class="m-copy">${escape(sourceLine(entry))}.</p>
-          ${parts.body ? `<p class="m-copy">${escape(parts.body)}</p>` : ""}
-        </div>
-      </details>
-    </div>`;
-}
-
-function directionBlock(direction, index, evidence) {
-  const byId = new Map(evidence.map((entry) => [entry.findingId, entry]));
-  const cited = (direction.rhymesWith || []).map((id) => byId.get(id)).filter(Boolean);
-  const detail = [
-    direction.whyThisArtist ? `<p class="m-copy">Why this artist: ${escape(direction.whyThisArtist)}</p>` : "",
-    direction.asksOfProduction ? `<p class="m-copy">What it asks of production: ${escape(direction.asksOfProduction)}</p>` : "",
-    direction.whereItMightMiss ? `<p class="m-copy">Where it might miss: ${escape(direction.whereItMightMiss)}</p>` : "",
-  ].join("");
-  return `<article class="m-orientation__section">
-      <span class="m-meta">DIRECTION ${escape(pad(index + 1))}</span>
-      <h3 class="m-section-heading">${escape(direction.title)}</h3>
-      <p class="m-copy m-copy--large">${escape(direction.idea)}</p>
-      ${detail}
-      ${cited.length ? `<div class="m-stack">${cited.map(evidenceEntry).join("")}</div>` : ""}
-    </article>`;
-}
-
-function listBlock(heading, items) {
-  if (!items || !items.length) return "";
-  return `<section class="m-orientation__section">
-      <h3 class="m-section-heading">${escape(heading)}</h3>
-      <ul>${items.map((entry) => `<li class="m-copy">${escape(entry)}</li>`).join("")}</ul>
-    </section>`;
-}
-
 function runPicker() {
   if (view.analyses.length < 2) return "";
   const rows = view.analyses.slice().reverse().map((entry) => {
@@ -177,9 +104,15 @@ function runPicker() {
   return `<div class="m-cluster">${rows}</div>`;
 }
 
+function currentAnalysis() {
+  if (!view.analyses.length) return null;
+  return view.analyses.find((entry) => entry.runId === view.runId) || view.analyses[view.analyses.length - 1];
+}
+
 function result() {
   if (view.loadingRuns) return "";
-  if (!view.analyses.length) {
+  const analysis = currentAnalysis();
+  if (!analysis) {
     return `<section class="m-empty-state m-empty-state--action m-empty-state--compact">
         <div class="m-empty-state__body">
           <h2 class="m-section-heading">Nothing asked for this Scene yet</h2>
@@ -187,27 +120,7 @@ function result() {
         </div>
       </section>`;
   }
-  const analysis = view.analyses.find((entry) => entry.runId === view.runId) || view.analyses[view.analyses.length - 1];
-  const evidence = Array.isArray(analysis.evidence) ? analysis.evidence : [];
-  const directions = Array.isArray(analysis.result && analysis.result.directions) ? analysis.result.directions : [];
-  const subject = analysis.subject || {};
-  return `<section class="m-orientation" aria-labelledby="result-heading">
-      <div class="m-section-lead">
-        <div class="m-stack">
-          <span class="m-label">Ideas for ${escape(subject.sceneTitle || "this Scene")}</span>
-          <h2 id="result-heading" class="m-section-heading">Run ${escape(pad(analysis.run))}, ${escape(day(analysis.ranAt))}</h2>
-          <span class="m-meta">TOUR DIRECTION V${escape(pad(analysis.directionVersion))} / ARTIST KNOWLEDGE APPROVED ${escape(day(analysis.brainApprovedAt).toUpperCase())}</span>
-        </div>
-        <div class="m-cluster">
-          ${runPicker()}
-          <button class="m-button" type="button" data-packet="${escape(analysis.runId)}">Download the concept packet</button>
-        </div>
-      </div>
-      <p class="m-copy">These are starting points. Nothing here has been decided or approved.</p>
-      ${directions.map((direction, index) => directionBlock(direction, index, evidence)).join("")}
-      ${listBlock("What this artist stays away from", analysis.result && analysis.result.avoidNotes)}
-      ${listBlock("Open questions", analysis.result && analysis.result.openQuestions)}
-    </section>`;
+  return renderIdeas(analysis, runPicker());
 }
 
 function reference() {
@@ -230,7 +143,7 @@ function render() {
   root.innerHTML = `<header class="m-job-header">
       <div class="m-job-header__copy">
         <span class="m-label">Higher Roads only</span>
-        <h1 class="m-heading">Artist Intelligence</h1>
+        <h1 class="m-section-heading">Intelligence</h1>
         <p class="m-copy">Four things you can ask about this artist. Every answer carries the research it came from.</p>
       </div>
     </header>
@@ -277,9 +190,21 @@ async function run() {
   render();
 }
 
-async function download(runId) {
+// A person takes one idea away, so both actions ask the server for that one
+// idea and get the same words either way. The stored run is untouched by
+// either; this is what leaves, not what Meridian keeps.
+async function packetFor(index) {
+  const analysis = currentAnalysis();
+  return await call("get-concept-packet", {
+    assignmentId: view.sceneId,
+    runId: analysis ? analysis.runId : "",
+    directionIndex: Number(index),
+  });
+}
+
+async function downloadIdea(index) {
   try {
-    const { filename, document: body } = await call("get-concept-packet", { assignmentId: view.sceneId, runId });
+    const { filename, document: body } = await packetFor(index);
     const url = URL.createObjectURL(new Blob([body], { type: "text/plain" }));
     const link = document.createElement("a");
     link.href = url;
@@ -294,6 +219,17 @@ async function download(runId) {
   }
 }
 
+async function copyIdea(index) {
+  try {
+    const { document: body } = await packetFor(index);
+    await navigator.clipboard.writeText(body);
+    view.message = "The idea is on your clipboard.";
+  } catch (error) {
+    view.message = error.message;
+  }
+  render();
+}
+
 document.addEventListener("change", (event) => {
   if (event.target && event.target.id === "scene-choice") {
     view.sceneId = event.target.value;
@@ -305,7 +241,8 @@ document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
   if (target.hasAttribute("data-run")) void run();
-  if (target.hasAttribute("data-packet")) void download(target.getAttribute("data-packet"));
+  if (target.hasAttribute("data-idea-download")) void downloadIdea(target.getAttribute("data-idea-download"));
+  if (target.hasAttribute("data-idea-copy")) void copyIdea(target.getAttribute("data-idea-copy"));
   if (target.hasAttribute("data-run-id")) {
     view.runId = target.getAttribute("data-run-id");
     render();

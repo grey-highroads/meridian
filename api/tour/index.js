@@ -728,7 +728,7 @@ export async function handleAction(body, options = {}) {
     return { tour: fixture.tour, assignment, context, ...proposed };
   }
 
-  // Job one of Artist Intelligence. An admin picks a Scene that has been
+  // Job one of Intelligence. An admin picks a Scene that has been
   // submitted and asks the artist's record for ideas. One action, nothing to
   // configure. What comes back is stored as a run, and a second ask adds a
   // second run rather than replacing the first.
@@ -779,8 +779,10 @@ export async function handleAction(body, options = {}) {
     return { analyses: await analysisStore.readAnalyses(SCENE_IDEAS, fixture.tour.id, assignment.id) };
   }
 
-  // The packet is rendered from the stored run and from nothing else, so a
-  // download in October says what the artist's record said in August.
+  // A packet covers one idea. It is rendered from the stored run and from
+  // nothing else, so a download in October says what the artist's record said
+  // in August. Which idea is resolved against the stored run rather than taken
+  // from the request, so an index nobody stored is a refusal and not a blank.
   if (body.action === "get-concept-packet") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
@@ -793,7 +795,11 @@ export async function handleAction(body, options = {}) {
       error.status = 404;
       throw error;
     }
-    return { filename: conceptPacketFilename(analysis), document: renderConceptPacket(analysis) };
+    const index = Number(body.directionIndex);
+    return {
+      filename: conceptPacketFilename(analysis, index),
+      document: renderConceptPacket(analysis, index),
+    };
   }
 
   if (body.action === "choose-concept") {

@@ -619,7 +619,7 @@ Recorded 2026-08-27 with the Scene page rebuild. The Artist Brain panel came out
 
 Bring it back when: a person deciding what to build asks for what the artist's history offers, from wherever that surface ends up living.
 
-Closed 2026-08-28. Artist Intelligence is that surface. An admin picks a submitted Scene, asks for ideas, and `propose-concepts` is reached again. Every run is stored and a second ask adds a run rather than replacing the first. The three fields a saved concept stopped carrying are still empty, because choosing an idea from this page and shaping it into a concept is a later commit.
+Closed 2026-08-28. Intelligence is that surface. An admin picks a submitted Scene, asks for ideas, and `propose-concepts` is reached again. Every run is stored and a second ask adds a run rather than replacing the first. The three fields a saved concept stopped carrying are still empty, because choosing an idea from this page and shaping it into a concept is a later commit.
 
 ## Venue and screen specifications are unstructured
 
@@ -641,7 +641,7 @@ Bring it back when: nothing to bring back. The rule it establishes is that any f
 
 ## The artist's intelligence has no durable version identifier
 
-Recorded 2026-08-28 with Artist Intelligence job one. Every analysis has to name which brain answered it, so a person reading an old run knows what the system knew that day. The brain has no version number. What exists is the date it was approved, in `decisions.json` under `brain.approvedAt`, written by `approveBrain` in `src/artist/store.js`. So `brainApprovedAt` in the analysis record is standing in for a version. Two approvals on the same day are indistinguishable, and re-approving after an import changes the reference without saying what changed.
+Recorded 2026-08-28 with Intelligence job one. Every analysis has to name which brain answered it, so a person reading an old run knows what the system knew that day. The brain has no version number. What exists is the date it was approved, in `decisions.json` under `brain.approvedAt`, written by `approveBrain` in `src/artist/store.js`. So `brainApprovedAt` in the analysis record is standing in for a version. Two approvals on the same day are indistinguishable, and re-approving after an import changes the reference without saying what changed.
 
 Bring it back when: intake or approval mints a durable identifier for the brain. The analysis record carries that identifier in place of the approval date, in the same commit, and `brainApprovedAt` comes out.
 
@@ -650,3 +650,24 @@ Bring it back when: intake or approval mints a durable identifier for the brain.
 Recorded 2026-08-28 with the concept packet. The packet is meant to carry every source behind an idea. What a finding holds is an independent source count and a list of tiers, because `claimIds` is empty and `evidenceLinked` is false on every finding this intake produced. So the packet prints the count and the tiers and says nothing it cannot support. This is the same gap as "Findings do not name the claims behind them" and "A claim's source is prose, not a source id", recorded here because the packet is the first thing that leaves Meridian and lands in front of somebody outside it.
 
 Bring it back when: a finding names its claims and a claim names its source id. The packet then prints titles and links under each idea, and `evidenceBlock` in `src/intelligence/concept-packet.js` is where that goes.
+
+## A reading measure comes from a reader pattern, not a page modifier
+
+Recorded 2026-08-28 with the Intelligence ideas view. The surface needs one column at one comfortable measure, for the asks and the ideas together, sharing one left edge. `m-page` is 76rem and `m-page--fluid` is the window. Neither is a reading measure, and there is no page modifier for one. So `app/intelligence.html` puts `m-intelligence-reader` on the page element itself, which is a block's own class doing a page's job. It is the nearest thing that exists and it carries the 58rem measure, the padding, and the narrow-width padding collapse already.
+
+The same commit found the cost of not doing this. The ideas were first put inside `m-orientation`, a two-column grid of unequal measures meant for a primary panel and an aside, so three ideas alternated across two columns of different widths. The pattern was used without being read.
+
+Bring it back when: a page modifier for a single reading measure exists, or the reader pattern is renamed to say it is a measure rather than a component. `app/intelligence.html` takes that class in the same commit.
+
+## No card pattern holds prose with an action group at its end
+
+Recorded 2026-08-28 with the Intelligence ideas view. An idea is a title, a body, three qualifying notes, its evidence, and two actions. `m-intelligence-principle` is what carries it: a rule-separated block with a heading at section scale and a body at 1.125rem. It is a reading block rather than a card, so the ideas are separated by rules instead of sitting on their own surfaces, and the two actions sit inside the block rather than on a defined footer.
+
+Bring it back when: somebody rules that these should read as cards. The pattern lands in `app/design/patterns.css` and `ideaBlock` in `src/intelligence/ideas-view.js` takes it.
+
+## The ideas view lives in src so its markup can be asserted
+
+Recorded 2026-08-28. `src/intelligence/ideas-view.js` holds the rendering for a run of ideas, and `app/intelligence.js` imports it. This is the first file under `app/` that imports from `src/`. It was moved because the first version of this view passed a test that matched strings in the page source, and shipped a two-column layout with unequal measures and a label printed over nothing. A test that cannot see rendered markup cannot see a composition fault.
+
+Bring it back when: Grey rules on whether page rendering belongs under `src/`. If it does not, the alternative is a browser-free rendering harness in `test/` that can import a page script, which is the larger job and the reason this route was taken first.
+

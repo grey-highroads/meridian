@@ -152,7 +152,7 @@ async function mountAccountPicker(active) {
 // page that loads the shell, and only for the Higher Roads role. The route
 // still refuses a client session on its own; nothing here is the enforcement.
 //
-// Artist Intelligence used to sit here as Artist Brain, a corner link to the
+// Intelligence used to sit here as Artist Brain, a corner link to the
 // reference view. It is a working destination now and sits in the rail, and the
 // reference view is reached from it, so the artist's intelligence has one home.
 // Ruled 2026-08-28.
@@ -176,7 +176,7 @@ function mountIntelligenceDestination() {
   link.setAttribute("data-operator-utility", "");
   if (here) link.setAttribute("aria-current", "page");
   link.href = "./intelligence.html";
-  link.innerHTML = `${INTELLIGENCE_ICON}<span class="m-shell__nav-label">Artist Intelligence</span>`;
+  link.innerHTML = `${INTELLIGENCE_ICON}<span class="m-shell__nav-label">Intelligence</span>`;
   nav.append(link);
 }
 

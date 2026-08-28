@@ -2,7 +2,7 @@
 
 Date: 2026-08-28
 Head at writing: `33b105453e936d050e4ff6511a3acef7282bce60`
-Pushed: 2026-08-28, with job one, at head `b136590010f72cc3a2b590d89662fa88f7ca4c56`. The nav name was corrected to Artist Intelligence in the same commit.
+Pushed: 2026-08-28, with job one, at head `b136590010f72cc3a2b590d89662fa88f7ca4c56`. The destination is named Intelligence, one word, ruled by Grey 2026-08-28 and corrected here in the commit that fixed the ideas view.
 For: the designer first, then builders. This document is orientation and journey, not an assignment. Commit briefs follow separately and will name files.
 
 ## Why the brain left, and why it is coming back
@@ -25,7 +25,7 @@ Rules already standing in the thesis and architecture, binding on every design c
 
 ## The surface
 
-A new left-nav destination named Artist Intelligence, admins only, enforced by the server like every other boundary. It is the brain's working surface, and the existing reference view (what the brain knows, by category, with evidence) becomes reachable from it, so the brain has one home instead of a corner utility. The nav says Artist Intelligence and the page says Artist Intelligence. The brain is what the thing holds; Artist Intelligence is what the person opens. (Named 2026-08-28 so this document and the app never disagree.)
+A new left-nav destination named Intelligence, admins only, enforced by the server like every other boundary. It is the brain's working surface, and the existing reference view (what the brain knows, by category, with evidence) becomes reachable from it, so the brain has one home instead of a corner utility. The nav says Intelligence and the page says Intelligence, one word in both places. The brain is what the thing holds; Intelligence is what the person opens. (Named 2026-08-28 so this document and the app never disagree.)
 
 Clients never see the nav item, the surface, or any output from it. This is the first navigation destination that exists for one role only, which is a design question in itself: the client's nav simply does not have it, and nothing in the client's experience implies a missing item.
 
@@ -71,7 +71,7 @@ The page-and-drawer ruling applies with a twist worth thinking through: this who
 
 ## The journey, as the admin walks it
 
-She opens Artist Intelligence from the nav. The page leads with the four things she can ask, each in her words: ideas for a Scene, read the direction against the artist, review a board before the client sees it, check the tour stops. Beneath them, the reference: what the brain knows, browsable by category with evidence, the view that already exists.
+She opens Intelligence from the nav. The page leads with the four things she can ask, each in her words: ideas for a Scene, read the direction against the artist, review a board before the client sees it, check the tour stops. Beneath them, the reference: what the brain knows, browsable by category with evidence, the view that already exists.
 
 She picks a Scene from a list of submitted ones and asks for ideas. The ask is one action; there is nothing to configure. What comes back reads like a colleague who knows the catalog: three directions, each saying what it rhymes with in the artist's history and where the evidence is. She exports the concept packet and drops it into her downstream workflow. Total time, a few minutes.
 
