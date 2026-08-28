@@ -624,7 +624,6 @@
   }
 
   .m-home__section-link,
-  .m-home-moving > summary,
   .m-home__tour-details > summary {
     color: var(--m-text-muted);
     font-family: var(--m-font-mono);
@@ -743,6 +742,23 @@
     justify-content: space-between;
     list-style: none;
     min-height: var(--m-control-large);
+  }
+
+  .m-home-moving > summary {
+    color: var(--m-text-muted);
+    font-family: var(--m-font-sans);
+    font-size: var(--m-type-label);
+    font-weight: var(--m-weight-regular);
+    gap: var(--m-space-3);
+    justify-content: flex-start;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  .m-home-moving__count {
+    color: var(--m-text-secondary);
+    flex: none;
   }
 
   .m-home-moving > summary::-webkit-details-marker,

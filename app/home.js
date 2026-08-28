@@ -158,7 +158,7 @@ function currentWork(assignments, user) {
 
   const movingRows = moving.map((scene) => `<a class="m-lifecycle-row" href="${escape(sceneHref(scene))}"><div class="m-lifecycle-row__object"><strong class="m-lifecycle-row__title">${escape(scene.title)}</strong>${scene.currentVersion ? `<span class="m-meta">${escape(String(scene.currentVersion).toUpperCase())}</span>` : ""}</div><p class="m-lifecycle-row__summary">${escape(progressStatus(scene, user))}</p></a>`).join("");
   const empty = `<div class="m-empty-inline m-empty-inline--clear"><p class="m-copy">Nothing needs a decision right now.</p></div>`;
-  const disclosure = moving.length ? `<details class="m-home-moving"><summary><span>Moving without you</span><span class="m-meta">${moving.length} ${moving.length === 1 ? "SCENE" : "SCENES"}</span></summary><div class="m-lifecycle-list">${movingRows}</div></details>` : "";
+  const disclosure = moving.length ? `<details class="m-home-moving" open><summary><span class="m-home-moving__label">In progress, nothing needed from you</span> <span class="m-home-moving__count">${moving.length} ${moving.length === 1 ? "Scene" : "Scenes"}</span></summary><div class="m-lifecycle-list">${movingRows}</div></details>` : "";
 
   return `<section class="m-home__work" aria-labelledby="work-heading"><div class="m-section-lead"><div class="m-stack"><span class="m-label m-home__work-label">Current work</span><h2 id="work-heading" class="m-section-heading">Needs you</h2></div><a class="m-home__section-link" href="./scenes.html?tour=${escape(TOUR_ID)}">All Scenes</a></div><div class="m-attention-list">${needRows || empty}</div>${disclosure}</section>`;
 }

@@ -57,6 +57,12 @@ function homePage(user, assignments) {
   };
 }
 
+function renderedSummaryText(markup) {
+  const summary = markup.match(/<details class="m-home-moving"[^>]*><summary>([\s\S]*?)<\/summary>/)?.[1];
+  assert.ok(summary, "Home rendered no in-progress summary");
+  return summary.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+}
+
 // The lifecycle is what Home reads, so the row under test carries exactly what
 // the route would put on it rather than numbers a test made up.
 function sceneAt(overrides) {
@@ -137,5 +143,35 @@ test("one Scene with a question and a pending review appears once on Home", asyn
   assert.equal((markup.match(/Storm and lightning/g) || []).length, 1, "Home repeats one Scene across decision and progress sections");
   assert.match(markup, /Answer requested/, "the question does not set the Scene's visible job");
   assert.match(markup, />Answer</, "the question does not carry its action");
-  assert.doesNotMatch(markup, /Moving without you/, "a Scene needing an answer also appears as independent work");
+  assert.doesNotMatch(markup, /In progress, nothing needed from you/, "a Scene needing an answer also appears as independent work");
+});
+
+test("both Home views render the in-progress disclosure as one composed line", async () => {
+  const moving = [
+    { id: "storm-and-lightning", title: "Storm and lightning", stage: "Requested", waitingOn: "production", currentVersion: null, openQuestions: [] },
+    { id: "opening-sequence", title: "Opening sequence", stage: "Approved for production", waitingOn: "production", currentVersion: "Artboard V02", openQuestions: [] },
+  ];
+  const users = [
+    { role: "higher-roads", displayName: "Ray Mercer" },
+    { role: "client-reviewer", displayName: "Sarah Lyle", introductionSeenAt: "2026-08-01" },
+  ];
+  const rendered = [];
+
+  for (const user of users) {
+    const page = homePage(user, moving);
+    await page.settle();
+    const markup = page.markup();
+    rendered.push(renderedSummaryText(markup));
+    assert.match(markup, /<details class="m-home-moving" open>/, `${user.role} Home collapsed work that needs nothing`);
+    assert.match(markup, /<span class="m-home-moving__count">2 Scenes<\/span>/, `${user.role} Home did not render the count as its own element`);
+  }
+
+  assert.deepEqual(rendered, [
+    "In progress, nothing needed from you 2 Scenes",
+    "In progress, nothing needed from you 2 Scenes",
+  ]);
+
+  const patterns = fs.readFileSync(path.join(rootPath, "app", "design", "patterns.css"), "utf8");
+  const summaryRule = patterns.match(/\.m-home-moving > summary \{([\s\S]*?)\n  \}/)?.[1] || "";
+  assert.match(summaryRule, /white-space:\s*nowrap;/, "the composed summary can break across lines at a narrow width");
 });
