@@ -307,6 +307,9 @@ const RUN = {
 
 test("each idea renders its own two actions and nothing carries a run-wide export", () => {
   const html = renderIdeas(RUN);
+  assert.match(html, /class="m-intelligence-results"/);
+  assert.match(html, /<span class="m-label">Generated ideas<\/span>/);
+  assert.match(html, /<span class="m-meta">2 IDEAS<\/span>/);
   for (const index of [0, 1]) {
     assert.ok(html.includes(`data-idea-download="${index}"`), `idea ${index} has no download`);
     assert.ok(html.includes(`data-idea-copy="${index}"`), `idea ${index} has no copy`);
@@ -380,6 +383,7 @@ test("the four asks render as independent instruments rather than directory rows
   ]);
   assert.equal((html.match(/class="m-intelligence-instrument"/g) || []).length, 4);
   assert.match(html, /class="m-intelligence-instruments"/);
+  assert.match(html, /class="m-intelligence-instrument__body"/);
   assert.match(html, /class="m-intelligence-instrument__footer"/);
   assert.ok(!html.includes("m-rule-list"), "the asks are still a rule list");
   assert.ok(!html.includes("m-rule-row"), "an ask still reads as a directory row");

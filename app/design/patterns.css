@@ -2031,14 +2031,22 @@
     padding: var(--m-space-8);
   }
 
+  .m-intelligence-reader.m-directory {
+    gap: var(--m-space-4);
+  }
+
+  .m-intelligence-reader > .m-job-header {
+    padding-bottom: var(--m-space-4);
+  }
+
   .m-intelligence-asks {
     display: grid;
-    gap: var(--m-space-4);
+    gap: var(--m-space-2);
   }
 
   .m-intelligence-instruments {
     display: grid;
-    gap: var(--m-space-4);
+    gap: var(--m-space-2);
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2047,18 +2055,27 @@
     border: var(--m-rule-width) solid var(--m-border-default);
     box-shadow: var(--m-shadow-raised);
     display: grid;
-    gap: var(--m-space-6);
+    gap: var(--m-space-4);
     grid-template-rows: minmax(0, 1fr) auto;
-    min-height: 17rem;
-    padding: var(--m-space-6);
+    min-height: 9rem;
+    padding: var(--m-space-3) var(--m-space-4);
+  }
+
+  .m-intelligence-instrument__body {
+    display: grid;
+    gap: var(--m-space-2);
   }
 
   .m-intelligence-instrument__heading {
-    font-size: var(--m-type-object);
+    font-size: 1.125rem;
     font-weight: var(--m-weight-medium);
     letter-spacing: var(--m-tracking-tight);
     line-height: 1.15;
-    max-width: 18rem;
+  }
+
+  .m-intelligence-instrument__body .m-copy {
+    font-size: 0.9375rem;
+    line-height: 1.45;
   }
 
   .m-intelligence-instrument__footer {
@@ -2066,6 +2083,19 @@
     display: grid;
     gap: var(--m-space-3);
     justify-items: start;
+  }
+
+  .m-intelligence-instrument__controls {
+    align-items: end;
+    display: grid;
+    gap: var(--m-space-3);
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+  }
+
+  .m-intelligence-instrument__controls .m-field {
+    gap: var(--m-space-2);
+    min-width: 0;
   }
 
   .m-intelligence-instrument__footer .m-field,
@@ -2078,6 +2108,20 @@
     display: grid;
     gap: var(--m-space-5);
     padding-bottom: var(--m-space-7);
+  }
+
+  .m-intelligence-results {
+    border-top: var(--m-rule-width) solid var(--m-border-strong);
+    display: grid;
+    gap: var(--m-space-5);
+    padding-top: var(--m-space-3);
+  }
+
+  .m-intelligence-results__handoff {
+    align-items: center;
+    display: flex;
+    gap: var(--m-space-4);
+    justify-content: space-between;
   }
 
   .m-intelligence-principles {
@@ -2763,8 +2807,8 @@
   }
 
   .m-intelligence-instrument {
-    min-height: 14rem;
-    padding: var(--m-space-5);
+    min-height: auto;
+    padding: var(--m-space-4);
   }
 
   .m-orientation__object-head {

@@ -309,3 +309,9 @@ Recorded against the committed tree at `db823ea3`. The composition pass on the f
 **Evidence is recruited after the idea, not imposed before its actions.** An idea, its three notes, and its actions must hold together before a person chooses to read the research. "What this rests on in the artist's history" is therefore one disclosure, closed by default, placed before the actions. Its closed state names the layer and counts the unique findings inside it. It does not sum sources, because findings may rest on overlapping sources. Opening it shows every finding and why it bears on the idea in full. Where a finding carries linked claims and sources, its trail may then open one layer further onto those sources. A counts-only trail remains static.
 
 **The trail line owns source counts and tiers.** Finding prose ends at the substantive finding. The independent source count, tiers, and the intake run's New, Confirmed, or Corrected comparison are metadata and do not repeat inside creative reading prose. The trail line beneath the finding carries the count and tier summary once. This keeps evidence honest without making evidence bookkeeping compete with the finding.
+
+## One ruling, 2026-08-28, fifth session
+
+Recorded after the fourth-session composition landed at `e774400`.
+
+**An answer announces itself in the first viewport.** The four asks remain equal instruments in a two-by-two field, but their first treatment spent enough height that generated ideas began beyond an ordinary laptop viewport. The instruments are compact: tighter padding and type, shorter internal gaps, and the live Scene choice and action on one line. A rule and the visible label "Generated ideas" separate asking from reading, with a quiet count confirming what arrived. The first idea may continue below the fold; the fact that an answer exists may not.

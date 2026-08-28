@@ -5,7 +5,7 @@ import { escape } from "./ideas-view.js";
 // its own action or honest state at the foot of the instrument.
 export function askInstrument(entry) {
   return `<article class="m-intelligence-instrument">
-      <div class="m-stack">
+      <div class="m-intelligence-instrument__body">
         <h3 class="m-intelligence-instrument__heading">${escape(entry.title)}</h3>
         <p class="m-copy">${escape(entry.copy)}</p>
       </div>

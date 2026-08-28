@@ -58,8 +58,10 @@ function sceneOptions() {
 function asks() {
   const ready = view.scenes.length > 0;
   const ideaControl = ready
-    ? `<label class="m-field"><span class="m-label">Scene</span>${sceneOptions()}</label>
-      <button class="m-button m-button--primary" type="button" data-run ${view.running ? "disabled" : ""}>${view.running ? "Working" : "Ask for ideas"}</button>`
+    ? `<div class="m-intelligence-instrument__controls">
+        <label class="m-field"><span class="m-label">Scene</span>${sceneOptions()}</label>
+        <button class="m-button m-button--primary" type="button" data-run ${view.running ? "disabled" : ""}>${view.running ? "Working" : "Ask for ideas"}</button>
+      </div>`
     : `<span class="m-state m-state--current">No Scene yet</span>`;
   const rows = [
     {

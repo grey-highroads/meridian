@@ -156,7 +156,12 @@ export function renderIdeas(analysis, picker = "", messages = {}) {
     `TOUR DIRECTION V${pad(analysis.directionVersion)}`,
     `ARTIST KNOWLEDGE APPROVED ${day(analysis.brainApprovedAt).toUpperCase()}`,
   ].join(" / ");
-  return `<section aria-labelledby="result-heading">
+  const count = `${directions.length} ${directions.length === 1 ? "idea" : "ideas"}`;
+  return `<section class="m-intelligence-results" aria-labelledby="result-heading">
+      <div class="m-intelligence-results__handoff">
+        <span class="m-label">Generated ideas</span>
+        <span class="m-meta">${escape(count).toUpperCase()}</span>
+      </div>
       <header class="m-intelligence-reader__head">
         <div class="m-stack">
           <span class="m-meta" id="result-heading">IDEAS FOR ${escape(String(subject.sceneTitle || "this Scene").toUpperCase())}</span>
