@@ -11,6 +11,7 @@ import { createTourStore } from "../src/tour/store.js";
 import { createAnalysisStore, analysisPathFor, SCENE_IDEAS } from "../src/intelligence/analysis.js";
 import { renderConceptPacket } from "../src/intelligence/concept-packet.js";
 import { renderIdeas } from "../app/intelligence/ideas-view.js";
+import { renderAsks } from "../app/intelligence/asks-view.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "../src/org/store.js";
 import { SESSION_COOKIE, signSession } from "../src/org/session.js";
@@ -292,7 +293,7 @@ const RUN = {
     // and one with nothing behind it but its counts and tiers.
     {
       findingId: "finding-1",
-      text: "**He plays sheds.** Twelve of the last fifteen runs were amphitheatres.",
+      text: "**He plays sheds.** Twelve of the last fifteen runs were amphitheatres. 4 sources, tiers 1, 2. **Confirmed.**",
       independentSourceCount: 4,
       tiers: [1, 2],
       why: "It bears on the request.",
@@ -316,30 +317,36 @@ test("each idea renders its own two actions and nothing carries a run-wide expor
   assert.ok(!/Download the concept packet/.test(html), "the run-level button is still on the page");
 });
 
-test("the finding and its why are always read in full, never behind a control", () => {
+test("the evidence cluster recruits whole findings once and promises what it holds", () => {
   const html = renderIdeas(RUN);
-  // Both findings, and both reasons, sit in the open.
+  // The cluster is one closed disclosure after the idea. Its closed state says
+  // what it recruits and counts unique findings, not overlapping sources.
+  assert.match(html, /<details class="m-intelligence-evidence">/);
+  assert.doesNotMatch(html, /<details class="m-intelligence-evidence" open>/);
+  assert.match(html, /What this rests on in the artist's history/);
+  assert.match(html, /2 FINDINGS/);
+
+  // Once recruited, each finding and its reason are present whole. They do not
+  // collapse into separate finding summaries.
   assert.match(html, /<p class="m-copy">He plays sheds\. Twelve of the last fifteen runs were amphitheatres\.<\/p>/);
   assert.match(html, /<p class="m-copy">It bears on the request\.<\/p>/);
   assert.match(html, /<p class="m-copy">The aviation staging returns\.<\/p>/);
   assert.match(html, /<p class="m-copy">The Scene asks for height\.<\/p>/);
-  // Nothing a person could open shows them prose they were already given.
-  const openable = html.match(/<details[\s\S]*?<\/details>/g) || [];
-  for (const disclosure of openable) {
-    assert.ok(!disclosure.includes("Twelve of the last fifteen"), "a disclosure repeats the finding");
-    assert.ok(!disclosure.includes("It bears on the request"), "a disclosure repeats the reason");
-  }
-  // The cited findings sit under one visible label.
-  assert.match(html, /<span class="m-label">What this rests on in the artist's history<\/span>/);
+  assert.equal((html.match(/m-intelligence-evidence__summary/g) || []).length, 1);
 });
 
 test("the trail degrades: a static line with counts only, a disclosure with sources", () => {
   const html = renderIdeas(RUN);
 
+  // A stored run from before the prose boundary may still carry its old source
+  // tail. The reader leaves that snapshot untouched and prints the count once.
+  assert.ok(!/4 sources, tiers 1, 2/i.test(html), "legacy evidence bookkeeping survives in finding prose");
+  assert.equal((html.match(/4 INDEPENDENT SOURCES, FROM TIER 1, 2/g) || []).length, 1);
+
   // finding-1 carries claims and sources in the run snapshot, so its trail is a
   // disclosure and it opens onto the sources themselves.
-  assert.equal((html.match(/<details/g) || []).length, 1, "a disclosure was written over nothing");
-  const disclosure = html.match(/<details[\s\S]*?<\/details>/)[0];
+  assert.equal((html.match(/<details/g) || []).length, 2, "the evidence group or its one real source trail is missing");
+  const disclosure = html.match(/<details class="m-evidence-item">[\s\S]*?<\/details>/)[0];
   assert.match(disclosure, /4 INDEPENDENT SOURCES, FROM TIER 1, 2/);
   assert.match(disclosure, /OPEN THE SOURCES/, "the disclosure does not say what it opens onto");
   assert.match(disclosure, /The 2024 run played eleven amphitheatres/);
@@ -356,6 +363,28 @@ test("the trail degrades: a static line with counts only, a disclosure with sour
   // Open questions is empty, so its heading does not render at all.
   assert.ok(!/OPEN QUESTIONS/.test(html), "an empty section printed its heading");
   assert.match(html, /WHAT THIS ARTIST STAYS AWAY FROM/, "a section with content did not render");
+});
+
+test("a packet also cleans legacy finding prose and carries the source count once", () => {
+  const packet = renderConceptPacket(RUN, 0);
+  assert.ok(!/4 sources, tiers 1, 2/i.test(packet));
+  assert.equal((packet.match(/4 independent sources, from tier 1, 2/g) || []).length, 1);
+});
+
+test("the four asks render as independent instruments rather than directory rows", () => {
+  const html = renderAsks([
+    { title: "Ideas for a Scene", copy: "Starting points.", control: '<button data-run>Ask for ideas</button>' },
+    { title: "Read the direction", copy: "A second reading.", control: '<span class="m-state">Coming</span>' },
+    { title: "Review a board", copy: "Before presentation.", control: '<span class="m-state">Coming</span>' },
+    { title: "Check the tour stops", copy: "Needs venue fields.", control: '<span class="m-state">Waiting on tour data</span>' },
+  ]);
+  assert.equal((html.match(/class="m-intelligence-instrument"/g) || []).length, 4);
+  assert.match(html, /class="m-intelligence-instruments"/);
+  assert.match(html, /class="m-intelligence-instrument__footer"/);
+  assert.ok(!html.includes("m-rule-list"), "the asks are still a rule list");
+  assert.ok(!html.includes("m-rule-row"), "an ask still reads as a directory row");
+  assert.match(html, /data-run/);
+  assert.match(html, /Waiting on tour data/);
 });
 
 test("feedback from an idea's actions renders inside that idea and is announced", () => {

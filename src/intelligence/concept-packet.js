@@ -17,6 +17,8 @@
 // download time, so a packet downloaded in October says what the artist's
 // intelligence said in August.
 
+import { findingStatement } from "../artist/finding.js";
+
 function pad(value) {
   return String(Number(value) || 0).padStart(2, "0");
 }
@@ -41,7 +43,7 @@ export function sourceLine(entry) {
 
 export function evidenceLines(evidence) {
   return evidence.map((entry) => {
-    const lines = [`- ${String(entry.text || "").replace(/\*\*/g, "").trim()}`];
+    const lines = [`- ${findingStatement(entry.text)}`];
     lines.push(`  Rests on ${sourceLine(entry).toLowerCase()}.`);
     if (entry.why) lines.push(`  Why it belongs here: ${entry.why}`);
     return lines.join("\n");

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { handleAction, intakeDirectory, readIntakeFiles } from "../api/artist/index.js";
 import { createArtistStore, createMemoryBackend, pathFor } from "../src/artist/store.js";
 import { parseIntake } from "../src/artist/parse-intake.js";
+import { findingStatement } from "../src/artist/finding.js";
 
 const DEMO_ACCOUNT = "dierks-bentley";
 
@@ -41,6 +42,22 @@ test("the committed intake files parse into the counts they state", async () => 
   const bins = { confirmed: 0, corrected: 0, new: 0 };
   for (const finding of parsed.findings) bins[finding.bin] += 1;
   assert.deepEqual(bins, { confirmed: 31, corrected: 5, new: 44 });
+  assert.ok(parsed.findings.every((finding) => !/\d+\s+sources?,\s+tiers?/i.test(finding.text)), "source counts leaked into finding prose");
+});
+
+test("finding prose stops before evidence and intake comparison metadata", () => {
+  assert.equal(
+    findingStatement("**The bluegrass thread returns.** It remains part of the live identity. 6 sources, tiers 2, 3, 4. **New.**"),
+    "The bluegrass thread returns. It remains part of the live identity.",
+  );
+  assert.equal(
+    findingStatement("**The prior picture was too narrow.** The record carries a wider view. 4 sources, tiers 2, 4. **Corrected**, in that the prior missed it."),
+    "The prior picture was too narrow. The record carries a wider view.",
+  );
+  assert.equal(
+    findingStatement("**The shape holds.** It has remained consistent. 1 source, tier 3. **Confirmed and sharpened.**"),
+    "The shape holds. It has remained consistent.",
+  );
 });
 
 test("importing twice yields identical stored objects", async () => {

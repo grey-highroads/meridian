@@ -13,6 +13,8 @@
 // Jim's workflow is a different reader. The compiled brief is the cheapest way
 // to ask him: hand him a real one and let him say what sits in the wrong place.
 
+import { findingStatement } from "../artist/finding.js";
+
 // The director's words split into paragraphs. The whole direction travels with
 // every brief, because it is the governing document and the brief names the
 // version it was written against. Nobody selects parts of it. Ruled 2026-08-27,
@@ -151,12 +153,7 @@ export function freeze(brief, person) {
 // the evidence in its own line and the bin is our word, not Jim's, so the tail
 // comes off rather than being printed twice.
 export function findingSentence(text) {
-  return String(text)
-    .replace(/\*\*/g, "")
-    // The tail runs to the end of the entry. Anything after the bookkeeping is
-    // the operator writing to Higher Roads, not a fact about the artist.
-    .replace(/\s*\d+\s+sources?,\s+tiers?[^.]*\.\s*(Confirmed|Corrected|New)\b[\s\S]*$/i, "")
-    .trim();
+  return findingStatement(text);
 }
 
 // Higher Roads' own vocabulary never leaves in a brief. An entry that still

@@ -299,3 +299,13 @@ Recorded against the committed tree at `4dfc4fd0`. The designer's pass on the In
 **The page's own name reads at page scale.** The hierarchy sentence in the previous ruling was about the run header competing with the ideas, not about shrinking the page's name. `m-heading` is restored on the Intelligence heading. The ideas dominate by where they sit and how much of the surface they take.
 
 **Browser rendering lives under `app/`.** `app/intelligence/ideas-view.js` holds the ideas rendering. Testability is not a reason to move an interface into the domain layer, and the earlier placement under `src/` is not a precedent. `src/intelligence/` keeps the analysis record and the packet.
+
+## Three rulings, 2026-08-28, fourth session
+
+Recorded against the committed tree at `db823ea3`. The composition pass on the finished Intelligence behavior.
+
+**The four asks are four instruments over one research archive.** They are not rows in a directory and no whole instrument pretends to be clickable. They sit as a two-by-two field at desktop width and one column at narrow width. Each instrument names the job, says what it returns, and anchors its own action or honest state at the foot. The first holds a labelled Scene choice and Ask for ideas. Two say Coming. Tour stops says Waiting on tour data. Equal stature describes the four jobs; the controls describe which job is live.
+
+**Evidence is recruited after the idea, not imposed before its actions.** An idea, its three notes, and its actions must hold together before a person chooses to read the research. "What this rests on in the artist's history" is therefore one disclosure, closed by default, placed before the actions. Its closed state names the layer and counts the unique findings inside it. It does not sum sources, because findings may rest on overlapping sources. Opening it shows every finding and why it bears on the idea in full. Where a finding carries linked claims and sources, its trail may then open one layer further onto those sources. A counts-only trail remains static.
+
+**The trail line owns source counts and tiers.** Finding prose ends at the substantive finding. The independent source count, tiers, and the intake run's New, Confirmed, or Corrected comparison are metadata and do not repeat inside creative reading prose. The trail line beneath the finding carries the count and tier summary once. This keeps evidence honest without making evidence bookkeeping compete with the finding.

@@ -201,6 +201,12 @@ Use `.m-intelligence-browser` when a large approved reference needs to remain br
 
 The default view is the approved intelligence, not the research database. A category index and one reading plane replace a continuous stack of every category and entry.
 
+## Intelligence jobs
+
+Use `.m-intelligence-instruments` for the four jobs that ask something of the approved artist record. Each `.m-intelligence-instrument` is a small tool with a title, a purpose, and its own action or honest state anchored at the foot. Use two columns at desktop width and one at narrow width. Do not turn the set into directory rows, make a whole instrument clickable, or make unavailable jobs smaller than the live one.
+
+Use `.m-intelligence-evidence` after an idea's qualifying notes. It is closed by default and its summary names the evidence layer and counts unique findings. Opening it recruits the whole findings and the reason each bears on the idea. A finding's trail may open one layer further only when linked sources exist. Counts and tiers stay on the trail line and never repeat in finding prose.
+
 ## Type and language
 
 Use `.m-heading` for the page job, `.m-section-heading` for a real section, `.m-copy` for explanation, `.m-label` for a compact label, and `.m-meta` for exact identifiers and time.

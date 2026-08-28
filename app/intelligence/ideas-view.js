@@ -1,4 +1,5 @@
 import { sourceLine } from "../../src/intelligence/concept-packet.js";
+import { findingStatement } from "../../src/artist/finding.js";
 
 // How a run of ideas reads on the page.
 //
@@ -13,7 +14,8 @@ import { sourceLine } from "../../src/intelligence/concept-packet.js";
 //   are context and sit small above the first idea.
 //   Emphasis comes from the order and the scale. No weight scattered through
 //   running text.
-//   Nothing interactive opens onto prose the reader was already given.
+//   The evidence cluster is recruited once, after the idea. A second
+//   disclosure appears only when a trail carries actual sources.
 //   Feedback appears beside the action that produced it.
 
 export function escape(value) {
@@ -31,10 +33,10 @@ export function day(value) {
   return parsed.toISOString().slice(0, 10);
 }
 
-// The intake file marks the lead sentence of an entry in bold. The finding is
-// read whole here, so the markers come out and nothing else changes.
+// Old stored runs may still carry the intake file's bold markers and its
+// bookkeeping tail. The shared finding boundary removes both for readers.
 export function findingText(text) {
-  return String(text || "").replace(/\*\*/g, "").trim();
+  return findingStatement(text);
 }
 
 // Whether a stored finding carries anything a person could open. Counts and
@@ -65,11 +67,10 @@ function sourceItems(entry) {
 
 // One thing the artist's record says, under the idea it supports.
 //
-// The finding and why it belongs here are always read in full and are never
-// behind a control. What degrades is the trail. With counts and tiers alone it
-// is a quiet static line that does not invite a click, because opening it would
-// show the reader what they have already read. With real sources behind it, the
-// same line becomes a disclosure that opens onto those sources.
+// Once the evidence cluster is recruited, the finding and why it belongs here
+// are read in full. What degrades is the trail. With counts and tiers alone it
+// is a quiet static line that does not invite another click. With real sources
+// behind it, the same line becomes a disclosure that opens onto those sources.
 export function evidenceEntry(entry) {
   const trail = sourceLine(entry);
   const detail = hasSourceDetail(entry);
@@ -91,11 +92,18 @@ export function evidenceEntry(entry) {
 }
 
 export function evidenceGroup(cited) {
-  if (!cited.length) return "";
-  return `<div class="m-stack">
-      <span class="m-label">What this rests on in the artist's history</span>
-      ${cited.map(evidenceEntry).join("")}
-    </div>`;
+  const unique = [...new Map(cited.map((entry) => [entry.findingId, entry])).values()];
+  if (!unique.length) return "";
+  const count = `${unique.length} ${unique.length === 1 ? "finding" : "findings"}`;
+  return `<details class="m-intelligence-evidence">
+      <summary>
+        <span class="m-intelligence-evidence__summary">
+          <span class="m-label">What this rests on in the artist's history</span>
+          <span class="m-meta">${escape(count).toUpperCase()}</span>
+        </span>
+      </summary>
+      <div class="m-intelligence-evidence__body">${unique.map(evidenceEntry).join("")}</div>
+    </details>`;
 }
 
 // Feedback from an action sits with the action, so a person who pressed a

@@ -15,6 +15,8 @@
 //      source number. It resolves to a source id only when exactly one source
 //      row matches; otherwise sourceId stays null and sourceRef holds the text.
 
+import { findingStatement } from "./finding.js";
+
 export const FACET_CODES = ["CE", "LH", "VL", "BS", "PB", "AV"];
 
 export const FACET_NAMES = {
@@ -279,7 +281,7 @@ export function parseFindings(text) {
       version: 1,
       facet,
       identity,
-      text: paragraph,
+      text: findingStatement(paragraph),
       bin,
       independentSourceCount: sourceLine ? Number(sourceLine[1]) : null,
       tiers,

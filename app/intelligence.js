@@ -1,5 +1,6 @@
 import { TOUR_ID, scopedBody } from "./context.js";
 import { escape, pad, renderIdeas } from "./intelligence/ideas-view.js";
+import { renderAsks } from "./intelligence/asks-view.js";
 
 // Intelligence. Four things a Higher Roads person can ask about the
 // artist, and the research they draw on underneath.
@@ -54,20 +55,11 @@ function sceneOptions() {
   return `<select class="m-select" id="scene-choice" aria-label="Scene">${rows}</select>`;
 }
 
-function askRow(entry) {
-  return `<div class="m-rule-row">
-      <div class="m-stack">
-        <span class="m-rule-row__title">${escape(entry.title)}</span>
-        <span class="m-copy">${escape(entry.copy)}</span>
-      </div>
-      <div class="m-cluster">${entry.control}</div>
-    </div>`;
-}
-
 function asks() {
   const ready = view.scenes.length > 0;
   const ideaControl = ready
-    ? `${sceneOptions()}<button class="m-button m-button--primary" type="button" data-run ${view.running ? "disabled" : ""}>${view.running ? "Working" : "Ask for ideas"}</button>`
+    ? `<label class="m-field"><span class="m-label">Scene</span>${sceneOptions()}</label>
+      <button class="m-button m-button--primary" type="button" data-run ${view.running ? "disabled" : ""}>${view.running ? "Working" : "Ask for ideas"}</button>`
     : `<span class="m-state m-state--current">No Scene yet</span>`;
   const rows = [
     {
@@ -93,10 +85,7 @@ function asks() {
       control: `<span class="m-state">Waiting on tour data</span>`,
     },
   ];
-  return `<section class="m-work" aria-labelledby="asks-heading">
-      <h2 id="asks-heading" class="m-visually-hidden">What you can ask</h2>
-      <div class="m-rule-list">${rows.map(askRow).join("")}</div>
-    </section>`;
+  return renderAsks(rows);
 }
 
 function runPicker() {
