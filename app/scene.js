@@ -470,6 +470,7 @@ function renderDrawer() {
   // The rail's own width is reserved once, when the page learns who is reading
   // it. Opening and closing the drawer never touches this, so the work under it
   // cannot move.
+  drawer.hidden = false;
   if (well && well.style) well.style.paddingRight = RAIL_WIDTH;
   frameDrawer();
   if (!drawerBody) return;
@@ -531,11 +532,10 @@ async function readBrief() {
 }
 
 async function load() {
-  try {
-    view.user = (await call("get-me")).user;
-  } catch {
-    view.user = { role: "higher-roads", displayName: "Higher Roads" };
-  }
+  // Who is reading decides what this page draws, so the page never guesses.
+  // A failure here reaches the reader as a message rather than as an operator
+  // page drawn for somebody who might be a client.
+  view.user = (await call("get-me")).user;
   const { tour, assignments } = await call("get-tour");
   view.tour = tour;
   if (!view.sceneId && assignments.length) view.sceneId = assignments[0].id;

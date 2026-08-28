@@ -60,6 +60,7 @@ function element() {
     dataset: {},
     style: {},
     open: false,
+    hidden: true,
     present: true,
     handlers: {},
     addEventListener(type, handler) { this.handlers[type] = handler; },
@@ -69,7 +70,7 @@ function element() {
 
 // The page's own script, run rather than read, so what the test reads is the
 // markup a person would be looking at and the calls the page actually makes.
-function scenePage({ user = OPERATOR, questions = [], references = [], state = SCENE_STATE, concept = null, artboards = [] } = {}) {
+function scenePage({ user = OPERATOR, questions = [], references = [], state = SCENE_STATE, concept = null, artboards = [], identityFails = false } = {}) {
   const source = fs.readFileSync(path.join(rootPath, "app", "scene.js"), "utf8")
     .replace(/^import .*?;\n\n/, "");
   const elements = {
@@ -105,7 +106,11 @@ function scenePage({ user = OPERATOR, questions = [], references = [], state = S
       return okReply({ references });
     }
     asked.push(sent.action);
-    if (sent.action === "get-me") return okReply({ user });
+    if (sent.action === "get-me") {
+      return identityFails
+        ? { ok: false, status: 401, json: async () => ({ error: "Sign in to Meridian to continue." }) }
+        : okReply({ user });
+    }
     if (sent.action === "get-tour") {
       return okReply({ tour: { id: TOUR, name: "Off The Map 2026", dates: [{ date: "2026-06-12", venue: "Ruoff Music Center", place: "Noblesville, Indiana" }] }, assignments: [state] });
     }
@@ -494,4 +499,33 @@ test("an open question outranks the stage sentence for the client", async () => 
 
   assert.match(text, /Answer the question above when you can\. Nothing else is needed from you\./);
   assert.doesNotMatch(text, /Nothing is needed from you\./, "the status line contradicts the question above it");
+});
+
+// ---------------------------------------------------------------------------
+// Who is reading. The page draws from the signed-in session and never guesses,
+// because the guess it used to make was Higher Roads.
+// ---------------------------------------------------------------------------
+
+test("a reader the page cannot identify is given a message and no Higher Roads surface", async () => {
+  const page = scenePage({ identityFails: true });
+  await page.settle();
+  const text = page.text();
+
+  assert.match(text, /Sign in to Meridian to continue\./, "the reader is told nothing about why the page is empty");
+  assert.doesNotMatch(text, /Prepare this Scene for production\.|Develop this Scene\./, "an instruction to Higher Roads was drawn for an unknown reader");
+  assert.equal(page.drawer().hidden, true, "the drawer opened for a reader the page could not name");
+  assert.equal(page.drawerMarkup(), "", "the drawer was filled for a reader the page could not name");
+  assert.equal(page.well().style.paddingRight, undefined, "the work reserved room for a rail nobody earned");
+  assert.ok(!page.asked.includes("assignment-context"), "the page asked for the Higher Roads context without knowing who was reading");
+});
+
+test("the drawer stays out of the page until the reader is known to be Higher Roads", async () => {
+  const client = scenePage({ user: CLIENT, questions: [] });
+  await client.settle();
+  assert.equal(client.drawer().present, false, "the client keeps the drawer element");
+
+  const admin = scenePage({ concept: { title: "Storm and lightning", idea: "Hold the break." } });
+  await admin.settle();
+  assert.equal(admin.drawer().hidden, false, "the drawer never comes back for Higher Roads");
+  assert.match(admin.drawerMarkup(), /id="ask-heading"/, "the drawer is shown without its work in it");
 });
