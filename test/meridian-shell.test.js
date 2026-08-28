@@ -8,12 +8,12 @@ const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 
 const PAGES = [
   "app/index.html", "app/scenes.html", "app/reviews.html", "app/artist.html",
-  "app/tour.html", "app/scene.html",
+  "app/intelligence.html", "app/tour.html", "app/scene.html",
   "app/request.html", "app/direction.html", "app/handoff.html", "app/admin.html",
 ];
 const SCRIPTS = [
   "app/home.js", "app/scenes.js", "app/reviews.js", "app/artist.js",
-  "app/tour.js", "app/scene.js",
+  "app/intelligence.js", "app/tour.js", "app/scene.js",
   "app/request.js", "app/direction.js", "app/handoff.js", "app/shell.js",
   "app/admin.js",
 ];
@@ -126,7 +126,7 @@ test("account and Tour context travel through Meridian navigation and requests",
   for (const name of [
     "app/home.js", "app/scenes.js", "app/reviews.js", "app/tour.js",
     "app/scene.js", "app/request.js",
-    "app/direction.js", "app/handoff.js", "app/artist.js", "app/shell.js",
+    "app/direction.js", "app/handoff.js", "app/artist.js", "app/intelligence.js", "app/shell.js",
   ]) {
     assert.match(read(name), /scopedBody\(/, `${name} does not send the selected account`);
   }

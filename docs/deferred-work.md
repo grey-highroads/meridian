@@ -619,6 +619,8 @@ Recorded 2026-08-27 with the Scene page rebuild. The Artist Brain panel came out
 
 Bring it back when: a person deciding what to build asks for what the artist's history offers, from wherever that surface ends up living.
 
+Closed 2026-08-28. Artist Intelligence is that surface. An admin picks a submitted Scene, asks for ideas, and `propose-concepts` is reached again. Every run is stored and a second ask adds a run rather than replacing the first. The three fields a saved concept stopped carrying are still empty, because choosing an idea from this page and shaping it into a concept is a later commit.
+
 ## Venue and screen specifications are unstructured
 
 Recorded 2026-08-27 with the Scene page rebuild. A tour date row carries a date, a venue name, and a place, all free text. Screen count, stage geometry, and rig detail live inside the production setup as one block of prose stored as the production designer supplied it. The Scene page shows what exists and says plainly that this is prose rather than fields, because inventing structure that is not there would be worse than the gap.
@@ -636,3 +638,15 @@ No condition to bring back. This entry is a record of how long a two-sided gap c
 Recorded 2026-08-27 after the review page threw on load. `670393e6` renamed `tourDirection.selectedParagraphs` to `tourDirection.paragraphs` in `compileBrief` and in `renderBriefDocument`. A frozen brief is stored exactly as it was compiled and is never rewritten, and `get-brief` re-renders that stored object every time somebody reads it. So every brief frozen before that commit threw `Cannot read properties of undefined` on the first read, the internal review page showed the error and the words "The governing brief could not be found", and no artboard could be decided on. Fixed by `briefDirectionParagraphs` in `src/tour/brief.js`, which takes either shape and rewrites nothing.
 
 Bring it back when: nothing to bring back. The rule it establishes is that any field name inside a frozen brief is permanent once one has been frozen. A rename needs a reader that takes both shapes, in the same commit, with a test that stores the old shape and reads it back.
+
+## The artist's intelligence has no durable version identifier
+
+Recorded 2026-08-28 with Artist Intelligence job one. Every analysis has to name which brain answered it, so a person reading an old run knows what the system knew that day. The brain has no version number. What exists is the date it was approved, in `decisions.json` under `brain.approvedAt`, written by `approveBrain` in `src/artist/store.js`. So `brainApprovedAt` in the analysis record is standing in for a version. Two approvals on the same day are indistinguishable, and re-approving after an import changes the reference without saying what changed.
+
+Bring it back when: intake or approval mints a durable identifier for the brain. The analysis record carries that identifier in place of the approval date, in the same commit, and `brainApprovedAt` comes out.
+
+## A finding names how many sources it has, not which ones
+
+Recorded 2026-08-28 with the concept packet. The packet is meant to carry every source behind an idea. What a finding holds is an independent source count and a list of tiers, because `claimIds` is empty and `evidenceLinked` is false on every finding this intake produced. So the packet prints the count and the tiers and says nothing it cannot support. This is the same gap as "Findings do not name the claims behind them" and "A claim's source is prose, not a source id", recorded here because the packet is the first thing that leaves Meridian and lands in front of somebody outside it.
+
+Bring it back when: a finding names its claims and a claim names its source id. The packet then prints titles and links under each idea, and `evidenceBlock` in `src/intelligence/concept-packet.js` is where that goes.

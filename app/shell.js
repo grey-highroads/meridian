@@ -62,7 +62,7 @@ const NAV_ICONS = {
 
 for (const link of document.querySelectorAll(".m-shell a[href^='./']")) {
   const url = new URL(link.href, window.location.href);
-  if (["index.html", "scenes.html", "reviews.html", "tour.html", "artist.html", "request.html", "direction.html"].some((name) => url.pathname.endsWith(`/${name}`))) {
+  if (["index.html", "scenes.html", "reviews.html", "tour.html", "intelligence.html", "artist.html", "request.html", "direction.html"].some((name) => url.pathname.endsWith(`/${name}`))) {
     if (ACCOUNT_ID) url.searchParams.set("account", ACCOUNT_ID);
     if (TOUR_ID) url.searchParams.set("tour", TOUR_ID);
     link.href = url.href;
@@ -146,15 +146,39 @@ async function mountAccountPicker(active) {
   brand.after(picker);
 }
 
-// Where a Higher Roads session goes that a client never does. Both used to be
-// hard-coded into a page's markup, so reaching either meant landing on the one
+// Where a Higher Roads session goes that a client never does. These used to be
+// hard-coded into a page's markup, so reaching one meant landing on the one
 // page that happened to carry the link. They are built here instead, on every
 // page that loads the shell, and only for the Higher Roads role. The route
 // still refuses a client session on its own; nothing here is the enforcement.
+//
+// Artist Intelligence used to sit here as Artist Brain, a corner link to the
+// reference view. It is a working destination now and sits in the rail, and the
+// reference view is reached from it, so the artist's intelligence has one home.
+// Ruled 2026-08-28.
 const OPERATOR_DESTINATIONS = [
-  { page: "artist.html", label: "Artist Brain" },
   { page: "admin.html", label: "Admin" },
 ];
+
+// The one rail destination a client never receives. It is appended to the
+// tour navigation after the session comes back as Higher Roads, so a client's
+// page is never built with it and then hidden. The page and the route refuse a
+// client on their own; this is what a person sees, not what stops them.
+const INTELLIGENCE_ICON = '<svg class="m-icon m-shell__nav-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg>';
+
+function mountIntelligenceDestination() {
+  const nav = document.querySelector(".m-shell__nav");
+  if (!nav || nav.querySelector("[data-intelligence-destination]")) return;
+  const here = window.location.pathname.endsWith("/intelligence.html");
+  const link = document.createElement("a");
+  link.className = "m-shell__nav-link";
+  link.setAttribute("data-intelligence-destination", "");
+  link.setAttribute("data-operator-utility", "");
+  if (here) link.setAttribute("aria-current", "page");
+  link.href = "./intelligence.html";
+  link.innerHTML = `${INTELLIGENCE_ICON}<span class="m-shell__nav-label">Artist Intelligence</span>`;
+  nav.append(link);
+}
 
 function operatorGroup() {
   const group = document.createElement("div");
@@ -211,6 +235,7 @@ fetch("/api/tour", {
   });
   if (body.user.role === "higher-roads") {
     mountOperatorDestinations();
+    mountIntelligenceDestination();
     void mountAccountPicker(body.actingAccount || ACCOUNT_ID);
   } else {
     mountClientIntroduction();

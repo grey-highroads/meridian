@@ -14,6 +14,7 @@ export default defineConfig({
         bws: resolve(__dirname, "app/bws.html"),
         landing: resolve(__dirname, "app/landing.html"),
         place: resolve(__dirname, "app/bws-place.html"),
+        intelligence: resolve(__dirname, "app/intelligence.html"),
         artist: resolve(__dirname, "app/artist.html"),
         tour: resolve(__dirname, "app/tour.html"),
         scene: resolve(__dirname, "app/scene.html"),

@@ -7,6 +7,8 @@ import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/st
 import { createSceneRecord } from "../../src/tour/scene-record.js";
 import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
 import { createArtistStore } from "../../src/artist/store.js";
+import { buildAnalysis, createAnalysisStore, SCENE_IDEAS } from "../../src/intelligence/analysis.js";
+import { conceptPacketFilename, renderConceptPacket } from "../../src/intelligence/concept-packet.js";
 import { createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 import { createOrgStore } from "../../src/org/store.js";
@@ -23,7 +25,8 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // get-artboard-artifact, save-review, issue-revision, send-revision,
 // get-reviews, approve-for-client, client-approve, client-comment,
 // get-production-intent, get-scene-activity, get-scene-record, ask-question,
-// answer-question, get-questions.
+// answer-question, get-questions, run-scene-ideas, get-scene-ideas,
+// get-concept-packet.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -111,7 +114,7 @@ async function contextFor(body, options) {
   const fixture = await loadTour(tourId, options);
   const assignment = findAssignment(fixture, body.assignmentId);
   const brain = await loadBrain(fixture.tour.artistId, options);
-  return { fixture, assignment, context: assembleContext(brain, fixture.tour, assignment, options) };
+  return { fixture, assignment, brain, context: assembleContext(brain, fixture.tour, assignment, options) };
 }
 
 // What the brand avoids is attached from the brain whether or not anyone asked
@@ -723,6 +726,74 @@ export async function handleAction(body, options = {}) {
     const { fixture, assignment, context } = await contextFor(body, options);
     const proposed = await proposeConcepts(context, options);
     return { tour: fixture.tour, assignment, context, ...proposed };
+  }
+
+  // Job one of Artist Intelligence. An admin picks a Scene that has been
+  // submitted and asks the artist's record for ideas. One action, nothing to
+  // configure. What comes back is stored as a run, and a second ask adds a
+  // second run rather than replacing the first.
+  if (body.action === "run-scene-ideas") {
+    const { fixture, assignment, brain, context } = await contextFor(body, options);
+    if (!String(assignment.request || "").trim()) {
+      const error = new Error("This Scene has not been submitted yet, so there is nothing to work from.");
+      error.status = 400;
+      throw error;
+    }
+    const proposed = await proposeConcepts(context, options);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    const analysis = buildAnalysis({
+      job: SCENE_IDEAS,
+      ranAt: options.now ? new Date(options.now()).toISOString() : new Date().toISOString(),
+      ranBy: user.displayName,
+      artistId: fixture.tour.artistId,
+      subject: {
+        tourId: fixture.tour.id,
+        tourName: fixture.tour.name,
+        sceneId: assignment.id,
+        sceneTitle: assignment.title,
+      },
+      directionVersion: context.directionVersion,
+      brainApprovedAt: brain.approvedAt,
+      result: {
+        directions: proposed.proposals,
+        avoidNotes: proposed.avoidNotes,
+        openQuestions: proposed.openQuestions,
+      },
+      evidence: proposed.appliedFindings.map((entry) => ({
+        findingId: entry.findingId,
+        part: entry.facetName,
+        text: entry.text,
+        independentSourceCount: entry.independentSourceCount,
+        tiers: entry.tiers,
+        why: entry.why,
+      })),
+    });
+    const stored = await analysisStore.appendAnalysis(SCENE_IDEAS, fixture.tour.id, assignment.id, analysis);
+    return { tour: fixture.tour, assignment, analysis: stored.analysis, analyses: stored.analyses };
+  }
+
+  if (body.action === "get-scene-ideas") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    return { analyses: await analysisStore.readAnalyses(SCENE_IDEAS, fixture.tour.id, assignment.id) };
+  }
+
+  // The packet is rendered from the stored run and from nothing else, so a
+  // download in October says what the artist's record said in August.
+  if (body.action === "get-concept-packet") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    const analyses = await analysisStore.readAnalyses(SCENE_IDEAS, fixture.tour.id, assignment.id);
+    const wanted = String(body.runId || "").trim();
+    const analysis = wanted ? analyses.find((entry) => entry.runId === wanted) : analyses[analyses.length - 1];
+    if (!analysis) {
+      const error = new Error("We couldn't find that set of ideas.");
+      error.status = 404;
+      throw error;
+    }
+    return { filename: conceptPacketFilename(analysis), document: renderConceptPacket(analysis) };
   }
 
   if (body.action === "choose-concept") {

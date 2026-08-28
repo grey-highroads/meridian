@@ -254,7 +254,7 @@ test("the account picker is built for the Higher Roads role only", () => {
   const shell = read("app/shell.js");
   assert.match(shell, /action: "list-accounts"/, "the shell never reads the accounts it may work in");
   assert.match(shell, /data-operator-utility/, "the picker is not hidden by the rule that hides the Admin link");
-  assert.match(shell, /role === "higher-roads"\) \{\s*\n\s*mountOperatorDestinations\(\);\s*\n\s*void mountAccountPicker/, "the picker is built for a role that may not have it");
+  assert.match(shell, /role === "higher-roads"\) \{\s*\n\s*mountOperatorDestinations\(\);\s*\n\s*mountIntelligenceDestination\(\);\s*\n\s*void mountAccountPicker/, "the picker is built for a role that may not have it");
   assert.match(shell, /url\.searchParams\.delete\("tour"\)/, "switching accounts carries the old account's tour id");
   // Under the wordmark and above the tour navigation, not in the group at the
   // bottom of the rail.
