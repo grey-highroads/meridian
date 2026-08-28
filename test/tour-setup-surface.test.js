@@ -215,7 +215,7 @@ test("Home explains its sections before Scenes and keeps the operational Home in
   assert.match(home, /Create the tour in Tour details so Meridian has a place/, "the creation action has no reason attached");
   assert.match(home, /href="\.\/tour\.html"/, "tour creation does not go to Tour details");
 
-  for (const kept of ["Nothing needs you right now", "Request the first Scene", "Welcome,", "m-home__layout"]) {
+  for (const kept of ["Nothing needs a decision right now", "Current work", "Welcome,", "m-home__layout"]) {
     assert.match(home, new RegExp(kept.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `the operational Home lost "${kept}"`);
   }
 });

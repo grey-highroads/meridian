@@ -93,12 +93,13 @@ test("the live shell has the four destinations and Home uses the approved patter
   }
   assert.doesNotMatch(primaryNav, />Artist Brain</, "Artist Brain appears in live primary navigation");
   const script = read("app/home.js");
-  for (const pattern of ["m-home__layout", "m-attention-list", "m-lifecycle-list", "m-home__sidecar m-inspector"]) {
+  for (const pattern of ["m-home__layout", "m-attention-list", "m-lifecycle-list", "m-home__sidecar m-home__reference", "m-home-moving"]) {
     assert.match(script, new RegExp(pattern), `live Home is missing ${pattern}`);
   }
   assert.doesNotMatch(script, /Foundation ready|Tour readiness/, "Home exposes architecture instead of tour language");
   assert.match(script, /Request a Scene/, "Home does not offer the primary Scene action independently");
-  assert.match(script, /Welcome,/, "Home does not greet the signed-in person");
+  assert.match(script, /<h1 class="m-heading">Today<\/h1>/, "Home does not lead with the current workday");
+  assert.match(script, /A Scene appears once under Needs you/, "Home can repeat one Scene across attention and progress");
   for (const category of ["Creative direction", "Dates and venues", "Playback system", "Production details", "Tour-wide themes"]) {
     assert.match(script, new RegExp(category), `Tour at a glance is missing ${category}`);
   }
@@ -227,8 +228,8 @@ test("empty states name the job and use the shared visual family", () => {
 
 test("empty screens speak to the person holding the work", () => {
   const home = read("app/home.js");
-  assert.match(home, /Nothing needs you right now/, "Home does not reassure a person with no assigned work");
-  assert.match(home, /Request the first Scene/, "Home does not open the first creative job");
+  assert.match(home, /Nothing needs a decision right now/, "Home does not reassure a person with no assigned work");
+  assert.match(home, /Scene requests, current work, and the next step/, "Home does not explain where the first creative job will appear");
 
   const scenes = read("app/scenes.js");
   assert.match(scenes, /song, an intro, a transition/, "Scenes does not explain what a Scene can be");

@@ -124,3 +124,18 @@ test("a Scene with no artboard still opens the Scene", async () => {
   assert.match(markup, /scene\.html\?tour=/, "a Scene with nothing back does not open the Scene");
   assert.doesNotMatch(markup, /reviews\.html\?/, "a Scene with nothing back opens the gallery");
 });
+
+test("one Scene with a question and a pending review appears once on Home", async () => {
+  const scene = {
+    ...sceneAt(CLEARED),
+    openQuestions: [{ id: "question-1", askedBy: "Higher Roads", text: "Can final playback support alpha-channel media?" }],
+  };
+  const page = homePage({ role: "client-reviewer", displayName: "Sarah Lyle", introductionSeenAt: "2026-08-01" }, [scene]);
+  await page.settle();
+  const markup = page.markup();
+
+  assert.equal((markup.match(/Storm and lightning/g) || []).length, 1, "Home repeats one Scene across decision and progress sections");
+  assert.match(markup, /Answer requested/, "the question does not set the Scene's visible job");
+  assert.match(markup, />Answer</, "the question does not carry its action");
+  assert.doesNotMatch(markup, /Moving without you/, "a Scene needing an answer also appears as independent work");
+});
