@@ -440,6 +440,9 @@ test("the ideas stack in one column and their titles are the largest text", () =
 
   // And the surface does not run the full width of the window.
   assert.doesNotMatch(markup, /m-page--fluid/, "the page runs the full width of the window");
+  const styles = read("app/design/patterns.css");
+  assert.match(styles, /\.m-intelligence-reader\s*\{[^}]*max-width:\s*70rem/s, "the instrument field is still constrained to the old reading width");
+  assert.match(styles, /\.m-intelligence-principle__copy\s*\{[^}]*max-width:\s*var\(--m-copy-width\)/s, "widening the field also widened idea prose");
 });
 
 test("emphasis comes from the hierarchy, never from weight inside running text", () => {

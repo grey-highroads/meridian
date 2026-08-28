@@ -315,3 +315,9 @@ Recorded against the committed tree at `db823ea3`. The composition pass on the f
 Recorded after the fourth-session composition landed at `e774400`.
 
 **An answer announces itself in the first viewport.** The four asks remain equal instruments in a two-by-two field, but their first treatment spent enough height that generated ideas began beyond an ordinary laptop viewport. The instruments are compact: tighter padding and type, shorter internal gaps, and the live Scene choice and action on one line. A rule and the visible label "Generated ideas" separate asking from reading, with a quiet count confirming what arrived. The first idea may continue below the fold; the fact that an answer exists may not.
+
+## One ruling, 2026-08-28, sixth session
+
+Recorded after the first-viewport correction landed at `2db05f4`.
+
+**The instrument canvas is wider than the reading measure.** The single-column correction was right about order and wrong to give every kind of content the same narrow frame. Intelligence uses a 70rem canvas so the four instruments can breathe and wrap less. Idea and evidence prose remain capped at the shared 44rem copy measure. The page gets broader; the sentences do not get longer.

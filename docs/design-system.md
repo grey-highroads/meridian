@@ -203,7 +203,7 @@ The default view is the approved intelligence, not the research database. A cate
 
 ## Intelligence jobs
 
-Use `.m-intelligence-instruments` for the four jobs that ask something of the approved artist record. Each `.m-intelligence-instrument` is a compact tool with a title, a purpose, and its own action or honest state anchored at the foot. Use two columns at desktop width and one at narrow width. The field must leave enough of the next section visible in the first laptop viewport for a person to know an answer arrived. Do not turn the set into directory rows, make a whole instrument clickable, or make unavailable jobs smaller than the live one.
+Use `.m-intelligence-instruments` for the four jobs that ask something of the approved artist record. Each `.m-intelligence-instrument` is a compact tool with a title, a purpose, and its own action or honest state anchored at the foot. Use two columns at desktop width and one at narrow width. The field uses the broad Intelligence canvas, while idea prose beneath it keeps the shared copy measure. The field must leave enough of the next section visible in the first laptop viewport for a person to know an answer arrived. Do not turn the set into directory rows, make a whole instrument clickable, or make unavailable jobs smaller than the live one.
 
 Use `.m-intelligence-evidence` after an idea's qualifying notes. It is closed by default and its summary names the evidence layer and counts unique findings. Opening it recruits the whole findings and the reason each bears on the idea. A finding's trail may open one layer further only when linked sources exist. Counts and tiers stay on the trail line and never repeat in finding prose.
 

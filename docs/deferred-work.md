@@ -653,7 +653,7 @@ Bring it back when: a finding names its claims and a claim names its source id. 
 
 ## A reading measure comes from a reader pattern, not a page modifier
 
-Recorded 2026-08-28 with the Intelligence ideas view. The surface needs one column at one comfortable measure, for the asks and the ideas together, sharing one left edge. `m-page` is 76rem and `m-page--fluid` is the window. Neither is a reading measure, and there is no page modifier for one. So `app/intelligence.html` puts `m-intelligence-reader` on the page element itself, which is a block's own class doing a page's job. It is the nearest thing that exists and it carries the 58rem measure, the padding, and the narrow-width padding collapse already.
+Recorded 2026-08-28 with the Intelligence ideas view. The surface needs one column for the asks and the ideas together, sharing one left edge, but the instrument field and the running prose do not need the same width. `m-page` is 76rem and `m-page--fluid` is the window. Neither expresses that hybrid measure, and there is no page modifier for one. So `app/intelligence.html` puts `m-intelligence-reader` on the page element itself, which is a block's own class doing a page's job. It is the nearest thing that exists and it carries the 70rem canvas, the padding, and the narrow-width padding collapse already. Running idea prose remains capped by the shared 44rem copy measure.
 
 The same commit found the cost of not doing this. The ideas were first put inside `m-orientation`, a two-column grid of unequal measures meant for a primary panel and an aside, so three ideas alternated across two columns of different widths. The pattern was used without being read.
 
