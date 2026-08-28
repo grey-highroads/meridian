@@ -285,3 +285,17 @@ Recorded against the committed tree at `d9ff1ff0`.
 
 **A view is tested on its markup.** The first version of this view was checked by matching strings in the page source and shipped a two-column layout of unequal measures, built by dropping ideas into `m-orientation`, a pattern for a primary panel and an aside. The rendering now lives in `src/intelligence/ideas-view.js` so tests assert what a person receives. Reading a design pattern before using it is the cheaper half of this lesson.
 
+
+## One ruling, 2026-08-28, third session
+
+Recorded against the committed tree at `4dfc4fd0`. The designer's pass on the Intelligence surface.
+
+**A control opens onto something the reader has not already been given.** The finding and why it belongs here are always read in full and are never behind a disclosure. What degrades is the trail. With independent source counts and tiers alone, the trail is one quiet static line and nothing in it invites a click, because opening it would show the reader the sentence they just read. With claims and sources stored behind it, the same line becomes a disclosure that says what it opens onto and opens onto the sources. Cited findings sit under one visible label, "What this rests on in the artist's history".
+
+**A stored run copies its evidence rather than pointing at it.** An analysis says what the system knew on the day it ran. Storing finding ids alone would have meant a later evidence view resolving an old run against a newer brain, which rewrites what a past analysis rested on. The run now carries the claims and sources as of generation time.
+
+**Feedback lands where the person is looking.** An answer from an idea's own actions renders inside that idea, in a live region, and repaints that idea alone. The page-level callout is for page-level failures. A message about a button at the bottom of the page, rendered at the top of the page, is a message nobody reads.
+
+**The page's own name reads at page scale.** The hierarchy sentence in the previous ruling was about the run header competing with the ideas, not about shrinking the page's name. `m-heading` is restored on the Intelligence heading. The ideas dominate by where they sit and how much of the surface they take.
+
+**Browser rendering lives under `app/`.** `app/intelligence/ideas-view.js` holds the ideas rendering. Testability is not a reason to move an interface into the domain layer, and the earlier placement under `src/` is not a precedent. `src/intelligence/` keeps the analysis record and the packet.

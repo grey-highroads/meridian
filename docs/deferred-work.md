@@ -657,17 +657,30 @@ Recorded 2026-08-28 with the Intelligence ideas view. The surface needs one colu
 
 The same commit found the cost of not doing this. The ideas were first put inside `m-orientation`, a two-column grid of unequal measures meant for a primary panel and an aside, so three ideas alternated across two columns of different widths. The pattern was used without being read.
 
-Bring it back when: a page modifier for a single reading measure exists, or the reader pattern is renamed to say it is a measure rather than a component. `app/intelligence.html` takes that class in the same commit.
+Reshaped 2026-08-28 to the designer's ruling. The close is a generic page modifier, `m-page--reader` or whatever it ends up called, that carries a single reading measure for any page that wants one. When it exists, `app/intelligence.html` takes it and `m-intelligence-reader` stops doing page-layout work, which it was never built for.
 
-## No card pattern holds prose with an action group at its end
+Bring it back when: that page modifier lands in `app/design/`. Both changes go in the same commit as the modifier.
 
-Recorded 2026-08-28 with the Intelligence ideas view. An idea is a title, a body, three qualifying notes, its evidence, and two actions. `m-intelligence-principle` is what carries it: a rule-separated block with a heading at section scale and a body at 1.125rem. It is a reading block rather than a card, so the ideas are separated by rules instead of sitting on their own surfaces, and the two actions sit inside the block rather than on a defined footer.
+## Prose blocks are not cards, and there is no prose-action footer
 
-Bring it back when: somebody rules that these should read as cards. The pattern lands in `app/design/patterns.css` and `ideaBlock` in `src/intelligence/ideas-view.js` takes it.
+Closed 2026-08-28. Asked as a card pattern and ruled against by the designer: an idea is a reading block, and rule-separated blocks are correct for it. The ideas stay on `m-intelligence-principle` and no card pattern is wanted.
 
-## The ideas view lives in src so its markup can be asserted
+What the question was actually pointing at is recorded in its place. The two actions currently sit in a bare `m-cluster` at the end of the block, which is a row of buttons rather than a defined end to a piece of prose. A reusable prose-action footer, the closing region of a reading block that holds its actions and any answer they produce, does not exist.
 
-Recorded 2026-08-28. `src/intelligence/ideas-view.js` holds the rendering for a run of ideas, and `app/intelligence.js` imports it. This is the first file under `app/` that imports from `src/`. It was moved because the first version of this view passed a test that matched strings in the page source, and shipped a two-column layout with unequal measures and a label printed over nothing. A test that cannot see rendered markup cannot see a composition fault.
+Bring it back when: a second surface needs the same closing region. Two real uses, then the pattern, which is the rule for shared code and holds for patterns too. `ideaBlock` in `app/intelligence/ideas-view.js` takes it.
 
-Bring it back when: Grey rules on whether page rendering belongs under `src/`. If it does not, the alternative is a browser-free rendering harness in `test/` that can import a page script, which is the larger job and the reason this route was taken first.
+## The ideas view lived in src so its markup could be asserted
 
+Closed 2026-08-28, ruled against. Browser rendering lives under `app/`. Testability is not a reason to move an interface into the domain layer, and putting it there set a precedent nobody wanted. The module is now `app/intelligence/ideas-view.js` and the tests import it from there. `src/intelligence/` keeps the analysis record and the packet, which are domain.
+
+The reason it went to `src/` in the first place still stands and is met by the new location: a test imports the module and asserts the markup a person receives, which is what a source-matching test could not do.
+
+No condition to bring back. This entry records a placement that was wrong for one commit.
+
+## A stored run pointed at findings instead of copying their evidence
+
+Closed 2026-08-28 by the commit that landed the designer's pass. `run-scene-ideas` stored a finding's id, its words, its independent source count, and its tiers, and dropped the claims and sources behind it. Anything later that wanted to show the evidence for an old run would have had to resolve those ids against the brain as it stands today, which rewrites what a past analysis rested on. A run exists to say what the system knew that day, so that would have defeated the record.
+
+The snapshot now copies the trail out of the record at generation time: `evidenceLinked`, `claimIds`, `claims`, `sourceIds`, and `sources`, through `evidenceSnapshot` in `api/tour/index.js`. This intake links no claims to findings, so today the lists store empty and the page reads that as a counts-only trail. An intake that does link them is stored without another change, which is asserted by a test that links a claim in the record and reads the stored run back.
+
+No migration. Every run stored before this commit is test data.

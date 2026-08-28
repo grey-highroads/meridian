@@ -6,11 +6,11 @@ import { fileURLToPath } from "node:url";
 import { handleAction as artistAction } from "../api/artist/index.js";
 import { handleAction as tourAction } from "../api/tour/index.js";
 import middleware from "../middleware.js";
-import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
+import { createArtistStore, createMemoryBackend, pathFor as artistPathFor } from "../src/artist/store.js";
 import { createTourStore } from "../src/tour/store.js";
 import { createAnalysisStore, analysisPathFor, SCENE_IDEAS } from "../src/intelligence/analysis.js";
 import { renderConceptPacket } from "../src/intelligence/concept-packet.js";
-import { renderIdeas } from "../src/intelligence/ideas-view.js";
+import { renderIdeas } from "../app/intelligence/ideas-view.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "../src/org/store.js";
 import { SESSION_COOKIE, signSession } from "../src/org/session.js";
@@ -137,6 +137,59 @@ test("asking for ideas stores the Scene, the direction version, both dates, the 
   assert.match(analysis.evidence[0].why, /bears on/);
 });
 
+test("a stored run carries the trail behind each finding as it stood when it ran", async () => {
+  const context = await ready();
+  await tourAction({ action: "run-scene-ideas", tourId: TOUR, assignmentId: SCENE }, options(context, OPERATOR, modelReply()));
+
+  // The stored file, not the return value.
+  const analysis = storedAnalyses(context)[0];
+  const entry = analysis.evidence[0];
+  assert.equal(entry.findingId, "finding-1");
+
+  // Every reference the record held for this finding is copied into the run.
+  // A later reader resolves nothing against a brain that has moved since.
+  for (const field of ["evidenceLinked", "claimIds", "claims", "sourceIds", "sources"]) {
+    assert.ok(Object.hasOwn(entry, field), `the run snapshot drops ${field}`);
+  }
+  assert.ok(Array.isArray(entry.claims));
+  assert.ok(Array.isArray(entry.sources));
+  assert.ok(Array.isArray(entry.claimIds));
+  assert.ok(Array.isArray(entry.sourceIds));
+
+  // This intake links no claims to findings, so the snapshot records that
+  // honestly rather than inventing a trail. The shape is what matters: an
+  // intake that does link them stores them here without another change.
+  assert.equal(entry.evidenceLinked, false);
+  assert.deepEqual(entry.claims, []);
+  assert.deepEqual(entry.sources, []);
+});
+
+test("when the record links a claim to a finding, the run stores that claim and its source", async () => {
+  const context = await ready();
+
+  // Link one claim to finding-1 in the artist record, which is the state a
+  // later intake produces. Nothing else changes.
+  const recordPath = artistPathFor(DEMO, "record", DEMO);
+  const record = JSON.parse(context.artistBackend.files.get(recordPath));
+  const claim = record.claims[0];
+  const source = record.sources.find((entry) => entry.id === claim.sourceId) || record.sources[0];
+  claim.sourceId = source.id;
+  const finding = record.findings.find((entry) => entry.id === "finding-1");
+  finding.claimIds = [claim.id];
+  finding.evidenceLinked = true;
+  context.artistBackend.files.set(recordPath, JSON.stringify(record, null, 2));
+
+  await tourAction({ action: "run-scene-ideas", tourId: TOUR, assignmentId: SCENE }, options(context, OPERATOR, modelReply()));
+
+  const entry = storedAnalyses(context)[0].evidence[0];
+  assert.equal(entry.evidenceLinked, true);
+  assert.deepEqual(entry.claimIds, [claim.id]);
+  assert.deepEqual(entry.sourceIds, [source.id]);
+  assert.equal(entry.claims[0].text, claim.text);
+  assert.equal(entry.sources[0].title, source.title);
+  assert.equal(entry.sources[0].url, source.url);
+});
+
 test("asking again chains a second run and leaves the first exactly as it was", async () => {
   const context = await ready();
   await tourAction({ action: "run-scene-ideas", tourId: TOUR, assignmentId: SCENE }, options(context, OPERATOR, modelReply()));
@@ -235,10 +288,19 @@ const RUN = {
     openQuestions: [],
   },
   evidence: [
-    // One finding with a supporting sentence behind its lead, and one with
-    // nothing behind it but its counts and tiers.
-    { findingId: "finding-1", text: "**He plays sheds.** Twelve of the last fifteen runs were amphitheatres.", independentSourceCount: 4, tiers: [1, 2], why: "It bears on the request." },
-    { findingId: "finding-2", text: "**The aviation staging returns.**", independentSourceCount: 3, tiers: [1], why: "The Scene asks for height." },
+    // One finding whose run snapshot carries the claims and sources behind it,
+    // and one with nothing behind it but its counts and tiers.
+    {
+      findingId: "finding-1",
+      text: "**He plays sheds.** Twelve of the last fifteen runs were amphitheatres.",
+      independentSourceCount: 4,
+      tiers: [1, 2],
+      why: "It bears on the request.",
+      evidenceLinked: true,
+      claims: [{ id: "claim-9", text: "The 2024 run played eleven amphitheatres", sourceId: "source-3" }],
+      sources: [{ id: "source-3", title: "Pollstar year-end routing", url: "https://example.test/routing", tier: 2 }],
+    },
+    { findingId: "finding-2", text: "**The aviation staging returns.**", independentSourceCount: 3, tiers: [1], why: "The Scene asks for height.", evidenceLinked: false, claims: [], sources: [] },
   ],
 };
 
@@ -254,17 +316,68 @@ test("each idea renders its own two actions and nothing carries a run-wide expor
   assert.ok(!/Download the concept packet/.test(html), "the run-level button is still on the page");
 });
 
-test("no label renders over a void, and a disclosure opens onto something", () => {
+test("the finding and its why are always read in full, never behind a control", () => {
   const html = renderIdeas(RUN);
-  // finding-1 has a sentence behind its lead, so it earns a disclosure.
-  assert.match(html, /<details class="m-evidence-item">/);
-  assert.match(html, /Twelve of the last fifteen runs were amphitheatres/);
-  // finding-2 has only counts and tiers, so it is one quiet line and no label.
-  assert.match(html, /<span class="m-meta">3 INDEPENDENT SOURCES, FROM TIER 1<\/span>/);
+  // Both findings, and both reasons, sit in the open.
+  assert.match(html, /<p class="m-copy">He plays sheds\. Twelve of the last fifteen runs were amphitheatres\.<\/p>/);
+  assert.match(html, /<p class="m-copy">It bears on the request\.<\/p>/);
+  assert.match(html, /<p class="m-copy">The aviation staging returns\.<\/p>/);
+  assert.match(html, /<p class="m-copy">The Scene asks for height\.<\/p>/);
+  // Nothing a person could open shows them prose they were already given.
+  const openable = html.match(/<details[\s\S]*?<\/details>/g) || [];
+  for (const disclosure of openable) {
+    assert.ok(!disclosure.includes("Twelve of the last fifteen"), "a disclosure repeats the finding");
+    assert.ok(!disclosure.includes("It bears on the request"), "a disclosure repeats the reason");
+  }
+  // The cited findings sit under one visible label.
+  assert.match(html, /<span class="m-label">What this rests on in the artist's history<\/span>/);
+});
+
+test("the trail degrades: a static line with counts only, a disclosure with sources", () => {
+  const html = renderIdeas(RUN);
+
+  // finding-1 carries claims and sources in the run snapshot, so its trail is a
+  // disclosure and it opens onto the sources themselves.
   assert.equal((html.match(/<details/g) || []).length, 1, "a disclosure was written over nothing");
+  const disclosure = html.match(/<details[\s\S]*?<\/details>/)[0];
+  assert.match(disclosure, /4 INDEPENDENT SOURCES, FROM TIER 1, 2/);
+  assert.match(disclosure, /OPEN THE SOURCES/, "the disclosure does not say what it opens onto");
+  assert.match(disclosure, /The 2024 run played eleven amphitheatres/);
+  assert.match(disclosure, /href="https:\/\/example\.test\/routing"/);
+  assert.match(disclosure, /Pollstar year-end routing/);
+
+  // finding-2 has counts and tiers and nothing else, so its trail is one quiet
+  // static line and nothing in it looks clickable.
+  const second = html.slice(html.indexOf("The aviation staging returns"));
+  const untilActions = second.slice(0, second.indexOf('<div class="m-cluster">'));
+  assert.match(untilActions, /<span class="m-meta">3 INDEPENDENT SOURCES, FROM TIER 1<\/span>/);
+  assert.ok(!/<details|<summary|<button|<a /.test(untilActions), "a counts-only trail offers something to click");
+
   // Open questions is empty, so its heading does not render at all.
   assert.ok(!/OPEN QUESTIONS/.test(html), "an empty section printed its heading");
   assert.match(html, /WHAT THIS ARTIST STAYS AWAY FROM/, "a section with content did not render");
+});
+
+test("feedback from an idea's actions renders inside that idea and is announced", () => {
+  const html = renderIdeas(RUN, "", { 1: "Copied to your clipboard." });
+  const second = html.slice(html.indexOf('data-idea="1"'));
+  assert.match(second, /role="status"/, "the answer is silent to a screen reader");
+  assert.match(second, /aria-live="polite"/);
+  assert.match(second, /Copied to your clipboard\./);
+
+  // And it landed in the idea that produced it, not the one above it.
+  const first = html.slice(html.indexOf('data-idea="0"'), html.indexOf('data-idea="1"'));
+  assert.ok(!first.includes("Copied to your clipboard."), "the answer rendered in the wrong idea");
+
+  // The page-level callout is for page-level failures, so the idea actions do
+  // not write to it.
+  const page = read("app/intelligence.js");
+  assert.match(page, /function sayInIdea/, "idea feedback still goes to the page callout");
+  for (const name of ["copyIdea", "downloadIdea"]) {
+    const body = page.match(new RegExp(`async function ${name}\\([\\s\\S]*?\\n\\}`))[0];
+    assert.ok(!body.includes("view.message"), `${name} still writes to the page callout`);
+    assert.ok(body.includes("sayInIdea"), `${name} does not answer beside the action`);
+  }
 });
 
 test("the ideas stack in one column and their titles are the largest text", () => {
@@ -279,10 +392,15 @@ test("the ideas stack in one column and their titles are the largest text", () =
   assert.match(html, /class="m-intelligence-principles"/);
   assert.ok(!/m-orientation/.test(html), "the ideas are back in the two-column grid");
 
-  // An idea's title is the only thing at section scale inside the run.
+  // An idea's title is the only thing at section scale inside the run, and the
+  // run header carries nothing above meta scale.
   assert.equal((html.match(/m-intelligence-principle__heading/g) || []).length, 2);
   assert.ok(!/m-section-heading/.test(html), "something in the run competes with an idea title");
   assert.ok(!/m-heading/.test(html.replace(/m-intelligence-principle__heading/g, "")), "the run header shouts");
+
+  // The page's own name reads at page scale. It is the name of the page, not a
+  // peer of the ideas.
+  assert.match(read("app/intelligence.js"), /<h1 class="m-heading">Intelligence<\/h1>/, "the page name was shrunk to section scale");
 
   // The run and its lineage are context, carried at meta scale.
   assert.match(html, /RUN 02 \/ 2026-08-28 \/ TOUR DIRECTION V01 \/ ARTIST KNOWLEDGE APPROVED 2026-08-20/);
@@ -297,7 +415,6 @@ test("emphasis comes from the hierarchy, never from weight inside running text",
   assert.ok(!html.includes("<b>"), "bold is back inside running text");
   // The intake file's own asterisks never reach a reader either.
   assert.ok(!html.includes("**"), "the intake file's markup reached the page");
-  assert.match(html, /<p class="m-copy">He plays sheds\.<\/p>/);
 });
 
 test("the nav reads Intelligence, one word, and no page hard-codes it", () => {

@@ -13,7 +13,7 @@ import { createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 import { createOrgStore } from "../../src/org/store.js";
 import { uploadPrefix } from "../../src/tour/upload-path.js";
-import { buildArtistView } from "../../src/artist/service.js";
+import { buildArtistView, evidenceFor } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { CLIENT_ROLE } from "../../src/org/store.js";
 
@@ -106,7 +106,28 @@ async function loadBrain(artistId, options) {
     error.status = 400;
     throw error;
   }
-  return brain;
+  // The record travels with the view. A run has to snapshot the evidence
+  // behind each finding as it stood when the run happened, and the view holds
+  // findings without the claims and sources under them.
+  return { ...brain, record };
+}
+
+// What one finding rests on, copied out of the record rather than referenced.
+// A finding with nothing linked to it stores empty lists and says so, which is
+// what the page reads to decide whether there is anything to open.
+function evidenceSnapshot(record, findingId) {
+  try {
+    const evidence = evidenceFor(record || {}, findingId);
+    return {
+      evidenceLinked: evidence.evidenceLinked === true,
+      claimIds: evidence.claims.map((claim) => claim.id),
+      claims: evidence.claims,
+      sourceIds: evidence.sources.map((source) => source.id),
+      sources: evidence.sources,
+    };
+  } catch {
+    return { evidenceLinked: false, claimIds: [], claims: [], sourceIds: [], sources: [] };
+  }
 }
 
 async function contextFor(body, options) {
@@ -759,14 +780,22 @@ export async function handleAction(body, options = {}) {
         avoidNotes: proposed.avoidNotes,
         openQuestions: proposed.openQuestions,
       },
-      evidence: proposed.appliedFindings.map((entry) => ({
-        findingId: entry.findingId,
-        part: entry.facetName,
-        text: entry.text,
-        independentSourceCount: entry.independentSourceCount,
-        tiers: entry.tiers,
-        why: entry.why,
-      })),
+      // The trail as it stood at generation time, not a pointer into a brain
+      // that will have moved by the time anybody reads this back. Resolving an
+      // old run against a newer brain would rewrite what a past analysis rested
+      // on, which is the one thing a stored analysis exists to prevent.
+      evidence: proposed.appliedFindings.map((entry) => {
+        const trail = evidenceSnapshot(brain.record, entry.findingId);
+        return {
+          findingId: entry.findingId,
+          part: entry.facetName,
+          text: entry.text,
+          independentSourceCount: entry.independentSourceCount,
+          tiers: entry.tiers,
+          why: entry.why,
+          ...trail,
+        };
+      }),
     });
     const stored = await analysisStore.appendAnalysis(SCENE_IDEAS, fixture.tour.id, assignment.id, analysis);
     return { tour: fixture.tour, assignment, analysis: stored.analysis, analyses: stored.analyses };

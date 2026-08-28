@@ -1,5 +1,5 @@
 import { TOUR_ID, scopedBody } from "./context.js";
-import { escape, pad, renderIdeas } from "../src/intelligence/ideas-view.js";
+import { escape, pad, renderIdeas } from "./intelligence/ideas-view.js";
 
 // Intelligence. Four things a Higher Roads person can ask about the
 // artist, and the research they draw on underneath.
@@ -25,6 +25,10 @@ const view = {
   analyses: [],
   runId: "",
   loadingRuns: false,
+  // Feedback from an idea's own actions, keyed by the idea it belongs to. The
+  // page-level callout is for page-level failures, and an error from a button
+  // low on the page rendered up there is an error nobody reads.
+  ideaMessages: {},
 };
 
 async function call(action, extra = {}) {
@@ -120,7 +124,7 @@ function result() {
         </div>
       </section>`;
   }
-  return renderIdeas(analysis, runPicker());
+  return renderIdeas(analysis, runPicker(), view.ideaMessages);
 }
 
 function reference() {
@@ -143,7 +147,7 @@ function render() {
   root.innerHTML = `<header class="m-job-header">
       <div class="m-job-header__copy">
         <span class="m-label">Higher Roads only</span>
-        <h1 class="m-section-heading">Intelligence</h1>
+        <h1 class="m-heading">Intelligence</h1>
         <p class="m-copy">Four things you can ask about this artist. Every answer carries the research it came from.</p>
       </div>
     </header>
@@ -162,6 +166,7 @@ async function loadRuns() {
   view.loadingRuns = true;
   render();
   try {
+    view.ideaMessages = {};
     const { analyses } = await call("get-scene-ideas", { assignmentId: view.sceneId });
     view.analyses = Array.isArray(analyses) ? analyses : [];
     view.runId = view.analyses.length ? view.analyses[view.analyses.length - 1].runId : "";
@@ -180,6 +185,7 @@ async function run() {
   view.message = "";
   render();
   try {
+    view.ideaMessages = {};
     const { analyses } = await call("run-scene-ideas", { assignmentId: view.sceneId });
     view.analyses = Array.isArray(analyses) ? analyses : [];
     view.runId = view.analyses.length ? view.analyses[view.analyses.length - 1].runId : "";
@@ -202,6 +208,15 @@ async function packetFor(index) {
   });
 }
 
+// The answer is written into the idea that asked, and only that idea repaints,
+// so a person reading an idea at the bottom of the page stays where they are.
+function sayInIdea(index, message) {
+  view.ideaMessages = { ...view.ideaMessages, [index]: message };
+  const slot = root.querySelector(`[data-idea="${index}"] [data-idea-feedback]`);
+  if (slot) slot.textContent = message;
+  else render();
+}
+
 async function downloadIdea(index) {
   try {
     const { filename, document: body } = await packetFor(index);
@@ -213,9 +228,9 @@ async function downloadIdea(index) {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+    sayInIdea(index, "Downloaded.");
   } catch (error) {
-    view.message = error.message;
-    render();
+    sayInIdea(index, error.message);
   }
 }
 
@@ -223,11 +238,10 @@ async function copyIdea(index) {
   try {
     const { document: body } = await packetFor(index);
     await navigator.clipboard.writeText(body);
-    view.message = "The idea is on your clipboard.";
+    sayInIdea(index, "Copied to your clipboard.");
   } catch (error) {
-    view.message = error.message;
+    sayInIdea(index, error.message);
   }
-  render();
 }
 
 document.addEventListener("change", (event) => {
@@ -241,8 +255,8 @@ document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
   if (target.hasAttribute("data-run")) void run();
-  if (target.hasAttribute("data-idea-download")) void downloadIdea(target.getAttribute("data-idea-download"));
-  if (target.hasAttribute("data-idea-copy")) void copyIdea(target.getAttribute("data-idea-copy"));
+  if (target.hasAttribute("data-idea-download")) void downloadIdea(Number(target.getAttribute("data-idea-download")));
+  if (target.hasAttribute("data-idea-copy")) void copyIdea(Number(target.getAttribute("data-idea-copy")));
   if (target.hasAttribute("data-run-id")) {
     view.runId = target.getAttribute("data-run-id");
     render();
