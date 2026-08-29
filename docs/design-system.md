@@ -8,6 +8,8 @@ This system gives builders one visual and interaction language for new Meridian 
 
 The system owns appearance, hierarchy, disclosure, responsive behavior, and interaction states. Builders own workflow logic, data loading, and service integration.
 
+This document is the implementation contract. It says what to use and how to compose it. Two documents hold the reasoning behind it. [`meridian-design-direction.md`](meridian-design-direction.md) holds the visual argument, the interface voice, the intervention ladder, the recurring failure patterns, and the judgment case studies. [`experience/design-quality-standard.md`](experience/design-quality-standard.md) is the standard a screen is judged against before it ships. Read both before making a design decision this document does not cover.
+
 ## Ownership
 
 All Meridian design code lives in `app/design/`.
