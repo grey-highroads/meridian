@@ -28,6 +28,16 @@ Missing state: There is no gallery pattern for rows of arbitrary-ratio images wi
 
 Where: `app/reviews.html`, for the Reviews gallery. A real thumbnail pipeline becomes necessary when one Scene exceeds 12 versions or the original files entering the viewport exceed 40 MB in total.
 
+### A tighter reading block for short entries
+
+Status: requested
+
+Job: a direction read stacks short observations, a title and two or three sentences each, under three group headings. The reader is scanning a set of related observations rather than reading one idea at a time.
+
+Missing state: `m-intelligence-principle` is the only rule-separated reading block that exists and it was tuned for an idea, which carries a title, a paragraph, three qualifying notes, an evidence disclosure, and two actions. Its `var(--m-space-8)` vertical padding and `var(--m-space-5)` internal gap leave a short entry floating in a block sized for a long one, and a read of eight entries runs about a third longer than it needs to. `app/intelligence/direction-view.js` uses the pattern as it stands rather than inventing local spacing.
+
+Where: `entryBlock` in `app/intelligence/direction-view.js`. It becomes worth doing when a second surface stacks short evidence-carrying entries, which job three, the artboard review, is likely to be.
+
 ### Full-viewport work viewer
 
 Status: requested
@@ -684,3 +694,19 @@ Closed 2026-08-28 by the commit that landed the designer's pass. `run-scene-idea
 The snapshot now copies the trail out of the record at generation time: `evidenceLinked`, `claimIds`, `claims`, `sourceIds`, and `sources`, through `evidenceSnapshot` in `api/tour/index.js`. This intake links no claims to findings, so today the lists store empty and the page reads that as a counts-only trail. An intake that does link them is stored without another change, which is asserted by a test that links a claim in the record and reads the stored run back.
 
 No migration. Every run stored before this commit is test data.
+
+## The direction read leaves nothing behind as a file
+
+Recorded 2026-08-29 with Intelligence job two. Job one exports, because the admitted reality is that a creative feeds an idea to a model outside Meridian, and an idea is the unit a person takes away. Job two has no equivalent unit. The whole read is the artifact, and the one sharing behavior described for it, handing two echo candidates to the creative director with their sources, is a fragment of a read rather than a thing the record holds. So no export was built and no second packet renderer exists.
+
+The name is settled in advance either way. If this ships it is a concept packet, never a brief, with the same lineage every packet carries: the tour, the direction version, the generation date, the artist knowledge approval date, and the run number.
+
+Bring it back when: a person has read one and says what they would hand over. If the answer is the whole read, `src/intelligence/concept-packet.js` grows a second renderer against the same stored analysis and the Download and Copy actions sit at the foot of the read. If the answer is one entry, they sit at the foot of the entry, as they do on an idea.
+
+## Two answers share one answer area on Intelligence
+
+Recorded 2026-08-29 with Intelligence job two. The page has one region below the instruments and two jobs now write into it. It shows one answer at a time: whichever job answered most recently on arrival, and whichever job the person just asked after that. The other job's answer is one named button away in the head of the answer on screen, and that button also sits in the empty state so a Scene with no ideas is not a dead end to a direction read that exists.
+
+This holds for two answers. It will not hold for four. Jobs three and four are not on this surface in the same way, since the artboard review meets the person in the Reviews drawer, but a fourth answer here would make the switch a menu, and a menu of answers is the panel this surface exists to avoid.
+
+Bring it back when: a third job writes an answer into this region. The composition is reopened then rather than extended, and the question to answer first is whether the answers belong on this page at all or beside the object each one is about.

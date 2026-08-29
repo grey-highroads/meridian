@@ -321,3 +321,15 @@ Recorded after the fourth-session composition landed at `e774400`.
 Recorded after the first-viewport correction landed at `2db05f4`.
 
 **The instrument canvas is wider than the reading measure.** The single-column correction was right about order and wrong to give every kind of content the same narrow frame. Intelligence uses a 70rem canvas so the four instruments can breathe and wrap less. Idea and evidence prose remain capped at the shared 44rem copy measure. The page gets broader; the sentences do not get longer.
+
+## Four rulings, 2026-08-29
+
+Recorded against the committed tree at `23732390`. Job two of Intelligence, the direction read, and the review pass that came with it.
+
+**The direction read is written, and the three groups are the read.** An admin presses one control and Meridian holds the tour direction, at the version stored now, against the artist's approved record. What comes back is three groups: what the direction keeps, where it leaves the record, and what it echoes, the last including the ones only a fan who knows the catalog would catch. There is no summary sentence, no meter, no percentage, and no count of how aligned the direction is. Whether this direction is a departure or in lockstep is the reader's conclusion from the groups, and a model-written sentence saying so would be the verdict this surface is not allowed to produce. The model is instructed against writing one and `renderDirectionRead` in `app/intelligence/direction-view.js` has nowhere to put one.
+
+**An entry the record cannot support does not appear.** Job one drops a citation the brain does not hold and keeps the idea. Job two drops the whole entry, because an idea with a thin trail is still an idea a person reacts to, while a departure nobody can trace reads as a finding about the direction. `checkDirectionRead` in `src/tour/direction-read.js` filters an entry with no surviving finding, and a read that survives with nothing in any group is an error rather than an empty page.
+
+**A read belongs to the direction version it read.** Runs are stored under `directionSubjectId(version)` from `src/intelligence/analysis.js`, so reads chain within a version and start again at run one when the director's words move. `get-direction-read` returns every version's runs, oldest first, so a read made against V02 stays readable after V03 arrives and its run label names the version as well as the number. The evidence snapshot is copied at generation time exactly as job one copies it.
+
+**The run a person is reading is named, not offered as a control.** Before this commit the run picker rendered every run as an identical button with `aria-current` that nothing styled, so the run on screen and the run in history looked the same. The current run is now a state and the earlier runs are buttons. That is the difference stated in words and in available actions rather than in color, which is what version identity asks for.

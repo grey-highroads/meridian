@@ -41,6 +41,14 @@ export function analysisPathFor(job, tourId, subjectId, accountId) {
   return `${ROOT}/${requireAccount(accountId)}/tours/${tourId}/intelligence/${job}/${subjectId}.json`;
 }
 
+// The direction read's subject is a version of the tour direction. Runs are
+// kept per version, so a read made against V02 stays readable after the
+// director's words move to V03 and the run numbering for V03 starts again at
+// one. Both the writer and the reader take the id from here.
+export function directionSubjectId(version) {
+  return `v${String(Number(version) || 0).padStart(2, "0")}`;
+}
+
 export function buildAnalysis(entry = {}) {
   const ranAt = entry.ranAt || new Date().toISOString();
   return {

@@ -1,5 +1,6 @@
-import { assembleContext } from "../../src/tour/select.js";
+import { assembleContext, assembleDirectionContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
+import { readDirection } from "../../src/tour/direction-read.js";
 import { createTourStore } from "../../src/tour/store.js";
 import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
 import { createArtboardStore } from "../../src/seam/artboard-store.js";
@@ -7,7 +8,7 @@ import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/st
 import { createSceneRecord } from "../../src/tour/scene-record.js";
 import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
 import { createArtistStore } from "../../src/artist/store.js";
-import { buildAnalysis, createAnalysisStore, SCENE_IDEAS } from "../../src/intelligence/analysis.js";
+import { buildAnalysis, createAnalysisStore, DIRECTION_READ, directionSubjectId, SCENE_IDEAS } from "../../src/intelligence/analysis.js";
 import { conceptPacketFilename, renderConceptPacket } from "../../src/intelligence/concept-packet.js";
 import { createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
@@ -26,7 +27,7 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // get-reviews, approve-for-client, client-approve, client-comment,
 // get-production-intent, get-scene-activity, get-scene-record, ask-question,
 // answer-question, get-questions, run-scene-ideas, get-scene-ideas,
-// get-concept-packet.
+// get-concept-packet, run-direction-read, get-direction-read.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -799,6 +800,76 @@ export async function handleAction(body, options = {}) {
     });
     const stored = await analysisStore.appendAnalysis(SCENE_IDEAS, fixture.tour.id, assignment.id, analysis);
     return { tour: fixture.tour, assignment, analysis: stored.analysis, analyses: stored.analyses };
+  }
+
+  // Job two of Intelligence. An admin presses one control and Meridian reads
+  // the tour direction, at the version stored now, against the artist's
+  // approved record. Runs are kept against the version they read, so a read
+  // made on V02 stays readable after the director's words move on.
+  if (body.action === "run-direction-read") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const brain = await loadBrain(fixture.tour.artistId, options);
+    const context = assembleDirectionContext(brain, fixture.tour);
+    const read = await readDirection(context, options);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    const analysis = buildAnalysis({
+      job: DIRECTION_READ,
+      ranAt: options.now ? new Date(options.now()).toISOString() : new Date().toISOString(),
+      ranBy: user.displayName,
+      artistId: fixture.tour.artistId,
+      subject: {
+        tourId: fixture.tour.id,
+        tourName: fixture.tour.name,
+        directionVersion: context.directionVersion,
+        directionSetBy: fixture.tour.direction.setBy || null,
+      },
+      directionVersion: context.directionVersion,
+      brainApprovedAt: brain.approvedAt,
+      result: {
+        continuity: read.continuity,
+        departure: read.departure,
+        echo: read.echo,
+        openQuestions: read.openQuestions,
+      },
+      // The trail as it stood at generation time, exactly as job one does it.
+      // Resolving an old run against a newer record would rewrite what a past
+      // read rested on.
+      evidence: read.appliedFindings.map((entry) => {
+        const trail = evidenceSnapshot(brain.record, entry.findingId);
+        return {
+          findingId: entry.findingId,
+          part: entry.facetName,
+          text: entry.text,
+          independentSourceCount: entry.independentSourceCount,
+          tiers: entry.tiers,
+          why: entry.why,
+          ...trail,
+        };
+      }),
+    });
+    const subjectId = directionSubjectId(context.directionVersion);
+    const stored = await analysisStore.appendAnalysis(DIRECTION_READ, fixture.tour.id, subjectId, analysis);
+    return { tour: fixture.tour, analysis: stored.analysis, analyses: stored.analyses };
+  }
+
+  // Every read this tour holds, oldest first, across every direction version
+  // that has one. A read made against an earlier version stays readable against
+  // the version it was made on rather than disappearing when the words move.
+  if (body.action === "get-direction-read") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const stored = await tourStore.readDirections(fixture.tour.id);
+    const versions = [...new Set([
+      ...stored.map((entry) => Number(entry.version)),
+      Number(fixture.tour.direction.version),
+    ])].filter((version) => Number.isInteger(version) && version > 0).sort((a, b) => a - b);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    const byVersion = await Promise.all(versions.map((version) =>
+      analysisStore.readAnalyses(DIRECTION_READ, fixture.tour.id, directionSubjectId(version))));
+    return {
+      directionVersion: fixture.tour.direction.version,
+      analyses: byVersion.flat(),
+    };
   }
 
   if (body.action === "get-scene-ideas") {

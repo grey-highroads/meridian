@@ -43,7 +43,7 @@ The page-and-drawer ruling applies with a twist worth thinking through: this who
 
 **Why first.** The server never forgot how. The propose action still works and nothing calls it; the register entry written when the Scene panel came out names this exact job as its closing condition.
 
-### Job two: direction against the brain
+### Job two: direction against the brain (live 2026-08-29)
 
 **The moment.** A creative director's words have just arrived, or moved to a new version. Before Scenes get briefed against it, the admin wants to know: is this direction a departure from who this artist has been, or in lockstep with the new record? Which past themes should the visuals lean on, which should they stay away from, and what older imagery would land as an if-you-know-you-know moment for the fans who know?
 
@@ -85,6 +85,6 @@ Not a chat window. Each job is an ask with a shaped answer, not a conversation. 
 
 ## Sequence and what exists
 
-Ship order: Scene ideas, direction read, artboard review, tour flags. The propose action exists on the server today with no caller. The direction read and artboard review are new model work with the evidence rules above. Tour flags wait on venue structure, already registered.
+Ship order: Scene ideas, direction read, artboard review, tour flags. Jobs one and two are live. The propose action exists on the server today with no caller. The direction read and artboard review are new model work with the evidence rules above. Tour flags wait on venue structure, already registered.
 
 For the designer, the immediate asks: the surface's composition under actions-first, the evidence presentation (the trail is the product; it must invite reading without burying the finding), the export as an artifact someone hands to tour production or a creative, and the verdict problem on job three. The failing example to avoid is on record: the old Scene panel, which had the content and no job.

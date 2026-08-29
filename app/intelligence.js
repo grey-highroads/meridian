@@ -1,6 +1,7 @@
 import { TOUR_ID, scopedBody } from "./context.js";
 import { escape, pad, renderIdeas } from "./intelligence/ideas-view.js";
 import { renderAsks } from "./intelligence/asks-view.js";
+import { renderDirectionRead } from "./intelligence/direction-view.js";
 
 // Intelligence. Four things a Higher Roads person can ask about the
 // artist, and the research they draw on underneath.
@@ -16,6 +17,13 @@ import { renderAsks } from "./intelligence/asks-view.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("intelligence");
 
+// Two jobs now answer on this page and one answer area holds them. The page
+// reads whichever job answered most recently, and the other job's answers are
+// one named control away in the head of the answer that is showing. A person
+// who never asked the second question never sees a control for it.
+const SCENE_IDEAS = "scene-ideas";
+const DIRECTION_READ = "direction-read";
+
 const view = {
   user: null,
   tour: null,
@@ -26,6 +34,14 @@ const view = {
   analyses: [],
   runId: "",
   loadingRuns: false,
+  // Which answer the reader is looking at.
+  activeJob: SCENE_IDEAS,
+  // Job two. Runs are kept against the direction version they read, so a run
+  // label names its version as well as its number.
+  reading: false,
+  directionVersion: null,
+  directionAnalyses: [],
+  directionRunId: "",
   // Feedback from an idea's own actions, keyed by the idea it belongs to. The
   // page-level callout is for page-level failures, and an error from a button
   // low on the page rendered up there is an error nobody reads.
@@ -74,7 +90,7 @@ function asks() {
     {
       title: "Read the direction against the artist",
       copy: "Whether the tour direction departs from who this artist has been, and which older themes it echoes.",
-      control: `<span class="m-state">Coming</span>`,
+      control: directionControl(),
     },
     {
       title: "Review a board before the client sees it",
@@ -90,13 +106,42 @@ function asks() {
   return renderAsks(rows);
 }
 
-function runPicker() {
-  if (view.analyses.length < 2) return "";
-  const rows = view.analyses.slice().reverse().map((entry) => {
-    const here = entry.runId === view.runId;
-    return `<button class="m-button m-button--small" type="button" data-run-id="${escape(entry.runId)}"${here ? ' aria-current="true"' : ""}>Run ${escape(pad(entry.run))}</button>`;
+// The direction read's action names what it will read and which version of it,
+// so the version is attached to the control and not only to the answer.
+function directionControl() {
+  if (!view.directionVersion) return `<span class="m-state">No direction yet</span>`;
+  const version = `V${pad(view.directionVersion)}`;
+  return `<button class="m-button m-button--primary" type="button" data-read ${view.reading ? "disabled" : ""}>${view.reading ? "Reading" : `Read direction ${escape(version)}`}</button>`;
+}
+
+// The run a person is reading is named and is not a control, because there is
+// nothing to press to arrive where you already are. Earlier runs are the
+// buttons. That is the difference in words and in available actions rather than
+// in color alone.
+function picker(analyses, currentId, attribute, label) {
+  if (analyses.length < 2) return "";
+  const rows = analyses.slice().reverse().map((entry) => {
+    const name = label(entry);
+    if (entry.runId === currentId) return `<span class="m-state m-state--current" aria-current="true">${escape(name)}</span>`;
+    return `<button class="m-button m-button--small" type="button" ${attribute}="${escape(entry.runId)}">${escape(name)}</button>`;
   }).join("");
-  return `<div class="m-cluster">${rows}</div>`;
+  return rows;
+}
+
+// The way to the other job's answer, offered only when that job has one.
+function otherAnswer() {
+  if (view.activeJob === SCENE_IDEAS) {
+    if (!view.directionAnalyses.length) return "";
+    return `<button class="m-button m-button--small" type="button" data-open-job="${DIRECTION_READ}">Open the direction read</button>`;
+  }
+  if (!view.analyses.length) return "";
+  return `<button class="m-button m-button--small" type="button" data-open-job="${SCENE_IDEAS}">Open the Scene ideas</button>`;
+}
+
+function headControls(rows) {
+  const other = otherAnswer();
+  if (!rows && !other) return "";
+  return `<div class="m-cluster">${rows}${other}</div>`;
 }
 
 function currentAnalysis() {
@@ -104,18 +149,55 @@ function currentAnalysis() {
   return view.analyses.find((entry) => entry.runId === view.runId) || view.analyses[view.analyses.length - 1];
 }
 
+function currentDirectionAnalysis() {
+  if (!view.directionAnalyses.length) return null;
+  return view.directionAnalyses.find((entry) => entry.runId === view.directionRunId)
+    || view.directionAnalyses[view.directionAnalyses.length - 1];
+}
+
+// Nothing has been asked yet. This is the answer region before it holds an
+// answer, so it reads like the answer region and not like a card announcing an
+// empty database. The instruments above already say what can be asked, so the
+// line here says what happens to an answer once one exists.
+//
+// The card this replaced used m-empty-state--compact with no m-empty-state__visual,
+// and that pattern is a two-column grid of a visual and a body. The body landed
+// in the 7rem visual column, so the heading broke across three lines and the
+// sentence ran about ten characters wide.
+//
+// With nothing stored for the job being read, the way to the other job's answer
+// still has to be here. Otherwise a person whose Scene has no ideas cannot
+// reach a direction read they already ran.
+function emptyResult() {
+  const other = otherAnswer();
+  return `<section class="m-intelligence-results" aria-labelledby="result-heading">
+      <div class="m-intelligence-results__handoff">
+        <span class="m-label" id="result-heading">No answer yet</span>
+      </div>
+      <div class="m-stack">
+        <p class="m-copy">Ask one of the questions above. What comes back is kept here, and asking again keeps the earlier answer too.</p>
+        ${other ? `<div class="m-cluster">${other}</div>` : ""}
+      </div>
+    </section>`;
+}
+
 function result() {
   if (view.loadingRuns) return "";
-  const analysis = currentAnalysis();
-  if (!analysis) {
-    return `<section class="m-empty-state m-empty-state--action m-empty-state--compact">
-        <div class="m-empty-state__body">
-          <h2 class="m-section-heading">Nothing asked for this Scene yet</h2>
-          <p class="m-copy">Pick a Scene above and ask. What comes back is kept, and asking again keeps the earlier answer too.</p>
-        </div>
-      </section>`;
+  if (view.activeJob === DIRECTION_READ) {
+    const analysis = currentDirectionAnalysis();
+    if (!analysis) return emptyResult();
+    const rows = picker(
+      view.directionAnalyses,
+      analysis.runId,
+      "data-direction-run-id",
+      (entry) => `V${pad(entry.directionVersion)} run ${pad(entry.run)}`,
+    );
+    return renderDirectionRead(analysis, headControls(rows));
   }
-  return renderIdeas(analysis, runPicker(), view.ideaMessages);
+  const analysis = currentAnalysis();
+  if (!analysis) return emptyResult();
+  const rows = picker(view.analyses, analysis.runId, "data-run-id", (entry) => `Run ${pad(entry.run)}`);
+  return renderIdeas(analysis, headControls(rows), view.ideaMessages);
 }
 
 function reference() {
@@ -170,6 +252,40 @@ async function loadRuns() {
   render();
 }
 
+async function readTheDirection() {
+  if (view.reading || !view.directionVersion) return;
+  view.reading = true;
+  view.message = "";
+  render();
+  try {
+    const { analyses } = await call("run-direction-read");
+    view.directionAnalyses = Array.isArray(analyses) ? analyses : [];
+    view.directionRunId = view.directionAnalyses.length
+      ? view.directionAnalyses[view.directionAnalyses.length - 1].runId
+      : "";
+    view.activeJob = DIRECTION_READ;
+  } catch (error) {
+    view.message = error.message;
+  }
+  view.reading = false;
+  render();
+}
+
+async function loadDirectionRuns() {
+  try {
+    const body = await call("get-direction-read");
+    view.directionVersion = body.directionVersion || null;
+    view.directionAnalyses = Array.isArray(body.analyses) ? body.analyses : [];
+    view.directionRunId = view.directionAnalyses.length
+      ? view.directionAnalyses[view.directionAnalyses.length - 1].runId
+      : "";
+  } catch (error) {
+    view.directionAnalyses = [];
+    view.directionRunId = "";
+    view.message = error.message;
+  }
+}
+
 async function run() {
   if (!view.sceneId || view.running) return;
   view.running = true;
@@ -180,6 +296,7 @@ async function run() {
     const { analyses } = await call("run-scene-ideas", { assignmentId: view.sceneId });
     view.analyses = Array.isArray(analyses) ? analyses : [];
     view.runId = view.analyses.length ? view.analyses[view.analyses.length - 1].runId : "";
+    view.activeJob = SCENE_IDEAS;
   } catch (error) {
     view.message = error.message;
   }
@@ -238,6 +355,7 @@ async function copyIdea(index) {
 document.addEventListener("change", (event) => {
   if (event.target && event.target.id === "scene-choice") {
     view.sceneId = event.target.value;
+    view.activeJob = SCENE_IDEAS;
     void loadRuns();
   }
 });
@@ -246,6 +364,15 @@ document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
   if (target.hasAttribute("data-run")) void run();
+  if (target.hasAttribute("data-read")) void readTheDirection();
+  if (target.hasAttribute("data-open-job")) {
+    view.activeJob = target.getAttribute("data-open-job");
+    render();
+  }
+  if (target.hasAttribute("data-direction-run-id")) {
+    view.directionRunId = target.getAttribute("data-direction-run-id");
+    render();
+  }
   if (target.hasAttribute("data-idea-download")) void downloadIdea(Number(target.getAttribute("data-idea-download")));
   if (target.hasAttribute("data-idea-copy")) void copyIdea(Number(target.getAttribute("data-idea-copy")));
   if (target.hasAttribute("data-run-id")) {
@@ -271,7 +398,16 @@ async function load() {
   view.scenes = submittedScenes(assignments || []);
   view.sceneId = view.scenes.length ? view.scenes[0].id : "";
   render();
-  await loadRuns();
+  await Promise.all([loadRuns(), loadDirectionRuns()]);
+  // Arrive on the answer that came back most recently. A person returning to
+  // this page is usually carrying on with what they were last doing, and this
+  // needs no mode for them to learn.
+  const ideas = currentAnalysis();
+  const direction = currentDirectionAnalysis();
+  if (direction && (!ideas || Date.parse(direction.ranAt) > Date.parse(ideas.ranAt))) {
+    view.activeJob = DIRECTION_READ;
+  }
+  render();
 }
 
 load().catch((error) => {

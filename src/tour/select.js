@@ -38,6 +38,23 @@ function shape(finding) {
   };
 }
 
+// The direction is a tour-level object, so the read behind it is tour level
+// too. Identity scoping belongs to an assignment, which names the identity it
+// is for; a tour holds no such field, so the direction is read against every
+// finding the approved record holds for this artist rather than against a
+// default identity nobody chose.
+export function assembleDirectionContext(brain, tour) {
+  const findings = (brain.groups || []).flatMap((group) => group.findings).map(shape);
+  return {
+    tourId: tour.id,
+    tourName: tour.name,
+    directionVersion: tour.direction.version,
+    direction: tour.direction,
+    counts: { inBrain: findings.length },
+    findings,
+  };
+}
+
 export function assembleContext(brain, tour, assignment) {
   const identity = assignment.identity || "main-stage";
   const { all, inScope } = scopeFindings(brain, identity);
