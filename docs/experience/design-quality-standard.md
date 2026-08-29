@@ -1,193 +1,294 @@
-# Design Quality Standard
+# Meridian design quality standard
 
-> Status: Active. This standard governs product design quality across Brand World System. It complements `docs/product-development-principles.md`, `docs/ui-contribution-guide.md`, and feature-specific handoffs.
+> Status: Active. Rewritten for Meridian on 2026-08-29 against `0bbcbde9`. This standard governs the quality of meaningful interface changes from proposal through rendered acceptance.
 
 ## Purpose
 
-Good design in Brand World System combines function, information architecture, interaction, language, aesthetics, accessibility, system consistency, and real-world validation.
+Good design in Meridian combines functional integrity, information architecture, interaction continuity, language, visual hierarchy, accessibility, system coherence, and evidence from real use.
 
-A screen can be attractive and still be poorly designed. It can also be usable and still feel careless, dense, or generic. Quality comes from resolving the whole experience as one coherent system:
+A screen can be attractive and still be poorly designed. It can be usable and still feel generic, awkward, or untrustworthy. It can follow the component rules perfectly and faithfully reproduce the wrong hierarchy.
 
-- the user understands where they are and what they can accomplish;
-- the most important information is easiest to find;
-- the interface asks only for decisions a person must make;
-- actions happen where the user expects them to happen;
-- the visual treatment creates rhythm, focus, and confidence;
-- empty, filled, loading, error, locked, and responsive states feel intentional;
-- the implementation belongs to the existing product rather than resembling a pasted-on reskin;
-- the result improves through realistic content and direct use.
+Quality comes from resolving the whole experience as one coherent system:
 
-This document defines how to judge that quality. It is a working standard, not a style manifesto. Feature handoffs still govern local behavior and source contracts.
+- the person understands where they are and what they can accomplish;
+- the work or decision that matters is easiest to find;
+- the interface asks only for decisions that belong to that person;
+- actions, feedback, evidence, and versions stay attached to the objects they govern;
+- the composition directs attention without over-signalling;
+- empty, mixed, complete, loading, error, locked, and responsive states feel intentional;
+- the implementation belongs to Meridian rather than resembling a pasted-on pattern;
+- the result has been read and operated as a rendered page with realistic content.
+
+This is a review standard, not a component catalog and not a style manifesto. Product rulings and feature contracts remain authoritative. The design standard decides whether those constraints have become a coherent experience.
 
 ## Relationship to other documents
 
-These documents answer different questions:
-
 | Document | Primary question |
 | --- | --- |
-| `docs/product-development-principles.md` | Should this concept become a product feature? |
-| This standard | Is the resulting experience thoughtful, elegant, and user-centered? |
-| `docs/ui-contribution-guide.md` | Is the interface implemented consistently with the design system? |
-| Feature handoffs | What local intent, behavior, and contracts must remain intact? |
+| `docs/meridian-product-architecture.md` | What is the product hierarchy, navigation, authority, and workflow ruling? |
+| `docs/meridian-experience.md` | What experience principles and canonical flows govern Meridian V1? |
+| `docs/meridian-design-direction.md` | Why does Meridian look and behave this way, and how should new design judgment be made? |
+| `docs/design-system.md` | Which implementation patterns, tokens, and composition contracts are available? |
+| This standard | Is the resulting experience coherent, complete, and ready to build or ship? |
+| Feature handoffs and contracts | What local behavior, data, safety, and lineage must remain intact? |
 
-Passing one document does not imply passing the others. A feature can be strategically valid and visually weak. A polished component can be attached to the wrong information architecture. A consistent implementation can faithfully reproduce an awkward workflow.
+Passing one document does not imply passing the others. A strategically valid feature may have weak information architecture. A polished component may be attached to the wrong object. A consistent implementation may preserve behavior while making the decision difficult to find.
 
-## The definition of thoughtful design
+## Quality is a gate, not a score
+
+Meridian design is not graded with points. A numerical score invites tradeoffs that do not exist. Decorative craft cannot compensate for a broken workflow, unclear authority, inaccessible controls, or an ambiguous version.
+
+Use four review states:
+
+**Not ready.** The job, hierarchy, contract, or role boundary remains unresolved. Do not style or implement around the uncertainty.
+
+**Ready for a design ruling.** The product job and constraints are known, but accepted patterns do not resolve the composition without inventing a new hierarchy.
+
+**Ready to build.** The organizing idea, role behavior, states, copy intent, and responsive order are explicit. The implementation can use accepted patterns or a ruled extension.
+
+**Ready to ship.** The committed implementation passes the critical gates, the applicable quality dimensions, and rendered review with realistic content.
+
+The state is determined by the weakest critical requirement, not by averaging strengths and weaknesses.
+
+## Critical gates
+
+Every meaningful interface change must pass all applicable gates.
+
+### The job is real and completable
+
+The page has a named person, a clear outcome, and an immediate consequence. The primary path works without hidden prerequisites or knowledge of internal architecture.
+
+### Product authority is preserved
+
+Settled hierarchy, terminology, permissions, workflow transitions, evidence lineage, and data contracts remain intact. A visual simplification cannot weaken a production or approval contract.
+
+### Role boundaries are honest
+
+Shared surfaces preserve the shared page. Higher Roads authority appears in the operator drawer when it is about the work. Role-specific surfaces are reachable only by authorized roles. The server projection, not visual hiding, protects private information.
+
+### Version identity is unambiguous
+
+The exact version stays attached to the work, rationale, feedback, action, approval, copy, or download it governs. Earlier history cannot be mistaken for the current actionable version.
+
+### Architecture vocabulary stays internal
+
+The person is never required to understand a state machine, record type, model score, storage status, or system term to make a decision.
+
+### The hierarchy survives responsive use
+
+Job order remains coherent at laptop and phone widths. Controls meet target requirements, focus remains visible, and the primary action does not disappear behind stacked supporting material.
+
+### The design system remains coherent
+
+The implementation uses existing tokens and accepted patterns. Builders do not solve a page problem by changing `app/design/`. A missing hierarchy becomes a design ruling. A missing reusable pattern becomes a pattern request.
+
+### Rendered review is complete
+
+The page has been judged with realistic mixed content, not only ideal fixture data. Shared surfaces are reviewed in both roles. Role-specific surfaces are reviewed in every authorized role, and excluded roles are verified to receive no trace. Markup inspection and computed-style inspection are not visual approval.
+
+## Thoughtful design
 
 Thoughtful design shows evidence of judgment at every layer.
 
 It decides:
 
-- what belongs on the screen;
+- what belongs on the page;
 - what belongs somewhere else;
 - what should be visible now;
 - what should wait until requested;
-- what the system already knows;
-- what the user genuinely needs to decide;
+- what the system can infer safely;
+- what the person genuinely needs to decide;
 - what deserves emphasis;
 - what can remain quiet;
-- how the experience behaves in incomplete and exceptional states;
-- how the page feels as a full composition.
+- how incomplete and exceptional states behave;
+- how the page reads as a full composition.
 
-Thoughtfulness is visible in what has been removed as much as in what has been added.
+Thoughtfulness is visible in what has been removed, combined, or demoted as much as in what has been added.
 
-## The definition of elegance
+## Elegant design
 
 Elegance is low conceptual friction.
 
-An elegant interface can support complex behavior. It does so with a small number of understandable ideas, stable patterns, and selective emphasis. It avoids making the user operate the architecture.
+An elegant interface can support complex behavior. It does so with a small number of understandable ideas, stable patterns, and selective emphasis. It avoids making the person operate the architecture.
 
-Elegance usually has these properties:
+Elegance usually means:
 
-- the page has one clear organizing idea;
+- the page has one organizing idea;
 - hierarchy is legible without repeated explanation;
 - related actions resolve locally;
 - known values are inferred safely;
 - advanced detail remains available without dominating the default state;
-- visual cues carry distinct jobs rather than repeating the same message;
+- visual signals carry distinct jobs rather than repeating one message;
 - every visible control earns its place;
-- the design becomes quieter as certainty increases.
+- the interface becomes quieter as certainty increases.
 
-Lightness is therefore a quality of attention, not an absence of capability.
+Lightness is a quality of attention, not an absence of capability.
 
 ## The eight dimensions of design quality
 
 ### 1. Functional integrity
 
-The experience must help the user complete a valuable job correctly.
+The experience must help the person complete a valuable job correctly.
 
 Ask:
 
-- What is the user's desired outcome?
-- What decisions genuinely belong to them?
-- Does every action have an immediate, understandable consequence?
-- Can the task be completed without hidden prerequisites or architectural knowledge?
-- Do safety and governance rules remain intact?
+- What outcome brought this person here?
+- Which decisions genuinely belong to them?
+- Does every action have an immediate and understandable consequence?
+- Can the task be completed without hidden prerequisites?
+- Do approval, evidence, versioning, and safety rules remain intact?
+- Does failure preserve entered work and explain the next safe move?
 
 Common failures:
 
-- a visually improved screen that preserves a broken workflow;
-- an action label that does not match what happens;
-- controls that imply capabilities the system does not have;
-- a simplified interface that drops required data or weakens a contract;
-- a polished empty state that gives the user no useful next action.
+- polishing a screen that preserves the wrong workflow;
+- using an action label that does not match what happens;
+- exposing a control the system cannot honor;
+- removing data that a later production step requires;
+- making a short client job depend on operator process knowledge;
+- presenting a false success while a write or handoff is unresolved.
+
+Required evidence:
+
+- the core path is exercised from entry to visible consequence;
+- failure and recovery are exercised where the action can fail;
+- changed contracts have direct tests;
+- no unrelated workflow behavior changes.
 
 ### 2. Information architecture
 
-The page must express the user's mental model before the system's data model.
+The page must express the person's mental model before the system's data model.
 
 Ask:
 
-- What are the few major jobs on this page?
-- Which concepts are peers, and which are supporting detail?
-- Is the same information competing in more than one place?
-- Does the order match frequency, importance, and dependency?
-- Can the user predict where a record, action, or explanation belongs?
+- What is the page's one job?
+- What object carries that job?
+- Which concepts are peers and which are supporting detail?
+- Is the same object or message competing in more than one place?
+- Does order match importance, frequency, and dependency?
+- Can the person predict where an action, record, or explanation belongs?
 
-Good information architecture creates durable boundaries. Guidance and inventory, creation and management, current state and future direction, and evidence and exact assets may share a page while remaining distinct jobs.
+Good information architecture creates durable boundaries. Asking and reading, finding and auditing, shared work and operator authority, current action and history may coexist while remaining distinct.
 
 Common failures:
 
-- organizing around schema categories ordinary users do not recognize;
-- presenting optional or rare material as equal to foundational material;
-- duplicating detailed records in both a guided layer and a library;
-- using navigation styling for an action that happens in place;
-- adding a summary layer that repeats the sections immediately below it.
+- organizing one section per backend record;
+- presenting optional material as equal to foundational work;
+- repeating the same Scene in attention and progress regions;
+- adding a summary that restates the sections below it;
+- using directory styling for instruments or local actions;
+- adding a panel because another record exists.
+
+Required evidence:
+
+- the page job can be stated in one sentence;
+- the first, second, and third objects of attention are named;
+- duplicate jobs are removed before styling;
+- the full page remains coherent with mixed content lengths.
 
 ### 3. Interaction continuity
 
-The interface should preserve the user's location, context, and momentum.
+The interface should preserve location, context, and momentum.
 
 Ask:
 
 - Can a local task resolve locally?
-- Does an expansion reveal only the fields needed for that choice?
-- Does the user retain sight of the object or section they acted on?
+- Does an expansion reveal only what the current choice needs?
+- Does the person retain sight of the work or section they acted on?
 - Are cancel, completion, and recovery paths obvious?
 - Does progressive disclosure reduce simultaneous complexity?
+- Does feedback land where the action occurred?
 
-Prefer an inline drawer, attached detail, or focused expansion when a task has a few fields and belongs to the current object. Use a new page when the task becomes a distinct job with its own navigation, history, or substantial decision sequence.
+Use a disclosure for supporting detail that belongs to the current reading. Use the operator drawer for Higher Roads actions about the shared object. Use a new page when the task becomes a distinct job with its own history or decision sequence.
 
 Common failures:
 
-- replacing an entire page after a row click;
-- asking the user to classify something they already selected by name;
-- exposing a long generic form for a short specific task;
+- replacing the whole page after a local row action;
+- moving a result to a page-level message far from its trigger;
 - opening several independent editors at once;
-- hiding completion or error state outside the user's current context.
+- hiding an arrived answer below the viewport without announcement;
+- treating a disclosure as a label over content already given;
+- changing page width when an overlay drawer opens.
+
+Required evidence:
+
+- every interactive path is operated in the rendered page;
+- open and closed states preserve context and focus order;
+- local success and failure appear beside the initiating object;
+- browser history and deep links land on the intended object when applicable.
 
 ### 4. Language and decision clarity
 
-Interface language should help a peer make a decision, not teach them the system's vocabulary.
+Meridian should help a peer make a decision, not teach them the system.
 
 Ask:
 
-- Would the user use these words?
-- Does the label describe the action and its consequence?
-- Does helper copy answer a likely question?
-- Can any sentence be removed because the layout already explains it?
-- Are required distinctions described in plain language?
+- Would the person use these words?
+- Does the action name its result?
+- Does helper copy answer a likely question at the point of need?
+- Is the line orientation, consequence, evidence, instruction, or action?
+- Can it be removed because the composition already says the same thing?
+- Are authority and version distinctions explicit where they matter?
 
-Good copy is specific, economical, and situated. It explains why a screenshot is needed at the point of upload. It distinguishes creative influence from governing authority without exposing those internal terms unnecessarily.
+Good copy is specific, economical, and situated. It names the real object, who acts next, and what will happen. It keeps evidence honest without making research bookkeeping the primary read.
 
 Common failures:
 
-- schema names presented as user choices;
-- labels that describe mechanism rather than intent;
-- helper text repeated across the page without adding meaning;
-- a short action surrounded by paragraphs of preemptive explanation;
-- vague verbs such as Manage when a more precise action exists.
+- presenting schema names as user choices;
+- vague verbs such as `Manage`, `Submit`, or `Continue`;
+- repeating helper copy at several levels;
+- surrounding one short action with preemptive explanation;
+- using labels to compensate for weak grouping;
+- calling a concept packet a brief;
+- writing an em dash in interface copy, documentation, or CSS comments.
+
+Required evidence:
+
+- the complete rendered page receives a copy pass;
+- action labels are checked against their actual consequence;
+- empty and error copy identify the real condition;
+- architecture terms and em dashes are absent.
 
 ### 5. Visual hierarchy and craft
 
-Visual design should direct attention, establish relationships, and make the product feel deliberate.
+Visual design should direct attention, express relationships, and make the product feel deliberate.
 
-Judge the page as a vertical and spatial composition, not as a collection of isolated cards.
+Judge the page as a spatial and vertical composition, not as isolated components.
 
 Ask:
 
 - What should the eye see first, second, and third?
-- Do spacing and alignment express grouping more clearly than borders alone?
-- Is color carrying product meaning?
-- Are typography, control size, density, and surface depth consistent?
-- Does every section receive the amount of visual emphasis its job deserves?
-- Are empty and filled states equally considered?
+- Is the work the largest and brightest object?
+- Do spacing, alignment, and measure express grouping before borders do?
+- Is color carrying one defined product meaning?
+- Does every section receive the weight its job deserves?
+- Does the page retain Meridian's type, surface, geometry, and material language?
+- Are ideal and awkward content lengths equally considered?
 
-Craft includes small details: balanced card heights, aligned baselines, consistent icon geometry, calm borders, readable metadata, disciplined spacing, focused hover and selected states, and a convincing transition between sections.
+Craft includes aligned baselines, controlled paragraph measure, calm borders, clear focus, useful hover states, consistent icon geometry, convincing section transitions, and intentional framing around artwork.
 
 Common failures:
 
-- adding color, shadows, badges, and borders to every level;
-- using several visual cues to communicate one status;
-- translating a mockup literally without resolving page rhythm;
-- letting one optional section feel more important than a foundational one;
-- treating spacing as leftover room rather than an active design tool.
+- adding color, shadows, badges, and borders at every level;
+- shrinking type to bring more content into the viewport;
+- using oversized type and whitespace as substitutes for hierarchy;
+- literal translation of a mockup without resolving the full-page rhythm;
+- letting optional context outweigh the decision;
+- removing subtle material until every surface looks flat;
+- inventing local styling to fix one composition.
+
+Required evidence:
+
+- a full-page rendered review at representative widths;
+- comparison with nearby accepted screens;
+- inspection of long, short, empty, and mixed content;
+- confirmation that system tokens and patterns remain unchanged unless explicitly ruled.
 
 ### 6. States, responsiveness, and accessibility
 
 The design is the complete set of states, not the ideal screenshot.
 
-At minimum, consider:
+Consider every applicable state:
 
 - empty;
 - partially filled;
@@ -197,383 +298,307 @@ At minimum, consider:
 - success;
 - error;
 - locked or read-only;
-- narrow desktop, tablet, and mobile;
+- current and historical versions;
+- narrow laptop, tablet, and phone;
 - keyboard and reduced-motion use.
 
 Ask:
 
-- Does the hierarchy survive when content wraps?
-- Can every action be understood without color?
-- Is keyboard order logical in collapsed and expanded states?
+- Does the hierarchy survive wrapping and long content?
+- Can every action and state be understood without color?
+- Is keyboard order logical when disclosures and drawers change?
 - Are focus, labels, live status, and disclosure semantics present?
-- Does the narrow layout preserve job order rather than merely stack boxes?
-
-Accessibility is part of design quality from the beginning. It is not a validation layer applied after visual approval.
-
-### 7. System coherence
-
-The feature should feel native to Brand World System.
-
-Ask:
-
-- Which existing components and interaction patterns already solve this problem?
-- Which tokens express the needed spacing, surface, border, and semantic state?
-- Does a new pattern deserve to become reusable?
-- Is the variation meaningful, or is it accidental drift?
-- Does the implementation preserve established behavior and data contracts?
-
-Coherence does not require every screen to look identical. The system provides a shared grammar. Individual pages use that grammar to express different jobs.
+- Does the narrow layout preserve job order rather than panel order?
+- Can a hurried client act one-handed on a phone?
 
 Common failures:
 
-- random inline styles;
-- parallel token or component systems;
-- near-duplicate cards with slightly different spacing and controls;
-- importing an attractive pattern that conflicts with the product's interaction language;
-- allowing technical convenience to determine visible hierarchy.
+- stacking every desktop panel without reconsidering order;
+- allowing supporting context to push the decision several screens away;
+- testing only the state where the new data exists;
+- relying on hover for essential meaning;
+- animating identity or progress without a reduced-motion path;
+- allowing text or controls to overflow at the narrowest supported width.
 
-### 8. Evidence and refinement
+Required evidence:
 
-Design quality must survive real content and real interaction.
+- rendered review at laptop and phone widths;
+- keyboard operation of every control in the changed path;
+- visible focus and semantic labels;
+- open and closed disclosure states;
+- presence and absence data states;
+- reduced-motion behavior when motion changes.
+
+Accessibility is part of the design decision from the beginning. It is not a validation layer applied after visual approval.
+
+### 7. System coherence
+
+The feature should feel native to Meridian.
 
 Ask:
 
-- Was the current repository and rendered screen inspected before redesign?
-- Were nearby representative screens studied?
-- Were multiple structural directions compared?
-- Was the design tested with realistic mixed states?
-- Did implementation receive a full-page visual review?
-- Was user feedback interpreted as evidence about the system rather than a request for surface styling alone?
+- Which accepted pattern already solves this relationship?
+- Which tokens express the needed surface, spacing, type, and signal?
+- Is the variation meaningful or accidental drift?
+- Does a missing pattern represent a repeated need?
+- Does the implementation preserve settled behavior and data contracts?
+- Has the intervention ladder stopped at the lowest sufficient level?
 
-Mockups are probes. Code is another probe. The live product is the final test. Each stage can reveal an information-architecture problem that the prior stage hid.
+Coherence does not make every screen identical. Meridian provides a shared grammar. Individual pages use that grammar to express different jobs.
 
-## Design quality scorecard
+Common failures:
 
-The scorecard makes tradeoffs explicit. It does not turn design judgment into arithmetic. A critical failure cannot be offset by decorative polish.
+- local colors, gradients, shadows, type sizes, or spacing;
+- near-duplicate components with incidental differences;
+- importing an attractive pattern that conflicts with Meridian's hierarchy;
+- copying the nearest screen despite a different job;
+- changing shared tokens to solve one crowded page;
+- editing `app/design/` without a design ruling.
 
-| Dimension | Weight |
-| --- | ---: |
-| Functional integrity | 20 |
-| Information architecture | 15 |
-| Interaction continuity | 15 |
-| Language and decision clarity | 10 |
-| Visual hierarchy and craft | 15 |
-| States, responsiveness, and accessibility | 10 |
-| System coherence | 10 |
-| Evidence and refinement | 5 |
-| Total | 100 |
+Required evidence:
 
-Interpretation:
+- the changed page names the accepted patterns it uses;
+- any gap is recorded as a pattern request before implementation;
+- design-system changes cite the repeated evidence that requires them;
+- representative screens are checked for regression when a shared primitive changes.
 
-- **90 to 100:** coherent, elegant, and ready to establish a reusable product pattern;
-- **80 to 89:** strong and shippable, with refinements that can proceed incrementally;
-- **70 to 79:** directionally sound but carrying a meaningful hierarchy, interaction, or state problem;
-- **below 70:** redesign before implementation or release.
+### 8. Evidence and refinement
 
-Every shippable design must also pass these gates:
+Design quality must survive the repository, realistic content, and direct use.
 
-- the core job can be completed;
-- required contracts and safety rules remain intact;
-- the user is not required to understand internal architecture;
-- keyboard and responsive paths remain usable;
-- the design uses the established system or deliberately extends it;
-- no major section duplicates another section's job.
+Ask:
+
+- Was current remote `main` confirmed before the work began?
+- Was the committed source read before editing?
+- Was the current page rendered and operated before a direction was proposed?
+- Were nearby accepted screens and product rulings studied?
+- Were structural alternatives compared when the hierarchy was uncertain?
+- Did the committed implementation receive full-page review?
+- Was user feedback interpreted as evidence about the underlying system?
+
+Mockups are probes. Code is another probe. The deployed product is the final test. Each can reveal an information architecture problem the prior stage hid.
+
+Common failures:
+
+- judging a screenshot without operating the path;
+- auditing markup and computed styles as a substitute for looking;
+- implementing a generated canvas literally without project context;
+- applying surface changes to feedback about hierarchy or usefulness;
+- verifying the sample record while old records remain broken;
+- reporting a local working tree as deployed behavior.
+
+Required evidence:
+
+- the exact source head is named;
+- before and after suite counts are reported;
+- the production build is verified;
+- the rendered states and widths are named;
+- committed blobs are checked before publication;
+- deployment status is reported separately from push success.
 
 ## The emphasis budget
 
-Every page has a limited emphasis budget. Spend it on distinctions the user needs.
+Every page has a limited emphasis budget. Spend it on distinctions the person needs.
 
 Typical hierarchy levels are:
 
 1. product and location;
 2. page and primary job;
-3. sections or major decisions;
+3. major work or decision;
 4. local tasks and records;
 5. requested detail.
 
-A sixth layer should be rare. Repeated summary strips, nested cards, status pills, section rails, accent borders, progress bars, and helper panels can each create another perceived level. Combining all of them makes the user re-parse the page several times.
+A sixth perceived level should be rare. Summary strips, nested cards, status pills, colored rails, accent borders, large labels, progress bars, and helper panels each consume emphasis. Combining them makes the person re-parse the page several times.
 
-Before adding a visual cue, state its unique job. Remove or demote it when another element already performs that job.
+Before adding a cue, state its unique job. Remove or demote it when another element already performs that job.
+
+An element may be important and quiet. Version lineage, evidence counts, and attributed history matter, but they should not compete with the decision until they change it.
 
 ## Subtractive design review
 
-After the first coherent design exists, run a subtractive pass.
+After the first coherent composition exists, inspect every surface, label, metric, border, icon, control, and paragraph.
 
-For every surface, label, metric, border, icon, and control, ask:
+Ask:
 
 1. What decision or understanding does this support?
 2. Is that job already handled elsewhere?
 3. What breaks if this becomes quieter?
 4. What breaks if it disappears?
 5. Can the system infer this safely?
+6. Is this element compensating for unclear hierarchy?
 
 The goal is not maximum removal. The goal is maximum clarity per visible element.
 
-## Case study: the three Sources directions
+Do not remove material that makes a decision trustworthy. Subtraction should quiet evidence access, not erase evidence; simplify version presentation, not detach the version; reduce operator clutter, not hide operator authority.
 
-The 2026-08-14 Brand Brain Sources redesign produced three Superdesign directions from one reproduced baseline. They are retained in the [Brand World System Superdesign project](https://superdesign.dev/teams/5e8335ee-7354-43d1-94d6-77cd3d9b6150/projects/48e84143-282e-489c-86fc-f6c0dce4c1eb).
+## Design and build workflow
 
-The scorecard can be applied retrospectively to show the relative movement. These are directional design-review scores, not empirical usability measurements:
+### 1. Confirm the source
 
-| Direction | Approximate score | Qualification |
-| --- | ---: | --- |
-| Guided coverage | 76 / 100 | Correct information model, with duplicated orientation and too many simultaneous hierarchy bands |
-| Section rhythm | 83 / 100 | Strong macro composition and visual craft, with emphasis spent at too many levels |
-| Compact inline drawers | 87 / 100 | Best interaction continuity and restraint, with some card content still too thin |
-| Shipped hybrid | 89 / 100 | Strong and shippable, combining section rhythm, local disclosure, and richer practical guidance; appropriate for small ongoing refinements |
+Fetch current remote `main`, name the exact head, and read from the committed tree. Inspect working-tree changes before editing. Do not overwrite another session's work or design from a stale copy.
 
-The improvement came less from adding visual sophistication and more from allocating it selectively. The final two points came from restoring useful content without restoring structural weight.
+### 2. Inspect before proposing
 
-### Direction A: Guided coverage
+Render the current page and operate the actual path. Read the product architecture, experience principles, design direction, design system, feature contract, and nearby accepted screens that govern the job.
 
-Draft: [Guided Sources Redesign](https://p.superdesign.dev/draft/53d91a39-f74b-4112-833c-07bde62f5024)
-
-What it improved:
-
-- converted foundation into four recognizable slots;
-- separated real-world examples from core materials;
-- introduced More context as a lighter entry point;
-- made mixed completion states concrete;
-- clarified the detailed library boundary.
-
-What it added:
-
-- one global orientation surface above the existing Brand Brain navigation;
-- three coverage concepts summarized before the same concepts appeared as sections;
-- a large container around Brand foundation;
-- section helper copy, row status, actions, and library status all visible at once.
-
-This direction solved the information model while adding a second dashboard to explain it. The orientation strip repeated the page architecture and increased the number of simultaneous hierarchy bands from four to five. It felt comprehensive, but less calm.
-
-### Direction B: Section rhythm
-
-Draft: [Brand Brain Sources Redesign](https://p.superdesign.dev/draft/b74fbaec-ba87-490a-a13d-4256d93c63fc)
-
-What it improved:
-
-- removed the extra orientation dashboard;
-- established the strongest vertical rhythm of the three directions;
-- used numbered sections and rails to make the four-part architecture legible;
-- introduced a meaningful progress bar for finite foundation coverage;
-- gave the social cards equal stature and generous spacing;
-- created a clear transition into the detailed library.
-
-What it added:
-
-- a 48px section gap throughout the main stack;
-- colored rails at the section level;
-- colored state bars on each foundation row;
-- several card-edge accents and status pills;
-- right-aligned explanatory copy in multiple section headers;
-- full-width card actions in the presence section.
-
-This direction demonstrated the value of page-level composition. It was the most visibly designed version and the key source for the final section rhythm. Keeping every cue would have spent emphasis at the section, row, card, and status levels simultaneously. The right lesson was the macro hierarchy, not every decorative articulation.
-
-### Direction C: Compact inline drawers
-
-Draft: [Sources Redesign - Compact Inline Drawers](https://p.superdesign.dev/draft/f7ffe812-f9d5-4e71-b375-2c28128d6e5c)
-
-What it improved:
-
-- kept the four numbered sections and their vertical rails;
-- removed the global orientation strip;
-- made foundation rows compact and locally actionable;
-- kept the three presence cards simple;
-- reduced More context to one quiet entry row;
-- attached the form directly beneath the selected row or card group;
-- kept All sources visible as the one detailed library.
-
-What it constrained:
-
-- one inline task can be open at a time;
-- a named slot asks only for the fields it cannot infer;
-- More context offers two input methods instead of four source-category cards;
-- advanced controls remain collapsed until requested;
-- detailed records stay out of Brand foundation;
-- only one compact recent-work example may appear above the library.
-
-This direction was the lightest touch and the most elegant interaction model. It changed less of the product while solving more of the user's friction. Its restraint came from selective inference, local disclosure, and a stronger boundary between guidance and inventory.
-
-## The shipped Sources landing point
-
-The shipped page is a selective hybrid rather than a literal implementation of one canvas.
-
-It retained from the section-rhythm direction:
-
-- four numbered sections;
-- deliberate vertical spacing;
-- semantic section rails;
-- equal presence cards;
-- progress only where coverage has a finite denominator;
-- a clear transition into All sources.
-
-It retained from the compact-drawer direction:
-
-- no global orientation dashboard;
-- local expansion instead of page replacement;
-- one active drawer at a time;
-- direct forms for known source slots;
-- collapsed advanced controls;
-- a lightweight File or Link path for More context;
-- the library as the only detailed inventory.
-
-It then restored richer practical guidance inside the presence cards, because the lightest visual treatment still needed enough content to make Instagram, LinkedIn, and Recent work actionable.
-
-The landing point can be quantified:
-
-- **4** major page sections;
-- **2** progress bars, used only for Brand foundation and How the brand shows up;
-- **8** guided entry surfaces above the library: 4 foundation rows, 3 presence cards, and 1 More context row;
-- **1** expanded task at a time;
-- **0** detailed records inside Brand foundation;
-- **1** compact Recent work example at most above the library;
-- **2** More context input methods: File and Link;
-- **1** detailed source library;
-- **5 to 7** contract decisions safely inferred by a named slot, depending on the source: kind, form, material treatment, provenance, aspiration, usage default, and sometimes asset kind.
-
-This is light-touch design with a high ratio of function to interface. The page retains every source contract and meaningful action while reducing repeated classification, page displacement, and competing hierarchy.
-
-## Lessons from the comparison
-
-### More designed is not automatically better designed
-
-Direction B showed the strongest visible craft, but the final page became better when several of its signals were softened or removed. Good design chooses which craft decisions matter most.
-
-### A progress cue earns its place through a denominator
-
-Foundation has four known slots. Real-world examples have three. Their progress bars answer a concrete question. More context is open-ended, so a progress bar would imply a false target.
-
-### Locality can simplify without weakening function
-
-Named slots pre-answer several contract decisions. The compact drawer preserves the contract while removing redundant questions. More context asks provenance and aspiration because those answers remain genuinely unknown.
-
-### Rich content and light structure can coexist
-
-The social cards became more helpful after practical upload guidance returned. The improvement came from useful content inside a restrained structure, rather than from adding another panel or status system.
-
-### The mockup is evidence, not an instruction sheet
-
-The final implementation borrowed the best structural insight from one direction, the best interaction model from another, and content refinements from live review. Thoughtful implementation preserves the reasoning behind a mockup while adapting its literal details to contracts, components, and real states.
-
-## Design workflow
-
-### 1. Inspect before proposing
-
-Read the current repository, render the current page, trace its actual interaction path, inspect the design system, and study two to four nearby screens. Confirm the branch is current.
-
-### 2. Frame the user job and invariants
+### 3. Frame the job and invariants
 
 Write down:
 
-- the outcome;
-- the decisions the user must make;
-- what the system can infer;
-- contracts and safety rules that cannot change;
+- the person and context;
+- the desired outcome;
+- the decisions that genuinely belong to them;
+- what the system already knows;
+- settled product and authority rules;
+- records and lineage that cannot change;
 - the states that must exist;
 - the current friction in user language.
 
-### 3. Model the information architecture
+### 4. Model the information architecture
 
-Group content by user job. Establish order, hierarchy, ownership, and where detailed records live. Resolve duplicate jobs before styling.
+Group content by user job. Establish the primary object, order, hierarchy, ownership, and location of supporting detail. Resolve duplicate jobs before styling.
 
-### 4. Explore structurally distinct directions
+### 5. Use the intervention ladder
 
-Variations should test meaningful tradeoffs such as:
+Correct information architecture first, then order and disclosure, then weighting, spacing, and measure. Builders may make these changes with accepted patterns. A missing pattern goes to the designer. Typography, tokens, and system changes require explicit systemic evidence.
+
+### 6. Explore only when the decision is real
+
+Create structurally distinct alternatives when two defensible organizing ideas remain. Useful comparisons may test:
 
 - guided versus direct;
 - page replacement versus local disclosure;
-- summary-first versus task-first;
-- compact versus explanatory;
-- centralized versus distributed control.
+- task-first versus reading-first;
+- broad instrument field versus narrow reading measure;
+- shared inline action versus operator drawer;
+- visible evidence versus recruited evidence.
 
-Changing color or card radius alone is not a meaningful design direction.
+Changing color, type size, or card radius alone is not a meaningful direction.
 
-### 5. Compare, then subtract
+### 7. Record the design ruling
 
-Use the scorecard and critical gates. Identify which direction has the strongest organizing idea. Borrow selectively when another direction solves a local problem better. Run the subtractive review before implementation.
+Name the chosen option, the defensible alternatives rejected, and what made the difference. A builder needs the rejection reasoning because future cases will not reproduce the same screenshot.
 
-### 6. Implement through the system
+### 8. Implement through the system
 
-Reuse components, tokens, spacing, typography, interaction patterns, and accessibility conventions. Create a reusable pattern when the system genuinely lacks one. Preserve contracts and settled behavior.
+Use accepted patterns and preserve contracts. Keep source edits narrow. Do not make unrelated design-system changes. Attach feedback and consequences to the action that produces them.
 
-### 7. Verify the whole experience
+### 9. Verify the whole experience
 
-Review realistic empty, mixed, complete, active, error, locked, and responsive states. Exercise keyboard behavior. Inspect the full-page rhythm and the transition between sections.
+Build and test the working implementation before commit. Render realistic mixed states. Inspect full-page rhythm, responsive order, disclosure behavior, keyboard operation, copy, version attachment, and role projection. After commit, confirm that the committed blobs are the same work that passed review.
 
-### 8. Refine from live evidence
+### 10. Refine from live evidence
 
-Treat user reactions to spacing, density, wording, and unexpected workflows as product evidence. Diagnose the underlying hierarchy or interaction problem before applying a surface fix.
+Treat reactions about density, copy, hierarchy, and usefulness as evidence. Diagnose the underlying problem before changing the surface. Record a durable ruling when the correction establishes a reusable principle.
+
+## Rendered review matrix
+
+Every meaningful visual change records what was actually reviewed.
+
+### Roles
+
+- Shared pages: Higher Roads and client reviewer.
+- Higher Roads-only pages: every authorized operator state, plus proof that a client receives no page, route data, or action trace.
+- Client-specific compositions: the client path and the operator's corresponding shared-object path when one exists.
+
+### Widths
+
+- the ordinary laptop viewport where the product is primarily operated;
+- the breakpoint where a multi-column composition changes shape;
+- a phone viewport appropriate to hurried client use;
+- any unusually wide or narrow work surface introduced by the change.
+
+### Content
+
+- no relevant records;
+- one record;
+- realistic mixed states;
+- long titles, prose, evidence, or metadata;
+- enough records to exercise disclosure and scrolling;
+- a record created before a newly introduced field or artifact when applicable.
+
+### Interaction states
+
+- default arrival;
+- open and closed disclosures;
+- drawer closed and open when present;
+- loading, success, and failure when asynchronous;
+- current and historical versions;
+- focus and keyboard traversal;
+- reduced motion when motion changes.
+
+Rendered review means reading the visible text, judging the spatial hierarchy, and operating the controls. Source matches and computed values may support that review. They cannot replace it.
 
 ## Using Superdesign thoughtfully
 
-Superdesign canvases are comparison tools. The workflow should preserve the distinctions between alternatives:
+Superdesign is a visual notebook and comparison tool. It is not the product authority.
+
+Use it to:
 
 1. reproduce the current rendered target as ground truth;
-2. branch directions around different information or interaction hypotheses;
-3. keep the established visual system fixed while varying structure;
-4. compare full pages rather than isolated components;
-5. identify what each direction proves;
-6. select or combine principles after user review;
-7. implement only after the direction is understood.
+2. explore different information or interaction hypotheses;
+3. keep the established Meridian system fixed while varying structure;
+4. compare full-page compositions rather than isolated components;
+5. identify what each direction proves and what it damages;
+6. choose principles after review;
+7. implement only after the reasoning is understood.
 
-The preferred result is often the least intervention that fully resolves the problem. Canvas density, novelty, and visible design effort are not quality measures by themselves.
+Do not ask a generated canvas to infer the project from a screenshot alone. Supply the real job, role, constraints, accepted patterns, content, and nearby screen context. Do not carry type, tokens, radii, or decorative language back into Meridian merely because a direction looks polished.
 
-## Review checklist
+The preferred result is often the least intervention that fully resolves the problem. Novelty, density, and visible design effort are not quality measures.
 
-Before presenting a design:
+## Review record
 
-- Can the primary job be stated in one sentence?
-- Are the page's major sections organized around user jobs?
-- Is any information doing the same job twice?
-- Does the design ask only what remains unknown?
-- Do local actions resolve locally when appropriate?
-- Is there a clear first, second, and third level of attention?
-- Has the emphasis budget been spent selectively?
-- Are realistic mixed states represented?
-- Are empty and filled states equally thoughtful?
-- Is helper copy useful at the point of need?
-- Do visual details use the existing design system?
-- Does responsive behavior preserve job order?
-- Are keyboard, focus, labels, and reduced motion considered?
-- Has a subtractive pass been completed?
+A meaningful design review should leave a compact record:
 
-Before shipping:
+- source head;
+- person, job, and primary object;
+- settled constraints;
+- chosen hierarchy;
+- alternatives rejected and why;
+- patterns used or requested;
+- roles, widths, content states, and interactions rendered;
+- test and build results;
+- unresolved risks;
+- whether the result was pushed, deployed, and read live.
 
-- validate the core interaction path;
-- validate required contracts and data output;
-- test desktop and narrow layouts;
-- check loading, error, locked, and partial states that apply;
-- compare the implementation to the intended page rhythm;
-- confirm no unrelated behavior changed;
-- get user review for meaningful visual changes;
-- record durable reasoning in a feature handoff when the pattern is new.
+The record can live in a feature handoff, a product-architecture ruling, or a commit report. It should not become another permanent document when no durable principle emerged.
 
 ## Common warning signs
 
-- The design is described mainly with adjectives rather than user outcomes.
+- The direction is described mainly with adjectives rather than user outcomes.
 - A new summary repeats the sections below it.
-- Every section has a different card or control pattern.
-- Several colors, borders, pills, and icons communicate the same state.
-- A row click opens a workflow unrelated to the row's visible context.
-- Optional content receives more visual weight than core content.
-- The upper page and lower library both manage the same records.
-- A user-facing choice exists because the schema has a field.
-- The mockup looks good only in its ideal filled state.
-- The implementation introduces hardcoded styles to match one screenshot.
-- The design requires a long explanation of how to use it.
-- The most elaborate direction is assumed to be the strongest.
+- Every backend record becomes a visible section.
+- Every section receives a different card or control pattern.
+- Several colors, borders, pills, and icons communicate one state.
+- A local action moves the person away from the object it affects.
+- Optional content carries more weight than the decision.
+- A finding and its evidence bookkeeping compete at the same level.
+- The person must choose a value because the schema has a field.
+- The design looks convincing only in an ideal filled state.
+- Responsive behavior means stacking every desktop region.
+- More content is brought into view by shrinking the design system.
+- Copy explains what hierarchy should have made obvious.
+- The most elaborate direction is assumed to be strongest.
+- A generated canvas changes the product's type, tokens, or tone.
+- Markup was audited and nobody looked at the page.
+- A push is reported as a deployment without deployment evidence.
 
 ## Definition of done
 
-A design is done when:
+A design is ready to ship when:
 
 - the primary job is understandable and completable;
-- the information architecture matches the user's mental model;
+- the information architecture matches the person's mental model;
+- the work or decision holds the stage;
 - interaction preserves context and reveals complexity progressively;
-- language supports decisions in plain terms;
+- language supports decisions in plain and exact terms;
+- version identity remains attached to consequential work;
 - visual hierarchy and craft feel deliberate across the whole page;
 - realistic states, responsiveness, and accessibility are resolved;
-- the implementation uses or thoughtfully extends the design system;
-- contracts and safety rules remain intact;
-- user review confirms the design feels clear and considered;
-- remaining changes are small refinements rather than unresolved structural problems.
+- each role receives the right composition and data;
+- the implementation uses or deliberately extends the design system;
+- product contracts, authority, evidence, and safety rules remain intact;
+- the committed build and tests are reported honestly;
+- rendered review confirms the result in context;
+- remaining changes are refinements rather than unresolved structural problems.
