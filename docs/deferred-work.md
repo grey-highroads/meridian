@@ -710,3 +710,21 @@ Recorded 2026-08-29 with Intelligence job two. The page has one region below the
 This holds for two answers. It will not hold for four. Jobs three and four are not on this surface in the same way, since the artboard review meets the person in the Reviews drawer, but a fourth answer here would make the switch a menu, and a menu of answers is the panel this surface exists to avoid.
 
 Bring it back when: a third job writes an answer into this region. The composition is reopened then rather than extended, and the question to answer first is whether the answers belong on this page at all or beside the object each one is about.
+
+Reopened 2026-08-29 with job three, as this entry required, and held. The board review writes into the same region, so the head of an answer now carries up to two named buttons rather than one. Two buttons is still a row a person reads at a glance. The question this entry asked was answered rather than skipped: the board review belongs beside the object it is about, and it is there, in the Reviews drawer under Present to client. It is also on Intelligence because a person reviewing several versions in a row wants one place to run the read from, and because the four asks are peers and one of them going missing from the surface would say the wrong thing about the set.
+
+Bring it back when: a fourth answer lands in this region. Three named buttons is a menu, and a menu of answers is the panel this surface exists to avoid. Job four, the tour stops, is the one that would do it, and its arrival is the moment to split the region rather than add to it.
+
+## A board review cannot read a stand-in artboard
+
+Recorded 2026-08-29 with Intelligence job three. The read hands the model the board as an image. A submitted version carries a PNG or a JPEG and is read. The stand-in writes SVG, which the model cannot look at, so those versions are refused with a plain sentence and are not offered in the version list on Intelligence.
+
+This is the honest state rather than a gap to close in code. The alternative was reading the receipt, the brief, and the concept summary, and presenting the answer as a read of the board, which would be the analysis quietly not looking at the work.
+
+Bring it back when: the stand-in is replaced by Jim's real system, which returns finished media rather than drawing markup, or a rasterizing step exists for a reason other than this. If neither happens and stand-in versions still need reading during the pilot, the cheap version is a browser-side render of the SVG to a PNG at submission time, stored beside the artifact.
+
+## Intelligence asks every Scene for its artboards to build one list
+
+Recorded 2026-08-29 with Intelligence job three. The board instrument offers one version of one Scene, so the page calls `get-artboards` once per Scene on load to find which versions carry a readable image. On this tour that is a handful of calls and it is invisible.
+
+Bring it back when: a tour holds enough Scenes that the Intelligence page is slow to become useful, or a second surface needs the same list. The close is one action that returns every version with a readable board for the tour, which `api/tour/index.js` can answer from the same reads it already does.

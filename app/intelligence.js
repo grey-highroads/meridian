@@ -2,6 +2,7 @@ import { TOUR_ID, scopedBody } from "./context.js";
 import { escape, pad, renderIdeas } from "./intelligence/ideas-view.js";
 import { renderAsks } from "./intelligence/asks-view.js";
 import { renderDirectionRead } from "./intelligence/direction-view.js";
+import { renderBoardReview } from "./intelligence/board-view.js";
 
 // Intelligence. Four things a Higher Roads person can ask about the
 // artist, and the research they draw on underneath.
@@ -17,12 +18,13 @@ import { renderDirectionRead } from "./intelligence/direction-view.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("intelligence");
 
-// Two jobs now answer on this page and one answer area holds them. The page
-// reads whichever job answered most recently, and the other job's answers are
+// Three jobs now answer on this page and one answer area holds them. The page
+// reads whichever job answered most recently, and the other jobs' answers are
 // one named control away in the head of the answer that is showing. A person
-// who never asked the second question never sees a control for it.
+// who never asked a question never sees a control for its answer.
 const SCENE_IDEAS = "scene-ideas";
 const DIRECTION_READ = "direction-read";
+const BOARD_REVIEW = "board-review";
 
 const view = {
   user: null,
@@ -42,6 +44,13 @@ const view = {
   directionVersion: null,
   directionAnalyses: [],
   directionRunId: "",
+  // Job three. The subject is one version of one Scene's work, so the choice
+  // names both and runs are kept against the version they read.
+  boards: [],
+  boardKey: "",
+  reviewing: false,
+  boardAnalyses: [],
+  boardRunId: "",
   // Feedback from an idea's own actions, keyed by the idea it belongs to. The
   // page-level callout is for page-level failures, and an error from a button
   // low on the page rendered up there is an error nobody reads.
@@ -94,8 +103,10 @@ function asks() {
     },
     {
       title: "Review a board before the client sees it",
-      copy: "A second read on a version from the artist's side, before you present it.",
-      control: `<span class="m-state">Coming</span>`,
+      copy: view.boards.length
+        ? "A second read on a version from the artist's side. It decides nothing."
+        : "Work submitted as a PNG or a JPEG can be read. Nothing has come back yet.",
+      control: boardControl(),
     },
     {
       title: "Check the tour stops",
@@ -114,6 +125,29 @@ function directionControl() {
   return `<button class="m-button m-button--primary" type="button" data-read ${view.reading ? "disabled" : ""}>${view.reading ? "Reading" : `Read direction ${escape(version)}`}</button>`;
 }
 
+// One version of one Scene's work is what a read is about, so the choice names
+// both and the action reads whichever one is chosen. Newest work first.
+export function boardKeyFor(sceneId, artboardVersion) {
+  return `${sceneId}::${artboardVersion}`;
+}
+
+function boardOptions() {
+  const rows = view.boards.map((board) => {
+    const key = boardKeyFor(board.sceneId, board.artboardVersion);
+    const name = `${board.sceneTitle}, V${pad(board.artboardVersion)}`;
+    return `<option value="${escape(key)}"${key === view.boardKey ? " selected" : ""}>${escape(name)}</option>`;
+  }).join("");
+  return `<select class="m-select" id="board-choice" aria-label="Artboard version">${rows}</select>`;
+}
+
+function boardControl() {
+  if (!view.boards.length) return `<span class="m-state">No board yet</span>`;
+  return `<div class="m-intelligence-instrument__controls">
+      <label class="m-field"><span class="m-label">Version</span>${boardOptions()}</label>
+      <button class="m-button m-button--primary" type="button" data-review ${view.reviewing ? "disabled" : ""}>${view.reviewing ? "Reading" : "Read this board"}</button>
+    </div>`;
+}
+
 // The run a person is reading is named and is not a control, because there is
 // nothing to press to arrive where you already are. Earlier runs are the
 // buttons. That is the difference in words and in available actions rather than
@@ -128,14 +162,18 @@ function picker(analyses, currentId, attribute, label) {
   return rows;
 }
 
-// The way to the other job's answer, offered only when that job has one.
+// The way to the other jobs' answers, offered only for a job that has one.
+const ANSWERS = [
+  { job: SCENE_IDEAS, open: "Open the Scene ideas", held: () => view.analyses },
+  { job: DIRECTION_READ, open: "Open the direction read", held: () => view.directionAnalyses },
+  { job: BOARD_REVIEW, open: "Open the board read", held: () => view.boardAnalyses },
+];
+
 function otherAnswer() {
-  if (view.activeJob === SCENE_IDEAS) {
-    if (!view.directionAnalyses.length) return "";
-    return `<button class="m-button m-button--small" type="button" data-open-job="${DIRECTION_READ}">Open the direction read</button>`;
-  }
-  if (!view.analyses.length) return "";
-  return `<button class="m-button m-button--small" type="button" data-open-job="${SCENE_IDEAS}">Open the Scene ideas</button>`;
+  return ANSWERS
+    .filter((entry) => entry.job !== view.activeJob && entry.held().length)
+    .map((entry) => `<button class="m-button m-button--small" type="button" data-open-job="${entry.job}">${entry.open}</button>`)
+    .join("");
 }
 
 function headControls(rows) {
@@ -147,6 +185,12 @@ function headControls(rows) {
 function currentAnalysis() {
   if (!view.analyses.length) return null;
   return view.analyses.find((entry) => entry.runId === view.runId) || view.analyses[view.analyses.length - 1];
+}
+
+function currentBoardAnalysis() {
+  if (!view.boardAnalyses.length) return null;
+  return view.boardAnalyses.find((entry) => entry.runId === view.boardRunId)
+    || view.boardAnalyses[view.boardAnalyses.length - 1];
 }
 
 function currentDirectionAnalysis() {
@@ -193,6 +237,17 @@ function result() {
       (entry) => `V${pad(entry.directionVersion)} run ${pad(entry.run)}`,
     );
     return renderDirectionRead(analysis, headControls(rows));
+  }
+  if (view.activeJob === BOARD_REVIEW) {
+    const analysis = currentBoardAnalysis();
+    if (!analysis) return emptyResult();
+    const rows = picker(
+      view.boardAnalyses,
+      analysis.runId,
+      "data-board-run-id",
+      (entry) => `V${pad((entry.subject || {}).artboardVersion)} run ${pad(entry.run)}`,
+    );
+    return renderBoardReview(analysis, headControls(rows));
   }
   const analysis = currentAnalysis();
   if (!analysis) return emptyResult();
@@ -286,6 +341,85 @@ async function loadDirectionRuns() {
   }
 }
 
+// A version can be read once its work is an image. A stand-in writes SVG, and
+// the model cannot look at one, so those versions are not offered rather than
+// offered and refused.
+export function readableBoard(artboard) {
+  const artifact = (artboard && artboard.artifact) || {};
+  if (artifact.dataUrl) return /^data:image\/(?:png|jpeg);base64,/i.test(artifact.dataUrl);
+  if (artifact.blobPathname) return /^image\/(?:png|jpeg)$/i.test(String(artifact.contentType || ""));
+  return false;
+}
+
+async function loadBoards() {
+  const rows = await Promise.all(view.scenes.map(async (scene) => {
+    try {
+      const { artboards } = await call("get-artboards", { assignmentId: scene.id });
+      return (artboards || [])
+        .filter((entry) => readableBoard(entry.artboard))
+        .map((entry) => ({
+          sceneId: scene.id,
+          sceneTitle: scene.title,
+          artboardVersion: entry.artboard.artboardVersion,
+        }));
+    } catch {
+      return [];
+    }
+  }));
+  // Newest work first, because the version somebody is deciding about is
+  // almost always the latest one.
+  view.boards = rows.flat().sort((left, right) => right.artboardVersion - left.artboardVersion);
+  view.boardKey = view.boards.length ? boardKeyFor(view.boards[0].sceneId, view.boards[0].artboardVersion) : "";
+}
+
+function chosenBoard() {
+  if (!view.boardKey) return null;
+  const [sceneId, version] = view.boardKey.split("::");
+  return { sceneId, artboardVersion: Number(version) };
+}
+
+async function loadBoardRuns() {
+  const board = chosenBoard();
+  if (!board) {
+    view.boardAnalyses = [];
+    view.boardRunId = "";
+    return;
+  }
+  try {
+    const { analyses } = await call("get-board-review", {
+      assignmentId: board.sceneId,
+      artboardVersion: board.artboardVersion,
+    });
+    view.boardAnalyses = Array.isArray(analyses) ? analyses : [];
+    view.boardRunId = view.boardAnalyses.length ? view.boardAnalyses[view.boardAnalyses.length - 1].runId : "";
+  } catch (error) {
+    view.boardAnalyses = [];
+    view.boardRunId = "";
+    view.message = error.message;
+  }
+}
+
+async function reviewTheBoard() {
+  const board = chosenBoard();
+  if (view.reviewing || !board) return;
+  view.reviewing = true;
+  view.message = "";
+  render();
+  try {
+    const { analyses } = await call("run-board-review", {
+      assignmentId: board.sceneId,
+      artboardVersion: board.artboardVersion,
+    });
+    view.boardAnalyses = Array.isArray(analyses) ? analyses : [];
+    view.boardRunId = view.boardAnalyses.length ? view.boardAnalyses[view.boardAnalyses.length - 1].runId : "";
+    view.activeJob = BOARD_REVIEW;
+  } catch (error) {
+    view.message = error.message;
+  }
+  view.reviewing = false;
+  render();
+}
+
 async function run() {
   if (!view.sceneId || view.running) return;
   view.running = true;
@@ -358,6 +492,10 @@ document.addEventListener("change", (event) => {
     view.activeJob = SCENE_IDEAS;
     void loadRuns();
   }
+  if (event.target && event.target.id === "board-choice") {
+    view.boardKey = event.target.value;
+    void loadBoardRuns().then(render);
+  }
 });
 
 document.addEventListener("click", (event) => {
@@ -365,12 +503,17 @@ document.addEventListener("click", (event) => {
   if (!target) return;
   if (target.hasAttribute("data-run")) void run();
   if (target.hasAttribute("data-read")) void readTheDirection();
+  if (target.hasAttribute("data-review")) void reviewTheBoard();
   if (target.hasAttribute("data-open-job")) {
     view.activeJob = target.getAttribute("data-open-job");
     render();
   }
   if (target.hasAttribute("data-direction-run-id")) {
     view.directionRunId = target.getAttribute("data-direction-run-id");
+    render();
+  }
+  if (target.hasAttribute("data-board-run-id")) {
+    view.boardRunId = target.getAttribute("data-board-run-id");
     render();
   }
   if (target.hasAttribute("data-idea-download")) void downloadIdea(Number(target.getAttribute("data-idea-download")));
@@ -398,15 +541,18 @@ async function load() {
   view.scenes = submittedScenes(assignments || []);
   view.sceneId = view.scenes.length ? view.scenes[0].id : "";
   render();
-  await Promise.all([loadRuns(), loadDirectionRuns()]);
+  await Promise.all([loadRuns(), loadDirectionRuns(), loadBoards().then(loadBoardRuns)]);
   // Arrive on the answer that came back most recently. A person returning to
   // this page is usually carrying on with what they were last doing, and this
   // needs no mode for them to learn.
-  const ideas = currentAnalysis();
-  const direction = currentDirectionAnalysis();
-  if (direction && (!ideas || Date.parse(direction.ranAt) > Date.parse(ideas.ranAt))) {
-    view.activeJob = DIRECTION_READ;
-  }
+  const latest = [
+    { job: SCENE_IDEAS, analysis: currentAnalysis() },
+    { job: DIRECTION_READ, analysis: currentDirectionAnalysis() },
+    { job: BOARD_REVIEW, analysis: currentBoardAnalysis() },
+  ]
+    .filter((entry) => entry.analysis)
+    .sort((left, right) => Date.parse(right.analysis.ranAt) - Date.parse(left.analysis.ranAt))[0];
+  if (latest) view.activeJob = latest.job;
   render();
 }
 

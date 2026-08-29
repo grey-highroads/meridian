@@ -1,6 +1,7 @@
 import { ACCOUNT_ID, TOUR_ID, preserveContextNavigation, scopedBody } from "./context.js";
 import { resolveArtifact } from "./artifact.js";
 import { showNoTour } from "./no-tour.js";
+import { renderBoardReviewInDrawer } from "./intelligence/board-view.js";
 
 preserveContextNavigation();
 
@@ -29,6 +30,11 @@ const view = {
   draft: { feedback: "", technical: "", preserve: "", comment: "" },
   message: "",
   messageAt: "",
+  // Job three of Intelligence, met where the decision is made. It is recruited
+  // context under Present to client, it is closed until asked for, and nothing
+  // about presenting waits on it or reads it.
+  boardReading: false,
+  boardReviewOpen: false,
 };
 
 let thumbnailQueue = Promise.resolve();
@@ -209,8 +215,20 @@ function operatorActions(detail, scene) {
         ${!latest ? `<p class="m-copy">Only the latest Artboard can be presented.</p>` : approved ? `<p class="m-copy">The client approved this Artboard.</p>` : ready ? `<p class="m-copy">The client can now review this Artboard.</p>` : `<p class="m-copy">Make this Artboard available for the client's decision.</p><div class="m-drawer__actions"><button class="m-button m-button--primary" type="button" data-present>Present to client</button></div>`}
         ${presentResult}
         <details class="m-drawer__context"><summary>Brief used for this Artboard</summary><div class="m-drawer__context-body"><p class="m-copy">${briefVersion ? `Brief V${version(briefVersion)}` : "No brief reference was recorded."}</p></div></details>
+        <details class="m-drawer__context"${view.boardReviewOpen ? " open" : ""}><summary>Read from the artist's side</summary><div class="m-drawer__context-body">${boardReadBody(detail)}</div></details>
       </section>
     </div>`;
+}
+
+// The read of this version, or the way to run one. Whatever it says, the
+// Present to client action above is unchanged: it is written before this, it
+// never consults it, and a version with a read full of departures presents in
+// the same one click as a version with no read at all.
+function boardReadBody(detail) {
+  if (view.boardReading) return `<p class="m-copy">Reading this board.</p>`;
+  const message = view.messageAt === "board" && view.message
+    ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : "";
+  return `${renderBoardReviewInDrawer(detail.boardRead)}${message}`;
 }
 
 function clientActions(detail, scene) {
@@ -266,12 +284,18 @@ async function detailFor(sceneId, artboardVersion) {
   const briefRequest = view.user.role === "higher-roads"
     ? { assignmentId: sceneId, briefVersion: entry.artboard.briefVersion }
     : { assignmentId: sceneId, artboardVersion };
-  const [written, end, brief, handoffs] = await Promise.all([
+  const [written, end, brief, handoffs, boardReview] = await Promise.all([
     call("get-reviews", { assignmentId: sceneId }),
     call("get-production-intent", { assignmentId: sceneId }),
     call("get-brief", briefRequest),
     view.user.role === "higher-roads" ? call("get-handoffs", { assignmentId: sceneId }) : Promise.resolve({ handoffs: [] }),
+    // A client never asks for this and never receives it. The route refuses the
+    // action for a client session, and this call is not made in that role.
+    view.user.role === "higher-roads"
+      ? call("get-board-review", { assignmentId: sceneId, artboardVersion })
+      : Promise.resolve({ analyses: [] }),
   ]);
+  const reads = boardReview.analyses || [];
   return {
     reviews: written.reviews || [],
     revisions: written.revisions || [],
@@ -280,6 +304,7 @@ async function detailFor(sceneId, artboardVersion) {
     end,
     brief,
     handoffs: handoffs.handoffs || [],
+    boardRead: reads.length ? reads[reads.length - 1] : null,
   };
 }
 
@@ -291,6 +316,8 @@ async function openVersion(sceneId, artboardVersion, pushAddress = true) {
   view.message = "";
   view.messageAt = "";
   view.size = "fit";
+  view.boardReviewOpen = false;
+  view.boardReading = false;
   if (drawer) drawer.open = false;
   const address = new URL(window.location.href);
   address.searchParams.set("scene", sceneId);
@@ -368,6 +395,29 @@ async function issueRevision() {
   await refreshDetail("Production has the change request.", "revision");
 }
 
+// Running the read from the drawer. It writes a record and changes nothing
+// about what this version can do next.
+async function readBoard() {
+  view.boardReviewOpen = true;
+  view.boardReading = true;
+  view.message = "";
+  view.messageAt = "";
+  renderDrawer();
+  try {
+    await call("run-board-review", {
+      assignmentId: view.selected.sceneId,
+      artboardVersion: view.selected.artboardVersion,
+    });
+    view.boardReading = false;
+    await refreshDetail("", "board");
+  } catch (error) {
+    view.boardReading = false;
+    view.message = error.message;
+    view.messageAt = "board";
+    renderDrawer();
+  }
+}
+
 async function guard(work) {
   try {
     await work();
@@ -397,6 +447,7 @@ document.addEventListener("click", (event) => {
     applyViewerSize();
     return;
   }
+  if (target.hasAttribute("data-read-board")) return void guard(readBoard);
   if (target.hasAttribute("data-revise")) return void guard(issueRevision);
   if (target.hasAttribute("data-present")) return void guard(async () => {
     await call("approve-for-client", { assignmentId: view.selected.sceneId, artboardVersion: view.selected.artboardVersion });

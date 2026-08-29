@@ -51,7 +51,7 @@ The page-and-drawer ruling applies with a twist worth thinking through: this who
 
 **Why it matters most.** This is the thesis kept: the brain is the context every tour is read against, and until this job exists, nothing has ever actually read a tour against it.
 
-### Job three: artboard review
+### Job three: artboard review (live 2026-08-29)
 
 **The moment.** An artboard has come back from production. Before presenting it to the client, the admin wants a second set of eyes from the artist's perspective: on brand, on tour, any red flags.
 
@@ -85,6 +85,6 @@ Not a chat window. Each job is an ask with a shaped answer, not a conversation. 
 
 ## Sequence and what exists
 
-Ship order: Scene ideas, direction read, artboard review, tour flags. Jobs one and two are live. The propose action exists on the server today with no caller. The direction read and artboard review are new model work with the evidence rules above. Tour flags wait on venue structure, already registered.
+Ship order: Scene ideas, direction read, artboard review, tour flags. Jobs one, two, and three are live. Tour flags wait on venue structure, already registered.
 
 For the designer, the immediate asks: the surface's composition under actions-first, the evidence presentation (the trail is the product; it must invite reading without burying the finding), the export as an artifact someone hands to tour production or a creative, and the verdict problem on job three. The failing example to avoid is on record: the old Scene panel, which had the content and no job.

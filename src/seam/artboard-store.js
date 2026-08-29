@@ -51,6 +51,29 @@ export function createArtifactBackend(options = {}) {
   };
 }
 
+// The stored file as bytes rather than as text. A submitted board is a PNG or
+// a JPEG, and the read above decodes what it fetches as text, which turns an
+// image into a broken string. The board review hands the model the image
+// itself, so it reads through here.
+export function createImageReader(options = {}) {
+  const token = options.token || process.env.BLOB_READ_WRITE_TOKEN;
+  const credentials = token ? { token } : {};
+  return {
+    async read(pathname) {
+      const result = await get(pathname, { access: "private", ...credentials, useCache: false });
+      if (!result || result.statusCode !== 200 || !result.stream) {
+        const error = new Error("That stored file could not be read.");
+        error.status = 404;
+        throw error;
+      }
+      return {
+        bytes: Buffer.from(await new Response(result.stream).arrayBuffer()),
+        contentType: result.blob.contentType,
+      };
+    },
+  };
+}
+
 export function createArtboardStore(options = {}) {
   const backend = options.backend || createBlobBackend(options);
   const accountId = options.accountId || null;

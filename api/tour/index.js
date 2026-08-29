@@ -1,14 +1,15 @@
 import { assembleContext, assembleDirectionContext } from "../../src/tour/select.js";
 import { proposeConcepts } from "../../src/tour/propose.js";
 import { readDirection } from "../../src/tour/direction-read.js";
+import { READABLE_BOARD_TYPES, readBoard } from "../../src/tour/board-review.js";
 import { createTourStore } from "../../src/tour/store.js";
 import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDocument, renderBriefSidecar } from "../../src/tour/brief.js";
-import { createArtboardStore } from "../../src/seam/artboard-store.js";
+import { createArtboardStore, createImageReader } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
 import { createSceneRecord } from "../../src/tour/scene-record.js";
 import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
 import { createArtistStore } from "../../src/artist/store.js";
-import { buildAnalysis, createAnalysisStore, DIRECTION_READ, directionSubjectId, SCENE_IDEAS } from "../../src/intelligence/analysis.js";
+import { BOARD_REVIEW, boardSubjectId, buildAnalysis, createAnalysisStore, DIRECTION_READ, directionSubjectId, SCENE_IDEAS } from "../../src/intelligence/analysis.js";
 import { conceptPacketFilename, renderConceptPacket } from "../../src/intelligence/concept-packet.js";
 import { createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
@@ -27,7 +28,8 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // get-reviews, approve-for-client, client-approve, client-comment,
 // get-production-intent, get-scene-activity, get-scene-record, ask-question,
 // answer-question, get-questions, run-scene-ideas, get-scene-ideas,
-// get-concept-packet, run-direction-read, get-direction-read.
+// get-concept-packet, run-direction-read, get-direction-read,
+// run-board-review, get-board-review.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -129,6 +131,33 @@ function evidenceSnapshot(record, findingId) {
   } catch {
     return { evidenceLinked: false, claimIds: [], claims: [], sourceIds: [], sources: [] };
   }
+}
+
+// The image a board review looks at. A submitted version carries its work
+// either inline as a data URL or in private storage, and the model gets the
+// picture either way. A stand-in version writes an SVG, which the model cannot
+// read as an image, so it is refused here. Reading the receipt and the brief
+// instead would be the analysis quietly not looking at the work.
+async function boardImage(artboard, options) {
+  const artifact = artboard.artifact || {};
+  const unreadable = () => {
+    const error = new Error("This version has no image to read. A board review runs on work submitted as a PNG or a JPEG.");
+    error.status = 400;
+    return error;
+  };
+  if (artifact.dataUrl) {
+    const match = /^data:(image\/(?:png|jpeg));base64,/i.exec(artifact.dataUrl);
+    if (!match) throw unreadable();
+    return { dataUrl: artifact.dataUrl, contentType: match[1].toLowerCase() };
+  }
+  if (artifact.blobPathname) {
+    const reader = options.imageReader || createImageReader(options);
+    const stored = await reader.read(artifact.blobPathname);
+    const contentType = String(stored.contentType || artifact.contentType || "").toLowerCase();
+    if (!READABLE_BOARD_TYPES.includes(contentType)) throw unreadable();
+    return { dataUrl: `data:${contentType};base64,${stored.bytes.toString("base64")}`, contentType };
+  }
+  throw unreadable();
 }
 
 async function contextFor(body, options) {
@@ -869,6 +898,104 @@ export async function handleAction(body, options = {}) {
     return {
       directionVersion: fixture.tour.direction.version,
       analyses: byVersion.flat(),
+    };
+  }
+
+  // Job three of Intelligence. An admin picks a version of a Scene's work and
+  // asks for a second read from the artist's side. The model is handed the
+  // board itself, the direction the board was briefed against rather than
+  // whatever the direction says today, and the artist's approved record.
+  //
+  // Nothing this returns gates anything. Present to client does not read it.
+  if (body.action === "run-board-review") {
+    const { fixture, assignment, brain, context } = await contextFor(body, options);
+    const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const versions = await artboardStore.readArtboards(fixture.tour.id, assignment.id);
+    const wanted = Number(body.artboardVersion);
+    const entry = versions.find((stored) => stored.artboard.artboardVersion === wanted);
+    if (!entry) {
+      const error = new Error("That artboard version was not found.");
+      error.status = 404;
+      throw error;
+    }
+    const board = await boardImage(entry.artboard, options);
+    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
+    const brief = briefs.find((row) => row.briefVersion === entry.artboard.briefVersion) || null;
+    // The board was made against a named version of the director's words. A
+    // read held against a later version would be a read of a board nobody
+    // asked for.
+    const directions = await tourStore.readDirections(fixture.tour.id);
+    const briefedVersion = brief ? Number(brief.directionVersion) : Number(fixture.tour.direction.version);
+    const direction = directions.find((row) => Number(row.version) === briefedVersion) || fixture.tour.direction;
+    const read = await readBoard({
+      ...context,
+      tourName: fixture.tour.name,
+      sceneTitle: assignment.title,
+      directionVersion: briefedVersion,
+      direction,
+      artboardVersion: wanted,
+      briefVersion: entry.artboard.briefVersion,
+      conceptSummary: entry.artboard.conceptSummary || "",
+      chosenConcept: brief ? brief.chosenConcept : null,
+      avoid: brief ? brief.avoid : [],
+      board,
+    }, options);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    const analysis = buildAnalysis({
+      job: BOARD_REVIEW,
+      ranAt: options.now ? new Date(options.now()).toISOString() : new Date().toISOString(),
+      ranBy: user.displayName,
+      artistId: fixture.tour.artistId,
+      subject: {
+        tourId: fixture.tour.id,
+        tourName: fixture.tour.name,
+        sceneId: assignment.id,
+        sceneTitle: assignment.title,
+        artboardVersion: wanted,
+        briefVersion: entry.artboard.briefVersion,
+      },
+      directionVersion: briefedVersion,
+      brainApprovedAt: brain.approvedAt,
+      result: {
+        alignment: read.alignment,
+        departure: read.departure,
+        prohibition: read.prohibition,
+        openQuestions: read.openQuestions,
+      },
+      // The trail as it stood at generation time, exactly as jobs one and two
+      // do it.
+      evidence: read.appliedFindings.map((row) => {
+        const trail = evidenceSnapshot(brain.record, row.findingId);
+        return {
+          findingId: row.findingId,
+          part: row.facetName,
+          text: row.text,
+          independentSourceCount: row.independentSourceCount,
+          tiers: row.tiers,
+          why: row.why,
+          ...trail,
+        };
+      }),
+    });
+    const stored = await analysisStore.appendAnalysis(
+      BOARD_REVIEW,
+      fixture.tour.id,
+      boardSubjectId(assignment.id, wanted),
+      analysis,
+    );
+    return { tour: fixture.tour, assignment, artboardVersion: wanted, analysis: stored.analysis, analyses: stored.analyses };
+  }
+
+  // Every read stored against one artboard version, oldest first.
+  if (body.action === "get-board-review") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const wanted = Number(body.artboardVersion);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    return {
+      artboardVersion: wanted,
+      analyses: await analysisStore.readAnalyses(BOARD_REVIEW, fixture.tour.id, boardSubjectId(assignment.id, wanted)),
     };
   }
 

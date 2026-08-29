@@ -241,12 +241,13 @@ test("the direction instrument is live and names the version it will read", () =
   const source = read("app/intelligence.js");
   assert.match(source, /Read direction \$\{escape\(version\)\}/);
   assert.match(source, /data-read/);
-  // Job two no longer says Coming, and jobs three and four still do.
   const asks = source.slice(source.indexOf("function asks()"), source.indexOf("function directionControl"));
   assert.ok(asks.includes("control: directionControl()"), "the direction ask does not use its own control");
-  // Job two no longer sits behind a dead state. Job three still says Coming and
-  // job four still names what it waits on.
-  assert.equal((asks.match(/m-state">Coming/g) || []).length, 1, "the honest state for job three moved");
+  // Jobs one, two, and three are live and none of them sits behind a dead
+  // state. Job four still names what it waits on. (Updated 2026-08-29 when the
+  // board review shipped and job three's Coming state came off.)
+  assert.ok(asks.includes("control: boardControl()"), "the board ask does not use its own control");
+  assert.equal((asks.match(/m-state">Coming/g) || []).length, 0, "a live job still says Coming");
   assert.match(asks, /Waiting on tour data/);
 });
 

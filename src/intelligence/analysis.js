@@ -41,12 +41,24 @@ export function analysisPathFor(job, tourId, subjectId, accountId) {
   return `${ROOT}/${requireAccount(accountId)}/tours/${tourId}/intelligence/${job}/${subjectId}.json`;
 }
 
+function versionSubjectId(version) {
+  return `v${String(Number(version) || 0).padStart(2, "0")}`;
+}
+
 // The direction read's subject is a version of the tour direction. Runs are
 // kept per version, so a read made against V02 stays readable after the
 // director's words move to V03 and the run numbering for V03 starts again at
 // one. Both the writer and the reader take the id from here.
 export function directionSubjectId(version) {
-  return `v${String(Number(version) || 0).padStart(2, "0")}`;
+  return versionSubjectId(version);
+}
+
+// The board review's subject is one artboard version of one Scene, so its id
+// names both. Runs chain inside a version for the same reason the direction
+// read's do: a read of V01 stays readable after V02 comes back, and V02 starts
+// its own run numbering at one.
+export function boardSubjectId(assignmentId, version) {
+  return `${assignmentId}-${versionSubjectId(version)}`;
 }
 
 export function buildAnalysis(entry = {}) {
