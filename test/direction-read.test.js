@@ -258,14 +258,27 @@ test("the answer region with nothing in it is the answer region, not a card with
   // supplied the visual, so the body rendered inside the 7rem visual column.
   assert.ok(!empty.includes("m-empty-state"), "the empty answer is a card again");
   assert.match(empty, /m-intelligence-results__handoff/);
-  assert.match(empty, /otherAnswer\(\)/, "the other job's answer is unreachable from here");
+  assert.ok(!empty.includes("data-open-job"), "cross-job navigation returned to the answer head");
 });
 
 test("the run a person is reading is named rather than offered as a control", () => {
   const source = read("app/intelligence.js");
-  const picker = source.slice(source.indexOf("function picker("), source.indexOf("function otherAnswer"));
+  const picker = source.slice(source.indexOf("function picker("), source.indexOf("function runHistory"));
   assert.match(picker, /m-state m-state--current/);
   assert.match(picker, /aria-current="true"/);
   // The current run is not a button. Earlier runs are.
   assert.ok(picker.indexOf("m-state--current") < picker.indexOf("<button"), "the current run is still a control");
+});
+
+test("each completed instrument owns the way back to its latest answer", () => {
+  const source = read("app/intelligence.js");
+  const asks = source.slice(source.indexOf("function asks()"), source.indexOf("function directionControl"));
+  const answerDoor = source.slice(source.indexOf("function answerDoor("), source.indexOf("function directionControl"));
+  const result = source.slice(source.indexOf("function result()"), source.indexOf("function reference()"));
+
+  assert.equal((asks.match(/answer: answerDoor\(/g) || []).length, 3, "a completed job cannot own its answer");
+  assert.match(answerDoor, /data-open-job/);
+  assert.match(answerDoor, /SHOWING BELOW/);
+  assert.ok(!result.includes("data-open-job"), "the answer head still switches between jobs");
+  assert.match(source, /<span class="m-label">Run history<\/span>/, "within-job history is not named separately");
 });

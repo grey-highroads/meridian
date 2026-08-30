@@ -34,7 +34,10 @@ export function askInstrument(entry) {
         <h3 class="m-intelligence-instrument__heading">${mark}${escape(entry.title)}</h3>
         <p class="m-copy">${escape(entry.copy)}</p>
       </div>
-      <div class="m-intelligence-instrument__footer">${entry.control}</div>
+      <div class="m-intelligence-instrument__footer">
+        ${entry.control}
+        ${entry.answer || ""}
+      </div>
     </article>`;
 }
 

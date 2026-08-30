@@ -18,10 +18,10 @@ import { renderBoardReview } from "./intelligence/board-view.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("intelligence");
 
-// Three jobs now answer on this page and one answer area holds them. The page
-// reads whichever job answered most recently, and the other jobs' answers are
-// one named control away in the head of the answer that is showing. A person
-// who never asked a question never sees a control for its answer.
+// Three jobs now answer on this page and one answer area holds them. Each
+// instrument owns the way back to its latest answer. The answer head carries
+// only history inside the job on screen, so two different axes never become
+// one row of identical controls.
 const SCENE_IDEAS = "scene-ideas";
 const DIRECTION_READ = "direction-read";
 const BOARD_REVIEW = "board-review";
@@ -96,12 +96,19 @@ function asks() {
         ? "Starting points drawn from this artist's history, with the research behind each one."
         : "Submit a Scene request first. Ideas are drawn from what the Scene asks for.",
       control: ideaControl,
+      answer: answerDoor(SCENE_IDEAS, view.analyses, view.runId, (entry) => `Ideas run ${pad(entry.run)}`),
     },
     {
       mark: "compare",
       title: "Compare the tour direction to this artist's history",
       copy: "Where the direction matches what this artist has done before, where it goes somewhere new, and which older work it echoes.",
       control: directionControl(),
+      answer: answerDoor(
+        DIRECTION_READ,
+        view.directionAnalyses,
+        view.directionRunId,
+        (entry) => `Direction V${pad(entry.directionVersion)}, run ${pad(entry.run)}`,
+      ),
     },
     {
       mark: "artboard",
@@ -110,6 +117,12 @@ function asks() {
         ? "How a finished Artboard compares to this artist's history and the direction it was made for. It does not decide anything."
         : "Meridian can check work submitted as a PNG or a JPEG. Nothing has come back yet.",
       control: boardControl(),
+      answer: answerDoor(
+        BOARD_REVIEW,
+        view.boardAnalyses,
+        view.boardRunId,
+        (entry) => `Artboard V${pad((entry.subject || {}).artboardVersion)}, run ${pad(entry.run)}`,
+      ),
     },
     {
       mark: "stops",
@@ -119,6 +132,21 @@ function asks() {
     },
   ];
   return renderAsks(rows);
+}
+
+// A completed instrument is the door back to its own answer. It names the
+// latest run quietly, and offers an action only when that run is not already
+// the answer below. The whole instrument never pretends to be clickable.
+function answerDoor(job, analyses, currentId, label) {
+  if (!analyses.length) return "";
+  const latest = analyses[analyses.length - 1];
+  const showing = view.activeJob === job && currentId === latest.runId;
+  return `<div class="m-intelligence-instrument__answer">
+      <span class="m-meta">${escape(label(latest).toUpperCase())}</span>
+      ${showing
+        ? `<span class="m-meta">SHOWING BELOW</span>`
+        : `<button class="m-button m-button--small m-button--quiet" type="button" data-open-job="${job}">Read answer</button>`}
+    </div>`;
 }
 
 // The direction read's action names what it will read and which version of it,
@@ -166,24 +194,12 @@ function picker(analyses, currentId, attribute, label) {
   return rows;
 }
 
-// The way to the other jobs' answers, offered only for a job that has one.
-const ANSWERS = [
-  { job: SCENE_IDEAS, open: "Open the Scene ideas", held: () => view.analyses },
-  { job: DIRECTION_READ, open: "Open the direction comparison", held: () => view.directionAnalyses },
-  { job: BOARD_REVIEW, open: "Open the Artboard check", held: () => view.boardAnalyses },
-];
-
-function otherAnswer() {
-  return ANSWERS
-    .filter((entry) => entry.job !== view.activeJob && entry.held().length)
-    .map((entry) => `<button class="m-button m-button--small" type="button" data-open-job="${entry.job}">${entry.open}</button>`)
-    .join("");
-}
-
-function headControls(rows) {
-  const other = otherAnswer();
-  if (!rows && !other) return "";
-  return `<div class="m-cluster">${rows}${other}</div>`;
+function runHistory(rows) {
+  if (!rows) return "";
+  return `<div class="m-intelligence-run-history">
+      <span class="m-label">Run history</span>
+      <div class="m-cluster">${rows}</div>
+    </div>`;
 }
 
 function currentAnalysis() {
@@ -213,18 +229,13 @@ function currentDirectionAnalysis() {
 // in the 7rem visual column, so the heading broke across three lines and the
 // sentence ran about ten characters wide.
 //
-// With nothing stored for the job being read, the way to the other job's answer
-// still has to be here. Otherwise a person whose Scene has no ideas cannot
-// reach a direction read they already ran.
 function emptyResult() {
-  const other = otherAnswer();
   return `<section class="m-intelligence-results" aria-labelledby="result-heading">
       <div class="m-intelligence-results__handoff">
         <span class="m-label" id="result-heading">No answer yet</span>
       </div>
       <div class="m-stack">
         <p class="m-copy">Ask one of the questions above. What comes back is kept here, and asking again keeps the earlier answer too.</p>
-        ${other ? `<div class="m-cluster">${other}</div>` : ""}
       </div>
     </section>`;
 }
@@ -240,7 +251,7 @@ function result() {
       "data-direction-run-id",
       (entry) => `V${pad(entry.directionVersion)} run ${pad(entry.run)}`,
     );
-    return renderDirectionRead(analysis, headControls(rows));
+    return renderDirectionRead(analysis, runHistory(rows));
   }
   if (view.activeJob === BOARD_REVIEW) {
     const analysis = currentBoardAnalysis();
@@ -251,12 +262,12 @@ function result() {
       "data-board-run-id",
       (entry) => `V${pad((entry.subject || {}).artboardVersion)} run ${pad(entry.run)}`,
     );
-    return renderBoardReview(analysis, headControls(rows));
+    return renderBoardReview(analysis, runHistory(rows));
   }
   const analysis = currentAnalysis();
   if (!analysis) return emptyResult();
   const rows = picker(view.analyses, analysis.runId, "data-run-id", (entry) => `Run ${pad(entry.run)}`);
-  return renderIdeas(analysis, headControls(rows), view.ideaMessages);
+  return renderIdeas(analysis, runHistory(rows), view.ideaMessages);
 }
 
 function reference() {
@@ -509,7 +520,15 @@ document.addEventListener("click", (event) => {
   if (target.hasAttribute("data-read")) void readTheDirection();
   if (target.hasAttribute("data-review")) void reviewTheBoard();
   if (target.hasAttribute("data-open-job")) {
-    view.activeJob = target.getAttribute("data-open-job");
+    const job = target.getAttribute("data-open-job");
+    view.activeJob = job;
+    if (job === SCENE_IDEAS && view.analyses.length) view.runId = view.analyses[view.analyses.length - 1].runId;
+    if (job === DIRECTION_READ && view.directionAnalyses.length) {
+      view.directionRunId = view.directionAnalyses[view.directionAnalyses.length - 1].runId;
+    }
+    if (job === BOARD_REVIEW && view.boardAnalyses.length) {
+      view.boardRunId = view.boardAnalyses[view.boardAnalyses.length - 1].runId;
+    }
     render();
   }
   if (target.hasAttribute("data-direction-run-id")) {

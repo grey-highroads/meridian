@@ -193,12 +193,18 @@ test("when the record links a claim to a finding, the run stores that claim and 
 
 test("asking again chains a second run and leaves the first exactly as it was", async () => {
   const context = await ready();
-  await tourAction({ action: "run-scene-ideas", tourId: TOUR, assignmentId: SCENE }, options(context, OPERATOR, modelReply()));
+  await tourAction(
+    { action: "run-scene-ideas", tourId: TOUR, assignmentId: SCENE },
+    options(context, OPERATOR, { ...modelReply(), now: () => "2026-08-30T12:00:00.000Z" }),
+  );
   const first = JSON.stringify(storedAnalyses(context)[0]);
 
   await tourAction(
     { action: "run-scene-ideas", tourId: TOUR, assignmentId: SCENE },
-    options(context, OPERATOR, modelReply({ proposals: [{ title: "A second look", idea: "Something else.", rhymesWith: [] }] })),
+    options(context, OPERATOR, {
+      ...modelReply({ proposals: [{ title: "A second look", idea: "Something else.", rhymesWith: [] }] }),
+      now: () => "2026-08-30T12:00:00.001Z",
+    }),
   );
 
   const analyses = storedAnalyses(context);

@@ -703,7 +703,7 @@ The name is settled in advance either way. If this ships it is a concept packet,
 
 Bring it back when: a person has read one and says what they would hand over. If the answer is the whole read, `src/intelligence/concept-packet.js` grows a second renderer against the same stored analysis and the Download and Copy actions sit at the foot of the read. If the answer is one entry, they sit at the foot of the entry, as they do on an idea.
 
-## Two answers share one answer area on Intelligence
+## Answers share one answer area on Intelligence
 
 Recorded 2026-08-29 with Intelligence job two. The page has one region below the instruments and two jobs now write into it. It shows one answer at a time: whichever job answered most recently on arrival, and whichever job the person just asked after that. The other job's answer is one named button away in the head of the answer on screen, and that button also sits in the empty state so a Scene with no ideas is not a dead end to a direction read that exists.
 
@@ -713,7 +713,9 @@ Bring it back when: a third job writes an answer into this region. The compositi
 
 Reopened 2026-08-29 with job three, as this entry required, and held. The board review writes into the same region, so the head of an answer now carries up to two named buttons rather than one. Two buttons is still a row a person reads at a glance. The question this entry asked was answered rather than skipped: the board review belongs beside the object it is about, and it is there, in the Reviews drawer under Present to client. It is also on Intelligence because a person reviewing several versions in a row wants one place to run the read from, and because the four asks are peers and one of them going missing from the surface would say the wrong thing about the set.
 
-Bring it back when: a fourth answer lands in this region. Three named buttons is a menu, and a menu of answers is the panel this surface exists to avoid. Job four, the tour stops, is the one that would do it, and its arrival is the moment to split the region rather than add to it.
+Resolved 2026-08-30 after the third answer made the row fail in use. Cross-job movement belongs to the four instruments, not to the head of whichever answer happens to be open. An instrument with a stored run names its latest answer at its foot and becomes the way back to it. The answer head now carries only run history within that job, as a separately labelled relationship. Tabs were refused because they would make the answer types a menu and recreate the panel this surface replaced.
+
+Bring it back when: an answer no longer has one stable instrument on this page, or a real comparison asks a person to keep two answer types visible at once. Job four alone does not reopen it; its instrument can own its answer by the same rule.
 
 ## A board review cannot read a stand-in artboard
 

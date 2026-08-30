@@ -377,3 +377,9 @@ Requesting changes is the only act that opens that page, so the way back belongs
 Two things go with it. The Scene keeps its collapsed shape from the 2026-08-27 ruling and gains nothing back. And issuing a revision stops repeating "Production has the change request" as a result underneath the same sentence in the block above it, which read as the app saying one thing twice.
 
 The designer's tree read that any commit touching seam behaviour requires was waived by Grey for this change.
+
+## One ruling, 2026-08-30, second session
+
+Recorded against the committed tree at `2de6718f`. The composition of Intelligence after three jobs began sharing one answer region.
+
+**An answer belongs to the instrument that asked for it.** The four instruments remain the stable map of Intelligence. Once one has run, its foot names the latest run and becomes the way back to that answer. The answer head no longer carries links to other jobs. It carries only run history inside the job being read, labelled as history, with the current run written as state and earlier runs offered as controls. Tabs were considered and refused because a tab strip across answer types would turn four jobs back into a menu of answers, which is the panel this surface exists to avoid. The composition holds when job four arrives: one more instrument can own one more answer without adding another control to every answer head.

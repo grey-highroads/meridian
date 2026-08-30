@@ -2318,6 +2318,23 @@
     justify-items: start;
   }
 
+  .m-intelligence-instrument__answer {
+    align-items: center;
+    border-top: var(--m-rule-width) solid var(--m-border-subtle);
+    display: flex;
+    gap: var(--m-space-3);
+    justify-content: space-between;
+    padding-top: var(--m-space-2);
+    width: 100%;
+  }
+
+  .m-intelligence-run-history {
+    align-items: flex-start;
+    display: grid;
+    gap: var(--m-space-2);
+    justify-items: end;
+  }
+
   .m-intelligence-instrument__controls {
     align-items: end;
     display: grid;
