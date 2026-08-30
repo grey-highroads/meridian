@@ -239,7 +239,7 @@ test("a read renders its clusters with no score, no meter, and no entry without 
 
 test("the direction instrument is live and names the version it will read", () => {
   const source = read("app/intelligence.js");
-  assert.match(source, /Read direction \$\{escape\(version\)\}/);
+  assert.match(source, /Compare direction \$\{escape\(version\)\}/);
   assert.match(source, /data-read/);
   const asks = source.slice(source.indexOf("function asks()"), source.indexOf("function directionControl"));
   assert.ok(asks.includes("control: directionControl()"), "the direction ask does not use its own control");

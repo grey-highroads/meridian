@@ -2160,7 +2160,7 @@
   }
 
   .m-intelligence-instrument {
-    background: var(--m-surface-work);
+    background: var(--m-gradient-raised);
     border: var(--m-rule-width) solid var(--m-border-default);
     box-shadow: var(--m-shadow-raised);
     display: grid;
@@ -2171,8 +2171,18 @@
   }
 
   .m-intelligence-instrument__body {
+    align-content: start;
     display: grid;
     gap: var(--m-space-2);
+  }
+
+  /* The base layer sets every svg to display: block, which puts a mark on its
+     own line inside a heading. A mark belongs on the line with the words it
+     names. */
+  .m-intelligence-instrument__heading .m-icon {
+    display: inline-block;
+    margin-right: var(--m-space-3);
+    vertical-align: -0.15em;
   }
 
   .m-intelligence-instrument__heading {

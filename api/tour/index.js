@@ -141,7 +141,7 @@ function evidenceSnapshot(record, findingId) {
 async function boardImage(artboard, options) {
   const artifact = artboard.artifact || {};
   const unreadable = () => {
-    const error = new Error("This version has no image to read. A board review runs on work submitted as a PNG or a JPEG.");
+    const error = new Error("This version has no image to check. Meridian can check work submitted as a PNG or a JPEG.");
     error.status = 400;
     return error;
   };

@@ -98,7 +98,7 @@ export function renderDirectionRead(analysis, picker = "") {
         <div class="m-stack">
           <span class="m-meta" id="result-heading">THE DIRECTION AGAINST THE ARTIST'S RECORD</span>
           <span class="m-meta">${escape(lineage)}</span>
-          <p class="m-copy">The director's words${subject.directionSetBy ? `, set by ${escape(subject.directionSetBy)}` : ""}, held against everything the artist's approved record holds. Nothing here decides anything.</p>
+          <p class="m-copy">How the director's words${subject.directionSetBy ? `, set by ${escape(subject.directionSetBy)}` : ""}, compare to everything Meridian knows about this artist. Nothing here decides anything.</p>
         </div>
         ${picker}
       </header>

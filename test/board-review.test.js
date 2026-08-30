@@ -173,7 +173,7 @@ test("a version with no image is refused rather than reviewed from its paperwork
     () => tourAction({ action: "run-board-review", ...AT, artboardVersion: 2 }, options(context, OPERATOR, modelReply())),
     (error) => {
       assert.equal(error.status, 400);
-      assert.match(error.message, /no image to read/);
+      assert.match(error.message, /no image to check/);
       return true;
     },
   );
@@ -391,10 +391,10 @@ test("a read renders its groups with no verdict and no entry without its trail",
   };
   const html = renderBoardReview(analysis);
 
-  assert.match(html, /Where the board sits with the record/);
-  assert.match(html, /What it touches that this artist stays away from/);
+  assert.match(html, /Where it matches this artist&#039;s history|Where it matches this artist's history/);
+  assert.match(html, /What this artist stays away from/);
   // A group with nothing in it writes no heading over a void.
-  assert.ok(!html.includes("Where it leaves the record"), "an empty group rendered its heading");
+  assert.ok(!html.includes("Where it goes somewhere new"), "an empty group rendered its heading");
 
   // Every entry carries the finding it rests on, in full, under the one label.
   assert.match(html, /What this rests on in the artist&#039;s history|What this rests on in the artist's history/);
@@ -412,6 +412,6 @@ test("a read renders its groups with no verdict and no entry without its trail",
   const drawer = renderBoardReviewInDrawer(analysis);
   assert.match(drawer, /One front, held back/);
   assert.match(drawer, /He has staged weather as structure before/);
-  assert.match(renderBoardReviewInDrawer(null), /No read has been run on this version/);
+  assert.match(renderBoardReviewInDrawer(null), /has not been checked yet/);
   assert.match(renderBoardReviewInDrawer(null), /data-read-board/);
 });

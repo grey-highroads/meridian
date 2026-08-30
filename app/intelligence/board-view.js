@@ -1,6 +1,6 @@
 import { day, escape, evidenceGroup, pad } from "./ideas-view.js";
 
-// How a board review reads.
+// How an Artboard check reads.
 //
 // Browser rendering lives under app/, the ruling that put the ideas view and
 // the direction view here. The composition follows the direction view, because
@@ -20,18 +20,18 @@ import { day, escape, evidenceGroup, pad } from "./ideas-view.js";
 export const GROUPS = [
   {
     key: "alignment",
-    heading: "Where the board sits with the record",
-    copy: "What it holds of the artist's history and the direction it was briefed against.",
+    heading: "Where it matches this artist's history",
+    copy: "What the Artboard holds of this artist's past work and of the direction it was made for.",
   },
   {
     key: "departure",
-    heading: "Where it leaves the record",
+    heading: "Where it goes somewhere new",
     copy: "What it does instead, and what that costs or opens up.",
   },
   {
     key: "prohibition",
-    heading: "What it touches that this artist stays away from",
-    copy: "What is in the board, and which part of the record it runs into.",
+    heading: "What this artist stays away from",
+    copy: "What is in the Artboard, and which part of this artist's history it runs into.",
   },
 ];
 
@@ -99,14 +99,14 @@ export function renderBoardReview(analysis, picker = "") {
   const count = `${entries} ${entries === 1 ? "entry" : "entries"}`;
   return `<section class="m-intelligence-results" aria-labelledby="result-heading">
       <div class="m-intelligence-results__handoff">
-        <span class="m-label">Board read</span>
+        <span class="m-label">Artboard check</span>
         <span class="m-meta">${escape(count).toUpperCase()}</span>
       </div>
       <header class="m-intelligence-reader__head">
         <div class="m-stack">
           <span class="m-meta" id="result-heading">${escape(String(subject.sceneTitle || "THIS SCENE").toUpperCase())} / ARTBOARD V${pad(subject.artboardVersion)}</span>
           <span class="m-meta">${escape(lineageOf(analysis))}</span>
-          <p class="m-copy">A second read of this version from the artist's side. It decides nothing, and presenting to the client is the same one click either way.</p>
+          <p class="m-copy">How this Artboard compares to this artist's history and the direction it was made for. Nothing here decides anything, and presenting to the client is the same one click either way.</p>
         </div>
         ${picker}
       </header>
@@ -122,8 +122,8 @@ export function renderBoardReview(analysis, picker = "") {
 // never waits on it.
 export function renderBoardReviewInDrawer(analysis) {
   if (!analysis) {
-    return `<p class="m-copy">No read has been run on this version.</p>
-      <div class="m-drawer__actions"><button class="m-button m-button--small" type="button" data-read-board>Read this board</button></div>`;
+    return `<p class="m-copy">This Artboard has not been checked yet.</p>
+      <div class="m-drawer__actions"><button class="m-button m-button--small" type="button" data-read-board>Check this Artboard</button></div>`;
   }
   const entries = entryCount(analysis);
   const count = `${entries} ${entries === 1 ? "entry" : "entries"}`;
@@ -131,6 +131,6 @@ export function renderBoardReviewInDrawer(analysis) {
       <span class="m-meta">${escape(`RUN ${pad(analysis.run)} / ${day(analysis.ranAt).toUpperCase()} / ${count.toUpperCase()}`)}</span>
       ${groupsOf(analysis, "drawer-board")}
       ${listBlock("Open questions", (analysis.result || {}).openQuestions)}
-      <div class="m-drawer__actions"><button class="m-button m-button--small" type="button" data-read-board>Read this board again</button></div>
+      <div class="m-drawer__actions"><button class="m-button m-button--small" type="button" data-read-board>Check it again</button></div>
     </div>`;
 }

@@ -215,7 +215,7 @@ function operatorActions(detail, scene) {
         ${!latest ? `<p class="m-copy">Only the latest Artboard can be presented.</p>` : approved ? `<p class="m-copy">The client approved this Artboard.</p>` : ready ? `<p class="m-copy">The client can now review this Artboard.</p>` : `<p class="m-copy">Make this Artboard available for the client's decision.</p><div class="m-drawer__actions"><button class="m-button m-button--primary" type="button" data-present>Present to client</button></div>`}
         ${presentResult}
         <details class="m-drawer__context"><summary>Brief used for this Artboard</summary><div class="m-drawer__context-body"><p class="m-copy">${briefVersion ? `Brief V${version(briefVersion)}` : "No brief reference was recorded."}</p></div></details>
-        <details class="m-drawer__context"${view.boardReviewOpen ? " open" : ""}><summary>Read from the artist's side</summary><div class="m-drawer__context-body">${boardReadBody(detail)}</div></details>
+        <details class="m-drawer__context"${view.boardReviewOpen ? " open" : ""}><summary>Checked against this artist's history</summary><div class="m-drawer__context-body">${boardReadBody(detail)}</div></details>
       </section>
     </div>`;
 }
@@ -225,7 +225,7 @@ function operatorActions(detail, scene) {
 // never consults it, and a version with a read full of departures presents in
 // the same one click as a version with no read at all.
 function boardReadBody(detail) {
-  if (view.boardReading) return `<p class="m-copy">Reading this board.</p>`;
+  if (view.boardReading) return `<p class="m-copy">Checking this Artboard.</p>`;
   const message = view.messageAt === "board" && view.message
     ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : "";
   return `${renderBoardReviewInDrawer(detail.boardRead)}${message}`;

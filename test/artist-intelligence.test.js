@@ -549,16 +549,26 @@ test("the rail destination is built for a Higher Roads session and the brain has
 
 test("the four asks are on the page in the words of the person making them", () => {
   const page = read("app/intelligence.js");
+  // Reworded 2026-08-29. "Read" and "against" were shorthand, and the object of
+  // job three is the Artboard that came back, never a concept.
   for (const ask of [
     "Ideas for a Scene",
-    "Read the direction against the artist",
-    "Review a board before the client sees it",
+    "Compare the tour direction to this artist's history",
+    "Check an Artboard before you present it",
     "Check the tour stops",
   ]) {
     assert.ok(page.includes(ask), `the page is missing "${ask}"`);
   }
   // The job that cannot run states what it needs rather than sitting behind a
   // dead control.
-  assert.match(page, /Requires venue and screen specifications as fields rather than prose/);
+  assert.match(page, /Needs venue and screen specifications as fields rather than prose/);
   assert.doesNotMatch(page, /Coming soon/, "an ask promises a date nobody set");
+
+  // Each ask carries its own mark, and no ask carries a colour of its own.
+  const marks = read("app/intelligence/asks-view.js");
+  for (const mark of ["ideas", "compare", "artboard", "stops"]) {
+    assert.ok(marks.includes(`${mark}:`), `the asks view has no mark for ${mark}`);
+    assert.ok(page.includes(`mark: "${mark}"`), `no ask uses the ${mark} mark`);
+  }
+  assert.doesNotMatch(marks, /--m-signal|fill="#|stroke="#/, "a mark carries its own colour");
 });

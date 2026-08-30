@@ -90,27 +90,31 @@ function asks() {
     : `<span class="m-state m-state--current">No Scene yet</span>`;
   const rows = [
     {
+      mark: "ideas",
       title: "Ideas for a Scene",
       copy: ready
         ? "Starting points drawn from this artist's history, with the research behind each one."
-        : "Submit a Scene request first. Ideas are drawn against what the Scene asks for.",
+        : "Submit a Scene request first. Ideas are drawn from what the Scene asks for.",
       control: ideaControl,
     },
     {
-      title: "Read the direction against the artist",
-      copy: "Whether the tour direction departs from who this artist has been, and which older themes it echoes.",
+      mark: "compare",
+      title: "Compare the tour direction to this artist's history",
+      copy: "Where the direction matches what this artist has done before, where it goes somewhere new, and which older work it echoes.",
       control: directionControl(),
     },
     {
-      title: "Review a board before the client sees it",
+      mark: "artboard",
+      title: "Check an Artboard before you present it",
       copy: view.boards.length
-        ? "A second read on a version from the artist's side. It decides nothing."
-        : "Work submitted as a PNG or a JPEG can be read. Nothing has come back yet.",
+        ? "How a finished Artboard compares to this artist's history and the direction it was made for. It does not decide anything."
+        : "Meridian can check work submitted as a PNG or a JPEG. Nothing has come back yet.",
       control: boardControl(),
     },
     {
+      mark: "stops",
       title: "Check the tour stops",
-      copy: "Requires venue and screen specifications as fields rather than prose. Nothing to read against yet.",
+      copy: "Needs venue and screen specifications as fields rather than prose. There is nothing to compare yet.",
       control: `<span class="m-state">Waiting on tour data</span>`,
     },
   ];
@@ -122,7 +126,7 @@ function asks() {
 function directionControl() {
   if (!view.directionVersion) return `<span class="m-state">No direction yet</span>`;
   const version = `V${pad(view.directionVersion)}`;
-  return `<button class="m-button m-button--primary" type="button" data-read ${view.reading ? "disabled" : ""}>${view.reading ? "Reading" : `Read direction ${escape(version)}`}</button>`;
+  return `<button class="m-button m-button--primary" type="button" data-read ${view.reading ? "disabled" : ""}>${view.reading ? "Comparing" : `Compare direction ${escape(version)}`}</button>`;
 }
 
 // One version of one Scene's work is what a read is about, so the choice names
@@ -141,10 +145,10 @@ function boardOptions() {
 }
 
 function boardControl() {
-  if (!view.boards.length) return `<span class="m-state">No board yet</span>`;
+  if (!view.boards.length) return `<span class="m-state">No Artboard yet</span>`;
   return `<div class="m-intelligence-instrument__controls">
       <label class="m-field"><span class="m-label">Version</span>${boardOptions()}</label>
-      <button class="m-button m-button--primary" type="button" data-review ${view.reviewing ? "disabled" : ""}>${view.reviewing ? "Reading" : "Read this board"}</button>
+      <button class="m-button m-button--primary" type="button" data-review ${view.reviewing ? "disabled" : ""}>${view.reviewing ? "Checking" : "Check this Artboard"}</button>
     </div>`;
 }
 
@@ -165,8 +169,8 @@ function picker(analyses, currentId, attribute, label) {
 // The way to the other jobs' answers, offered only for a job that has one.
 const ANSWERS = [
   { job: SCENE_IDEAS, open: "Open the Scene ideas", held: () => view.analyses },
-  { job: DIRECTION_READ, open: "Open the direction read", held: () => view.directionAnalyses },
-  { job: BOARD_REVIEW, open: "Open the board read", held: () => view.boardAnalyses },
+  { job: DIRECTION_READ, open: "Open the direction comparison", held: () => view.directionAnalyses },
+  { job: BOARD_REVIEW, open: "Open the Artboard check", held: () => view.boardAnalyses },
 ];
 
 function otherAnswer() {
