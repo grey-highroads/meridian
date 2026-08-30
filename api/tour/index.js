@@ -10,7 +10,14 @@ import { createSceneRecord } from "../../src/tour/scene-record.js";
 import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { BOARD_REVIEW, boardSubjectId, buildAnalysis, createAnalysisStore, DIRECTION_READ, directionSubjectId, SCENE_IDEAS } from "../../src/intelligence/analysis.js";
-import { conceptPacketFilename, renderConceptPacket } from "../../src/intelligence/concept-packet.js";
+import {
+  boardReviewFilename,
+  conceptPacketFilename,
+  directionReadFilename,
+  renderBoardReviewExport,
+  renderConceptPacket,
+  renderDirectionReadExport,
+} from "../../src/intelligence/concept-packet.js";
 import { createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 import { createOrgStore } from "../../src/org/store.js";
@@ -29,7 +36,8 @@ import { CLIENT_ROLE } from "../../src/org/store.js";
 // get-production-intent, get-scene-activity, get-scene-record, ask-question,
 // answer-question, get-questions, run-scene-ideas, get-scene-ideas,
 // get-concept-packet, run-direction-read, get-direction-read,
-// run-board-review, get-board-review.
+// get-direction-read-export, run-board-review, get-board-review,
+// get-board-review-export.
 //
 // The tour reads the artist layer and never writes to it. Nothing here moves a
 // finding, a claim, or a source. A tour is a temporary interpretation that sits
@@ -999,11 +1007,58 @@ export async function handleAction(body, options = {}) {
     };
   }
 
+  if (body.action === "get-board-review-export") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const assignment = findAssignment(fixture, body.assignmentId);
+    const wantedVersion = Number(body.artboardVersion);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    const analyses = await analysisStore.readAnalyses(
+      BOARD_REVIEW,
+      fixture.tour.id,
+      boardSubjectId(assignment.id, wantedVersion),
+    );
+    const wantedRun = String(body.runId || "").trim();
+    const analysis = wantedRun ? analyses.find((entry) => entry.runId === wantedRun) : analyses[analyses.length - 1];
+    if (!analysis) {
+      const error = new Error("We couldn't find that Artboard check.");
+      error.status = 404;
+      throw error;
+    }
+    const scope = body.groupKey === undefined
+      ? null
+      : { groupKey: body.groupKey, entryIndex: Number(body.entryIndex) };
+    return {
+      filename: boardReviewFilename(analysis, scope),
+      document: renderBoardReviewExport(analysis, scope),
+    };
+  }
+
   if (body.action === "get-scene-ideas") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
     const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
     return { analyses: await analysisStore.readAnalyses(SCENE_IDEAS, fixture.tour.id, assignment.id) };
+  }
+
+  if (body.action === "get-direction-read-export") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const version = Number(body.directionVersion);
+    const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
+    const analyses = await analysisStore.readAnalyses(DIRECTION_READ, fixture.tour.id, directionSubjectId(version));
+    const wantedRun = String(body.runId || "").trim();
+    const analysis = wantedRun ? analyses.find((entry) => entry.runId === wantedRun) : analyses[analyses.length - 1];
+    if (!analysis) {
+      const error = new Error("We couldn't find that direction read.");
+      error.status = 404;
+      throw error;
+    }
+    const scope = body.groupKey === undefined
+      ? null
+      : { groupKey: body.groupKey, entryIndex: Number(body.entryIndex) };
+    return {
+      filename: directionReadFilename(analysis, scope),
+      document: renderDirectionReadExport(analysis, scope),
+    };
   }
 
   // A packet covers one idea. It is rendered from the stored run and from

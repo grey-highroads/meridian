@@ -211,6 +211,30 @@ test("a board review stores the version, both dates, the groups, and the evidenc
   assert.ok(analysis.evidence[0].text, "the evidence carries an id and no words");
   assert.ok(Array.isArray(analysis.evidence[0].claimIds), "the run stored no claim list");
 
+  const whole = await tourAction({
+    action: "get-board-review-export",
+    ...AT,
+    artboardVersion: 1,
+    runId: analysis.runId,
+  }, options(context));
+  assert.match(whole.filename, /^artboard-check-storm-and-lightning-v01-run-01\.txt$/);
+  assert.match(whole.document, /Tour: Off The Map Tour/);
+  assert.match(whole.document, /Scene: Storm and lightning/);
+  assert.match(whole.document, /Artboard version: V01/);
+  assert.match(whole.document, /One front, held back/);
+
+  const entry = await tourAction({
+    action: "get-board-review-export",
+    ...AT,
+    artboardVersion: 1,
+    runId: analysis.runId,
+    groupKey: "alignment",
+    entryIndex: 0,
+  }, options(context));
+  assert.match(entry.filename, /alignment-01-one-front-held-back\.txt$/);
+  assert.match(entry.document, /One front, held back/);
+  assert.match(entry.document, /independent sources/i);
+
   // Nothing here is a verdict, a score, or a conclusion.
   const stored = JSON.stringify(analysis.result);
   for (const word of ["score", "verdict", "rating", "recommendation"]) {
@@ -291,7 +315,7 @@ test("a client is refused both actions and finds no trace of a read in anything 
   await tourAction({ action: "run-board-review", ...AT, artboardVersion: 1 }, options(context, OPERATOR, modelReply()));
   await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 1 }, options(context));
 
-  for (const action of ["run-board-review", "get-board-review"]) {
+  for (const action of ["run-board-review", "get-board-review", "get-board-review-export"]) {
     await assert.rejects(
       () => tourAction({ action, ...AT, artboardVersion: 1 }, options(context, CLIENT, modelReply())),
       (error) => {
@@ -394,6 +418,8 @@ test("a read renders its groups with no verdict and no entry without its trail",
   assert.match(html, /m-intelligence-read-group/, "the review groups are not composed as one object's parts");
   assert.ok(!html.includes("m-section-heading"), "a review group still renders at page-section scale");
   assert.match(html, /m-intelligence-read__lineage/, "review lineage is not quieted separately from the read");
+  assert.match(html, /data-board-copy="alignment:0"/);
+  assert.match(html, /data-board-download="whole"/);
 
   assert.match(html, /Where it matches this artist&#039;s history|Where it matches this artist's history/);
   assert.match(html, /What this artist stays away from/);
@@ -417,6 +443,7 @@ test("a read renders its groups with no verdict and no entry without its trail",
   assert.match(drawer, /One front, held back/);
   assert.match(drawer, /He has staged weather as structure before/);
   assert.match(drawer, /m-section-heading/, "the compact drawer inherited the full-page read treatment");
+  assert.ok(!drawer.includes("data-board-copy"), "the Reviews drawer gained an unwired export action");
   assert.match(renderBoardReviewInDrawer(null), /has not been checked yet/);
   assert.match(renderBoardReviewInDrawer(null), /data-read-board/);
 });

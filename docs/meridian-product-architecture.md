@@ -378,10 +378,12 @@ Two things go with it. The Scene keeps its collapsed shape from the 2026-08-27 r
 
 The designer's tree read that any commit touching seam behaviour requires was waived by Grey for this change.
 
-## Two rulings, 2026-08-30, second session
+## Three rulings, 2026-08-30, second session
 
 Recorded against the committed tree at `2de6718f`. The composition of Intelligence after three jobs began sharing one answer region.
 
 **An answer belongs to the instrument that asked for it.** The four instruments remain the stable map of Intelligence. Once one has run, its foot names the latest run and becomes the way back to that answer. The answer head no longer carries links to other jobs. It carries only run history inside the job being read, labelled as history, with the current run written as state and earlier runs offered as controls. Tabs were considered and refused because a tab strip across answer types would turn four jobs back into a menu of answers, which is the panel this surface exists to avoid. The composition holds when job four arrives: one more instrument can own one more answer without adding another control to every answer head.
 
 **A read is one object with parts, not a sequence of fresh page sections.** The direction read and Artboard check keep every word the model wrote and the 44rem copy measure, but their three groups move down one level. Group headings use object scale, internal rules and gaps tighten, and lineage recedes as quiet metadata. The answer label and first sentence lead; the run, generation date, subject version, and artist knowledge approval date remain exact without competing with them. No type token, page measure, or shared section pattern changes.
+
+**Sharing has two scales and no compose step.** A single observation and the whole read each end with Copy and Download. Both the direction read and the Artboard check use those two scales. Every file and clipboard document is rendered from the stored run, never from the current artist record, and carries the tour, subject version, run, generation date, and artist knowledge approval date. No checkbox, audience choice, title field, assembled packet, or destination appears. Intelligence is a reading surface that lets a person share what they read, not an authoring tool.

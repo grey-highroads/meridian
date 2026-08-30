@@ -113,6 +113,17 @@ export function actionFeedback(message) {
   return `<span class="m-meta" role="status" aria-live="polite" data-idea-feedback>${escape(message || "")}</span>`;
 }
 
+export function readActions(kind, scope, label) {
+  return `<div class="m-reading-actions">
+      <span class="m-meta">${escape(String(label).toUpperCase())}</span>
+      <div class="m-cluster">
+        <button class="m-button m-button--small" type="button" data-${kind}-copy="${escape(scope)}">Copy</button>
+        <button class="m-button m-button--small" type="button" data-${kind}-download="${escape(scope)}">Download</button>
+        <span class="m-meta" role="status" aria-live="polite" data-export-feedback></span>
+      </div>
+    </div>`;
+}
+
 // One idea, read top to bottom: what it is called, what it is, the three notes
 // that qualify it, what it rests on, and the two things a person does with it.
 export function ideaBlock(direction, index, evidence, message = "") {

@@ -501,6 +501,69 @@ async function copyIdea(index) {
   }
 }
 
+function exportScope(value) {
+  if (value === "whole") return {};
+  const [groupKey, index] = String(value || "").split(":");
+  return { groupKey, entryIndex: Number(index) };
+}
+
+async function storedReadExport(kind, value) {
+  const scope = exportScope(value);
+  if (kind === "direction") {
+    const analysis = currentDirectionAnalysis();
+    return await call("get-direction-read-export", {
+      directionVersion: analysis ? analysis.directionVersion : null,
+      runId: analysis ? analysis.runId : "",
+      ...scope,
+    });
+  }
+  const analysis = currentBoardAnalysis();
+  const subject = (analysis && analysis.subject) || {};
+  return await call("get-board-review-export", {
+    assignmentId: subject.sceneId || "",
+    artboardVersion: subject.artboardVersion || null,
+    runId: analysis ? analysis.runId : "",
+    ...scope,
+  });
+}
+
+function sayByExport(target, message) {
+  const actions = target.closest(".m-reading-actions");
+  const slot = actions && actions.querySelector("[data-export-feedback]");
+  if (slot) slot.textContent = message;
+}
+
+function downloadDocument(filename, body) {
+  const url = URL.createObjectURL(new Blob([body], { type: "text/plain" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadRead(kind, value, target) {
+  try {
+    const { filename, document: body } = await storedReadExport(kind, value);
+    downloadDocument(filename, body);
+    sayByExport(target, "Downloaded.");
+  } catch (error) {
+    sayByExport(target, error.message);
+  }
+}
+
+async function copyRead(kind, value, target) {
+  try {
+    const { document: body } = await storedReadExport(kind, value);
+    await navigator.clipboard.writeText(body);
+    sayByExport(target, "Copied to your clipboard.");
+  } catch (error) {
+    sayByExport(target, error.message);
+  }
+}
+
 document.addEventListener("change", (event) => {
   if (event.target && event.target.id === "scene-choice") {
     view.sceneId = event.target.value;
@@ -541,6 +604,18 @@ document.addEventListener("click", (event) => {
   }
   if (target.hasAttribute("data-idea-download")) void downloadIdea(Number(target.getAttribute("data-idea-download")));
   if (target.hasAttribute("data-idea-copy")) void copyIdea(Number(target.getAttribute("data-idea-copy")));
+  if (target.hasAttribute("data-direction-download")) {
+    void downloadRead("direction", target.getAttribute("data-direction-download"), target);
+  }
+  if (target.hasAttribute("data-direction-copy")) {
+    void copyRead("direction", target.getAttribute("data-direction-copy"), target);
+  }
+  if (target.hasAttribute("data-board-download")) {
+    void downloadRead("board", target.getAttribute("data-board-download"), target);
+  }
+  if (target.hasAttribute("data-board-copy")) {
+    void copyRead("board", target.getAttribute("data-board-copy"), target);
+  }
   if (target.hasAttribute("data-run-id")) {
     view.runId = target.getAttribute("data-run-id");
     render();

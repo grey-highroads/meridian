@@ -124,6 +124,32 @@ test("a direction read stores the version, both dates, the clusters, and the evi
   assert.equal(typeof analysis.evidence[0].independentSourceCount, "number");
   assert.ok(analysis.evidence[0].text, "the evidence carries an id and no words");
   assert.ok(Array.isArray(analysis.evidence[0].claimIds), "the run stored no claim list");
+
+  const whole = await tourAction({
+    action: "get-direction-read-export",
+    tourId: TOUR,
+    directionVersion: 1,
+    runId: analysis.runId,
+  }, options(context));
+  assert.match(whole.filename, /^direction-read-off-the-map-2026-v01-run-01\.txt$/);
+  assert.match(whole.document, /Tour: Off The Map Tour/);
+  assert.match(whole.document, /Tour direction version: V01/);
+  assert.match(whole.document, /Artist knowledge approved:/);
+  assert.match(whole.document, /Weather as structure/);
+  assert.match(whole.document, /The early club rig/);
+
+  const entry = await tourAction({
+    action: "get-direction-read-export",
+    tourId: TOUR,
+    directionVersion: 1,
+    runId: analysis.runId,
+    groupKey: "continuity",
+    entryIndex: 0,
+  }, options(context));
+  assert.match(entry.filename, /continuity-01-weather-as-structure\.txt$/);
+  assert.match(entry.document, /Weather as structure/);
+  assert.match(entry.document, /independent sources/i);
+  assert.ok(!entry.document.includes("The early club rig"), "one observation exported the whole read");
 });
 
 test("reading again chains a second run and leaves the first exactly as it was", async () => {
@@ -172,9 +198,9 @@ test("a client session is refused both actions and reaches no part of a read", a
   const context = await ready();
   await tourAction({ action: "run-direction-read", tourId: TOUR }, options(context, OPERATOR, modelReply()));
 
-  for (const action of ["run-direction-read", "get-direction-read"]) {
+  for (const action of ["run-direction-read", "get-direction-read", "get-direction-read-export"]) {
     await assert.rejects(
-      () => tourAction({ action, tourId: TOUR }, options(context, CLIENT, modelReply())),
+      () => tourAction({ action, tourId: TOUR, directionVersion: 1 }, options(context, CLIENT, modelReply())),
       (error) => {
         assert.equal(error.status, 403);
         assert.match(error.message, /Higher Roads team/);
@@ -220,6 +246,8 @@ test("a read renders its clusters with no score, no meter, and no entry without 
   assert.equal((html.match(/class="m-intelligence-read-group"/g) || []).length, 2, "the read groups are not composed as one object's parts");
   assert.ok(!html.includes("m-section-heading"), "a read group still renders at page-section scale");
   assert.match(html, /m-intelligence-read__lineage/, "lineage is not quieted separately from the read");
+  assert.match(html, /data-direction-copy="continuity:0"/);
+  assert.match(html, /data-direction-download="whole"/);
   // A cluster with nothing in it writes no heading over a void.
   assert.ok(!html.includes("Where it leaves the record"), "an empty cluster rendered its heading");
 

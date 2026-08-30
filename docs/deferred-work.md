@@ -695,14 +695,6 @@ The snapshot now copies the trail out of the record at generation time: `evidenc
 
 No migration. Every run stored before this commit is test data.
 
-## The direction read leaves nothing behind as a file
-
-Recorded 2026-08-29 with Intelligence job two. Job one exports, because the admitted reality is that a creative feeds an idea to a model outside Meridian, and an idea is the unit a person takes away. Job two has no equivalent unit. The whole read is the artifact, and the one sharing behavior described for it, handing two echo candidates to the creative director with their sources, is a fragment of a read rather than a thing the record holds. So no export was built and no second packet renderer exists.
-
-The name is settled in advance either way. If this ships it is a concept packet, never a brief, with the same lineage every packet carries: the tour, the direction version, the generation date, the artist knowledge approval date, and the run number.
-
-Bring it back when: a person has read one and says what they would hand over. If the answer is the whole read, `src/intelligence/concept-packet.js` grows a second renderer against the same stored analysis and the Download and Copy actions sit at the foot of the read. If the answer is one entry, they sit at the foot of the entry, as they do on an idea.
-
 ## Answers share one answer area on Intelligence
 
 Recorded 2026-08-29 with Intelligence job two. The page has one region below the instruments and two jobs now write into it. It shows one answer at a time: whichever job answered most recently on arrival, and whichever job the person just asked after that. The other job's answer is one named button away in the head of the answer on screen, and that button also sits in the empty state so a Scene with no ideas is not a dead end to a direction read that exists.

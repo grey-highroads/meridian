@@ -144,3 +144,121 @@ export function renderConceptPacket(analysis, index) {
 
   return lines.join("\n");
 }
+
+const DIRECTION_GROUPS = [
+  { key: "continuity", heading: "What the direction keeps" },
+  { key: "departure", heading: "Where it leaves the record" },
+  { key: "echo", heading: "What it echoes" },
+];
+
+const BOARD_GROUPS = [
+  { key: "alignment", heading: "Where it matches this artist's history" },
+  { key: "departure", heading: "Where it goes somewhere new" },
+  { key: "prohibition", heading: "What this artist stays away from" },
+];
+
+function readLineage(analysis, title, objectLines = []) {
+  const subject = (analysis && analysis.subject) || {};
+  return [
+    title,
+    "Meridian, by Higher Roads",
+    "",
+    `Tour: ${subject.tourName || subject.tourId || "not recorded"}`,
+    ...objectLines,
+    `Tour direction version: V${pad(analysis && analysis.directionVersion)}`,
+    `Generated: ${day(analysis && analysis.ranAt)}`,
+    `Artist knowledge approved: ${day(analysis && analysis.brainApprovedAt)}`,
+    `Run: ${pad(analysis && analysis.run)}`,
+    "",
+  ];
+}
+
+function entryAt(analysis, groups, groupKey, index) {
+  const group = groups.find((entry) => entry.key === String(groupKey || ""));
+  const entries = group && Array.isArray((analysis.result || {})[group.key])
+    ? analysis.result[group.key]
+    : [];
+  const wanted = Number(index);
+  if (!group || !Number.isInteger(wanted) || wanted < 0 || wanted >= entries.length) {
+    const error = new Error("We couldn't find that observation.");
+    error.status = 404;
+    throw error;
+  }
+  return { group, entry: entries[wanted], index: wanted };
+}
+
+function citedEvidence(analysis, entry) {
+  const evidence = Array.isArray(analysis && analysis.evidence) ? analysis.evidence : [];
+  const byId = new Map(evidence.map((row) => [row.findingId, row]));
+  return (entry.restsOn || []).map((id) => byId.get(id)).filter(Boolean);
+}
+
+function observationLines(analysis, entry, number = null) {
+  const title = number === null ? entry.title : `${pad(number + 1)}. ${entry.title}`;
+  const lines = [title || "Untitled", ""];
+  if (entry.note) lines.push(entry.note, "");
+  const evidence = citedEvidence(analysis, entry);
+  if (evidence.length) {
+    lines.push("What this rests on in the artist's history", "");
+    lines.push(...evidenceLines(evidence), "");
+  }
+  return lines;
+}
+
+function wholeReadLines(analysis, groups) {
+  const result = (analysis && analysis.result) || {};
+  const lines = [];
+  for (const group of groups) {
+    const entries = Array.isArray(result[group.key]) ? result[group.key] : [];
+    if (!entries.length) continue;
+    lines.push(group.heading, "");
+    entries.forEach((entry, index) => lines.push(...observationLines(analysis, entry, index)));
+  }
+  const questions = Array.isArray(result.openQuestions) ? result.openQuestions : [];
+  if (questions.length) {
+    lines.push("Open questions", "", ...questions.map((entry) => `- ${entry}`), "");
+  }
+  return lines;
+}
+
+function entrySuffix(analysis, groups, scope) {
+  if (!scope) return "";
+  const selected = entryAt(analysis, groups, scope.groupKey, scope.entryIndex);
+  return `-${slug(selected.group.key)}-${pad(selected.index + 1)}-${slug(selected.entry.title)}`;
+}
+
+export function directionReadFilename(analysis, scope = null) {
+  const subject = (analysis && analysis.subject) || {};
+  return `direction-read-${slug(subject.tourId || "tour")}-v${pad(analysis && analysis.directionVersion)}-run-${pad(analysis && analysis.run)}${entrySuffix(analysis, DIRECTION_GROUPS, scope)}.txt`;
+}
+
+export function renderDirectionReadExport(analysis, scope = null) {
+  const lines = readLineage(analysis, "Direction read");
+  if (!scope) {
+    lines.push("The direction against the artist's record", "", ...wholeReadLines(analysis, DIRECTION_GROUPS));
+    return lines.join("\n");
+  }
+  const selected = entryAt(analysis, DIRECTION_GROUPS, scope.groupKey, scope.entryIndex);
+  lines.push(selected.group.heading, "", ...observationLines(analysis, selected.entry));
+  return lines.join("\n");
+}
+
+export function boardReviewFilename(analysis, scope = null) {
+  const subject = (analysis && analysis.subject) || {};
+  return `artboard-check-${slug(subject.sceneId || "scene")}-v${pad(subject.artboardVersion)}-run-${pad(analysis && analysis.run)}${entrySuffix(analysis, BOARD_GROUPS, scope)}.txt`;
+}
+
+export function renderBoardReviewExport(analysis, scope = null) {
+  const subject = (analysis && analysis.subject) || {};
+  const lines = readLineage(analysis, "Artboard check", [
+    `Scene: ${subject.sceneTitle || subject.sceneId || "not recorded"}`,
+    `Artboard version: V${pad(subject.artboardVersion)}`,
+  ]);
+  if (!scope) {
+    lines.push(`${subject.sceneTitle || "This Scene"}, Artboard V${pad(subject.artboardVersion)}`, "", ...wholeReadLines(analysis, BOARD_GROUPS));
+    return lines.join("\n");
+  }
+  const selected = entryAt(analysis, BOARD_GROUPS, scope.groupKey, scope.entryIndex);
+  lines.push(selected.group.heading, "", ...observationLines(analysis, selected.entry));
+  return lines.join("\n");
+}

@@ -211,6 +211,8 @@ Use `.m-intelligence-evidence` after an idea's qualifying notes. It is closed by
 
 Use `.m-intelligence-results` as the handoff from asking to reading. Its top rule and `Generated ideas` label must remain visible even when the first idea begins below the fold. The small count confirms that the answer arrived without turning the section into a metric.
 
+Use `.m-reading-actions` at the foot of a stored observation or a whole read when that exact unit may leave the surface. Name the scale quietly, keep Copy and Download together, and return feedback in the same footer. The footer shares what is already written. It does not introduce selection, assembly, titling, audience, or destination controls.
+
 ## Type and language
 
 Use `.m-heading` for the page job, `.m-section-heading` for a real section, `.m-copy` for explanation, `.m-label` for a compact label, and `.m-meta` for exact identifiers and time.

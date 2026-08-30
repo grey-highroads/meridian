@@ -1,4 +1,4 @@
-import { day, escape, evidenceGroup, pad } from "./ideas-view.js";
+import { day, escape, evidenceGroup, pad, readActions } from "./ideas-view.js";
 
 // How a direction read reads on the page.
 //
@@ -40,13 +40,14 @@ export const CLUSTERS = [
 // One observation: what it is called, what it says, and the findings under it.
 // The evidence cluster is the one the ideas view recruits, so a finding reads
 // the same way whichever job cited it.
-export function entryBlock(entry, evidence) {
+export function entryBlock(entry, evidence, groupKey, index) {
   const byId = new Map(evidence.map((row) => [row.findingId, row]));
   const cited = (entry.restsOn || []).map((id) => byId.get(id)).filter(Boolean);
   return `<article class="m-intelligence-principle">
       <h4 class="m-copy m-copy--large">${escape(entry.title)}</h4>
       ${entry.note ? `<p class="m-copy">${escape(entry.note)}</p>` : ""}
       ${evidenceGroup(cited)}
+      ${readActions("direction", `${groupKey}:${index}`, "Observation")}
     </article>`;
 }
 
@@ -61,7 +62,7 @@ export function clusterBlock(cluster, entries, evidence) {
         </div>
         <span class="m-meta">${escape(count).toUpperCase()}</span>
       </div>
-      <div class="m-intelligence-principles">${entries.map((entry) => entryBlock(entry, evidence)).join("")}</div>
+      <div class="m-intelligence-principles">${entries.map((entry, index) => entryBlock(entry, evidence, cluster.key, index)).join("")}</div>
     </section>`;
 }
 
@@ -105,6 +106,7 @@ export function renderDirectionRead(analysis, picker = "") {
       <div class="m-intelligence-read">
         ${clusters}
         ${listBlock("Open questions", result.openQuestions)}
+        ${readActions("direction", "whole", "Whole read")}
       </div>
     </section>`;
 }
