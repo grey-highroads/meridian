@@ -192,6 +192,68 @@ test("PNG and JPEG are the only submission types admitted by upload, stored subm
   assert.deepEqual(await artboardStore.readArtboards(TOUR, ASSIGNMENT), before);
 });
 
+// Requesting changes is the only thing that opens the page where the next
+// version is returned, and once an Artboard exists the Scene stops offering a
+// way there. So the drawer has to carry the way back, and the address it
+// carries has to be one that actually takes a submission.
+test("a requested change leads to the page that takes the next version, and that page stores it", async () => {
+  const { asOperator, artboardStore } = await prepared();
+  await tourAction({
+    action: "save-review",
+    ...AT,
+    artboardVersion: 1,
+    departures: ["Leave more room around the band."],
+  }, asOperator);
+  await tourAction({
+    action: "issue-revision",
+    ...AT,
+    revisionId: "human-revision-two",
+    sourceArtboardVersion: 1,
+    instructions: [{ text: "Leave more room around the band." }],
+  }, asOperator);
+
+  const handoff = (await artboardStore.readHandoffs(TOUR, ASSIGNMENT))
+    .find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === 1);
+  assert.ok(handoff, "requesting changes records a revision handoff");
+  assert.ok(handoff.directPath, "the revision handoff carries the address of the page that takes the next version");
+
+  const address = new URL(handoff.directPath, "https://meridian.test");
+  assert.match(address.pathname, /handoff\.html$/);
+  assert.equal(address.searchParams.get("scene"), ASSIGNMENT);
+  assert.equal(address.searchParams.get("tour"), TOUR);
+  assert.equal(address.searchParams.get("revision"), "human-revision-two");
+
+  // The address is not decoration. Submitting through the parameters it carries
+  // stores a second version.
+  const submitted = await tourAction({
+    action: "submit-artboard",
+    accountId: address.searchParams.get("account") || ACCOUNT.id,
+    tourId: address.searchParams.get("tour"),
+    assignmentId: address.searchParams.get("scene"),
+    briefVersion: 1,
+    sourceArtboardVersion: 1,
+    artifact: {
+      name: "storm-v2.png",
+      contentType: "image/png",
+      size: 68,
+      dataUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nCQAAAAASUVORK5CYII=",
+    },
+    conceptSummary: "The band now has room on both sides.",
+  }, asOperator);
+  assert.equal(submitted.artboard.artboardVersion, 2);
+
+  const stored = await artboardStore.readArtboards(TOUR, ASSIGNMENT);
+  assert.equal(stored.length, 2);
+  assert.equal(stored.at(-1).artboard.artboardVersion, 2);
+  assert.equal(stored.at(-1).artboard.artifact.name, "storm-v2.png");
+
+  // The drawer builds that link from the stored handoff rather than assembling
+  // an address of its own, so the two can never drift apart.
+  const page = read("app/reviews.js");
+  assert.match(page, /href="\$\{escape\(handoff\.directPath\)\}"/);
+  assert.doesNotMatch(page, /href="[^"]*handoff\.html/);
+});
+
 test("the gallery sends a human revision without manufacturing another Artboard", async () => {
   const { asOperator, artboardStore } = await prepared();
   await tourAction({

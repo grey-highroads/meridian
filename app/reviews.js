@@ -188,11 +188,23 @@ function internalReviewHistory(detail) {
   return `${reviews.map((entry) => `<div class="m-contribution"><span class="m-label">Review notes</span>${list(entry.departures)}${list(entry.technicalItems, "No technical notes.")}<span class="m-meta">${escape(entry.writtenBy)} / ${escape(entry.writtenAt)}</span></div>`).join("")}${revisions.map((entry) => `<div class="m-contribution"><span class="m-label">Changes requested</span>${list(entry.instructions)}<span class="m-meta">${escape(entry.sentBy)} / ${escape(entry.sentAt)}</span></div>`).join("")}`;
 }
 
+// Where the next version comes back. Nothing else in the app leads here once
+// an Artboard has arrived, so without this the change request is issued and
+// the page that receives the answer has no door.
+function revisionHandoffLink(handoff) {
+  if (!handoff || !handoff.directPath) return "";
+  return `<div class="m-drawer__actions"><a class="m-button m-button--primary" href="${escape(handoff.directPath)}">Open production handoff</a></div>`;
+}
+
 function operatorActions(detail, scene) {
   const value = view.selected.artboardVersion;
   const latest = value === newestVersion(scene);
   const review = detail.reviews?.find((entry) => entry.artboardVersion === value);
-  const pending = detail.handoffs?.some((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value);
+  // The handoff itself, not just whether one exists. Requesting changes is the
+  // only thing that opens the page where the next version is returned, so the
+  // way back to that page is kept here and shown once the request is out.
+  const revisionHandoff = detail.handoffs?.find((entry) => entry.kind === "revision" && entry.sourceArtboardVersion === value) || null;
+  const pending = Boolean(revisionHandoff);
   const ready = detail.end.readyForClient?.some((entry) => entry.artboardVersion === value);
   const approved = detail.end.clientApprovals?.some((entry) => entry.artboardVersion === value);
   const feedback = review ? review.departures.join("\n") : view.draft.feedback;
@@ -206,7 +218,7 @@ function operatorActions(detail, scene) {
   return `<div class="m-drawer__stack">
       <section class="m-drawer__action" aria-labelledby="request-changes-heading">
         <h2 class="m-drawer__title" id="request-changes-heading">Request changes</h2>
-        ${!latest ? `<p class="m-copy">Earlier Artboards are read-only history.</p>` : approved ? `<p class="m-copy">The client approved this Artboard.</p>` : pending ? `<p class="m-copy">Production has the change request.</p>` : `<div class="m-field"><label class="m-label" for="review-feedback">What should change</label><textarea class="m-textarea" id="review-feedback" data-draft="feedback" placeholder="One change per line.">${escape(feedback)}</textarea></div><div class="m-field"><label class="m-label" for="review-technical">Technical notes, optional</label><textarea class="m-textarea m-textarea--note" id="review-technical" data-draft="technical">${escape(technical)}</textarea></div><div class="m-field"><label class="m-label" for="review-preserve">Keep, optional</label><textarea class="m-textarea m-textarea--note" id="review-preserve" data-draft="preserve">${escape(view.draft.preserve)}</textarea></div><div class="m-drawer__actions"><button class="m-button m-button--change" type="button" data-revise>Request changes</button></div>`}
+        ${!latest ? `<p class="m-copy">Earlier Artboards are read-only history.</p>` : approved ? `<p class="m-copy">The client approved this Artboard.</p>` : pending ? `<p class="m-copy">Production has the change request.</p>${revisionHandoffLink(revisionHandoff)}` : `<div class="m-field"><label class="m-label" for="review-feedback">What should change</label><textarea class="m-textarea" id="review-feedback" data-draft="feedback" placeholder="One change per line.">${escape(feedback)}</textarea></div><div class="m-field"><label class="m-label" for="review-technical">Technical notes, optional</label><textarea class="m-textarea m-textarea--note" id="review-technical" data-draft="technical">${escape(technical)}</textarea></div><div class="m-field"><label class="m-label" for="review-preserve">Keep, optional</label><textarea class="m-textarea m-textarea--note" id="review-preserve" data-draft="preserve">${escape(view.draft.preserve)}</textarea></div><div class="m-drawer__actions"><button class="m-button m-button--change" type="button" data-revise>Request changes</button></div>`}
         ${revisionResult}
         <details class="m-drawer__context"><summary>Review history</summary><div class="m-drawer__context-body">${history || `<p class="m-copy">No internal review has been recorded for this Artboard.</p>`}</div></details>
       </section>
@@ -392,7 +404,9 @@ async function issueRevision() {
     preserve: lines(view.draft.preserve),
   });
   view.draft = { feedback: "", technical: "", preserve: "", comment: "" };
-  await refreshDetail("Production has the change request.", "revision");
+  // The block itself now says the request is out and offers the way to the
+  // page that answers it, so repeating the sentence underneath said it twice.
+  await refreshDetail("", "revision");
 }
 
 // Running the read from the drawer. It writes a record and changes nothing

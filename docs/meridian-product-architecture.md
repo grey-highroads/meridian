@@ -363,3 +363,17 @@ Two corrections went with it, both exposed by the gradient rather than caused by
 **The asks say what they do, and job three's object is an Artboard.** "Read the direction against the artist" and "a second read from the artist's side" were shorthand between two people who already knew the system. The asks now read "Compare the tour direction to this artist's history" and "Check an Artboard before you present it."
 
 The object of job three is the Artboard that came back from production, never a concept. A concept goes out across the seam and an Artboard comes back, and this job runs after production has built the work, at the moment somebody decides whether the client sees it. Putting the word concept there would name the wrong object at the one moment it matters most. The rest of the app already says Artboard, on the Reviews gallery and in the drawer, and the Intelligence copy now agrees with it. The identifiers stay as they are, since architecture vocabulary is not interface copy.
+
+## One ruling, 2026-08-30
+
+Recorded against the committed tree at `3617cbb4`.
+
+**The way back to production lives in the Reviews drawer.** Ruled by Grey 2026-08-30, after a regression he hit on the live app: uploading a new Artboard version no longer worked. Nothing refused it. The door was gone.
+
+There was one link to the handoff page in the whole app, in `sendWork()` in `app/scene.js`, and it carried a brief version and never a revision. That function opens with a return as soon as an Artboard exists, so the moment the first version came back the link went with it. The Reviews rebuild on 2026-08-27 read `get-handoffs` only to decide a state label and a form, and never rendered the address the revision handoff carries. After requesting changes there was no route through the interface to the page that receives the next version, and the handoff page opened without a revision names the version already on record and shows no upload control at all.
+
+Requesting changes is the only act that opens that page, so the way back belongs beside it. The Request changes block shows the link once the request is out, built from `directPath` on the stored handoff rather than from an address the page assembles, so the two cannot drift. This holds the page and the drawer grammar: the link is operator work about the Artboard, it sits in the drawer with the action it follows, and a client receives neither the action nor the link.
+
+Two things go with it. The Scene keeps its collapsed shape from the 2026-08-27 ruling and gains nothing back. And issuing a revision stops repeating "Production has the change request" as a result underneath the same sentence in the block above it, which read as the app saying one thing twice.
+
+The designer's tree read that any commit touching seam behaviour requires was waived by Grey for this change.
