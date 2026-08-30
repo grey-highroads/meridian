@@ -1418,7 +1418,7 @@
     background: var(--m-gradient-raised);
     border: var(--m-rule-width) solid var(--m-border-strong);
     box-shadow: var(--m-shadow-raised);
-    padding: var(--m-space-6);
+    padding: var(--m-space-5);
   }
 
   .m-handoff-return .m-field,
