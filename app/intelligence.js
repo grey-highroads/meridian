@@ -131,7 +131,15 @@ function asks() {
       control: `<span class="m-state">Waiting on tour data</span>`,
     },
   ];
-  return renderAsks(rows);
+  return renderAsks(rows, { answered: anyAnswer() });
+}
+
+// One page-level fact drives two things: the four instruments reserve an answer
+// row so they read as a set, and they give back the room they took while the
+// page had nothing to show. On a first visit neither applies, because four
+// empty rows would be dead space in the viewport the answer needs.
+function anyAnswer() {
+  return Boolean(view.analyses.length || view.directionAnalyses.length || view.boardAnalyses.length);
 }
 
 // A completed instrument is the door back to its own answer, and an answer that
@@ -152,7 +160,7 @@ function answerDoor(job, analyses, currentId, label) {
   const door = showing
     ? `<span class="m-state m-state--current">Showing below</span>`
     : `<button class="m-button m-button--primary" type="button" data-open-job="${job}">Read answer</button>`;
-  return `<div class="m-intelligence-instrument__answer">${door}<span class="m-meta">${escape(label(latest).toUpperCase())}</span></div>`;
+  return `${door}<span class="m-meta">${escape(label(latest).toUpperCase())}</span>`;
 }
 
 // Asking again steps down once the job holds an answer. The cobalt edge is the

@@ -9,6 +9,7 @@ import { createArtistStore, createMemoryBackend } from "../src/artist/store.js";
 import { createTourStore } from "../src/tour/store.js";
 import { analysisPathFor, createAnalysisStore, DIRECTION_READ, directionSubjectId } from "../src/intelligence/analysis.js";
 import { renderDirectionRead } from "../app/intelligence/direction-view.js";
+import { renderAsks } from "../app/intelligence/asks-view.js";
 import { seedTourFromFixture } from "../src/tour/seed-from-fixture.js";
 import { CLIENT_ROLE, OPERATOR_ROLE } from "../src/org/store.js";
 
@@ -343,3 +344,47 @@ test("an answer that exists outranks asking for it again", () => {
   );
 });
 
+test("the four instruments share one footer skeleton", () => {
+  const rows = [
+    { title: "Ideas for a Scene", copy: "Starting points.", control: '<div class="m-intelligence-instrument__controls"><button data-run>Ask for ideas</button></div>', answer: "<span>read</span>" },
+    { title: "Compare the direction", copy: "A second reading.", control: "<button data-read>Compare</button>", answer: "<span>read</span>" },
+    { title: "Check an Artboard", copy: "Before you present it.", control: '<div class="m-intelligence-instrument__controls"><button data-review>Check</button></div>' },
+    { title: "Check the tour stops", copy: "Needs venue fields.", control: '<span class="m-state">Waiting on tour data</span>' },
+  ];
+
+  // Every control sits in the ask slot, whatever shape it is, so four shapes
+  // put their control on the same line across a row.
+  const answered = renderAsks(rows, { answered: true });
+  assert.equal((answered.match(/class="m-intelligence-instrument__ask"/g) || []).length, 4);
+  // A card with no answer holds the row open rather than collapsing it.
+  assert.equal((answered.match(/class="m-intelligence-instrument__answer"/g) || []).length, 2);
+  assert.equal(
+    (answered.match(/m-intelligence-instrument__answer m-intelligence-instrument__answer--reserved/g) || []).length,
+    2,
+    "a card with no answer collapses its row",
+  );
+});
+
+test("the instruments earn their size on a first visit and not after", () => {
+  const rows = [{ title: "Ideas for a Scene", copy: "Starting points.", control: "<button data-run>Ask</button>" }];
+
+  const first = renderAsks(rows);
+  assert.ok(!first.includes("m-intelligence-instruments--compact"), "the instruments shrink before an answer exists");
+  // Nothing is reserved either, because no card sits beside one holding an
+  // answer and the room belongs to the page.
+  assert.ok(!first.includes("m-intelligence-instrument__answer"), "an answer row is held open on a first visit");
+
+  assert.match(renderAsks(rows, { answered: true }), /m-intelligence-instruments--compact/);
+
+  // Spacing only. Every word an instrument says on a first visit it keeps
+  // saying afterwards.
+  assert.equal(first.includes("Starting points."), true);
+  assert.equal(renderAsks(rows, { answered: true }).includes("Starting points."), true);
+
+  const page = read("app/intelligence.js");
+  assert.match(page, /renderAsks\(rows, \{ answered: anyAnswer\(\) \}\)/);
+  const any = page.slice(page.indexOf("function anyAnswer("), page.indexOf("function answerDoor("));
+  for (const store of ["view.analyses", "view.directionAnalyses", "view.boardAnalyses"]) {
+    assert.ok(any.includes(store), `${store} does not count towards an answer being on the page`);
+  }
+});

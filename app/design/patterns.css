@@ -2311,11 +2311,26 @@
     line-height: 1.45;
   }
 
+  /* The rows stretch to their tracks rather than sitting at the top of them,
+     because the ask puts its control on the floor of its row and a row it does
+     not fill has no floor to put it on. */
   .m-intelligence-instrument__footer {
-    align-items: start;
+    align-items: stretch;
     display: grid;
     gap: var(--m-space-3);
     justify-items: start;
+  }
+
+  /* Room for a control and the label above it, with whatever the instrument
+     carries sitting on the floor of that slot. A select with a button, a lone
+     button, and a state span then start their last line at the same height
+     across a row. */
+  .m-intelligence-instrument__ask {
+    align-content: end;
+    display: grid;
+    justify-items: start;
+    min-height: calc(var(--m-target-minimum) + var(--m-space-5));
+    width: 100%;
   }
 
   .m-intelligence-instrument__answer {
@@ -2324,8 +2339,81 @@
     display: flex;
     gap: var(--m-space-3);
     justify-content: space-between;
+    min-height: var(--m-target-minimum);
     padding-top: var(--m-space-2);
     width: 100%;
+  }
+
+  /* Held open on a card with no answer so the four bottom edges agree. The rule
+     belongs to an answer, so it does not draw over empty space. */
+  .m-intelligence-instrument__answer--reserved {
+    border-top-color: transparent;
+  }
+
+  .m-intelligence-instruments--compact .m-intelligence-instrument {
+    gap: var(--m-space-3);
+    min-height: auto;
+    padding: var(--m-space-3);
+  }
+
+  .m-intelligence-instruments--compact .m-intelligence-instrument__body {
+    gap: var(--m-space-1);
+  }
+
+  .m-intelligence-instruments--compact .m-intelligence-instrument__heading {
+    font-size: 1rem;
+  }
+
+  .m-intelligence-instruments--compact .m-intelligence-instrument__body .m-copy {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .m-intelligence-instruments--compact .m-intelligence-instrument__footer {
+    gap: var(--m-space-2);
+  }
+
+  .m-intelligence-instruments--compact .m-intelligence-instrument__answer {
+    padding-top: var(--m-space-1);
+  }
+
+  /* The rules above are the fallback: a slot tall enough for the tallest ask,
+     and an element holding the answer row open. They align the four correctly
+     and they cost that reserved room in one column too, where no card sits
+     beside another and there is nothing to line up with.
+
+     Where subgrid is available the row tracks come from the field itself, so
+     two cards side by side share the height of the taller one and a card
+     stacked alone is sized by its own content. The reserved element is then
+     unnecessary and the ask slot needs no floor. */
+  @supports (grid-template-rows: subgrid) {
+    .m-intelligence-instrument {
+      grid-row: span 3;
+      grid-template-rows: subgrid;
+      row-gap: var(--m-space-4);
+    }
+
+    .m-intelligence-instrument__footer {
+      grid-row: span 2;
+      grid-template-rows: subgrid;
+      row-gap: var(--m-space-3);
+    }
+
+    .m-intelligence-instrument__ask {
+      min-height: 0;
+    }
+
+    .m-intelligence-instrument__answer--reserved {
+      display: none;
+    }
+
+    .m-intelligence-instruments--compact .m-intelligence-instrument {
+      row-gap: var(--m-space-3);
+    }
+
+    .m-intelligence-instruments--compact .m-intelligence-instrument__footer {
+      row-gap: var(--m-space-2);
+    }
   }
 
   .m-intelligence-run-history {

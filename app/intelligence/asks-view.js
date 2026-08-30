@@ -27,23 +27,42 @@ export const MARKS = {
   stops: '<svg class="m-icon m-icon--large" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>',
 };
 
-export function askInstrument(entry) {
+// The four instruments share one footer skeleton, because four different
+// control shapes in four cards left every control at a different height and
+// every card with a different ragged bottom edge. The ask sits in a slot tall
+// enough for a labelled choice and bottom aligned inside it, so a select with a
+// button, a lone button, and an honest state all land on the same line across a
+// row. The way back to an answer sits in a row of its own beneath it.
+//
+// A card with no answer reserves that row rather than collapsing it, but only
+// once some instrument on the page holds an answer. Before then there is
+// nothing for the four to line up with and the room belongs to the page.
+export function askInstrument(entry, answered = false) {
   const mark = MARKS[entry.mark] || "";
+  const answer = entry.answer || "";
+  const reserved = answer ? "" : " m-intelligence-instrument__answer--reserved";
+  const row = answered
+    ? `<div class="m-intelligence-instrument__answer${reserved}">${answer}</div>`
+    : "";
   return `<article class="m-intelligence-instrument">
       <div class="m-intelligence-instrument__body">
         <h3 class="m-intelligence-instrument__heading">${mark}${escape(entry.title)}</h3>
         <p class="m-copy">${escape(entry.copy)}</p>
       </div>
       <div class="m-intelligence-instrument__footer">
-        ${entry.control}
-        ${entry.answer || ""}
+        <div class="m-intelligence-instrument__ask">${entry.control}</div>
+        ${row}
       </div>
     </article>`;
 }
 
-export function renderAsks(entries) {
+// The instruments earn their size on a first visit and not after. Once an
+// answer is on the page they tighten, so the answer gets the room the menu was
+// holding. Spacing only: every word an instrument says, it keeps saying.
+export function renderAsks(entries, { answered = false } = {}) {
+  const compact = answered ? " m-intelligence-instruments--compact" : "";
   return `<section class="m-intelligence-asks" aria-labelledby="asks-heading">
       <h2 id="asks-heading" class="m-label">What you can ask</h2>
-      <div class="m-intelligence-instruments">${entries.map(askInstrument).join("")}</div>
+      <div class="m-intelligence-instruments${compact}">${entries.map((entry) => askInstrument(entry, answered)).join("")}</div>
     </section>`;
 }
