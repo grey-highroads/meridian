@@ -85,7 +85,7 @@ function asks() {
   const ideaControl = ready
     ? `<div class="m-intelligence-instrument__controls">
         <label class="m-field"><span class="m-label">Scene</span>${sceneOptions()}</label>
-        <button class="m-button m-button--primary" type="button" data-run ${view.running ? "disabled" : ""}>${view.running ? "Working" : "Ask for ideas"}</button>
+        <button class="${askTreatment(view.analyses)}" type="button" data-run ${view.running ? "disabled" : ""}>${view.running ? "Working" : "Ask for ideas"}</button>
       </div>`
     : `<span class="m-state m-state--current">No Scene yet</span>`;
   const rows = [
@@ -134,19 +134,32 @@ function asks() {
   return renderAsks(rows);
 }
 
-// A completed instrument is the door back to its own answer. It names the
-// latest run quietly, and offers an action only when that run is not already
-// the answer below. The whole instrument never pretends to be clickable.
+// A completed instrument is the door back to its own answer, and an answer that
+// exists outranks asking for it again. So the way back takes the primary
+// treatment and leads the row, and the run it names is metadata behind it. The
+// run label never shares a type treatment with the control, which is what the
+// first build got wrong: quiet muted text beside two other pieces of small
+// muted text, none of them looking like the only control on the card.
+//
+// When the answer below is already this run, there is nothing to press to
+// arrive where you are, so it reads as a state. That is the same grammar the
+// run history uses: the place you are is a state, the place you can reach is a
+// control.
 function answerDoor(job, analyses, currentId, label) {
   if (!analyses.length) return "";
   const latest = analyses[analyses.length - 1];
   const showing = view.activeJob === job && currentId === latest.runId;
-  return `<div class="m-intelligence-instrument__answer">
-      <span class="m-meta">${escape(label(latest).toUpperCase())}</span>
-      ${showing
-        ? `<span class="m-meta">SHOWING BELOW</span>`
-        : `<button class="m-button m-button--small m-button--quiet" type="button" data-open-job="${job}">Read answer</button>`}
-    </div>`;
+  const door = showing
+    ? `<span class="m-state m-state--current">Showing below</span>`
+    : `<button class="m-button m-button--primary" type="button" data-open-job="${job}">Read answer</button>`;
+  return `<div class="m-intelligence-instrument__answer">${door}<span class="m-meta">${escape(label(latest).toUpperCase())}</span></div>`;
+}
+
+// Asking again steps down once the job holds an answer. The cobalt edge is the
+// loudest thing on a card and it belongs to whichever of the two a person is
+// more likely to want.
+function askTreatment(analyses) {
+  return analyses.length ? "m-button" : "m-button m-button--primary";
 }
 
 // The direction read's action names what it will read and which version of it,
@@ -154,7 +167,7 @@ function answerDoor(job, analyses, currentId, label) {
 function directionControl() {
   if (!view.directionVersion) return `<span class="m-state">No direction yet</span>`;
   const version = `V${pad(view.directionVersion)}`;
-  return `<button class="m-button m-button--primary" type="button" data-read ${view.reading ? "disabled" : ""}>${view.reading ? "Comparing" : `Compare direction ${escape(version)}`}</button>`;
+  return `<button class="${askTreatment(view.directionAnalyses)}" type="button" data-read ${view.reading ? "disabled" : ""}>${view.reading ? "Comparing" : `Compare direction ${escape(version)}`}</button>`;
 }
 
 // One version of one Scene's work is what a read is about, so the choice names
@@ -176,7 +189,7 @@ function boardControl() {
   if (!view.boards.length) return `<span class="m-state">No Artboard yet</span>`;
   return `<div class="m-intelligence-instrument__controls">
       <label class="m-field"><span class="m-label">Version</span>${boardOptions()}</label>
-      <button class="m-button m-button--primary" type="button" data-review ${view.reviewing ? "disabled" : ""}>${view.reviewing ? "Checking" : "Check this Artboard"}</button>
+      <button class="${askTreatment(view.boardAnalyses)}" type="button" data-review ${view.reviewing ? "disabled" : ""}>${view.reviewing ? "Checking" : "Check this Artboard"}</button>
     </div>`;
 }
 

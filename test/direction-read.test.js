@@ -305,7 +305,41 @@ test("the run a person is reading is named rather than offered as a control", ()
 
   assert.equal((asks.match(/answer: answerDoor\(/g) || []).length, 3, "a completed job cannot own its answer");
   assert.match(answerDoor, /data-open-job/);
-  assert.match(answerDoor, /SHOWING BELOW/);
+  assert.match(answerDoor, /Showing below/);
   assert.ok(!result.includes("data-open-job"), "the answer head still switches between jobs");
   assert.match(source, /<span class="m-label">Run history<\/span>/, "within-job history is not named separately");
 });
+
+// Corrected 2026-08-30, third session. The door shipped as m-button--quiet,
+// which is a transparent background, a transparent border, no shadow, and muted
+// text. It sat beside two other pieces of small muted text and was the only
+// control on the card, while the ask kept the cobalt edge.
+test("an answer that exists outranks asking for it again", () => {
+  const source = read("app/intelligence.js");
+  const answerDoor = source.slice(source.indexOf("function answerDoor("), source.indexOf("function askTreatment("));
+
+  assert.match(answerDoor, /m-button m-button--primary" type="button" data-open-job/);
+  assert.ok(!answerDoor.includes("m-button--quiet"), "the way back to an answer is quiet text again");
+  // The run it names is metadata and does not share a type treatment with the
+  // control beside it.
+  assert.match(answerDoor, /<span class="m-meta">/);
+  assert.ok(
+    answerDoor.indexOf("data-open-job") < answerDoor.indexOf('<span class="m-meta">'),
+    "the run label leads and the control follows",
+  );
+  // Arriving where you already are is a state, not a control. Same grammar as
+  // the run history.
+  assert.match(answerDoor, /m-state m-state--current">Showing below/);
+
+  // And asking again steps down on a card that holds a run.
+  const treatment = source.slice(source.indexOf("function askTreatment("), source.indexOf("// The direction read's action"));
+  assert.match(treatment, /analyses\.length \? "m-button" : "m-button m-button--primary"/);
+  for (const control of ["view.analyses", "view.directionAnalyses", "view.boardAnalyses"]) {
+    assert.ok(source.includes(`askTreatment(${control})`), `${control} still hardcodes its treatment`);
+  }
+  assert.ok(
+    !/class="m-button m-button--primary" type="button" data-(run|read|review)/.test(source),
+    "an ask keeps the primary treatment whether or not it has an answer",
+  );
+});
+
