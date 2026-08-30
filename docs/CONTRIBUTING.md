@@ -27,6 +27,7 @@ If your change touches the boundary with Jim's system, read `docs/meridian-seam-
 - Check the line count of every file you touched. An unexpected shrink is a sign something was dropped. Intentional shrinks are named in the commit message.
 - Scripted find-and-replace asserts exactly one match before substituting.
 - If a deploy does not fire after a push, a second empty commit on the same tree is the known workaround. Note it in the message.
+- Rendered review is not required on every commit. `docs/experience/design-quality-standard.md` names the three cases that call for it. Report what was checked and nothing beyond it.
 
 ## Code rules
 

@@ -493,7 +493,21 @@ Treat reactions about density, copy, hierarchy, and usefulness as evidence. Diag
 
 ## Rendered review matrix
 
-Every meaningful visual change records what was actually reviewed.
+Rendered review is not required on every commit. Revised 2026-08-30. Grey reviews the live app and asks for a second pass, which reaches the same judgment sooner than a builder rendering a proxy of it.
+
+A builder renders when one of these is true:
+
+- Grey has flagged the surface and the brief says so;
+- the change touches a surface a client sees, at phone width;
+- the change involves a destructive verb.
+
+Role separation moves from rendered review into the suite. Absent navigation, refusal states, and the contents of a client payload are assertions, and an assertion holds better than a builder looking at a picture.
+
+A report states what was checked and claims nothing beyond it. A session that did not render says it did not render. A passing suite is not evidence that a page looks right.
+
+This trades occasional visual misses for turn speed on purpose. A miss caught on review and fixed in a second pass is the expected cost of the trade, not a failure.
+
+When rendering is required, it records what was actually reviewed.
 
 ### Roles
 
