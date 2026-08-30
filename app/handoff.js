@@ -21,6 +21,7 @@ const view = {
   file: null,
   draft: { summary: "", assumptions: "", findings: "", onBehalfOf: "" },
   message: "",
+  messageTarget: "",
   working: false,
 };
 
@@ -60,6 +61,15 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: value.includes("T") ? "short" : undefined }).format(date);
 }
 
+function nextArtboardVersion() {
+  return view.artboards.length ? Math.max(...view.artboards.map((entry) => entry.artboard.artboardVersion)) + 1 : 1;
+}
+
+function message(target) {
+  if (!view.message || view.messageTarget !== target) return "";
+  return `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>`;
+}
+
 function download(kind) {
   const brief = view.brief;
   const name = `${brief.jobId}-v${brief.briefVersion}`;
@@ -75,56 +85,82 @@ function download(kind) {
 
 function intro() {
   const revision = view.revision;
-  const heading = revision ? `Revision from V${version(revision.sourceArtboardVersion)}` : `Brief V${version(view.brief.briefVersion)}`;
-  const copy = revision
-    ? "Make the named changes, preserve what is working, and return the next version here."
-    : "Build against this frozen brief and return the first version here.";
+  const next = nextArtboardVersion();
+  const context = revision ? `Production revision / Brief V${version(view.brief.briefVersion)}` : `Production brief / V${version(view.brief.briefVersion)}`;
+  const copy = view.receipt
+    ? `Artboard V${version(view.receipt.artboardVersion)} is back. Higher Roads reviews it next.`
+    : revision
+      ? `Make the requested changes and return Artboard V${version(next)} here.`
+      : `Build from this brief, then return Artboard V${version(next)} here.`;
   const state = view.receipt
     ? `<span class="m-state m-state--approved">V${version(view.receipt.artboardVersion)} received</span>`
-    : `<span class="m-state m-state--current">${view.handoff ? "Sent" : "Not sent yet"}</span>`;
-  return `<header class="m-form-page__intro">
-      <span class="m-label">Production handoff</span>
-      <h1 class="m-heading">${escape(heading)}</h1>
-      <p class="m-copy m-copy--large">${escape(copy)}</p>
-      ${state}
-      <div class="m-stack">
-        <span class="m-label">Scene</span>
-        <p class="m-copy">${escape(view.assignment.title)}</p>
-        <span class="m-meta">JOB ${escape(view.brief.jobId)}</span>
+    : `<span class="m-state m-state--current">${view.handoff ? "Issued" : "Not sent yet"}</span>`;
+  return `<header class="m-handoff-header">
+      <div class="m-stack m-handoff-header__copy">
+        <span class="m-label">${escape(context)}</span>
+        <h1 class="m-heading">${escape(view.assignment.title)}</h1>
+        <p class="m-copy m-copy--large">${escape(copy)}</p>
+      </div>
+      <div class="m-handoff-header__record">
+        ${state}
+        ${view.handoff ? `<span class="m-meta">${escape(formatDate(view.handoff.issuedAt).toUpperCase())}</span>` : ""}
       </div>
     </header>`;
+}
+
+function recordBlock() {
+  const brief = view.brief;
+  const issued = view.handoff
+    ? `<div class="m-stack"><span class="m-label">Issued</span><p class="m-copy">${escape(formatDate(view.handoff.issuedAt))} by ${escape(view.handoff.issuedBy)}</p></div>`
+    : `<div class="m-stack"><span class="m-label">Status</span><p class="m-copy">Not sent yet</p></div>`;
+  return `<details class="m-disclosure m-handoff-disclosure">
+      <summary><span class="m-label">Files and record</span><span class="m-meta">Brief V${version(brief.briefVersion)}</span></summary>
+      <div class="m-disclosure__body m-stack">
+        <div class="m-handoff-record">
+          ${issued}
+          <div class="m-stack"><span class="m-label">Production ID</span><span class="m-meta m-handoff-record__id">${escape(brief.jobId)}</span></div>
+        </div>
+        <div class="m-cluster">
+          <button class="m-button m-button--small" type="button" data-download="sidecar">Download production data</button>
+          ${view.handoff ? `<button class="m-button m-button--small" type="button" data-copy>Copy handoff link</button>` : ""}
+        </div>
+        ${message("record")}
+      </div>
+    </details>`;
 }
 
 function briefBlock() {
   const brief = view.brief;
   const required = brief.requiredElements || [];
   const target = brief.technicalTarget || {};
-  return `<section class="m-work m-stack" aria-labelledby="brief-heading">
-      <div class="m-cluster">
+  const repeatsSceneTitle = String(brief.chosenConcept.title || "").trim().toLowerCase() === String(view.assignment.title || "").trim().toLowerCase();
+  const heading = repeatsSceneTitle ? "Creative direction" : brief.chosenConcept.title;
+  const requiredContent = required.length
+    ? `<ul>${list(required)}</ul>`
+    : `<p class="m-copy">No additional elements are required.</p>`;
+  return `<section class="m-handoff-brief" aria-labelledby="brief-heading">
+      <div class="m-handoff-brief__head">
         <div class="m-stack">
-          <span class="m-label">Frozen production reference</span>
-          <h2 id="brief-heading" class="m-section-heading">${escape(brief.chosenConcept.title)}</h2>
+          <span class="m-label">The brief</span>
+          <h2 id="brief-heading" class="m-section-heading">${escape(heading)}</h2>
         </div>
-        <span class="m-state m-state--approved">Brief V${version(brief.briefVersion)} frozen</span>
+        <button class="m-button m-button--small" type="button" data-download="document">Download brief</button>
       </div>
       <p class="m-copy m-copy--large">${escape(brief.chosenConcept.idea)}</p>
-      <div class="m-stack"><span class="m-label">Required</span><ul>${list(required, "No required elements were named.")}</ul></div>
-      <div class="m-record-grid">
-        <div class="m-record-grid__item"><span class="m-label">Playback</span><strong>${escape(target.playbackSystem || "Not recorded")}</strong></div>
-        <div class="m-record-grid__item"><span class="m-label">Direction</span><strong>V${version(brief.directionVersion)}</strong></div>
+      <div class="m-stack"><span class="m-label">Required elements</span>${requiredContent}</div>
+      <div class="m-handoff-facts">
+        <div class="m-handoff-fact"><span class="m-label">Playback</span><strong>${escape(target.playbackSystem || "Not recorded")}</strong></div>
+        <div class="m-handoff-fact"><span class="m-label">Direction version</span><strong>V${version(brief.directionVersion)}</strong></div>
       </div>
-      <div class="m-cluster">
-        <button class="m-button m-button--small" type="button" data-download="document">Download brief</button>
-        <button class="m-button m-button--small" type="button" data-download="sidecar">Download machine readable file</button>
-      </div>
-      <details class="m-disclosure"><summary><span class="m-label">Read the full brief</span><span class="m-meta">V${version(brief.briefVersion)}</span></summary><div class="m-disclosure__body"><pre>${escape(view.document)}</pre></div></details>
+      <details class="m-disclosure m-handoff-disclosure"><summary><span class="m-label">Full brief</span><span class="m-meta">Brief V${version(brief.briefVersion)}</span></summary><div class="m-disclosure__body"><pre>${escape(view.document)}</pre></div></details>
+      ${recordBlock()}
     </section>`;
 }
 
 function revisionBlock() {
   if (!view.revision) return "";
-  return `<section class="m-work m-stack" aria-labelledby="revision-heading">
-      <div class="m-stack"><span class="m-label">Feedback against V${version(view.revision.sourceArtboardVersion)}</span><h2 id="revision-heading" class="m-section-heading">What changes now</h2></div>
+  return `<section class="m-handoff-revision m-stack" aria-labelledby="revision-heading">
+      <div class="m-stack"><span class="m-label">Requested changes</span><h2 id="revision-heading" class="m-section-heading">For Artboard V${version(view.revision.sourceArtboardVersion)}</h2></div>
       <ul>${list(view.revision.instructions)}</ul>
       <div class="m-stack"><span class="m-label">Preserve</span><ul>${list(view.revision.preserve, "Nothing was separately named to preserve.")}</ul></div>
       <span class="m-meta">${escape(String(view.revision.source || "Higher Roads review").toUpperCase())} / ${escape(formatDate(view.revision.sentAt).toUpperCase())}</span>
@@ -132,16 +168,11 @@ function revisionBlock() {
 }
 
 function issueBlock() {
-  if (view.handoff) {
-    return `<section class="m-work m-stack" aria-labelledby="issued-heading">
-        <div class="m-stack"><span class="m-label">Sent to</span><h2 id="issued-heading" class="m-section-heading">Production</h2></div>
-        <button class="m-button m-button--small" type="button" data-copy>Copy direct link</button>
-        <span class="m-meta">SENT BY ${escape(String(view.handoff.issuedBy).toUpperCase())} / ${escape(formatDate(view.handoff.issuedAt).toUpperCase())}</span>
-      </section>`;
-  }
+  if (view.handoff) return "";
   if (view.revision) return "";
-  return `<section class="m-work m-stack" aria-labelledby="issue-heading">
-      <div class="m-stack"><span class="m-label">Before work starts</span><h2 id="issue-heading" class="m-section-heading">This brief has not gone out yet.</h2></div>
+  return `<section class="m-handoff-return m-stack" aria-labelledby="issue-heading">
+      <div class="m-stack"><span class="m-label">Send the brief</span><h2 id="issue-heading" class="m-section-heading">Ready for production</h2><p class="m-copy">This freezes Brief V${version(view.brief.briefVersion)} and opens Artboard V01 for return.</p></div>
+      ${message("record")}
       <button class="m-button m-button--primary" type="button" data-issue ${view.working ? "disabled" : ""}>Send to production</button>
     </section>`;
 }
@@ -149,33 +180,32 @@ function issueBlock() {
 function submitBlock() {
   if (!view.handoff) return "";
   if (view.receipt) {
-    return `<section class="m-work m-stack" aria-labelledby="receipt-heading">
-        <div class="m-callout m-callout--approved">
-          <span class="m-state m-state--approved">Version received</span>
-          <h2 id="receipt-heading" class="m-section-heading">Artboard V${version(view.receipt.artboardVersion)} is on the record.</h2>
-          <p class="m-copy">Higher Roads reviews next. Feedback, if any, returns against this exact version.</p>
-          <span class="m-meta">${escape(String(view.receipt.submittedBy).toUpperCase())} / ${escape(formatDate(view.receipt.receivedAt).toUpperCase())}</span>
-        </div>
+    return `<section class="m-handoff-return m-stack" aria-labelledby="receipt-heading">
+        <span class="m-state m-state--approved">Artboard received</span>
+        <h2 id="receipt-heading" class="m-section-heading">Higher Roads reviews V${version(view.receipt.artboardVersion)} next.</h2>
+        <p class="m-copy">Any requested changes will come back against this exact version.</p>
+        <span class="m-meta">${escape(String(view.receipt.submittedBy).toUpperCase())} / ${escape(formatDate(view.receipt.receivedAt).toUpperCase())}</span>
       </section>`;
   }
-  const next = view.artboards.length ? Math.max(...view.artboards.map((entry) => entry.artboard.artboardVersion)) + 1 : 1;
-  return `<section class="m-work m-stack" aria-labelledby="submit-heading">
-      <div class="m-stack"><span class="m-label">Return the work</span><h2 id="submit-heading" class="m-section-heading">Submit artboard V${version(next)}</h2><p class="m-copy">One artifact and one sentence are enough.</p></div>
-      <div class="m-field"><label class="m-label" for="artifact">Artboard image</label><input class="m-input" id="artifact" type="file" accept="image/png,image/jpeg" data-file /><span class="m-help">PNG or JPEG, up to 20 MB. The file is stored privately.</span></div>
-      <div class="m-field"><label class="m-label" for="summary">How you read the brief</label><textarea class="m-textarea" id="summary" data-draft="summary" placeholder="One clear sentence.">${escape(view.draft.summary)}</textarea></div>
+  const next = nextArtboardVersion();
+  return `<section class="m-handoff-return m-stack" aria-labelledby="submit-heading">
+      <div class="m-stack"><span class="m-label">Return the work</span><h2 id="submit-heading" class="m-section-heading">Artboard V${version(next)}</h2><p class="m-copy">Send one image and one sentence.</p></div>
+      <div class="m-field"><label class="m-label" for="artifact">Artboard</label><input class="m-input" id="artifact" type="file" accept="image/png,image/jpeg" data-file /><span class="m-help">PNG or JPEG, up to 20 MB. Stored privately.</span></div>
+      <div class="m-field"><label class="m-label" for="summary">What you made</label><textarea class="m-textarea m-textarea--note" id="summary" data-draft="summary" placeholder="Describe the idea in one sentence.">${escape(view.draft.summary)}</textarea></div>
       <details class="m-disclosure"><summary><span class="m-label">Technical notes, optional</span><span class="m-meta">Add only what matters</span></summary><div class="m-disclosure__body m-stack">
-        <div class="m-field"><label class="m-label" for="assumptions">Assumptions</label><textarea class="m-textarea" id="assumptions" data-draft="assumptions" placeholder="One per line.">${escape(view.draft.assumptions)}</textarea></div>
-        <div class="m-field"><label class="m-label" for="findings">Questions or technical findings</label><textarea class="m-textarea" id="findings" data-draft="findings" placeholder="One per line.">${escape(view.draft.findings)}</textarea></div>
+        <div class="m-field"><label class="m-label" for="assumptions">What you assumed</label><textarea class="m-textarea" id="assumptions" data-draft="assumptions" placeholder="One per line.">${escape(view.draft.assumptions)}</textarea></div>
+        <div class="m-field"><label class="m-label" for="findings">Questions or technical notes</label><textarea class="m-textarea" id="findings" data-draft="findings" placeholder="One per line.">${escape(view.draft.findings)}</textarea></div>
         <div class="m-field"><label class="m-label" for="behalf">Submitting for someone else, optional</label><input class="m-input" id="behalf" data-draft="onBehalfOf" value="${escape(view.draft.onBehalfOf)}" placeholder="Name or team" /></div>
       </div></details>
-      <button class="m-button m-button--primary" type="button" data-submit ${view.working ? "disabled" : ""}>${view.working ? "Submitting" : `Submit V${version(next)}`}</button>
+      ${message("return")}
+      <button class="m-button m-button--primary" type="button" data-submit ${view.working ? "disabled" : ""}>${view.working ? "Submitting" : `Submit Artboard V${version(next)}`}</button>
     </section>`;
 }
 
 function render() {
-  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(SCENE_ID)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Production handoff</span></nav>`;
-  root.className = "m-form-page";
-  root.innerHTML = `${intro()}<div class="m-form-page__work">${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${revisionBlock()}${briefBlock()}${issueBlock()}${submitBlock()}</div>`;
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><a href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(SCENE_ID)}">${escape(view.assignment.title)}</a><span aria-hidden="true">/</span><span class="m-breadcrumb__current">Production brief</span></nav>`;
+  root.className = "m-handoff-page";
+  root.innerHTML = `${intro()}<div class="m-handoff-layout"><div class="m-handoff-document">${revisionBlock()}${briefBlock()}</div><aside class="m-handoff-response" aria-label="Return the work">${issueBlock()}${submitBlock()}</aside></div>`;
 }
 
 function renderNoBrief() {
@@ -252,10 +282,11 @@ async function storeFile(file) {
   return { name: file.name, contentType: file.type, size: file.size, blobPathname: authorized.pathname };
 }
 
-async function guard(work) {
+async function guard(work, target) {
   try {
     view.working = true;
     view.message = "";
+    view.messageTarget = target;
     render();
     await work();
   } catch (error) {
@@ -280,7 +311,8 @@ document.addEventListener("click", (event) => {
   if (target.dataset.download) download(target.dataset.download);
   if (target.hasAttribute("data-copy")) {
     navigator.clipboard.writeText(window.location.href).then(() => {
-      view.message = "Direct link copied.";
+      view.message = "Handoff link copied.";
+      view.messageTarget = "record";
       render();
     });
   }
@@ -289,9 +321,10 @@ document.addEventListener("click", (event) => {
       const issued = await call("issue-brief", { briefVersion: view.brief.briefVersion });
       view.handoff = issued.handoff;
       view.working = false;
-      view.message = "Sent to production. Copy the direct link when you are ready to notify them.";
+      view.message = `Brief V${version(view.brief.briefVersion)} sent. Artboard V01 can be returned here.`;
+      view.messageTarget = "record";
       render();
-    });
+    }, "record");
   }
   if (target.hasAttribute("data-submit")) {
     guard(async () => {
@@ -310,7 +343,7 @@ document.addEventListener("click", (event) => {
       view.working = false;
       view.message = "";
       render();
-    });
+    }, "return");
   }
 });
 
