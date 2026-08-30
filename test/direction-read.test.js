@@ -217,6 +217,9 @@ test("a read renders its clusters with no score, no meter, and no entry without 
 
   assert.match(html, /What the direction keeps/);
   assert.match(html, /What it echoes/);
+  assert.equal((html.match(/class="m-intelligence-read-group"/g) || []).length, 2, "the read groups are not composed as one object's parts");
+  assert.ok(!html.includes("m-section-heading"), "a read group still renders at page-section scale");
+  assert.match(html, /m-intelligence-read__lineage/, "lineage is not quieted separately from the read");
   // A cluster with nothing in it writes no heading over a void.
   assert.ok(!html.includes("Where it leaves the record"), "an empty cluster rendered its heading");
 
@@ -268,10 +271,6 @@ test("the run a person is reading is named rather than offered as a control", ()
   assert.match(picker, /aria-current="true"/);
   // The current run is not a button. Earlier runs are.
   assert.ok(picker.indexOf("m-state--current") < picker.indexOf("<button"), "the current run is still a control");
-});
-
-test("each completed instrument owns the way back to its latest answer", () => {
-  const source = read("app/intelligence.js");
   const asks = source.slice(source.indexOf("function asks()"), source.indexOf("function directionControl"));
   const answerDoor = source.slice(source.indexOf("function answerDoor("), source.indexOf("function directionControl"));
   const result = source.slice(source.indexOf("function result()"), source.indexOf("function reference()"));

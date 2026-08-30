@@ -2360,6 +2360,15 @@
     padding-bottom: var(--m-space-7);
   }
 
+  .m-intelligence-read__head {
+    gap: var(--m-space-4);
+    padding-bottom: var(--m-space-5);
+  }
+
+  .m-intelligence-read__lineage {
+    color: var(--m-text-quiet);
+  }
+
   .m-intelligence-results {
     border-top: var(--m-rule-width) solid var(--m-border-strong);
     display: grid;
@@ -2376,6 +2385,43 @@
 
   .m-intelligence-principles {
     display: grid;
+  }
+
+  .m-intelligence-read {
+    display: grid;
+    gap: var(--m-space-8);
+    max-width: var(--m-copy-width);
+  }
+
+  .m-intelligence-read-group {
+    display: grid;
+    gap: var(--m-space-2);
+  }
+
+  .m-intelligence-read-group__head {
+    align-items: end;
+    border-bottom: var(--m-rule-width) solid var(--m-border-default);
+    display: flex;
+    gap: var(--m-space-4);
+    justify-content: space-between;
+    padding-bottom: var(--m-space-2);
+  }
+
+  .m-intelligence-read-group__intro {
+    display: grid;
+    gap: var(--m-space-1);
+  }
+
+  .m-intelligence-read-group__heading {
+    color: var(--m-text-primary);
+    font-size: var(--m-type-object);
+    font-weight: var(--m-weight-medium);
+    line-height: 1.25;
+  }
+
+  .m-intelligence-read .m-intelligence-principle {
+    gap: var(--m-space-3);
+    padding: var(--m-space-5) 0;
   }
 
   .m-intelligence-principle {

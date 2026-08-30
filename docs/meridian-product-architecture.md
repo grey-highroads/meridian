@@ -378,8 +378,10 @@ Two things go with it. The Scene keeps its collapsed shape from the 2026-08-27 r
 
 The designer's tree read that any commit touching seam behaviour requires was waived by Grey for this change.
 
-## One ruling, 2026-08-30, second session
+## Two rulings, 2026-08-30, second session
 
 Recorded against the committed tree at `2de6718f`. The composition of Intelligence after three jobs began sharing one answer region.
 
 **An answer belongs to the instrument that asked for it.** The four instruments remain the stable map of Intelligence. Once one has run, its foot names the latest run and becomes the way back to that answer. The answer head no longer carries links to other jobs. It carries only run history inside the job being read, labelled as history, with the current run written as state and earlier runs offered as controls. Tabs were considered and refused because a tab strip across answer types would turn four jobs back into a menu of answers, which is the panel this surface exists to avoid. The composition holds when job four arrives: one more instrument can own one more answer without adding another control to every answer head.
+
+**A read is one object with parts, not a sequence of fresh page sections.** The direction read and Artboard check keep every word the model wrote and the 44rem copy measure, but their three groups move down one level. Group headings use object scale, internal rules and gaps tighten, and lineage recedes as quiet metadata. The answer label and first sentence lead; the run, generation date, subject version, and artist knowledge approval date remain exact without competing with them. No type token, page measure, or shared section pattern changes.

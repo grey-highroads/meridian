@@ -391,6 +391,10 @@ test("a read renders its groups with no verdict and no entry without its trail",
   };
   const html = renderBoardReview(analysis);
 
+  assert.match(html, /m-intelligence-read-group/, "the review groups are not composed as one object's parts");
+  assert.ok(!html.includes("m-section-heading"), "a review group still renders at page-section scale");
+  assert.match(html, /m-intelligence-read__lineage/, "review lineage is not quieted separately from the read");
+
   assert.match(html, /Where it matches this artist&#039;s history|Where it matches this artist's history/);
   assert.match(html, /What this artist stays away from/);
   // A group with nothing in it writes no heading over a void.
@@ -412,6 +416,7 @@ test("a read renders its groups with no verdict and no entry without its trail",
   const drawer = renderBoardReviewInDrawer(analysis);
   assert.match(drawer, /One front, held back/);
   assert.match(drawer, /He has staged weather as structure before/);
+  assert.match(drawer, /m-section-heading/, "the compact drawer inherited the full-page read treatment");
   assert.match(renderBoardReviewInDrawer(null), /has not been checked yet/);
   assert.match(renderBoardReviewInDrawer(null), /data-read-board/);
 });

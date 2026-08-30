@@ -53,10 +53,10 @@ export function entryBlock(entry, evidence) {
 export function clusterBlock(cluster, entries, evidence) {
   if (!entries.length) return "";
   const count = `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
-  return `<section aria-labelledby="cluster-${escape(cluster.key)}">
-      <div class="m-section-lead">
-        <div class="m-section-lead__copy">
-          <h3 class="m-section-heading" id="cluster-${escape(cluster.key)}">${escape(cluster.heading)}</h3>
+  return `<section class="m-intelligence-read-group" aria-labelledby="cluster-${escape(cluster.key)}">
+      <div class="m-intelligence-read-group__head">
+        <div class="m-intelligence-read-group__intro">
+          <h3 class="m-intelligence-read-group__heading" id="cluster-${escape(cluster.key)}">${escape(cluster.heading)}</h3>
           <p class="m-copy">${escape(cluster.copy)}</p>
         </div>
         <span class="m-meta">${escape(count).toUpperCase()}</span>
@@ -94,15 +94,15 @@ export function renderDirectionRead(analysis, picker = "") {
         <span class="m-label">Direction read</span>
         <span class="m-meta">${escape(count).toUpperCase()}</span>
       </div>
-      <header class="m-intelligence-reader__head">
+      <header class="m-intelligence-reader__head m-intelligence-read__head">
         <div class="m-stack">
           <span class="m-meta" id="result-heading">THE DIRECTION AGAINST THE ARTIST'S RECORD</span>
-          <span class="m-meta">${escape(lineage)}</span>
+          <span class="m-meta m-intelligence-read__lineage">${escape(lineage)}</span>
           <p class="m-copy">How the director's words${subject.directionSetBy ? `, set by ${escape(subject.directionSetBy)}` : ""}, compare to everything Meridian knows about this artist. Nothing here decides anything.</p>
         </div>
         ${picker}
       </header>
-      <div class="m-stack">
+      <div class="m-intelligence-read">
         ${clusters}
         ${listBlock("Open questions", result.openQuestions)}
       </div>

@@ -46,11 +46,12 @@ export function entryBlock(entry, evidence) {
 }
 
 // A group with nothing in it writes no heading over a void.
-export function groupBlock(group, entries, evidence, prefix = "board") {
+export function groupBlock(group, entries, evidence, prefix = "board", reading = true) {
   if (!entries.length) return "";
   const count = `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
   const id = `${prefix}-${group.key}`;
-  return `<section aria-labelledby="${escape(id)}">
+  if (!reading) {
+    return `<section aria-labelledby="${escape(id)}">
       <div class="m-section-lead">
         <div class="m-section-lead__copy">
           <h3 class="m-section-heading" id="${escape(id)}">${escape(group.heading)}</h3>
@@ -60,13 +61,24 @@ export function groupBlock(group, entries, evidence, prefix = "board") {
       </div>
       <div class="m-intelligence-principles">${entries.map((entry) => entryBlock(entry, evidence)).join("")}</div>
     </section>`;
+  }
+  return `<section class="m-intelligence-read-group" aria-labelledby="${escape(id)}">
+      <div class="m-intelligence-read-group__head">
+        <div class="m-intelligence-read-group__intro">
+          <h3 class="m-intelligence-read-group__heading" id="${escape(id)}">${escape(group.heading)}</h3>
+          <p class="m-copy">${escape(group.copy)}</p>
+        </div>
+        <span class="m-meta">${escape(count).toUpperCase()}</span>
+      </div>
+      <div class="m-intelligence-principles">${entries.map((entry) => entryBlock(entry, evidence)).join("")}</div>
+    </section>`;
 }
 
-export function groupsOf(analysis, prefix) {
+export function groupsOf(analysis, prefix, reading = true) {
   const evidence = Array.isArray(analysis.evidence) ? analysis.evidence : [];
   const result = analysis.result || {};
   return GROUPS
-    .map((group) => groupBlock(group, Array.isArray(result[group.key]) ? result[group.key] : [], evidence, prefix))
+    .map((group) => groupBlock(group, Array.isArray(result[group.key]) ? result[group.key] : [], evidence, prefix, reading))
     .join("");
 }
 
@@ -102,15 +114,15 @@ export function renderBoardReview(analysis, picker = "") {
         <span class="m-label">Artboard check</span>
         <span class="m-meta">${escape(count).toUpperCase()}</span>
       </div>
-      <header class="m-intelligence-reader__head">
+      <header class="m-intelligence-reader__head m-intelligence-read__head">
         <div class="m-stack">
           <span class="m-meta" id="result-heading">${escape(String(subject.sceneTitle || "THIS SCENE").toUpperCase())} / ARTBOARD V${pad(subject.artboardVersion)}</span>
-          <span class="m-meta">${escape(lineageOf(analysis))}</span>
+          <span class="m-meta m-intelligence-read__lineage">${escape(lineageOf(analysis))}</span>
           <p class="m-copy">How this Artboard compares to this artist's history and the direction it was made for. Nothing here decides anything, and presenting to the client is the same one click either way.</p>
         </div>
         ${picker}
       </header>
-      <div class="m-stack">
+      <div class="m-intelligence-read">
         ${groupsOf(analysis, "board")}
         ${listBlock("Open questions", (analysis.result || {}).openQuestions)}
       </div>
@@ -129,7 +141,7 @@ export function renderBoardReviewInDrawer(analysis) {
   const count = `${entries} ${entries === 1 ? "entry" : "entries"}`;
   return `<div class="m-stack">
       <span class="m-meta">${escape(`RUN ${pad(analysis.run)} / ${day(analysis.ranAt).toUpperCase()} / ${count.toUpperCase()}`)}</span>
-      ${groupsOf(analysis, "drawer-board")}
+      ${groupsOf(analysis, "drawer-board", false)}
       ${listBlock("Open questions", (analysis.result || {}).openQuestions)}
       <div class="m-drawer__actions"><button class="m-button m-button--small" type="button" data-read-board>Check it again</button></div>
     </div>`;
