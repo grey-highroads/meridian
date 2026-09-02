@@ -5,27 +5,15 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const appRoot = resolve(repositoryRoot, "app");
 
-const legacyStylesheets = new Set([
-  "app/bws-place.css",
-  "app/bws-polish.css",
-  "app/bws.css",
-]);
+const legacyStylesheets = new Set([]);
 
 const legacyHexBaseline = new Map([
-  ["app/app.js", 53],
   ["app/landing.html", 13],
-  ["app/bws-place.js", 1],
-  ["app/bws-polish.css", 4],
-  ["app/bws.css", 107],
 ]);
 
-const legacyInlineStyleBaseline = new Map([
-  ["app/app.js", 9],
-]);
+const legacyInlineStyleBaseline = new Map([]);
 
-const legacyStyleApiBaseline = new Map([
-  ["app/app.js", 2],
-]);
+const legacyStyleApiBaseline = new Map([]);
 
 const hexValuePattern = /#[0-9a-f]{3,8}\b/gi;
 const inlineStylePattern = /\bstyle\s*=/gi;

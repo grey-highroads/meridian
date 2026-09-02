@@ -43,22 +43,9 @@ test("a deployment missing its sign in values says so rather than letting anyone
   await assert.rejects(() => store.signIn("ray", "one-password"), (error) => error.status === 503);
 });
 
-test("the browser build includes direct private source uploads", () => {
-  const index = fs.readFileSync(path.join(rootPath, "app", "bws.html"), "utf8");
-  const uploadClient = fs.readFileSync(path.join(rootPath, "app", "bws-upload-client.js"), "utf8");
-  const uploadApi = fs.readFileSync(path.join(rootPath, "api", "blob", "upload.js"), "utf8");
-  assert.match(index, /upload-client\.js/);
-  assert.match(uploadClient, /credentials: "same-origin"/);
-  assert.match(uploadClient, /presignedUrl/);
-  assert.match(uploadClient, /blobPathname/);
-  assert.match(uploadApi, /issueSignedToken/);
-  assert.match(uploadApi, /access: "private"/);
-  assert.match(uploadApi, /maximumSizeInBytes/);
-});
-
 test("Blob access supports Vercel OIDC without requiring a long-lived token", () => {
-  const uploadApi = fs.readFileSync(path.join(rootPath, "api", "blob", "upload.js"), "utf8");
-  const blobStore = fs.readFileSync(path.join(rootPath, "src", "brand-brain", "store.js"), "utf8");
+  const uploadApi = fs.readFileSync(path.join(rootPath, "api", "tour-upload.js"), "utf8");
+  const blobStore = fs.readFileSync(path.join(rootPath, "src", "artist", "store.js"), "utf8");
   assert.doesNotMatch(uploadApi, /if \(!process\.env\.BLOB_READ_WRITE_TOKEN\)/);
   assert.doesNotMatch(blobStore, /if \(!token\)/);
   assert.match(uploadApi, /const credentials = token \? \{ token \} : \{\}/);
