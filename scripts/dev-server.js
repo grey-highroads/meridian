@@ -2,21 +2,39 @@ import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { synthesizeWithChatCompletions } from "../src/brand-brain/chat-completions-provider.js";
-import { saveBrandBrainSnapshot, synthesizeBrandBrain } from "../src/brand-brain/service.js";
-import { createFileBrandBrainStore } from "../src/brand-brain/store.js";
-import { generateProductionImage, prepareProductionPackage, readProductionJob } from "../src/production/service.js";
-import { createFileProductionStore } from "../src/production/store.js";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  CLIENT_HOME,
+  clientMayLoad,
+  isPage,
+  isStaticAsset,
+  PUBLIC_PATHS,
+} from "../middleware.js";
+import { CLIENT_ROLE } from "../src/org/roles.js";
+import { readCookie, readSession, SESSION_COOKIE, sessionSecret } from "../src/org/session.js";
 
-export { mergeIncrementalSources, selectApprovedBaseline } from "../src/brand-brain/service.js";
-export { assertSafeRemoteUrl, readRemotePage } from "../src/brand-brain/source-reader.js";
+// The local runtime for the whole application: every function under api/,
+// behind the same page gate the edge middleware applies, in front of the
+// built app in dist/. Before this, only the retired Brand World routes ran
+// locally and every Meridian change was verified by deploying. That workflow
+// is over: pnpm dev runs the same handlers the deployment runs.
+//
+// The gate mirrors middleware.js by importing its path sets rather than
+// keeping a second list that has to agree with the first. The middleware
+// itself is written for the edge runtime and its next() helper, so the
+// decision logic is restated here against Node primitives; the sets and the
+// helpers are shared, which is where drift would actually happen.
+//
+// Storage and the model are the real ones. Handlers read process.env, so
+// .env.local is loaded into it below. A local run against the deployed data
+// needs BLOB_READ_WRITE_TOKEN from the Vercel project's Blob store; point it
+// at a separate dev store unless reading production data is the point.
+// MERIDIAN_OPERATOR and MERIDIAN_CLIENT are required to sign in, exactly as
+// on the deployment.
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const builtAppRoot = path.join(projectRoot, "dist");
-const appRoot = existsSync(builtAppRoot) ? builtAppRoot : path.join(projectRoot, "app");
-const defaultStorePath = path.join(projectRoot, ".data", "brand-brain.json");
-const defaultProductionRoot = path.join(projectRoot, ".data", "production");
+const apiRoot = path.join(projectRoot, "api");
 
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
@@ -28,6 +46,7 @@ const mimeTypes = {
   ".jpeg": "image/jpeg",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  ".ico": "image/x-icon",
 };
 
 function loadEnvFile(text) {
@@ -42,144 +61,109 @@ function loadEnvFile(text) {
   return values;
 }
 
-async function readLocalEnv() {
+async function loadLocalEnv() {
+  let text;
   try {
-    return loadEnvFile(await fs.readFile(path.join(projectRoot, ".env.local"), "utf8"));
+    text = await fs.readFile(path.join(projectRoot, ".env.local"), "utf8");
   } catch (error) {
-    if (error.code === "ENOENT") return {};
+    if (error.code === "ENOENT") return;
     throw error;
   }
-}
-
-function sendJson(response, status, body) {
-  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-  response.end(JSON.stringify(body));
-}
-
-async function readJson(request, limit = 55 * 1024 * 1024) {
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of request) {
-    size += chunk.length;
-    if (size > limit) {
-      const error = new Error("The source batch is larger than the 50 MB request limit.");
-      error.status = 413;
-      throw error;
-    }
-    chunks.push(chunk);
+  // Handlers read process.env directly, so the local values go there. A value
+  // already set in the shell wins over the file.
+  for (const [key, value] of Object.entries(loadEnvFile(text))) {
+    if (process.env[key] === undefined) process.env[key] = value;
   }
+}
+
+// api/tour -> api/tour/index.js, api/tour-upload -> api/tour-upload.js. The
+// same file layout Vercel routes, resolved the same way, confined to api/.
+async function apiHandler(pathname) {
+  const trimmed = pathname.replace(/^\/api\/?/, "").replace(/\/+$/, "");
+  if (!trimmed || trimmed.includes("..")) return null;
+  const asFile = path.join(apiRoot, `${trimmed}.js`);
+  const asIndex = path.join(apiRoot, trimmed, "index.js");
+  const found = existsSync(asFile) ? asFile : existsSync(asIndex) ? asIndex : null;
+  if (!found || !found.startsWith(apiRoot)) return null;
+  const loaded = await import(pathToFileURL(found).href);
+  return typeof loaded.default === "function" ? loaded.default : null;
+}
+
+function sendText(response, status, message, headers = {}) {
+  response.writeHead(status, {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "no-store",
+    ...headers,
+  });
+  response.end(message);
+}
+
+async function sendStatic(response, pathname) {
+  const wanted = pathname === "/" ? "/index.html" : pathname;
+  const file = path.join(builtAppRoot, path.normalize(wanted));
+  if (!file.startsWith(builtAppRoot)) return sendText(response, 404, "Not found.");
+  let body;
   try {
-    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    body = await fs.readFile(file);
   } catch {
-    const error = new Error("The request body is not valid JSON.");
-    error.status = 400;
-    throw error;
+    return sendText(response, 404, "Not found.");
   }
+  response.writeHead(200, { "Content-Type": mimeTypes[path.extname(file)] || "application/octet-stream" });
+  response.end(body);
 }
 
-async function serveStatic(request, response) {
-  const requestPath = new URL(request.url, "http://localhost").pathname;
-  const relative = requestPath === "/" ? "index.html" : requestPath.replace(/^\/+/, "");
-  const filePath = path.resolve(appRoot, relative);
-  if (filePath !== appRoot && !filePath.startsWith(`${appRoot}${path.sep}`)) {
-    response.writeHead(403);
-    response.end("Forbidden");
-    return;
+// The same decisions middleware.js makes at the edge, from the same sets.
+async function pageGate(request, pathname) {
+  if (isStaticAsset(pathname)) return { allow: true };
+  if (PUBLIC_PATHS.has(pathname)) return { allow: true };
+  const claim = await readSession(readCookie(request.headers.cookie || "", SESSION_COOKIE), sessionSecret());
+  if (!claim) {
+    if (isPage(pathname)) return { redirect: "/landing.html" };
+    return { deny: { status: 401, message: "Sign in to Meridian to continue." } };
   }
-  try {
-    const data = await fs.readFile(filePath);
-    response.writeHead(200, {
-      "Content-Type": mimeTypes[path.extname(filePath).toLowerCase()] || "application/octet-stream",
-      "Cache-Control": "no-cache",
-    });
-    response.end(data);
-  } catch (error) {
-    response.writeHead(error.code === "ENOENT" ? 404 : 500);
-    response.end(error.code === "ENOENT" ? "Not found" : "Server error");
+  if (claim.role === CLIENT_ROLE && !clientMayLoad(pathname)) {
+    return { deny: { status: 403, message: "That part of Meridian is for the Higher Roads team. Your tour is at " + CLIENT_HOME + "." } };
   }
+  return { allow: true };
 }
 
-export function createBrandWorldServer(options = {}) {
-  const storePath = options.storePath || process.env.BRAND_BRAIN_STORE_PATH || defaultStorePath;
-  const store = options.store || createFileBrandBrainStore(storePath);
-  const productionStore = options.productionStore || createFileProductionStore(options.productionRoot || defaultProductionRoot);
-  const fetchImpl = options.fetchImpl || fetch;
-  const synthesize = options.synthesize || synthesizeWithChatCompletions;
-  const renderImage = options.renderImage;
-  const envPromise = options.env ? Promise.resolve(options.env) : readLocalEnv();
+async function main() {
+  await loadLocalEnv();
+  if (!existsSync(builtAppRoot)) {
+    console.error("[meridian-dev] dist/ is missing. Run pnpm build first, or use pnpm dev, which builds before serving.");
+    process.exit(1);
+  }
 
-  return http.createServer(async (request, response) => {
+  const server = http.createServer(async (request, response) => {
+    const pathname = new URL(request.url, "http://meridian.local").pathname;
     try {
-      const url = new URL(request.url, "http://localhost");
-      if (request.method === "GET" && url.pathname === "/api/brand-brain") {
-        sendJson(response, 200, { saved: await store.read() });
-        return;
+      const gate = await pageGate(request, pathname);
+      if (gate.redirect) return sendText(response, 302, "", { Location: gate.redirect });
+      if (gate.deny) return sendText(response, gate.deny.status, gate.deny.message);
+
+      if (pathname.startsWith("/api/")) {
+        const handler = await apiHandler(pathname);
+        if (!handler) return sendText(response, 404, "No function is deployed at this path.");
+        return await handler(request, response);
       }
-      if (request.method === "POST" && url.pathname === "/api/brand-brain/save") {
-        const snapshot = await readJson(request, 5 * 1024 * 1024);
-        const saved = await saveBrandBrainSnapshot(snapshot, store);
-        sendJson(response, 200, { savedAt: saved.savedAt });
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/api/brand-brain/synthesize") {
-        const body = await readJson(request);
-        const env = { ...process.env, ...(await envPromise) };
-        const saved = await synthesizeBrandBrain(body, { store, fetchImpl, synthesize, env });
-        sendJson(response, 200, saved);
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/api/production/preflight") {
-        const body = await readJson(request, 1024 * 1024);
-        const { generationPackage } = await prepareProductionPackage(body, { brainStore: store });
-        sendJson(response, 200, { generationPackage });
-        return;
-      }
-      if (request.method === "POST" && url.pathname === "/api/production/generate") {
-        const body = await readJson(request, 1024 * 1024);
-        const env = { ...process.env, ...(await envPromise) };
-        const job = await generateProductionImage(body, {
-          brainStore: store,
-          productionStore,
-          env,
-          fetchImpl,
-          render: renderImage,
-        });
-        if (job?.status === "complete") job.imageUrl = `/api/production/image?jobId=${encodeURIComponent(job.jobId)}`;
-        sendJson(response, 200, { job });
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/api/production/current") {
-        const job = await readProductionJob({ productionStore });
-        if (job?.status === "complete") job.imageUrl = `/api/production/image?jobId=${encodeURIComponent(job.jobId)}`;
-        sendJson(response, 200, { job });
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/api/production/image") {
-        const job = await productionStore.read();
-        if (!job?.imagePathname || job.jobId !== url.searchParams.get("jobId")) {
-          response.writeHead(404);
-          response.end("Not found");
-          return;
-        }
-        const bytes = await productionStore.readImage(job.imagePathname);
-        response.writeHead(200, { "Content-Type": job.imageContentType || "image/png", "Cache-Control": "private, no-store" });
-        response.end(bytes);
-        return;
-      }
-      await serveStatic(request, response);
+      return await sendStatic(response, pathname);
     } catch (error) {
-      const status = error.status && Number.isInteger(error.status) ? error.status : 500;
-      const publicMessage = status >= 500 && !error.message ? "The server could not complete this request." : error.message;
-      console.error(`[brand-world-server] ${publicMessage}`);
-      sendJson(response, status, { error: publicMessage });
+      console.error(`[meridian-dev] ${request.method} ${pathname} failed:`, error);
+      if (!response.headersSent) sendText(response, 500, "The server could not complete this request.");
+      else response.end();
+    }
+  });
+
+  const port = Number(process.env.PORT) || 4173;
+  server.listen(port, () => {
+    console.log(`[meridian-dev] Meridian is at http://localhost:${port}`);
+    if (!process.env.MERIDIAN_OPERATOR || !process.env.MERIDIAN_CLIENT) {
+      console.log("[meridian-dev] MERIDIAN_OPERATOR and MERIDIAN_CLIENT are not both set; nobody can sign in until they are.");
+    }
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.log("[meridian-dev] BLOB_READ_WRITE_TOKEN is not set; storage reads and writes will fail until it is.");
     }
   });
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
-  const port = Number(process.env.PORT || 4173);
-  createBrandWorldServer().listen(port, "127.0.0.1", () => {
-    console.log(`Brand World System is running at http://localhost:${port}`);
-  });
-}
+main();

@@ -12,13 +12,13 @@ import { CLIENT_ROLE } from "./src/org/roles.js";
 // Set-password is public because the person opening it has no way to sign in
 // yet. The link is what stands in for a session, and the server is what checks
 // it. Ruled 2026-08-26 in docs/spec-admin-surface.md.
-const PUBLIC_PATHS = new Set([
+export const PUBLIC_PATHS = new Set([
   "/landing.html",
   "/set-password.html",
   "/api/auth/login",
 ]);
 
-const CLIENT_PATHS = new Set([
+export const CLIENT_PATHS = new Set([
   "/", "/index.html", "/home.js", "/shell.js",
   "/scenes.html", "/scenes.js", "/reviews.html", "/reviews.js",
   "/tour.html", "/tour.js", "/scene.html", "/scene.js",
@@ -27,9 +27,9 @@ const CLIENT_PATHS = new Set([
   "/api/tour", "/api/tour-upload", "/api/auth/login",
 ]);
 
-const CLIENT_HOME = "/";
+export const CLIENT_HOME = "/";
 
-function isPage(pathname) {
+export function isPage(pathname) {
   return pathname === "/" || pathname.endsWith(".html");
 }
 
@@ -38,13 +38,13 @@ function isPage(pathname) {
 // account data. Everything that does comes from the API routes, and those stay
 // closed. The set-password page has to work for someone with no session, which
 // only happens if these load for anyone.
-function isStaticAsset(pathname) {
+export function isStaticAsset(pathname) {
   return pathname.startsWith("/assets/")
     || pathname.startsWith("/design/")
     || pathname === "/favicon.ico";
 }
 
-function clientMayLoad(pathname) {
+export function clientMayLoad(pathname) {
   return CLIENT_PATHS.has(pathname);
 }
 
