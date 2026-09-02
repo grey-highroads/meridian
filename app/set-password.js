@@ -8,7 +8,7 @@
 const root = document.getElementById("set-password");
 const token = new URLSearchParams(window.location.search).get("token") || "";
 
-const state = { password: "", again: "", working: false, message: "", done: false };
+const state = { password: "", again: "", working: false, message: "", done: false, login: "" };
 
 function escape(value) {
   return String(value === null || value === undefined ? "" : value)
@@ -24,6 +24,7 @@ function render() {
   if (state.done) {
     root.innerHTML = `<h1 class="m-heading">You are ready</h1>
       <p class="m-copy m-copy--large">Your password is saved and you are signed in.</p>
+      ${state.login ? `<p class="m-copy m-copy--large">When you come back, sign in as <strong>${escape(state.login)}</strong>.</p>` : ""}
       <div class="m-cluster"><a class="m-button m-button--primary" href="./index.html">Open Meridian</a></div>`;
     return;
   }
@@ -71,6 +72,7 @@ document.addEventListener("click", async (event) => {
     });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || "That did not work.");
+    state.login = body.user && body.user.login ? String(body.user.login) : "";
     state.done = true;
   } catch (error) {
     state.message = error.message;

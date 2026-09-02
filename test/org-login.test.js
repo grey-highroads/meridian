@@ -262,7 +262,7 @@ test("the sign in page says what a person needs and no system words", () => {
     assert.ok(!new RegExp(`\\b${word}`, "i").test(copy), `the sign in page says "${word}" to a person`);
   }
   assert.ok(!page.includes("\u2014"), "the sign in page carries an em dash");
-  assert.match(page, /Use the login and password Higher Roads gave you\./);
+  assert.match(page, /Sign in with your email address, or the login Higher Roads gave you\./);
   assert.match(page, /login, password/);
   assert.ok(!page.includes("brandworld"), "the sign in page still names the old shared login");
 });
