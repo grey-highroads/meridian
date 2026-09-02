@@ -15,7 +15,6 @@ import { CLIENT_ROLE } from "./src/org/roles.js";
 const PUBLIC_PATHS = new Set([
   "/landing.html",
   "/set-password.html",
-  "/api/blob/upload",
   "/api/auth/login",
 ]);
 
