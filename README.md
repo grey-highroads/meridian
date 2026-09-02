@@ -24,7 +24,7 @@ Changes to the thesis are decisions, recorded as such. Findings that conflict wi
 
 ## Origin
 
-Forked from `grey-highroads/brand-world-system` at commit `adab5f6` (2026-08-20), tagged there as the forensic baseline. Other clients' material was stripped in this repo's first commit. The BWS interface is disposable; its brain, storage, versioning, and approval infrastructure are kept.
+Forked from `grey-highroads/brand-world-system` at commit `adab5f6` (2026-08-20), tagged there as the forensic baseline. Other clients' material was stripped in this repo's first commit. The BWS interface and its production stack were removed on 2026-08-31; the storage, versioning, and approval infrastructure were kept.
 
 Meridian is purpose-built. There is no generic platform layer. Shared code is extracted only after two real uses exist.
 
@@ -47,4 +47,4 @@ Full rules for anyone pushing to this repo are in `CONTRIBUTING.md`. The short v
 
 ## Deployment
 
-Own Vercel project (paid tier), own Blob store, own environment. Nothing shared with BWS. Required environment values are listed in `docs/deferred-work.md` until a setup document exists.
+Own Vercel project (paid tier), own Blob store, own environment. Nothing shared with BWS. Setup, environment values, and local development are in `docs/vercel-deployment.md`.

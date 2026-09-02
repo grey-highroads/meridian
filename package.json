@@ -1,9 +1,9 @@
 {
-  "name": "brand-world-system",
+  "name": "meridian",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Deterministic Brand World production compiler foundation",
+  "description": "The creative intelligence and memory system behind live experiences",
   "scripts": {
     "build": "vite build",
     "predev": "pnpm run build",
