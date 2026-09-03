@@ -57,6 +57,13 @@ export function createSceneRecord(options = {}) {
         pathname: fact.pathname || null,
         filename: fact.filename || null,
         contentType: fact.contentType || null,
+        // The job production named when it confirmed it has the brief. That
+        // fact is the only record of the acknowledgement, and the job id is the
+        // only part of it that came from outside Meridian, so a writer that
+        // dropped it would leave a fact saying something was acknowledged with
+        // no way to read which job. Added 2026-09-03 for the acknowledgement
+        // fact. Every other fact carries it empty.
+        jobId: fact.jobId || null,
         at: fact.at || new Date().toISOString(),
       };
       if (!entry.action) {

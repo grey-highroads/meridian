@@ -22,6 +22,13 @@ import { CLIENT_ROLE } from "../org/roles.js";
 // drift.
 export const SENT_TO_PRODUCTION = "Sent the brief to production";
 
+// The second fact. Sending is ours and delivery is production's, and the record
+// keeps them apart. Ruled 2026-09-03. This one is written only when production
+// answers, so a Scene carrying the sent fact and not this one is a Scene whose
+// brief went out and has not been confirmed. It moves no stage and gates
+// nothing.
+export const PRODUCTION_ACKNOWLEDGED = "Production confirmed it has the brief";
+
 export const STAGES = {
   draftRequest: "Draft request",
   requested: "Requested",
@@ -60,9 +67,18 @@ function highest(values) {
 
 // A brief went out when the record says so, or when an artboard came back
 // against it. Either one is durable and neither can be undone.
-function briefWentOut(scene) {
+export function briefWentOut(scene) {
   const said = list(scene.facts).some((entry) => entry && entry.action === SENT_TO_PRODUCTION);
   return said || list(scene.artboards).length > 0;
+}
+
+// Production answered. Read the same way the sent fact is read, from the same
+// record, because it is the same kind of thing: a line saying something
+// happened. An artboard coming back is not read as an acknowledgement here,
+// because the question this answers is whether the brief arrived, and only
+// production's answer says that.
+export function productionAcknowledged(scene) {
+  return list(scene.facts).some((entry) => entry && entry.action === PRODUCTION_ACKNOWLEDGED);
 }
 
 // The most advanced versioned Scene object. Briefs until an artboard exists,

@@ -7,7 +7,8 @@ import { compileBrief, findingSentence, freeze, nextBriefVersion, renderBriefDoc
 import { createArtboardStore, createImageReader } from "../../src/seam/artboard-store.js";
 import { receiveBrief, receiveRevision, STAND_IN_LABEL } from "../../src/seam/stand-in.js";
 import { createSceneRecord } from "../../src/tour/scene-record.js";
-import { conceptPath, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
+import { conceptPath, PRODUCTION_ACKNOWLEDGED, productionAcknowledged, sceneLifecycle, SENT_TO_PRODUCTION } from "../../src/tour/lifecycle.js";
+import { deliverBrief } from "../../src/seam/delivery.js";
 import { createArtistStore } from "../../src/artist/store.js";
 import { BOARD_REVIEW, boardSubjectId, buildAnalysis, createAnalysisStore, DIRECTION_READ, directionSubjectId, SCENE_IDEAS } from "../../src/intelligence/analysis.js";
 import {
@@ -1264,6 +1265,27 @@ export async function handleAction(body, options = {}) {
     return { handoff };
   }
 
+  // Sending and delivery are two facts. Ruled 2026-09-03. The record already
+  // says the brief went out; this posts it and, if production answers, writes
+  // the second fact saying production has it. A post that does not land is not
+  // a failed send, because the brief did leave here, so nothing is thrown and
+  // the caller is told plainly what came back. An acknowledgement that already
+  // exists is never written twice.
+  async function deliverAndRecord({ brief, record, fixture, assignment, actor, options }) {
+    const facts = await record.readFacts(fixture.tour.id, assignment.id);
+    if (productionAcknowledged({ facts })) return true;
+    const outcome = await deliverBrief(renderBriefSidecar(brief), { fetchImpl: options.deliveryFetch, env: options.env });
+    if (!outcome.acknowledged) return false;
+    await record.appendFact(fixture.tour.id, assignment.id, {
+      ...actor,
+      action: PRODUCTION_ACKNOWLEDGED,
+      version: `Brief V0${brief.briefVersion}`,
+      jobId: outcome.jobId,
+      at: outcome.acknowledgedAt || undefined,
+    });
+    return true;
+  }
+
   // One action for the one judgement a person makes here: this is right, send
   // it. It freezes the newest brief if nothing is frozen yet and issues the
   // handoff in the same move, recording both facts exactly as the two separate
@@ -1299,7 +1321,12 @@ export async function handleAction(body, options = {}) {
     const handoffs = await artboardStore.readHandoffs(fixture.tour.id, assignment.id);
     const existing = handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === brief.briefVersion);
     if (existing) {
-      return { brief, handoff: existing, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
+      // Pressing send on a Scene that already went out and has not been
+      // confirmed is the retry. Production answers a repeat as a safe
+      // duplicate, so it costs nothing to try again and it is the only retry
+      // there is. Nothing is queued and nothing runs in the background.
+      const acknowledged = await deliverAndRecord({ brief, record, fixture, assignment, actor, options });
+      return { brief, handoff: existing, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief), acknowledged };
     }
     const handoff = {
       handoffId: `brief-${brief.jobId}-v${brief.briefVersion}`,
@@ -1321,7 +1348,8 @@ export async function handleAction(body, options = {}) {
       version: `Brief V0${brief.briefVersion}`,
       onBehalfOf: optionalText(body.onBehalfOf),
     });
-    return { brief, handoff, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief) };
+    const acknowledged = await deliverAndRecord({ brief, record, fixture, assignment, actor, options });
+    return { brief, handoff, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief), acknowledged };
   }
 
   if (body.action === "get-handoffs") {

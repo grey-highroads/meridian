@@ -45,6 +45,18 @@ Three things travel, all scoped to one assignment. The artist layer and the orga
 
 **At the end: production intent.** When a client approves, Meridian freezes that artboard version as production intent and carries the job, brief, and artboard identifiers that final production should reference. Whether production reads those identifiers, and how, is one of the discovery questions below.
 
+### Sending and delivery are two facts
+
+Added 2026-09-03 on Grey's ruling. Pressing the button in Meridian is sending. Delivery is a receipt from production's side. The Scene record holds them as two separate lines and the Scene screen tells them apart, so a person can see the difference between a brief that went out and a brief that arrived.
+
+Meridian posts the `meridian.brief` sidecar as JSON to a configured address with an `Authorization: Bearer` header and a short timeout. The deployment reads two values, `MERIDIAN_PRODUCTION_URL` and `MERIDIAN_PRODUCTION_SECRET`. With either one absent, nothing is posted and Meridian records only that the brief was sent. What goes over the wire is exactly what the sidecar renderer returns. No field is added for production's benefit.
+
+An answer in the 2xx range that names the job Meridian posted is an acknowledgement, and Meridian records it as a fact carrying that job, the brief version, and the time the answer gave. An answer that names a different job, or names none, is not an acknowledgement of this brief. Meridian records nothing and the person is told what came back. The job id is the identity both systems work from, and it is the only part of that fact that came from outside Meridian, so it is read rather than assumed.
+
+A post that does not land is not a failed send. The brief left Meridian either way. A person pressing send again is the retry, and there is no queue, no background worker, and no scheduler behind it. That works because production answers a repeat against the same job and brief version as a safe duplicate rather than starting a second job. An acknowledgement that already exists is never written twice and pressing send again after one posts nothing.
+
+Provisional, like everything else here. If the shape of the answer is wrong for how Jim's receiver works, it changes here first and in the same commit as the code.
+
 A provisional shape for these payloads is in section 6. It is a list of fields Meridian expects to need, not a format Jim's system must accept.
 
 ## 4. What Meridian needs to learn from Jim's side
@@ -65,7 +77,7 @@ Discovery works backward from real finished artboards. Five to ten completed pro
 
 **Revision.** How does feedback arrive today and how is it applied? Is prior state preserved? Can the system accept structured instructions against a specific version and report what changed?
 
-**Receipts.** Does Jim's side return a receipt on every inbound payload, saying what it received and when? Meridian's stand-in returns one and the Scene record writes a fact from it, so a person can see that what went out arrived. If Jim's side does not do this today, the question is whether it can, and what the receipt would carry.
+**Receipts.** Does Jim's side return a receipt on every inbound payload, saying what it received and when? Meridian's stand-in returns one and the Scene record writes a fact from it, so a person can see that what went out arrived. If Jim's side does not do this today, the question is whether it can, and what the receipt would carry. Added 2026-09-03: the answer to an inbound brief needs to name the job it received, because Meridian will not record an acknowledgement it cannot tie to the brief it sent. Whether that field is called `jobId`, and what else the answer carries, is open.
 
 **Final production.** How does an approved artboard become media? What carries forward, what is re-entered, where can drift occur? Which production steps could reference an immutable approved artboard?
 
