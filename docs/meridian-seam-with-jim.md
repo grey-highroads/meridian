@@ -91,6 +91,8 @@ During the pilot, every manual translation between the systems is logged. Those 
 
 Placeholders for discovery. Field names and structure will change.
 
+The contract is provisional and this document is where that is said. Added 2026-09-03: the outbound brief payload used to carry a field of its own saying so. Nothing read it and nobody managed it, so it would have said provisional forever whatever the two sides had settled. It has been removed. What a payload carries is the contract name, `meridian.brief`. Whether that contract is agreed is a question about this document, and the answer is here, at the top, where both sides read it.
+
 **Meridian to Jim: chosen concept and brief**
 
 ```json

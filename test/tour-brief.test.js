@@ -389,9 +389,10 @@ test("both artifact forms carry the same content, the same version, and the same
   assert.equal(frozen.sidecar.frozenAt, frozen.brief.frozenAt);
   assert.equal(frozen.document, renderBriefDocument(frozen.brief));
   assert.ok(frozen.document.includes(`Brief version: ${frozen.brief.briefVersion}`));
-  // The sidecar shape is Higher Roads' guess and says so in itself.
+  // The sidecar names the contract it is. Whether that contract is agreed is
+  // said in docs/meridian-seam-with-jim.md and not in the payload.
   assert.equal(frozen.sidecar.contract, "meridian.brief");
-  assert.match(frozen.sidecar.contractStatus, /provisional/);
+  assert.equal("contractStatus" in frozen.sidecar, false);
 });
 
 test("a brief version that does not exist fails plainly", async () => {

@@ -200,7 +200,7 @@ Bring it back when: a tour is running in Meridian and someone asks a question th
 
 Recorded 2026-08-22. The compiled brief leads with required elements and the technical target and trails with latitude, the direction, and meaning. That order comes from a BWS render finding that concrete facts placed early beat abstract description placed anywhere. It was a renderer finding and Jim's workflow is a different reader, so it is Reasoned here rather than Verified.
 
-The compiled brief is the cheapest way to test it. Hand Jim a real one and let him say what sits in the wrong place. The sidecar labels itself provisional in its own `contractStatus` field for the same reason: its shape is our guess and it is not an obligation on his system until the seam document says both sides agreed to it.
+The compiled brief is the cheapest way to test it. Hand Jim a real one and let him say what sits in the wrong place. The shape of the machine readable sidecar is our guess for the same reason, and it is not an obligation on his system until both sides agree to it. Corrected 2026-09-03: the sidecar used to carry a `contractStatus` field saying so. Nothing read it and nobody managed it, so it would have said provisional forever whatever the two sides had settled. The status is now stated in `docs/meridian-seam-with-jim.md`, which is the document both sides read.
 
 Bring it back when: Jim has read a real brief and said what he would move.
 

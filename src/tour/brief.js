@@ -264,13 +264,14 @@ export function renderBriefDocument(brief) {
   ].filter((line) => line !== null).join("\n");
 }
 
-// What a machine reads. Provisional on purpose: this shape is Higher Roads'
-// guess and is not an obligation on Jim's system until the seam document says
-// both sides agreed to it.
+// What a machine reads. The shape is Higher Roads' guess and is not an
+// obligation on Jim's system until both sides agree to it. That status is
+// stated in docs/meridian-seam-with-jim.md, where both sides read it, rather
+// than carried as a field in the payload. Nobody manages a field like that, so
+// it would say provisional forever whatever the two sides had settled.
 export function renderBriefSidecar(brief) {
   return {
     contract: "meridian.brief",
-    contractStatus: "provisional, not yet agreed with Jim's side",
     ...brief,
   };
 }
