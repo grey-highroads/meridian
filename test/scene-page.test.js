@@ -70,7 +70,7 @@ function element() {
 
 // The page's own script, run rather than read, so what the test reads is the
 // markup a person would be looking at and the calls the page actually makes.
-function scenePage({ user = OPERATOR, questions = [], references = [], state = SCENE_STATE, concept = null, artboards = [], identityFails = false } = {}) {
+function scenePage({ user = OPERATOR, questions = [], references = [], state = SCENE_STATE, concept = null, artboards = [], briefs = [], handoffs = [], acknowledged = false, identityFails = false } = {}) {
   const source = fs.readFileSync(path.join(rootPath, "app", "scene.js"), "utf8")
     .replace(/^import .*?;\n\n/, "");
   const elements = {
@@ -123,10 +123,10 @@ function scenePage({ user = OPERATOR, questions = [], references = [], state = S
       return okReply({ tour: { id: TOUR, name: "Off The Map 2026" }, assignment: ASSIGNMENT_REPLY, concept: null, context: {} });
     }
     if (sent.action === "get-concept") return okReply({ concept });
-    if (sent.action === "list-briefs") return okReply({ briefs: [] });
+    if (sent.action === "list-briefs") return okReply({ briefs });
     if (sent.action === "compile-brief") return okReply({ brief: { jobId: "j", briefVersion: 1, status: "draft" }, document: "", sidecar: {} });
     if (sent.action === "get-questions") return okReply({ questions });
-    if (sent.action === "get-handoffs") return okReply({ handoffs: [] });
+    if (sent.action === "get-handoffs") return okReply(operator ? { handoffs, acknowledged } : { handoffs });
     if (sent.action === "get-artboards") return okReply({ artboards });
     throw new Error(`the page asked for ${sent.action}, which this test does not answer`);
   };
@@ -290,6 +290,49 @@ test("the drawer leads with complete actions and recruits context under the send
   assert.match(drawer, /Ruoff Music Center/);
   assert.match(drawer, /One main wall upstage behind the band/);
   assert.match(drawer, /The Gorge/);
+});
+
+// Sending is ours. Delivery is production's. The send section says which of the
+// two has happened, because "Production has the Scene" was being said the
+// moment the brief left here, when nobody on the other end had answered.
+
+const FROZEN_BRIEF = { jobId: "off-the-map-2026--storm-and-lightning", briefVersion: 1, status: "frozen" };
+const ISSUED_HANDOFF = { handoffId: "brief-off-the-map-2026--storm-and-lightning-v1", kind: "brief", briefVersion: 1 };
+
+test("a brief that went out and has not been confirmed says so and offers the send again", async () => {
+  const page = scenePage({ briefs: [FROZEN_BRIEF], handoffs: [ISSUED_HANDOFF], acknowledged: false });
+  await page.settle();
+  const words = page.drawerText();
+  const drawer = page.drawerMarkup();
+
+  assert.match(words, /The brief went out\. Production has not confirmed it\./);
+  assert.doesNotMatch(words, /Production has the Scene/, "the Scene claims production has it before production said so");
+  assert.match(drawer, /data-send[^>]*>\s*Send again/, "there is no way to send it again");
+  // The handoff is still reachable. Sending again is the thing to do, so it
+  // leads.
+  assert.ok(drawer.indexOf("Send again") < drawer.indexOf("Open handoff"), "the send again does not lead");
+});
+
+test("a brief production confirmed keeps the sentence and stops offering the send", async () => {
+  const page = scenePage({ briefs: [FROZEN_BRIEF], handoffs: [ISSUED_HANDOFF], acknowledged: true });
+  await page.settle();
+  const words = page.drawerText();
+  const drawer = page.drawerMarkup();
+
+  assert.match(words, /Production has the Scene\./);
+  assert.doesNotMatch(words, /has not confirmed/);
+  assert.doesNotMatch(drawer, /data-send[ >]/, "an acknowledged brief still offers the send");
+  assert.match(drawer, /Open handoff/);
+});
+
+test("a Scene nobody has sent says neither thing", async () => {
+  const page = scenePage({ concept: { title: "Storm and lightning", idea: "Hold the break." } });
+  await page.settle();
+  const words = page.drawerText();
+
+  assert.doesNotMatch(words, /Production has the Scene/);
+  assert.doesNotMatch(words, /has not confirmed/);
+  assert.match(page.drawerMarkup(), /data-send[^>]*>\s*Send to production/);
 });
 
 test("the drawer trigger reads in plain words", async () => {

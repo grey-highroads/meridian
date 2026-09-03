@@ -248,6 +248,15 @@ test("a client reviewer is told nothing about delivery", async () => {
   // Nothing on a client payload names a job either.
   assert.equal(theirs.some((entry) => entry.jobId), false);
 
+  // The handoff list is shared, and the delivery state on it is not. It is
+  // absent from their payload rather than false on it, so nothing on the client
+  // side can read it as a state at all.
+  const ours = await tourAction({ action: "get-handoffs", ...AT }, options);
+  assert.equal(ours.acknowledged, true);
+  const shared = await tourAction({ action: "get-handoffs", ...AT }, asClient);
+  assert.equal("acknowledged" in shared, false);
+  assert.equal(shared.handoffs.length, ours.handoffs.length);
+
   // And the action itself stays on our side of the glass.
   await assert.rejects(
     () => tourAction({ action: "send-to-production", ...AT }, asClient),

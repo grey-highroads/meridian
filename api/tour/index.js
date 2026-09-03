@@ -1356,7 +1356,14 @@ export async function handleAction(body, options = {}) {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const assignment = findAssignment(fixture, body.assignmentId);
     const artboardStore = options.artboardStore || createArtboardStore({ accountId: actingAccount });
-    return { handoffs: await artboardStore.readHandoffs(fixture.tour.id, assignment.id) };
+    const handoffs = await artboardStore.readHandoffs(fixture.tour.id, assignment.id);
+    if (user.role === CLIENT_ROLE) return { handoffs };
+    // Whether production answered is ours. The Scene screen needs it to tell a
+    // brief that went out from a brief that arrived, and a client is told
+    // neither, so it is absent from their payload rather than false on it.
+    const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
+    const facts = await record.readFacts(fixture.tour.id, assignment.id);
+    return { handoffs, acknowledged: productionAcknowledged({ facts }) };
   }
 
   // The seam. What goes out is one frozen brief. What comes back is an

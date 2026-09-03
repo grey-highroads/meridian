@@ -35,6 +35,9 @@ const view = {
   brief: null,
   briefs: [],
   handoffs: [],
+  // Whether production answered. Sending is ours and delivery is theirs, and
+  // the send section says which of the two has happened.
+  acknowledged: false,
   artboards: [],
   receipt: null,
   draft: { direction: "", question: "", answers: {} },
@@ -351,14 +354,27 @@ function receiptSection() {
     </div>`;
 }
 
-// One judgement is made here: this is right, send it.
+// One judgement is made here: this is right, send it. After it goes, the
+// section says which of two things has happened. The brief left Meridian, which
+// is ours and certain. Production confirmed it has the brief, which is theirs
+// and only true when they have answered. Pressing send again is the whole
+// retry: production answers a repeat against the same job as a duplicate, so it
+// costs nothing to press.
 function sendWork() {
   if (view.artboards.length > 0) return "";
   const latestBrief = view.briefs.at(-1);
   const handoff = latestBrief && view.handoffs.find((entry) => entry.kind === "brief" && entry.briefVersion === latestBrief.briefVersion);
+  const openHandoff = latestBrief
+    ? `<a class="m-button" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`
+    : "";
+  let standing = "";
   let controls;
-  if (handoff) {
+  if (handoff && view.acknowledged) {
+    standing = `<div class="m-drawer__result"><p class="m-copy">Production has the Scene.</p></div>`;
     controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`;
+  } else if (handoff) {
+    standing = `<div class="m-drawer__result"><p class="m-copy">The brief went out. Production has not confirmed it.</p></div>`;
+    controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send again"}</button>${openHandoff}`;
   } else {
     controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send to production"}</button>`;
   }
@@ -366,6 +382,7 @@ function sendWork() {
       <h2 id="send-heading" class="m-drawer__title">Send to production</h2>
       ${handoff ? "" : noteWork()}
       ${receiptSection()}
+      ${standing}
       ${view.messageAt === "send" && view.message ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
       <div class="m-drawer__actions">${controls}</div>
       <details class="m-drawer__context">
@@ -470,9 +487,12 @@ async function load() {
   if (!isOperator()) return;
   view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
   try {
-    view.handoffs = (await call("get-handoffs", { assignmentId: view.sceneId })).handoffs;
+    const issued = await call("get-handoffs", { assignmentId: view.sceneId });
+    view.handoffs = issued.handoffs;
+    view.acknowledged = Boolean(issued.acknowledged);
   } catch {
     view.handoffs = [];
+    view.acknowledged = false;
   }
   try {
     view.artboards = (await call("get-artboards", { assignmentId: view.sceneId })).artboards;
@@ -560,9 +580,13 @@ document.addEventListener("click", (event) => {
       const sent = await call("send-to-production", { assignmentId: view.sceneId });
       view.brief = { brief: sent.brief, document: sent.document, sidecar: sent.sidecar };
       view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
-      view.handoffs = (await call("get-handoffs", { assignmentId: view.sceneId })).handoffs;
+      const issued = await call("get-handoffs", { assignmentId: view.sceneId });
+      view.handoffs = issued.handoffs;
+      view.acknowledged = Boolean(issued.acknowledged);
       view.working = false;
-      view.message = "Production has the Scene.";
+      // The section now says which of the two happened, so a message here would
+      // say it a second time.
+      view.message = "";
       view.messageAt = "send";
       render();
     }, "send");
