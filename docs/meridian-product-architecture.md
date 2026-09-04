@@ -431,3 +431,15 @@ MadMapper and disguise use the same word for a mapped region on an output. That 
 Where they live: inside the production setup, beside its words, versioned with it. Not on the tour object. The setup is what production supplied, a surface list is a structured reading of that same supplied thing, and a brief already names the setup version it was written against. A list held anywhere else would drift from the version it came from. An assignment then carries the surfaces it is aimed at, which is what makes a request, a technical finding, and a revision each able to say which one they mean.
 
 Not built yet. This records the word and the place so the next commit has both.
+
+## One ruling, 2026-09-04, third session
+
+Recorded against the committed tree at `fd29fe76`.
+
+**Approval is a setting on a client person, not a third role.** The research sweep named people around a tour who are not Higher Roads and are not the person with final say: the video programmer, the lighting designer, the production designer, the video vendor's project manager, a promoter's technical contact. They have a view worth hearing on a concept and no business approving one.
+
+They do not need a role of their own. They are client people, and everything the client boundary already does for them is right: they see the work, the version, the rationale, and the controls, and they never see internal review, unpresented artboards, or production intent. What separates them from the person with final say is one thing, so it is one setting.
+
+A client person carries approval on or off. Off is the default, because a person added to a tour has not been given final say by being added. On means the approval controls appear and `client-approve` is accepted. Off means they comment and nothing else. The check is server side beside the existing client action guard in `api/tour/index.js`, not a hidden control, because a boundary the interface enforces is not a boundary.
+
+This replaces the viewer, commenter, and approver split considered earlier in the same session. Three levels would have carried a permission model into a product that needs one distinction. The 2026-08-27 entry in `docs/deferred-work.md` recording that there is no third role in Meridian stands. There still is not one.
