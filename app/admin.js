@@ -6,7 +6,7 @@ import { ARTIST_LABEL, artistLabel } from "./label.js";
 // Every act hangs off a row in one of them. Ruled 2026-08-26 in
 // docs/spec-admin-surface.md.
 //
-// Starting a tour is not here. It lives in Tour details, and an admin working
+// Starting a tour is not here. It lives in Project, and an admin working
 // for a busy client switches into that account and uses the screen the client
 // uses, so the two never drift apart.
 //

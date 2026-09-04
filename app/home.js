@@ -188,8 +188,8 @@ function tourReference(tour) {
   const missing = categories.filter((item) => !item.ready && !item.optional);
   const next = missing[0];
   const heading = next ? `${next.label} not added` : `${label} foundation is in place`;
-  const action = next ? `Add ${next.label.toLowerCase()}` : "View tour details";
-  return `<section class="m-home__tour" aria-labelledby="tour-reference-heading"><header class="m-home__reference-head"><span class="m-label">${escape(label)} foundation</span><h2 id="tour-reference-heading" class="m-section-heading">${escape(heading)}</h2></header><div class="m-home__tour-actions"><a class="m-button ${next ? "m-button--primary" : ""}" href="./tour.html?tour=${escape(TOUR_ID)}">${escape(action)}</a>${next ? `<a class="m-home__section-link" href="./tour.html?tour=${escape(TOUR_ID)}">View all tour details</a>` : ""}</div><details class="m-home__tour-details"><summary>Show ${escape(label.toLowerCase())} foundation</summary><div class="m-readiness-list">${rows}</div></details></section>`;
+  const action = next ? `Add ${next.label.toLowerCase()}` : "View the project";
+  return `<section class="m-home__tour" aria-labelledby="tour-reference-heading"><header class="m-home__reference-head"><span class="m-label">${escape(label)} foundation</span><h2 id="tour-reference-heading" class="m-section-heading">${escape(heading)}</h2></header><div class="m-home__tour-actions"><a class="m-button ${next ? "m-button--primary" : ""}" href="./tour.html?tour=${escape(TOUR_ID)}">${escape(action)}</a>${next ? `<a class="m-home__section-link" href="./tour.html?tour=${escape(TOUR_ID)}">View the whole project</a>` : ""}</div><details class="m-home__tour-details"><summary>Show ${escape(label.toLowerCase())} foundation</summary><div class="m-readiness-list">${rows}</div></details></section>`;
 }
 
 function recent(facts, user) {

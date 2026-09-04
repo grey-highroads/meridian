@@ -37,7 +37,7 @@ async function call(action, extra = {}) {
     body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })),
   });
   const body = await response.json();
-  if (!response.ok) throw new Error(body.error || "Meridian could not load tour details. Refresh the page and try again.");
+  if (!response.ok) throw new Error(body.error || "Meridian could not load the project. Refresh the page and try again.");
   return body;
 }
 

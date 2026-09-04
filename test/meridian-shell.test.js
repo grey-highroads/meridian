@@ -88,10 +88,12 @@ test("the phase-two Home fixture is the shell composition reference", () => {
 test("the live shell has the four destinations and Home uses the approved patterns", () => {
   const source = read("app/index.html");
   const primaryNav = source.match(/<nav class="m-shell__nav"[\s\S]*?<\/nav>/)?.[0] || "";
-  // The rail carries no category word. A record's own word appears where a
-  // record is in scope, and the rail is parsed before one is loaded. The
-  // design sample above keeps the wording it was drawn with. Ruled 2026-09-04.
-  for (const label of ["Home", "Scenes", "Reviews", "Details"]) {
+  // The rail names destinations rather than the record it holds, because it is
+  // parsed before a record is loaded. Project sits second: it is the thing the
+  // Scenes and Reviews hang off, and on a new account it is where the first
+  // work happens. The design sample above keeps the wording it was drawn with.
+  // Ruled 2026-09-04, replacing Details.
+  for (const label of ["Home", "Project", "Scenes", "Reviews"]) {
     assert.match(primaryNav, new RegExp(`>${label}<`), `live Home is missing ${label}`);
   }
   assert.doesNotMatch(primaryNav, />Artist Brain</, "Artist Brain appears in live primary navigation");
