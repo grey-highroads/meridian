@@ -30,9 +30,15 @@ Meridian is purpose-built. There is no generic platform layer. Shared code is ex
 
 ## Current state
 
-Step 1 of the roadmap. First artist: Dierks Bentley.
+First artist: Dierks Bentley. First tour: Off The Map, seeded from a fixture whose direction, setup, dates, and themes are Higher Roads' sample content and are labeled as such in the file.
+
+What the tree holds: the artist brain with intake, findings, and approval. A tour with its direction, dates, and production setup stored as given and versioned. Scene requests, concept proposals, and a compiled brief that freezes. A stand-in for Jim's system, a delivery module that posts a frozen brief to his receiver, and the acknowledgement fact that comes back. Higher Roads review, client review with a server-side boundary, and client approval that freezes production intent. An Intelligence surface carrying scene ideas, a direction read, and a board review. Two roles, sign in, and an admin surface.
+
+This does not map to one roadmap step anymore. `docs/meridian-roadmap.md` still says what gets built and why in that order; it no longer says where we are.
 
 `docs/deferred-work.md` holds what is known and not yet done. Read it fresh; every handoff ages the moment it is written.
+
+Corrected 2026-09-04. This section read "Step 1 of the roadmap" from the fork until now, while the tree held everything listed above. Every chat is told to read this file on arrival, so the wrong line was handed to each one. Recorded rather than quietly replaced.
 
 ## Working here
 
