@@ -443,3 +443,17 @@ They do not need a role of their own. They are client people, and everything the
 A client person carries approval on or off. Off is the default, because a person added to a tour has not been given final say by being added. On means the approval controls appear and `client-approve` is accepted. Off means they comment and nothing else. The check is server side beside the existing client action guard in `api/tour/index.js`, not a hidden control, because a boundary the interface enforces is not a boundary.
 
 This replaces the viewer, commenter, and approver split considered earlier in the same session. Three levels would have carried a permission model into a product that needs one distinction. The 2026-08-27 entry in `docs/deferred-work.md` recording that there is no third role in Meridian stands. There still is not one.
+
+## One ruling, 2026-09-04, fourth session
+
+Recorded against the committed tree at `609fe1eb`. Extends the container ruling in the first entry of the same day.
+
+**The subject record carries a label too, and it is the reason the labels ship first.** Higher Roads has a projection mapping job running now. It cannot be entered in Meridian at all: `create-tour` in `api/tour/index.js` refuses without an artist id and refuses again if no artist is stored under that name, and `parseTour` in `src/tour/parse-fixture.js` makes the same demand.
+
+The answer is not to make the subject optional, which would empty the layer. The subject of a mapping job is the brand, the venue, or the building. The artist layer does its job unchanged: durable intelligence about who this is, their visual language, their prohibitions, what past work did. Only the word on screen is wrong.
+
+So the subject record carries a display label the same way the container does. Both default to the words in the code, Artist and Tour, so nothing changes for the Dierks tour. On the mapping job the subject label is Client. Grey chose that word knowing it overlaps with the client reviewer role and the client boundary, since the label is set per record and the two jobs can read differently.
+
+Interface scale, read from the tree: 43 occurrences of Tour across 18 files under `app` outside `app/design`, and 24 of Artist across 10. Most are page titles, rail labels, and headings rather than sentences, because the interface already shows the record's own name in body copy.
+
+Shape is deliberately not built with this. Labels are needed to enter the job. Shape earns itself when something behaves differently because of it, and nothing does yet.
