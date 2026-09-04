@@ -419,3 +419,15 @@ So the stored word stays. The container gains a display label, which is what the
 This is not debt taken on to avoid effort. A display name is a real need on its own, since every account calls its work something. The mismatch left behind is that builders read `tourId` on a job that is not a tour, which is small, constant, and does not compound. Labeling now makes a later rename no harder than it is today, so the choice is one large price now against the same price later with the option never to pay it.
 
 What is not ruled here: the word for the named things inside a production setup that a Scene can be aimed at. `surface` collides with MadMapper and disguise, where it means a mapped output region on production's side, and the counts never correspond. One wall here can be many there. That word lands inside a frozen brief, so it is ruled before it is built.
+
+## One ruling, 2026-09-04, second session
+
+Recorded against the committed tree at `ae813e4b`. Closes the word left open in the entry above.
+
+**The named things a Scene is aimed at are called surfaces, and Meridian's meaning is the only one that travels.** A surface in Meridian is a physical thing in the room that content plays on. The main wall behind the band, the two side screens, a building facade on a projection job. The tour's production designer supplies them and Meridian stores the list as given, the same way it already stores the setup's words.
+
+MadMapper and disguise use the same word for a mapped region on an output. That is Jim's side of the line and it stays there. The two lists do not correspond and are never matched to each other. One wall in Meridian can be forty mapped regions in his project. The rule is written into `docs/meridian-seam-with-jim.md` in section 3, where both sides read it, rather than solved by picking a different word here. Grey ruled that the answer is to keep the room's own word and stop the other meaning at the seam.
+
+Where they live: inside the production setup, beside its words, versioned with it. Not on the tour object. The setup is what production supplied, a surface list is a structured reading of that same supplied thing, and a brief already names the setup version it was written against. A list held anywhere else would drift from the version it came from. An assignment then carries the surfaces it is aimed at, which is what makes a request, a technical finding, and a revision each able to say which one they mean.
+
+Not built yet. This records the word and the place so the next commit has both.
