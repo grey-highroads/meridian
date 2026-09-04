@@ -451,3 +451,13 @@ Bring it back when: the stand-in is replaced by Jim's real system, which returns
 Recorded 2026-08-29 with Intelligence job three. The board instrument offers one version of one Scene, so the page calls `get-artboards` once per Scene on load to find which versions carry a readable image. On this tour that is a handful of calls and it is invisible.
 
 Bring it back when: a tour holds enough Scenes that the Intelligence page is slow to become useful, or a second surface needs the same list. The close is one action that returns every version with a readable board for the tour, which `api/tour/index.js` can answer from the same reads it already does.
+
+## Lowercase category words remain in body copy on screens that show no label
+
+Recorded 2026-09-04 with the display label. The label replaced the capitalised category word everywhere the interface named a record: 43 occurrences of Tour and 24 of Artist. Lowercase "tour" and "artist" in ordinary sentences were left alone, because a job with no label reads Tour and Artist anyway and the two agree.
+
+The contradictions were fixed. Where lowercase copy sits on a screen that also shows the label, it follows the label: `app/tour.js` on the creation screen and the direction empty state, and `app/home.js` where one sentence names the job twice. Everything else was left as written.
+
+Three places were left on purpose and are not part of this entry: `app/admin.js` names a specific tour by name in its delete confirmation, offers to open one by default, and reports what a new account was created with. Admin lists many records and each carries its own word, so a category word there is a heading over a list rather than a name for one thing.
+
+Bring it back when: a second job with a different label reaches a screen whose lowercase copy reads wrong. That is the signal that the remaining sentences need the same treatment, and it will name which screens rather than asking for a sweep of all of them.

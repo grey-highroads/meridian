@@ -88,7 +88,10 @@ test("the phase-two Home fixture is the shell composition reference", () => {
 test("the live shell has the four destinations and Home uses the approved patterns", () => {
   const source = read("app/index.html");
   const primaryNav = source.match(/<nav class="m-shell__nav"[\s\S]*?<\/nav>/)?.[0] || "";
-  for (const label of ["Home", "Scenes", "Reviews", "Tour details"]) {
+  // The rail carries no category word. A record's own word appears where a
+  // record is in scope, and the rail is parsed before one is loaded. The
+  // design sample above keeps the wording it was drawn with. Ruled 2026-09-04.
+  for (const label of ["Home", "Scenes", "Reviews", "Details"]) {
     assert.match(primaryNav, new RegExp(`>${label}<`), `live Home is missing ${label}`);
   }
   assert.doesNotMatch(primaryNav, />Artist Brain</, "Artist Brain appears in live primary navigation");
@@ -100,7 +103,7 @@ test("the live shell has the four destinations and Home uses the approved patter
   assert.match(script, /Request a Scene/, "Home does not offer the primary Scene action independently");
   assert.match(script, /<h1 class="m-heading">Today<\/h1>/, "Home does not lead with the current workday");
   assert.match(script, /A Scene appears once under Needs you/, "Home can repeat one Scene across attention and progress");
-  for (const category of ["Creative direction", "Dates and venues", "Playback system", "Production details", "Tour-wide themes"]) {
+  for (const category of ["Creative direction", "Dates and venues", "Playback system", "Production details", "-wide themes"]) {
     assert.match(script, new RegExp(category), `Tour at a glance is missing ${category}`);
   }
   assert.doesNotMatch(script, /m-lifecycle-row__fact/, "Home still splits one Scene state across several columns");
@@ -236,7 +239,7 @@ test("empty screens speak to the person holding the work", () => {
   assert.match(scenes, /One sentence is enough/, "Scenes makes a first request feel heavier than it is");
 
   const tour = read("app/tour.js");
-  assert.match(tour, /What should guide the creative work across the tour/, "Tour Direction empty state does not ask for the direction plainly");
+  assert.match(tour, /What should guide the creative work across the \$\{escape\(lower\)\}\?/, "the direction empty state does not ask for the direction plainly");
   assert.match(tour, /You can still request and develop Scenes/, "optional themes read like a blocker");
 
   const scene = read("app/scene.js");
@@ -252,7 +255,7 @@ test("empty screens speak to the person holding the work", () => {
   const handoff = read("app/handoff.js");
   assert.match(handoff, /Send the brief from the Scene/, "handoff does not name where the brief goes out from");
   const artist = read("app/artist.js");
-  assert.match(artist, /Build the Artist Brain/, "Artist Brain does not start with the manual research job");
+  assert.match(artist, /Build the \$\{escape\(view\.label\)\} Brain/, "the Brain does not start with the manual research job");
 });
 
 // Amended 2026-08-28. Client work is part of the shared Artboard surface. Only

@@ -167,10 +167,21 @@ export function createTourStore(options = {}) {
       for (const id of ids.sort()) {
         const stored = await readTourDocument(id, "tour", null);
         if (!stored || !stored.tour) continue;
-        tours.push({ id: stored.tour.id, name: stored.tour.name, artistId: stored.tour.artistId || null });
+        // The label travels with every projection of a tour. Without it a
+        // list of tours reads the default word beside a record that carries
+        // its own. Absent on a tour created before the label existed.
+        tours.push({
+          id: stored.tour.id,
+          name: stored.tour.name,
+          artistId: stored.tour.artistId || null,
+          label: stored.tour.label === undefined ? null : stored.tour.label,
+        });
       }
       return tours;
     },
+    // The document arrives whole and is written whole, so the label the
+    // caller put on it is carried through here with everything else. A
+    // document without one is stored without one and reads the default.
     async createTour(tourId, document) {
       const existing = await readTourDocument(tourId, "tour", null);
       if (existing) {
@@ -180,6 +191,20 @@ export function createTourStore(options = {}) {
       }
       await writeTourDocument(tourId, "tour", document);
       return document;
+    },
+    // The word this tour is called on screen. Written on its own rather than
+    // through a rewrite of the tour document, so nothing else stored under
+    // the tour is touched when somebody changes the word.
+    async setTourLabel(tourId, label) {
+      const stored = await readTourDocument(tourId, "tour", null);
+      if (!stored || !stored.tour) {
+        const error = new Error("We couldn't find this tour.");
+        error.status = 404;
+        throw error;
+      }
+      const document = { ...stored, tour: { ...stored.tour, label } };
+      await writeTourDocument(tourId, "tour", document);
+      return document.tour;
     },
     // Tour-level facts, the same shape the Scene record writes. The shape is
     // written twice on purpose for now; extracting it inside this commit would

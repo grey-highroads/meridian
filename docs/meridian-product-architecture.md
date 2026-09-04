@@ -457,3 +457,21 @@ So the subject record carries a display label the same way the container does. B
 Interface scale, read from the tree: 43 occurrences of Tour across 18 files under `app` outside `app/design`, and 24 of Artist across 10. Most are page titles, rail labels, and headings rather than sentences, because the interface already shows the record's own name in body copy.
 
 Shape is deliberately not built with this. Labels are needed to enter the job. Shape earns itself when something behaves differently because of it, and nothing does yet.
+
+## One ruling, 2026-09-04, fifth session
+
+Recorded against the committed tree at `ea4d9d3c`. Builds the labels the fourth entry of the same day ruled.
+
+**The label is stored on the record, resolved on read, and is a word on screen and nothing else.** Both records carry an optional `label`. Absence is stored as absence rather than as an empty string, so a record someone cleared and a record nobody ever labeled read the same way. `tourLabel` and `artistLabel` in `src/label.js` resolve absence to Tour and Artist, which is why nothing already stored on the live deployment needed migrating.
+
+Where it is set and changed: `create-tour` in `api/tour/index.js` writes it, `save-tour-label` changes it and appends a record fact naming who did. `createArtist` in `src/org/artists.js` writes it, `save-artist-label` changes it, and `get-artist` reads it off the account's artist row so the Knowledge page reads the right word before anything has been imported. `parseTour` in `src/tour/parse-fixture.js` reads an optional `Label:` line and returns null when the line is absent, so every fixture written before this parses as it did. `readTours` carries the label, because a list of jobs that dropped it would read the default beside a record holding its own word.
+
+No shape field, no container type, no branch. A test asserts that the stored tour gains no `shape`, `type`, `kind`, `container`, or `recordType` key alongside the label.
+
+**The rail carries no category word.** The 43 and 24 counted in the fourth entry are raw word counts. Thirty-six of them name one record and now read its label. The rest could not: 21 sit in static HTML parsed before any record is fetched, 6 are code comments, 2 are marketing copy on the landing page, and 2 head Admin lists covering many records that each carry their own word.
+
+For the static ones Grey ruled the word out rather than in. The rail reads Details. The nav landmark names Meridian. Page titles read Details, Direction, and Knowledge. Knowledge replaced Artist Brain because Brain is system vocabulary reaching a user, which the writing rules already refused; the page says what it holds in its own description.
+
+The alternative considered and refused was hydrating the rail from the record after the session call, which `app/shell.js` already makes. It would have worked and it would have shown the default word on every page load and corrected itself a moment later. There is no accepted pattern for a rail label that changes after load, and the label is not worth inventing one.
+
+**Lowercase copy follows the label only where the two would contradict each other.** A screen showing the label and saying "tour" in the next sentence reads wrong. A screen with no label on it reads Tour anyway and the two agree. So `app/tour.js` on the creation screen and the direction empty state, and `app/home.js` where one sentence names the job twice, follow the label. Everything else stands, recorded in `docs/deferred-work.md` with the condition that closes it.

@@ -80,6 +80,9 @@ test("Tour details creates the same complete stored tour the standalone form cre
       themes: [],
       approximateDates: "May to September",
       primaryContact: "Sarah Vance",
+      // Nobody typed a word for this job, so nothing is stored and the
+      // interface reads Tour.
+      label: null,
       direction: { version: 0, words: "", setBy: null, setOn: null, role: null },
     },
     assignments: [],
@@ -212,7 +215,7 @@ test("Home explains its sections before Scenes and keeps the operational Home in
     "Work waiting for your feedback, changes, or approval will appear here.",
     "Creative direction, dates, venues, and production details will live here.",
   ]) assert.match(home, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(home, /Create the tour in Tour details so Meridian has a place/, "the creation action has no reason attached");
+  assert.match(home, /Create the \$\{lower\} in \$\{label\} details so Meridian has a place/, "the creation action has no reason attached");
   assert.match(home, /href="\.\/tour\.html"/, "tour creation does not go to Tour details");
 
   for (const kept of ["Nothing needs a decision right now", "Current work", "Welcome,", "m-home__layout"]) {
@@ -223,7 +226,7 @@ test("Home explains its sections before Scenes and keeps the operational Home in
 test("starting the tour is a client job in Tour details and no longer a standalone page or Admin act", () => {
   const page = read("app/tour.js");
   assert.match(page, /call\("create-tour"/, "the tour page does not create the tour");
-  assert.match(page, /The tour name is the only required field\. Add the rest if you know it\./, "the tour page does not say the rest can wait");
+  assert.match(page, /The \$\{escape\(lower\)\} name is the only required field\. Add the rest if you know it\./, "the tour page does not say the rest can wait");
   assert.match(page, /view\.primaryContact = me\.user\.displayName/, "the signed-in person is not filled in as the contact");
   assert.match(page, /view\.artists\.length === 1/, "the artist is a picker when the account holds one");
   assert.match(page, /view\.message = error\.message;\s*\n\s*paintTourCreation\(\);/, "a refused create loses what was typed");

@@ -71,17 +71,19 @@ test("the five introduction cards use the existing empty state and exact copy", 
     "Home\", copy: \"Your snapshot into everything happening with the tour creative.",
     "Scenes\", copy: \"A Scene can be a song, an intro, a transition, or any moment that needs screen content.",
     "Reviews\", copy: \"Provide feedback, request changes, or approve the work for final production.",
-    "Tour Details\", copy: \"Instructions that guide the creative work across all the scenes of the tour.",
-    "Get Started\", copy: \"Start by adding Tour visual direction and details so the creative process can begin.",
+    "Instructions that guide the creative work across all the scenes of the tour.",
+    "visual direction and details so the creative process can begin.",
   ]) assert.ok(home.includes(copy), `introduction copy changed: ${copy}`);
-  for (const calibration of ["Scene register / Open", "Decision queue / Clear", "Tour direction / Not set", "Tour / Not started"]) {
+  for (const calibration of ["Scene register / Open", "Decision queue / Clear", "${label} direction / Not set", "${label} / Not started"]) {
     assert.ok(home.includes(calibration), `introduction lost ${calibration}`);
   }
+  // Two cards name the job by the word the account chose. Ruled 2026-09-04.
+  assert.match(home, /title: `\$\{label\} details`/, "the details card does not read the record's word");
   assert.match(home, /<section class="m-empty-state m-empty-state--action"/);
   assert.match(home, /data-next-introduction/);
   assert.match(home, /data-skip-introduction/);
   assert.match(home, /data-finish-introduction/);
-  assert.match(home, /completeIntroduction\("tour"\)/, "the last card does not go to Tour details");
+  assert.match(home, /completeIntroduction\("tour"\)/, "the last card does not go to the details page");
   assert.match(read("app/shell.js"), /data-client-introduction/, "the introduction cannot be reopened from the utility group");
   assert.doesNotMatch(home, /localStorage|sessionStorage/, "Home stores introduction state in the browser");
   assert.doesNotMatch(read("src/org/people.js"), /localStorage|sessionStorage/, "the person record depends on browser storage");

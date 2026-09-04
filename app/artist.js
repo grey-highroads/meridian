@@ -1,4 +1,5 @@
 import { scopedBody } from "./context.js";
+import { ARTIST_LABEL } from "./label.js";
 
 // The Artist Brain. The approved findings, grouped by part of the artist, with
 // the evidence one disclosure away. It is a quiet destination: a person comes
@@ -14,7 +15,7 @@ const locationBar = document.getElementById("location");
 const root = document.getElementById("artist");
 const operator = document.getElementById("operator");
 
-const view = { mode: "brain", identity: "", part: "", open: {}, provenance: false, message: "" };
+const view = { mode: "brain", identity: "", part: "", open: {}, provenance: false, message: "", label: ARTIST_LABEL };
 
 const IDENTITY_LABELS = [
   { id: "", name: "Both identities" },
@@ -235,7 +236,7 @@ function head(brain) {
   const state = brain.approved ? "m-state m-state--approved" : "m-state m-state--current";
   const stateText = brain.approved ? "Brain approved" : "Needs approval";
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
-      <span class="m-breadcrumb__current">Artist Brain</span>
+      <span class="m-breadcrumb__current">${escape(view.label)} Brain</span>
     </nav>
     <span class="${state}">${escape(stateText)}</span>`;
 
@@ -271,11 +272,11 @@ function firstBrain() {
   return `<section class="m-empty-state m-empty-state--waiting" aria-labelledby="first-brain-heading">
       <div class="m-empty-state__visual" aria-hidden="true">
         <svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor"><path d="M20 49h24M24 55h16"></path><path d="M18 28a14 14 0 1 1 28 0c0 7-5 9-7 15H25c-2-6-7-8-7-15Z"></path><path d="M25 28h14M32 21v14"></path></svg>
-        <span class="m-empty-state__calibration">Artist research / Not approved</span>
+        <span class="m-empty-state__calibration">${escape(view.label)} research / Not approved</span>
       </div>
       <div class="m-empty-state__body">
         <span class="m-label">Higher Roads research</span>
-        <h2 id="first-brain-heading" class="m-section-heading">Build the Artist Brain</h2>
+        <h2 id="first-brain-heading" class="m-section-heading">Build the ${escape(view.label)} Brain</h2>
         <p class="m-copy m-copy--large">Import the research Higher Roads has gathered, then review and approve it before it guides a Scene.</p>
         <div class="m-empty-state__actions"><button class="m-button m-button--primary" type="button" data-import>Import intake files</button><span class="m-meta">NOTHING ENTERS AUTOMATICALLY</span></div>
       </div>
@@ -284,9 +285,12 @@ function firstBrain() {
 
 async function render() {
   const brain = await call("get-artist");
+  // The word comes from the account's artist row, so it is right on this page
+  // before anything has been imported into the brain.
+  view.label = String(brain.label || "").trim() || ARTIST_LABEL;
   if (!brain.artist) {
-    locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><span class="m-breadcrumb__current">Artist Brain</span></nav><span class="m-state m-state--current">Research not started</span>`;
-    root.innerHTML = `<header class="m-job-header m-intelligence-header"><div class="m-job-header__copy"><span class="m-label">What Meridian knows</span><h1 class="m-heading">Artist Brain</h1></div></header>${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${firstBrain()}`;
+    locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><span class="m-breadcrumb__current">${escape(view.label)} Brain</span></nav><span class="m-state m-state--current">Research not started</span>`;
+    root.innerHTML = `<header class="m-job-header m-intelligence-header"><div class="m-job-header__copy"><span class="m-label">What Meridian knows</span><h1 class="m-heading">${escape(view.label)} Brain</h1></div></header>${view.message ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}${firstBrain()}`;
     operator.innerHTML = "";
     return;
   }

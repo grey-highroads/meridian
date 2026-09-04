@@ -1,4 +1,5 @@
 import { TOUR_ID, scopedBody } from "./context.js";
+import { TOUR_LABEL } from "./label.js";
 import { escape, pad, renderIdeas } from "./intelligence/ideas-view.js";
 import { renderAsks } from "./intelligence/asks-view.js";
 import { renderDirectionRead } from "./intelligence/direction-view.js";
@@ -651,7 +652,8 @@ async function load() {
     return;
   }
   if (!TOUR_ID) {
-    view.message = "Start a tour in Tour details before asking about a Scene.";
+    // No tour is in scope here, so this reads the default word.
+    view.message = `Start a tour in ${TOUR_LABEL} details before asking about a Scene.`;
     render();
     return;
   }

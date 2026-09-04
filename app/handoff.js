@@ -1,4 +1,5 @@
 import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
+import { tourLabel } from "./label.js";
 
 const PARAMS = new URLSearchParams(window.location.search);
 const SCENE_ID = PARAMS.get("scene") || "storm-and-lightning";
@@ -219,7 +220,7 @@ function renderNoBrief() {
       <div class="m-empty-state__body">
         <span class="m-label">One step comes first</span>
         <h1 id="handoff-not-ready-heading" class="m-section-heading">Send the brief from the Scene</h1>
-        <p class="m-copy m-copy--large">Production needs one exact Scene direction, its required elements, and the Tour Direction version behind it. Finish that work in the Scene and send it to production from there.</p>
+        <p class="m-copy m-copy--large">Production needs one exact Scene direction, its required elements, and the ${escape(tourLabel(view.tour))} Direction version behind it. Finish that work in the Scene and send it to production from there.</p>
         <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./scene.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(SCENE_ID)}">Open the Scene</a></div>
       </div>
     </section>`;

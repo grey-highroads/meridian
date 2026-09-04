@@ -277,7 +277,7 @@ test("the org store's account list and the tour store's listing stay account sco
 
   const store = createTourStore({ backend, accountId: ACCOUNT_B });
   await store.createTour("northstar-2027", { tour: { id: "northstar-2027", name: "Northstar 2027", artistId: "wren-halloway" }, assignments: [] });
-  assert.deepEqual(await store.readTours(), [{ id: "northstar-2027", name: "Northstar 2027", artistId: "wren-halloway" }]);
+  assert.deepEqual(await store.readTours(), [{ id: "northstar-2027", name: "Northstar 2027", artistId: "wren-halloway", label: null }]);
   assert.deepEqual(await createTourStore({ backend, accountId: DEMO }).readTours(), []);
 });
 

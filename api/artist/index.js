@@ -7,6 +7,7 @@ import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError 
 import { ACCOUNT, OPERATOR_ROLE, createOrgStore } from "../../src/org/store.js";
 import { ACTIVE, DEACTIVATED, publicPerson } from "../../src/org/people.js";
 import { RECORD_ACTOR, createArtistDirectory, sanitizeArtistId } from "../../src/org/artists.js";
+import { artistLabel, storedLabel } from "../../src/label.js";
 import { createTourStore } from "../../src/tour/store.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 
@@ -236,7 +237,11 @@ export async function handleAction(body, options = {}) {
     const account = await openAccounts(options, store).createAccount(body.name);
     const directory = openDirectory(options, store, account.id, account.id);
     try {
-      const artist = await directory.createArtist({ name: artistName, identities: body.identities });
+      const artist = await directory.createArtist({
+        name: artistName,
+        identities: body.identities,
+        label: body.artistLabel,
+      });
       await directory.appendArtistFact({
         actor: options.user.displayName,
         role: options.user.roleLabel || null,
@@ -252,7 +257,11 @@ export async function handleAction(body, options = {}) {
   }
   if (body.action === "create-artist" && options.user && options.user.role === OPERATOR_ROLE) {
     const directory = openDirectory(options, store, accountId);
-    const created = await directory.createArtist({ name: body.name, identities: body.identities });
+    const created = await directory.createArtist({
+      name: body.name,
+      identities: body.identities,
+      label: body.label,
+    });
     await directory.appendArtistFact({
       actor: options.user ? options.user.displayName : RECORD_ACTOR,
       role: options.user ? options.user.roleLabel || null : null,
@@ -262,6 +271,23 @@ export async function handleAction(body, options = {}) {
       onBehalfOf: optionalText(body.onBehalfOf),
     });
     return { artist: created };
+  }
+
+  // The word this subject is called on screen. A display label and nothing
+  // else, so nothing downstream reads it to decide anything.
+  if (body.action === "save-artist-label" && options.user && options.user.role === OPERATOR_ROLE) {
+    const directory = openDirectory(options, store, accountId);
+    const wanted = sanitizeArtistId(body.artistId || "");
+    const updated = await directory.setArtistLabel(wanted, body.label);
+    await directory.appendArtistFact({
+      actor: options.user.displayName,
+      role: options.user.roleLabel || null,
+      account: accountId,
+      action: updated.label ? `Called this subject ${updated.label}` : "Went back to the default word for this subject",
+      artistId: updated.id,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { artist: updated };
   }
 
   // Which tour the account opens when the address names none. The tour has to
@@ -370,8 +396,14 @@ export async function handleAction(body, options = {}) {
     return await importIntake(store, openDirectory(options, store, accountId), artistId, reader);
   }
   if (body.action === "get-artist") {
-    const [record, decisions] = await Promise.all([store.readRecord(artistId), store.readDecisions(artistId)]);
-    return buildArtistView(record, decisions);
+    // The label lives on the account's artist row, not in the brain, so the
+    // page reads the right word before anything has been imported.
+    const [record, decisions, row] = await Promise.all([
+      store.readRecord(artistId),
+      store.readDecisions(artistId),
+      openDirectory(options, store, accountId).findArtist(artistId).catch(() => null),
+    ]);
+    return { ...buildArtistView(record, decisions), label: artistLabel(row) };
   }
   if (body.action === "list-findings") {
     const [record, decisions] = await Promise.all([store.readRecord(artistId), store.readDecisions(artistId)]);

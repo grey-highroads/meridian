@@ -20,7 +20,7 @@ function element() {
 
 function homePage(user, assignments) {
   const source = fs.readFileSync(path.join(rootPath, "app", "home.js"), "utf8")
-    .replace(/^import .*?;\n/, "");
+    .replace(/^(import .*?;\n)+/, "");
   const elements = { location: element(), home: element(), "review-count": element() };
   const context = {
     URLSearchParams, JSON, Number, String, Array, Set, Boolean, Object, Date, console,
@@ -28,6 +28,8 @@ function homePage(user, assignments) {
     ACCOUNT_ID: null,
     TOUR_ID: TOUR,
     scopedBody: (body) => ({ accountId: null, ...body }),
+    TOUR_LABEL: "Tour",
+    tourLabel: (record) => String((record && record.label) || "").trim() || "Tour",
     window: { location: { search: `?tour=${TOUR}`, href: "https://meridian.test/index.html" } },
     URL,
     document: {

@@ -1,4 +1,5 @@
 import { createBlobBackend, createMemoryBackend } from "../artist/store.js";
+import { storedLabel } from "../label.js";
 
 // The account's artists, as stored rows. Brief 3 of
 // docs/spec-accounts-artists-tours.md.
@@ -35,6 +36,8 @@ export const DEMO_ARTIST = {
   id: "dierks-bentley",
   name: "Dierks Bentley",
   identities: ["main-stage", "hot-country-knights", "shared"],
+  // No label stored, so this row reads Artist. The seed stays byte-identical
+  // to the one already written on the live deployment.
   createdAt: null,
 };
 
@@ -99,7 +102,7 @@ export function createArtistDirectory(options = {}) {
       return artists.find((entry) => entry.id === artistId) || null;
     },
 
-    async createArtist({ name, identities } = {}) {
+    async createArtist({ name, identities, label } = {}) {
       const cleaned = String(name || "").trim();
       if (!cleaned) {
         const error = new Error("Name the artist before creating it.");
@@ -127,10 +130,30 @@ export function createArtistDirectory(options = {}) {
         id,
         name: cleaned,
         identities: chosen.length ? chosen : [...DEFAULT_IDENTITIES],
+        // What this subject is called on screen. Absent when nobody typed
+        // one, and an absent label reads Artist.
+        label: storedLabel(label),
         createdAt: new Date().toISOString(),
       };
       await backend.write(artistsPath(accountId), JSON.stringify({ artists: [...artists, created] }, null, 2));
       return created;
+    },
+
+    // The word this subject is called on screen. The row is rewritten in
+    // place because a label is not a version of anything; the artist record
+    // carries who changed it and when.
+    async setArtistLabel(artistId, label) {
+      const artists = await this.readArtists();
+      const found = artists.find((entry) => entry.id === artistId);
+      if (!found) {
+        const error = new Error("No artist is stored under that name in this account.");
+        error.status = 404;
+        throw error;
+      }
+      const updated = { ...found, label: storedLabel(label) };
+      const rows = artists.map((entry) => (entry.id === artistId ? updated : entry));
+      await backend.write(artistsPath(accountId), JSON.stringify({ artists: rows }, null, 2));
+      return updated;
     },
 
     async readArtistFacts() {

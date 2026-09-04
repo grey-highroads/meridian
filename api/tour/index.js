@@ -23,11 +23,13 @@ import { createArtistDirectory } from "../../src/org/artists.js";
 import { resolveActingAccount } from "../../src/org/acting-account.js";
 import { createOrgStore } from "../../src/org/store.js";
 import { uploadPrefix } from "../../src/tour/upload-path.js";
+import { storedLabel } from "../../src/label.js";
 import { buildArtistView, evidenceFor } from "../../src/artist/service.js";
 import { readJsonBody, requireUser, sanitizeClientId, sendJson, sendPublicError } from "../../src/server/http.js";
 import { CLIENT_ROLE } from "../../src/org/store.js";
 
-// The tour layer's one function. Actions: create-tour, get-tour, list-tours,
+// The tour layer's one function. Actions: create-tour, save-tour-label,
+// get-tour, list-tours,
 // get-assignment, save-tour-dates, save-production-setup,
 // assignment-context, propose-concepts, choose-concept, get-concept,
 // compile-brief, freeze-brief, list-briefs, get-brief, send-brief,
@@ -575,6 +577,9 @@ export async function handleAction(body, options = {}) {
         themes: [],
         approximateDates: optionalText(body.approximateDates),
         primaryContact: optionalText(body.primaryContact),
+        // What this job is called on screen. Absent when nobody typed one,
+        // and an absent label reads Tour.
+        label: storedLabel(body.label),
         // An absent direction reads as version 0 with no words, so the first
         // direction someone writes becomes version 1 and Home shows the gap.
         direction: { version: 0, words: "", setBy: null, setOn: null, role: null },
@@ -590,6 +595,23 @@ export async function handleAction(body, options = {}) {
       at: createdAt,
     });
     return { tour: document.tour };
+  }
+
+  // The word this job is called on screen. It is a display label and nothing
+  // reads it to decide anything, so changing it is not versioned the way the
+  // direction and the dates are. The record still says who changed it.
+  if (body.action === "save-tour-label") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const label = storedLabel(body.label);
+    const tour = await tourStore.setTourLabel(fixture.tour.id, label);
+    await tourStore.appendTourFact(fixture.tour.id, {
+      ...actor,
+      action: label ? `Called this job ${label}` : "Went back to the default word for this job",
+      version: null,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { tour };
   }
 
   // The tour's route. A row keeps whatever it has, so a date with no venue yet

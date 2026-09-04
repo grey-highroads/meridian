@@ -124,6 +124,10 @@ export function parseTour(text) {
     version: 1,
     artistId,
     name: title.trim(),
+    // What this job is called on screen. A tour file without a Label line
+    // reads null and the interface says Tour, so every fixture written before
+    // this line existed parses exactly as it did.
+    label: field(text, "Label"),
     cycle: field(text, "Cycle"),
     // What the tour plays content back on. Most tours carry their own hardware
     // and configure it per venue, so the playback system is the technical fact

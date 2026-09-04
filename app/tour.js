@@ -1,4 +1,5 @@
 import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
+import { ARTIST_LABEL, TOUR_LABEL, artistLabel, tourLabel } from "./label.js";
 
 // The tour home. The tour record and the direction as the director gave it.
 // The route and the production setup can be written here, each on its own and
@@ -23,6 +24,7 @@ const view = {
   primaryContact: "",
   artistId: "",
   artists: [],
+  label: "",
   role: null,
 };
 
@@ -76,30 +78,43 @@ function artistField() {
       </div>`;
   }
   if (view.artists.length === 1) {
-    return `<div class="m-field"><span class="m-label">Artist</span><p class="m-copy">${escape(view.artists[0].name)}</p></div>`;
+    return `<div class="m-field"><span class="m-label">${escape(artistLabel(view.artists[0]))}</span><p class="m-copy">${escape(view.artists[0].name)}</p></div>`;
   }
   const options = view.artists.map((entry) => `<option value="${escape(entry.id)}"${entry.id === view.artistId ? " selected" : ""}>${escape(entry.name)}</option>`).join("");
-  return `<div class="m-field"><label class="m-label" for="artist">Artist</label><select class="m-select" id="artist" data-field="artistId">${options}</select></div>`;
+  return `<div class="m-field"><label class="m-label" for="artist">${escape(ARTIST_LABEL)}</label><select class="m-select" id="artist" data-field="artistId">${options}</select></div>`;
+}
+
+// What the creation screen calls the job. Nothing is stored yet, so it reads
+// what has been typed and falls back to the default.
+function creationLabel() {
+  return String(view.label || "").trim() || TOUR_LABEL;
 }
 
 function paintTourCreation() {
-  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><span class="m-breadcrumb__current">Tour details</span></nav>`;
+  const label = creationLabel();
+  const lower = label.toLowerCase();
+  locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb"><span class="m-breadcrumb__current">${escape(label)} details</span></nav>`;
   root.innerHTML = `<div class="m-form-page">
       <header class="m-form-page__intro">
-        <span class="m-label">Start the tour</span>
-        <h1 class="m-heading">Name the tour</h1>
-        <p class="m-copy m-copy--large">The tour name is the only required field. Add the rest if you know it.</p>
+        <span class="m-label">Start the ${escape(lower)}</span>
+        <h1 class="m-heading">Name the ${escape(lower)}</h1>
+        <p class="m-copy m-copy--large">The ${escape(lower)} name is the only required field. Add the rest if you know it.</p>
       </header>
       <div class="m-form-page__work">
         ${artistField()}
         <div class="m-field">
-          <label class="m-label" for="name">Tour name</label>
+          <label class="m-label" for="name">${escape(label)} name</label>
           <input class="m-input" id="name" data-field="name" value="${escape(view.name)}" placeholder="For example, Off The Map 2026" required />
+        </div>
+        <div class="m-field">
+          <label class="m-label" for="label">What to call this job</label>
+          <input class="m-input" id="label" data-field="label" value="${escape(view.label)}" placeholder="${escape(TOUR_LABEL)}" />
+          <span class="m-help">Optional. Use Residency, Festival, or whatever this job is called. Leave it blank for ${escape(TOUR_LABEL)}. You can change it later.</span>
         </div>
         <div class="m-field">
           <label class="m-label" for="approximate-dates">Rough dates</label>
           <input class="m-input" id="approximate-dates" data-field="approximateDates" value="${escape(view.approximateDates)}" placeholder="For example, May to September" />
-          <span class="m-help">Optional. Add the full route in Tour details later.</span>
+          <span class="m-help">Optional. Add the full route in ${escape(label)} details later.</span>
         </div>
         <div class="m-field">
           <label class="m-label" for="contact">Main contact</label>
@@ -108,13 +123,14 @@ function paintTourCreation() {
         </div>
         ${view.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
         <div class="m-cluster">
-          <button class="m-button m-button--primary" type="button" data-create-tour ${view.working || !view.artists.length ? "disabled" : ""}>${view.working ? "Starting" : "Start the tour"}</button>
+          <button class="m-button m-button--primary" type="button" data-create-tour ${view.working || !view.artists.length ? "disabled" : ""}>${view.working ? "Starting" : `Start the ${escape(lower)}`}</button>
         </div>
       </div>
     </div>`;
 }
 
 function directionSection(tour) {
+  const lower = tourLabel(tour).toLowerCase();
   const direction = tour.direction;
   if (!direction || !String(direction.words || "").trim()) {
     return `<section class="m-empty-state m-empty-state--waiting" aria-labelledby="direction-heading">
@@ -126,8 +142,8 @@ function directionSection(tour) {
           </svg>
         </div>
         <div class="m-empty-state__body">
-          <h2 id="direction-heading" class="m-section-heading">Set the direction for the tour</h2>
-          <p class="m-copy m-copy--large">What should guide the creative work across the tour?</p>
+          <h2 id="direction-heading" class="m-section-heading">Set the direction for the ${escape(lower)}</h2>
+          <p class="m-copy m-copy--large">What should guide the creative work across the ${escape(lower)}?</p>
           <div class="m-empty-state__actions"><a class="m-button m-button--primary" href="./direction.html?tour=${escape(TOUR_ID)}">Set direction</a></div>
         </div>
       </section>`;
@@ -257,26 +273,51 @@ function setupSection(tour) {
 function themesSection(tour) {
   const themes = (tour.themes || []).map((entry) => `<li>${escape(entry)}</li>`).join("");
   return `<section class="m-orientation__section" aria-labelledby="themes-heading">
-      <h3 id="themes-heading" class="m-label">Tour-wide themes</h3>
+      <h3 id="themes-heading" class="m-label">${escape(tourLabel(tour))}-wide themes</h3>
       ${themes ? `<ul class="m-compact-themes">${themes}</ul>` : `<div class="m-empty-inline"><span class="m-label">Optional</span><p class="m-copy">No tour-wide themes yet. You can still request and develop Scenes.</p></div>`}
+    </section>`;
+}
+
+function labelSection(tour) {
+  const current = tourLabel(tour);
+  const editor = `<div class="m-stack">
+      <div class="m-field">
+        <label class="m-label" for="tour-label">What to call this job</label>
+        <input class="m-input" id="tour-label" data-field="label" value="${escape(view.label)}" placeholder="${escape(TOUR_LABEL)}" />
+        <span class="m-help">Leave it blank to go back to ${escape(TOUR_LABEL)}.</span>
+      </div>
+      ${editorMessage("label")}
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-save-label ${view.working ? "disabled" : ""}>${view.working ? "Saving" : "Save the word"}</button>
+        <button class="m-button m-button--quiet" type="button" data-cancel>Cancel</button>
+      </div>
+    </div>`;
+  const reading = `<dl class="m-compact-definition"><div class="m-compact-definition__row"><dt class="m-label">On screen</dt><dd>${escape(current)}</dd></div></dl>`;
+  return `<section class="m-orientation__section" aria-labelledby="label-heading">
+      <div class="m-orientation__section-head">
+        <div class="m-stack"><h3 id="label-heading" class="m-label">What this job is called</h3></div>
+        ${view.editing === "label" ? "" : `<button class="m-button m-button--small" type="button" data-edit-label>Change the word</button>`}
+      </div>
+      ${view.editing === "label" ? editor : reading}
     </section>`;
 }
 
 function supportingReference(tour) {
   return `<aside class="m-orientation__aside" aria-labelledby="tour-facts-heading">
       <header class="m-orientation__aside-head">
-        <h2 id="tour-facts-heading" class="m-section-heading">Tour details</h2>
+        <h2 id="tour-facts-heading" class="m-section-heading">${escape(tourLabel(tour))} details</h2>
       </header>
       ${datesSection(tour)}
       ${setupSection(tour)}
       ${themesSection(tour)}
+      ${labelSection(tour)}
     </aside>`;
 }
 
 function paint() {
   const tour = view.tour;
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
-      <a href="./tour.html?tour=${escape(TOUR_ID)}">Tour</a>
+      <a href="./tour.html?tour=${escape(TOUR_ID)}">${escape(tourLabel(tour))}</a>
       <span aria-hidden="true">/</span>
       <span class="m-breadcrumb__current">${escape(tour.name)}</span>
     </nav>`;
@@ -360,6 +401,7 @@ document.addEventListener("click", (event) => {
     paintTourCreation();
     call("create-tour", {
       name: view.name,
+      label: view.label,
       artistId: view.artistId,
       approximateDates: view.approximateDates,
       primaryContact: view.primaryContact,
@@ -391,6 +433,12 @@ document.addEventListener("click", (event) => {
     view.dates = [...view.dates, blankDate()];
     paint();
   }
+  if (target.hasAttribute("data-edit-label")) {
+    view.label = view.tour.label || "";
+    view.editing = "label";
+    view.message = "";
+    paint();
+  }
   if (target.hasAttribute("data-edit-setup")) {
     const setup = view.tour.productionSetup;
     view.words = setup ? setup.words || "" : "";
@@ -406,6 +454,7 @@ document.addEventListener("click", (event) => {
   }
   if (target.hasAttribute("data-save-dates")) void save("save-tour-dates", { dates: view.dates });
   if (target.hasAttribute("data-save-setup")) void save("save-production-setup", { words: view.words, suppliedBy: view.suppliedBy });
+  if (target.hasAttribute("data-save-label")) void save("save-tour-label", { label: view.label });
 });
 
 render().catch((error) => {
