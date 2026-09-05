@@ -9,7 +9,7 @@ Who runs it: a Higher Roads operator, with a model in a chat as the tool. Nothin
 Five files, handed to the app for import:
 
 1. `00-prior.md`: the model's unresearched brain, by facet and identity, each claim with the model's own confidence, plus written predictions of what research will change.
-2. `01-sources.md`: the source list in tier order, every URL marked confirmed, index, or constructed.
+2. `01-sources.md`: the source list in tier order, every URL marked confirmed, index, or constructed. It also carries the artist's identities, on one line in the header, written `Identity: MS is main stage, HCK is Hot Country Knights, SH is shared.` This line is the only place the codes used in the source and claim tables are joined to the names used as headings in `03-findings.md`, so an identity missing from it is an identity the app cannot read. An intake with no such line is imported with a main stage and a shared bin and nothing else.
 3. `02-claims.md`: one line per claim: claim, era, facet, identity, source number from `01-sources.md`, locator, paraphrase. The source is a number, never a name, so the app can join claim to URL; the first run used names and 214 of 261 claims could not be joined.
 4. `03-findings.md`: findings per facet and identity, each listing the claim ids behind it, its independent source count and tiers, and its bin (confirmed, corrected, or new) against the prior, with counts at the top. A finding with no claim ids is not a finding; the app cannot open it to its evidence.
 5. `04-log.md`: every stage, every block, every judgment call, and timings.

@@ -44,14 +44,46 @@ const FACET_BY_PROSE = {
   "what the brand avoids, read from the brand itself": "AV",
 };
 
-export const IDENTITIES = [
+// The identities an artist performs under belong to that artist and not to
+// this module. The intake states them in one line near the top of
+// 01-sources.md, which the first run already wrote:
+//
+//   Identity: MS is main stage, HCK is Hot Country Knights, SH is shared.
+//
+// The sources and claims tables carry the code, the findings file carries the
+// name as a heading, and nothing else in the files joins the two, so that line
+// is the join. An intake that states no identity line gets the main stage and
+// the shared bin, which is the pair a new artist row is created with.
+export const DEFAULT_IDENTITIES = [
   { code: "MS", id: "main-stage", name: "Main stage" },
-  { code: "HCK", id: "hot-country-knights", name: "Hot Country Knights" },
   { code: "SH", id: "shared", name: "Shared" },
 ];
 
-const IDENTITY_BY_CODE = Object.fromEntries(IDENTITIES.map((entry) => [entry.code, entry.id]));
-const IDENTITY_BY_HEADING = Object.fromEntries(IDENTITIES.map((entry) => [entry.name.toLowerCase(), entry.id]));
+export function identityId(name) {
+  return String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function readableIdentity(value) {
+  const text = String(value).trim();
+  return text ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+export function parseIdentities(text) {
+  const line = String(text).match(/^Identity:\s*(.+)$/im);
+  if (!line) return DEFAULT_IDENTITIES.map((entry) => ({ ...entry }));
+  const identities = [];
+  for (const part of line[1].replace(/\.\s*$/, "").split(",")) {
+    const match = part.trim().match(/^([A-Za-z0-9]+)\s+is\s+(.+)$/);
+    if (!match) continue;
+    const name = readableIdentity(match[2]);
+    const id = identityId(name);
+    if (!id) continue;
+    if (identities.some((entry) => entry.id === id || entry.code === match[1].toUpperCase())) continue;
+    identities.push({ code: match[1].toUpperCase(), id, name });
+  }
+  if (!identities.length) fail("The identity line in 01-sources.md names no identities.");
+  return identities;
+}
 
 const BINS = ["confirmed", "corrected", "new"];
 
@@ -92,16 +124,27 @@ function facetsFromCodes(value) {
   return codes;
 }
 
-function identityFromCode(value) {
+// Identities arrive from the intake, so they are matched over the list rather
+// than through an object keyed by them. A code or a heading that names no
+// declared identity resolves to null and the row keeps no identity.
+function identityFromCode(value, identities) {
   const code = String(value).trim().toUpperCase();
-  return Object.prototype.hasOwnProperty.call(IDENTITY_BY_CODE, code) ? IDENTITY_BY_CODE[code] : null;
+  const found = identities.find((entry) => entry.code === code);
+  return found ? found.id : null;
+}
+
+function identityFromHeading(value, identities) {
+  const name = String(value).trim().toLowerCase();
+  const found = identities.find((entry) => entry.name.toLowerCase() === name);
+  return found ? found.id : null;
 }
 
 // ---------------------------------------------------------------------------
 // 01-sources.md
 // ---------------------------------------------------------------------------
 
-export function parseSources(text) {
+export function parseSources(text, identities) {
+  const declared = identities || parseIdentities(text);
   const sources = [];
   let tier = null;
   for (const line of String(text).split("\n")) {
@@ -136,7 +179,7 @@ export function parseSources(text) {
       status,
       facets: facetsFromProse(cells[3]),
       era: cells[4],
-      identity: identityFromCode(cells[5]),
+      identity: identityFromCode(cells[5], declared),
       // Syndicated copies are collapsed to their origin during extraction, so
       // no row in this file is a copy of another. The field is here because
       // the seam and the playbook both expect it once a run keeps one.
@@ -165,7 +208,7 @@ function resolveSourceId(sourceRef, sources) {
   return matches[0].id;
 }
 
-export function parseClaims(text, sources = []) {
+export function parseClaims(text, sources = [], identities = DEFAULT_IDENTITIES) {
   const claims = [];
   const seen = new Set();
   for (const line of String(text).split("\n")) {
@@ -188,7 +231,7 @@ export function parseClaims(text, sources = []) {
       text: cells[1],
       era: cells[2],
       facets: facetsFromCodes(cells[3]),
-      identities: [identityFromCode(cells[4])].filter(Boolean),
+      identities: [identityFromCode(cells[4], identities)].filter(Boolean),
       sourceRef,
       sourceId: resolveSourceId(sourceRef, sources),
       // The file's own note says this column carries a locator and a
@@ -237,7 +280,7 @@ function binFromParagraph(paragraph) {
   return null;
 }
 
-export function parseFindings(text) {
+export function parseFindings(text, identities = DEFAULT_IDENTITIES) {
   const findings = [];
   let facet = null;
   let identity = null;
@@ -260,9 +303,7 @@ export function parseFindings(text) {
     }
     const identityHeading = line.match(/^##\s+(.+?)\s*$/);
     if (identityHeading) {
-      identity = Object.prototype.hasOwnProperty.call(IDENTITY_BY_HEADING, identityHeading[1].toLowerCase())
-        ? IDENTITY_BY_HEADING[identityHeading[1].toLowerCase()]
-        : null;
+      identity = identityFromHeading(identityHeading[1], identities);
       continue;
     }
     if (!facet || !identity) continue;
@@ -309,15 +350,16 @@ export function parseFindings(text) {
 
 export function parseIntake({ artistId, artistName, prior, sources, claims, findings, log }) {
   if (!artistId) fail("An artist id is needed to import intake files.");
-  const sourceObjects = parseSources(sources);
-  const claimObjects = parseClaims(claims, sourceObjects);
-  const findingObjects = parseFindings(findings);
+  const identities = parseIdentities(sources);
+  const sourceObjects = parseSources(sources, identities);
+  const claimObjects = parseClaims(claims, sourceObjects, identities);
+  const findingObjects = parseFindings(findings, identities);
   return {
     artist: {
       id: artistId,
       version: 1,
       name: artistName || artistId,
-      identities: IDENTITIES.map((entry) => ({ id: entry.id, name: entry.name, code: entry.code })),
+      identities: identities.map((entry) => ({ id: entry.id, name: entry.name, code: entry.code })),
     },
     sources: sourceObjects,
     claims: claimObjects,

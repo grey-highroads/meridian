@@ -470,6 +470,25 @@ This is a conflict between a governing document and the code, recorded per CONTR
 
 Closes when: the setting exists and is checked, before the first real client logs in.
 
+## A Scene with no identity falls to the main stage, and shared is reserved
+
+Recorded 2026-09-05 with the identities fix. Identities now come from the
+intake rather than from `src/artist/parse-intake.js`, so an artist can declare
+any set of them. Two places in `src/tour/select.js` still name identities in
+code. `assembleContext` falls back to `main-stage` for a Scene that names no
+identity, and `scopeFindings` treats `shared` as the bin that applies to every
+identity. Both are right for an artist whose intake declares those words, which
+is what the default set gives an intake naming none.
+
+An artist declaring neither would scope to no findings, and nothing would say
+so. The Scene would run on the direction and the request alone and read as an
+artist with a thin brain.
+
+Closes when: a second artist's intake declares an identity set with no main
+stage. The fix must make the absence say so on the Scene rather than pick a
+different default, because the failure this entry records is a silent one and a
+new default would repeat its shape.
+
 ## Concurrent writes can silently drop a record
 
 Histories are arrays inside JSON documents. `appendFact` in `src/tour/scene-record.js` reads the whole document, appends in memory, and writes it back, and the same shape holds for reviews, approvals, versions, and intent. Two writers acting at the same moment both read version five, both write version six, and the last write wins; the other record disappears with no error. Verified against the tree 2026-09-05, found by the outside review.

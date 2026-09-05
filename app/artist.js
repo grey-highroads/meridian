@@ -15,14 +15,15 @@ const locationBar = document.getElementById("location");
 const root = document.getElementById("artist");
 const operator = document.getElementById("operator");
 
-const view = { mode: "brain", identity: "", part: "", open: {}, provenance: false, message: "", label: ARTIST_LABEL };
+const view = { mode: "brain", identity: "", identities: [], part: "", open: {}, provenance: false, message: "", label: ARTIST_LABEL };
 
-const IDENTITY_LABELS = [
-  { id: "", name: "Both identities" },
-  { id: "main-stage", name: "Main stage" },
-  { id: "hot-country-knights", name: "Hot Country Knights" },
-  { id: "shared", name: "Shared" },
-];
+// The identities this artist performs under come from the record the intake
+// wrote, so a second artist is never offered the first artist's side project.
+// An artist with one identity gets no filter at all, because a choice between
+// one thing and everything is not a choice.
+function identityLabels() {
+  return [{ id: "", name: "All identities" }, ...view.identities];
+}
 
 const PART_LABELS = [
   { id: "", name: "Every part of the artist" },
@@ -174,9 +175,9 @@ function reader(groups) {
   const selected = groups.filter((group) => group.facet === view.part);
   const entries = entriesFrom(selected);
   const category = PART_LABELS.find((part) => part.id === view.part);
-  const identity = IDENTITY_LABELS.find((entry) => entry.id === view.identity);
+  const identity = identityLabels().find((entry) => entry.id === view.identity);
   const title = category ? category.name : "Approved guidance";
-  const scope = view.identity ? identity.name : "Across both identities";
+  const scope = view.identity && identity ? identity.name : "Across all identities";
   const initialLimit = 4;
   const visible = entries.slice(0, initialLimit);
   const remaining = entries.slice(initialLimit);
@@ -211,10 +212,10 @@ function browser(brain, groups) {
   choosePart(groups);
   return `<div class="m-intelligence-browser">
       <aside class="m-intelligence-browser__index" aria-label="Brain categories">
-        <div class="m-intelligence-browser__filter">
+        ${view.identities.length > 1 ? `<div class="m-intelligence-browser__filter">
           <label class="m-label" for="identity-filter">Identity</label>
-          <select class="m-select" id="identity-filter" data-filter="identity">${options(IDENTITY_LABELS, view.identity)}</select>
-        </div>
+          <select class="m-select" id="identity-filter" data-filter="identity">${options(identityLabels(), view.identity)}</select>
+        </div>` : ""}
         ${categoryIndex(groups)}
         ${adminPanel(brain)}
       </aside>
@@ -294,6 +295,13 @@ async function render() {
     operator.innerHTML = "";
     return;
   }
+  // The identities come from this artist's own record. A filter left standing
+  // from another artist would ask the server for findings nobody here has, so
+  // it is dropped rather than carried.
+  view.identities = (brain.artist.identities || [])
+    .filter((entry) => entry && entry.id)
+    .map((entry) => ({ id: entry.id, name: entry.name || entry.id }));
+  if (view.identity && !view.identities.some((entry) => entry.id === view.identity)) view.identity = "";
   if (!brain.approved) view.mode = "review";
   let groups = [];
   if (view.mode === "brain") {
