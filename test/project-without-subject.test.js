@@ -174,3 +174,39 @@ test("a brief from a project with a subject still reads the artist section", () 
   assert.match(document, /## The artist behind this/);
   assert.match(document, /He plays weather\./);
 });
+
+test("a project attaches and detaches subjects, and the created artist stays fixed", async () => {
+  const backend = createMemoryBackend();
+  const options = tourOptions(backend);
+  const directory = createArtistDirectory({ backend, accountId: ACCOUNT });
+  await directory.createArtist({ name: "First Artist" });
+  const venue = await directory.createArtist({ name: "The Pinnacle", kind: "venue" });
+  await tourAction({ action: "create-tour", name: "Attach Test", artistId: "first-artist" }, options);
+  const attach = await tourAction({ action: "attach-subject", tourId: "attach-test", subjectId: venue.id }, options);
+  assert.deepEqual(attach.subjectIds, ["first-artist", "the-pinnacle"], "artistId reads first, attachment after");
+  await assert.rejects(
+    tourAction({ action: "attach-subject", tourId: "attach-test", subjectId: venue.id }, options),
+    /already on this job/, "attaching twice is refused");
+  await assert.rejects(
+    tourAction({ action: "detach-subject", tourId: "attach-test", subjectId: "first-artist" }, options),
+    /stays on its record/, "the creation subject cannot be detached");
+  const detach = await tourAction({ action: "detach-subject", tourId: "attach-test", subjectId: venue.id }, options);
+  assert.deepEqual(detach.subjectIds, ["first-artist"], "detach removes the attachment only");
+  const facts = await options.tourStore.readTourFacts("attach-test");
+  const actions = facts.map((entry) => entry.action);
+  assert.ok(actions.some((entry) => entry.includes("Attached The Pinnacle")), "the attach fact names the subject");
+  assert.ok(actions.some((entry) => entry.includes("Removed The Pinnacle")), "the detach fact names the subject");
+});
+
+test("a subject from another account cannot be attached, and a subjectless project can gain its first", async () => {
+  const backend = createMemoryBackend();
+  const options = tourOptions(backend);
+  await tourAction({ action: "create-tour", name: "Bare Job" }, options);
+  await assert.rejects(
+    tourAction({ action: "attach-subject", tourId: "bare-job", subjectId: "someone-elses" }, options),
+    /No subject is stored under that name in this account/, "an id this account does not hold reads as absent");
+  const directory = createArtistDirectory({ backend, accountId: ACCOUNT });
+  const org = await directory.createArtist({ name: "Charity Org", kind: "organization" });
+  const attach = await tourAction({ action: "attach-subject", tourId: "bare-job", subjectId: org.id }, options);
+  assert.deepEqual(attach.subjectIds, ["charity-org"], "a project created with nobody gains its first subject later");
+});

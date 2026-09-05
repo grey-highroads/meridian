@@ -192,6 +192,24 @@ export function createTourStore(options = {}) {
       await writeTourDocument(tourId, "tour", document);
       return document;
     },
+    // Who the work is for. A list of subject ids from the account's
+    // directory. Written on its own, like the label, so nothing else stored
+    // under the tour is touched. The stored artistId is never rewritten;
+    // reads treat it as the first subject when present, so every project
+    // from before this field existed keeps its subject without migration.
+    async setSubjects(tourId, subjectIds) {
+      const stored = await readTourDocument(tourId, "tour", null);
+      if (!stored || !stored.tour) {
+        const error = new Error("We couldn't find this tour.");
+        error.status = 404;
+        throw error;
+      }
+      const cleaned = Array.isArray(subjectIds)
+        ? [...new Set(subjectIds.map((entry) => String(entry || "").trim()).filter(Boolean))]
+        : [];
+      await writeTourDocument(tourId, "tour", { ...stored, tour: { ...stored.tour, subjectIds: cleaned } });
+      return cleaned;
+    },
     // The word this tour is called on screen. Written on its own rather than
     // through a rewrite of the tour document, so nothing else stored under
     // the tour is touched when somebody changes the word.

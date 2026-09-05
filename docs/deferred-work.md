@@ -470,29 +470,6 @@ This is a conflict between a governing document and the code, recorded per CONTR
 
 Closes when: the setting exists and is checked, before the first real client logs in.
 
-## A project's subject is set at creation and cannot be changed after
-
-Recorded 2026-09-05 with the Intelligence work. A project now stores `artistId`
-as null when nobody names a subject, and `create-tour` is the only thing that
-ever writes that field. There is no action, and no control, that attaches a
-subject to a project later or moves one to a different subject. Verified against
-the tree: the tour route has `save-tour-label`, `save-tour-dates`,
-`save-production-setup`, and `save-scene-direction`, and nothing that touches
-`artistId`.
-
-The consequence a person meets first is on Intelligence. The direction
-comparison says it needs research about who the work is for, which is true, and
-there is nothing on any screen a person can then do about it. The instrument
-names a gap the app cannot close.
-
-Closes when: a real project needs a subject it did not start with, which the
-mapping job will produce as soon as the building's research exists. The change
-is one action, one control on the project page, and a fact on the record naming
-who attached it. It waits because the subjects model in step 4 of
-`docs/meridian-roadmap-phase-2.md` decides whether a project points at one
-subject or a list of them, and building the single-subject version first would
-be built twice.
-
 ## A subjectless artboard check has no citation to drop an entry against
 
 Recorded 2026-09-05 with the Intelligence work. On a project with a subject,

@@ -70,8 +70,15 @@ async function loadTour(tourId, options) {
   // version written through the app wins, and the earlier one stays stored.
   const dates = dateVersions.length ? dateVersions[dateVersions.length - 1].dates : (stored.tour.dates || []);
   const productionSetup = setupVersions.length ? setupVersions[setupVersions.length - 1] : (stored.tour.productionSetup || null);
+  // Who the work is for, derived at read. The stored artistId from before
+  // the subject list existed reads as the first subject; nothing stored is
+  // rewritten. Order is artistId first, then attachments in the order made.
+  const attached = Array.isArray(stored.tour.subjectIds) ? stored.tour.subjectIds : [];
+  const subjectIds = stored.tour.artistId
+    ? [stored.tour.artistId, ...attached.filter((entry) => entry !== stored.tour.artistId)]
+    : [...attached];
   return {
-    tour: { ...stored.tour, direction, dates, productionSetup },
+    tour: { ...stored.tour, direction, dates, productionSetup, subjectIds },
     assignments: [...(stored.assignments || []), ...requests],
   };
 }
@@ -632,6 +639,82 @@ export async function handleAction(body, options = {}) {
   // The word this job is called on screen. It is a display label and nothing
   // reads it to decide anything, so changing it is not versioned the way the
   // direction and the dates are. The record still says who changed it.
+
+  // Who the work is for can change after creation. Attach and detach write
+  // the subject list only; the stored artistId is never touched, so a
+  // project from before the list existed keeps its first subject. Ruled
+  // 2026-09-05: clients own subjects, projects apply them, no lead subject.
+  if (body.action === "attach-subject") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const subjectId = String(body.subjectId || "").trim();
+    if (!subjectId) {
+      const error = new Error("Name the subject to attach.");
+      error.status = 400;
+      throw error;
+    }
+    const artistDirectory = options.artists || createArtistDirectory({
+      ...((options.store?.backend || options.tourStore?.backend)
+        ? { backend: options.store?.backend || options.tourStore.backend }
+        : {}),
+      accountId: actingAccount,
+    });
+    const row = await artistDirectory.findArtist(subjectId);
+    if (!row) {
+      const error = new Error("No subject is stored under that name in this account.");
+      error.status = 404;
+      throw error;
+    }
+    if (fixture.tour.subjectIds.includes(subjectId)) {
+      const error = new Error("That subject is already on this job.");
+      error.status = 409;
+      throw error;
+    }
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const stored = Array.isArray((await tourStore.readTour(fixture.tour.id)).tour.subjectIds)
+      ? (await tourStore.readTour(fixture.tour.id)).tour.subjectIds
+      : [];
+    const subjectIds = await tourStore.setSubjects(fixture.tour.id, [...stored, subjectId]);
+    await tourStore.appendTourFact(fixture.tour.id, {
+      ...actor,
+      action: `Attached ${row.name} to this job`,
+      version: null,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { subjectIds: fixture.tour.artistId ? [fixture.tour.artistId, ...subjectIds] : subjectIds };
+  }
+  if (body.action === "detach-subject") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const subjectId = String(body.subjectId || "").trim();
+    if (subjectId && subjectId === fixture.tour.artistId) {
+      const error = new Error("This subject was set when the job was created and stays on its record. It can be left unused, not removed.");
+      error.status = 409;
+      throw error;
+    }
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const current = (await tourStore.readTour(fixture.tour.id)).tour.subjectIds;
+    const stored = Array.isArray(current) ? current : [];
+    if (!stored.includes(subjectId)) {
+      const error = new Error("That subject is not on this job.");
+      error.status = 404;
+      throw error;
+    }
+    const subjectIds = await tourStore.setSubjects(fixture.tour.id, stored.filter((entry) => entry !== subjectId));
+    const artistDirectory = options.artists || createArtistDirectory({
+      ...((options.store?.backend || options.tourStore?.backend)
+        ? { backend: options.store?.backend || options.tourStore.backend }
+        : {}),
+      accountId: actingAccount,
+    });
+    const removed = await artistDirectory.findArtist(subjectId);
+    await tourStore.appendTourFact(fixture.tour.id, {
+      ...actor,
+      action: `Removed ${removed ? removed.name : subjectId} from this job`,
+      version: null,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    });
+    return { subjectIds: fixture.tour.artistId ? [fixture.tour.artistId, ...subjectIds] : subjectIds };
+  }
+
   if (body.action === "save-tour-label") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
     const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });

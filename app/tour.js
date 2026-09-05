@@ -12,6 +12,7 @@ const root = document.getElementById("tour");
 // Which section is open for editing, and what has been typed into it. Nothing
 // here is required before a Scene can be requested.
 const view = {
+  attachSubject: "",
   tour: null,
   editing: null,
   dates: [],
@@ -287,6 +288,40 @@ function themesSection(tour) {
     </section>`;
 }
 
+function subjectsSection(tour) {
+  const ids = Array.isArray(tour.subjectIds) ? tour.subjectIds : [];
+  const byId = new Map(view.artists.map((entry) => [entry.id, entry]));
+  const kindWord = (row) => {
+    if (!row) return "subject";
+    if (row.kind && row.kind !== "artist") return row.kind;
+    return artistLabel(row).toLowerCase();
+  };
+  const rows = ids.map((id) => {
+    const row = byId.get(id);
+    const name = row ? row.name : id;
+    const fixed = tour.artistId === id;
+    return `<div class="m-compact-definition__row"><dt class="m-label">${escape(kindWord(row))}</dt><dd>${escape(name)}${fixed ? "" : ` <button class="m-button m-button--small" type="button" data-detach-subject="${escape(id)}" ${view.working ? "disabled" : ""}>Remove</button>`}</dd></div>`;
+  }).join("");
+  const attachable = view.artists.filter((entry) => !ids.includes(entry.id));
+  const options = attachable.map((entry) => `<option value="${escape(entry.id)}"${entry.id === view.attachSubject ? " selected" : ""}>${escape(entry.name)}</option>`).join("");
+  const attach = attachable.length
+    ? `<div class="m-cluster">
+        <select class="m-input" data-field="attachSubject" aria-label="Subject to add">
+          <option value="">Choose who to add</option>${options}
+        </select>
+        <button class="m-button m-button--small" type="button" data-attach-subject ${view.working ? "disabled" : ""}>Add to this job</button>
+      </div>`
+    : "";
+  return `<section class="m-orientation__section" aria-labelledby="subjects-heading">
+      <div class="m-orientation__section-head">
+        <div class="m-stack"><h3 id="subjects-heading" class="m-label">Who this work is for</h3></div>
+      </div>
+      ${rows ? `<dl class="m-compact-definition">${rows}</dl>` : `<div class="m-empty-inline"><span class="m-label">Optional</span><p class="m-copy">Nobody is attached yet. The job runs on its own material either way.</p></div>`}
+      ${attach}
+      ${editorMessage("subjects")}
+    </section>`;
+}
+
 function labelSection(tour) {
   const current = tourLabel(tour);
   const editor = `<div class="m-stack">
@@ -319,6 +354,7 @@ function supportingReference(tour) {
       ${datesSection(tour)}
       ${setupSection(tour)}
       ${themesSection(tour)}
+      ${subjectsSection(tour)}
       ${labelSection(tour)}
     </aside>`;
 }
@@ -464,6 +500,22 @@ document.addEventListener("click", (event) => {
   if (target.hasAttribute("data-save-dates")) void save("save-tour-dates", { dates: view.dates });
   if (target.hasAttribute("data-save-setup")) void save("save-production-setup", { words: view.words, suppliedBy: view.suppliedBy });
   if (target.hasAttribute("data-save-label")) void save("save-tour-label", { label: view.label });
+  if (target.hasAttribute("data-attach-subject")) {
+    if (!view.attachSubject) {
+      view.editing = "subjects";
+      view.message = "Choose who to add first.";
+      paint();
+      return;
+    }
+    const chosen = view.attachSubject;
+    view.attachSubject = "";
+    view.editing = "subjects";
+    void save("attach-subject", { subjectId: chosen });
+  }
+  if (target.hasAttribute("data-detach-subject")) {
+    view.editing = "subjects";
+    void save("detach-subject", { subjectId: target.getAttribute("data-detach-subject") });
+  }
 });
 
 render().catch((error) => {
