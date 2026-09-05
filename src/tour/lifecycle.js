@@ -77,8 +77,15 @@ export function briefWentOut(scene) {
 // happened. An artboard coming back is not read as an acknowledgement here,
 // because the question this answers is whether the brief arrived, and only
 // production's answer says that.
-export function productionAcknowledged(scene) {
-  return list(scene.facts).some((entry) => entry && entry.action === PRODUCTION_ACKNOWLEDGED);
+export function productionAcknowledged(scene, briefVersion) {
+  // Each brief version is its own delivery, so its confirmation is its own
+  // fact. Asked without a version, this answers whether any version was
+  // confirmed, which is what the lifecycle stages read.
+  return list(scene.facts).some((entry) => {
+    if (!entry || entry.action !== PRODUCTION_ACKNOWLEDGED) return false;
+    if (briefVersion === undefined || briefVersion === null) return true;
+    return entry.version === `Brief V0${briefVersion}`;
+  });
 }
 
 // The most advanced versioned Scene object. Briefs until an artboard exists,

@@ -271,3 +271,33 @@ test("a failed delivery's reason travels to the send-to-production response", as
   assert.equal(result.acknowledged, false);
   assert.match(String(result.deliveryReason), /status 500/, "the reason names what production answered");
 });
+
+test("a second frozen brief is its own delivery: v1 stays confirmed, v2 posts and confirms on its own fact", async () => {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    const posted = JSON.parse(init.body);
+    calls.push(posted);
+    return { ok: true, status: calls.length === 1 ? 201 : 201, async json() { return { jobId: posted.jobId, receivedAt: "2026-09-05T22:00:00.000Z" }; } };
+  };
+  const { options } = await ready({ env: CONFIGURED, deliveryFetch: fetchImpl });
+
+  const first = await tourAction({ action: "send-to-production", ...AT }, options);
+  assert.equal(first.acknowledged, true);
+  assert.equal(first.brief.briefVersion, 1);
+
+  const v2 = await tourAction({ action: "freeze-brief", ...AT }, options);
+  assert.equal(v2.brief.briefVersion, 2);
+
+  const between = await tourAction({ action: "get-handoffs", ...AT }, options);
+  assert.equal(between.acknowledged, false, "freezing v2 puts the Scene back to unconfirmed until v2 is answered");
+
+  const second = await tourAction({ action: "send-to-production", ...AT }, options);
+  assert.equal(second.brief.briefVersion, 2, "sending after a new freeze sends the new version");
+  assert.equal(second.acknowledged, true);
+  assert.equal(calls.length, 2, "v2 was actually posted rather than skipped on v1's confirmation");
+  assert.equal(calls[1].briefVersion, 2);
+  assert.equal(calls[0].jobId, calls[1].jobId, "the jobId is stable across versions");
+
+  const after = await tourAction({ action: "get-handoffs", ...AT }, options);
+  assert.equal(after.acknowledged, true);
+});

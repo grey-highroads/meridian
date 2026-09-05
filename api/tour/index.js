@@ -1434,7 +1434,7 @@ export async function handleAction(body, options = {}) {
   // exists is never written twice.
   async function deliverAndRecord({ brief, record, fixture, assignment, actor, options }) {
     const facts = await record.readFacts(fixture.tour.id, assignment.id);
-    if (productionAcknowledged({ facts })) return { acknowledged: true, reason: null };
+    if (productionAcknowledged({ facts }, brief.briefVersion)) return { acknowledged: true, reason: null };
     const outcome = await deliverBrief(renderBriefSidecar(brief), { fetchImpl: options.deliveryFetch, env: options.env });
     if (!outcome.acknowledged) return { acknowledged: false, reason: outcome.reason || null };
     await record.appendFact(fixture.tour.id, assignment.id, {
@@ -1524,7 +1524,13 @@ export async function handleAction(body, options = {}) {
     // neither, so it is absent from their payload rather than false on it.
     const record = options.sceneRecord || createSceneRecord({ accountId: actingAccount });
     const facts = await record.readFacts(fixture.tour.id, assignment.id);
-    return { handoffs, acknowledged: productionAcknowledged({ facts }) };
+    // Acknowledged means the newest frozen brief was confirmed, so freezing a
+    // second version puts the Scene honestly back to sent-and-unconfirmed
+    // until production answers for that version.
+    const versions = await (options.tourStore || createTourStore({ accountId: actingAccount })).readBriefs(fixture.tour.id, assignment.id);
+    const frozen = versions.filter((entry) => entry.status === "frozen");
+    const newest = frozen.length ? frozen[frozen.length - 1].briefVersion : null;
+    return { handoffs, acknowledged: newest === null ? false : productionAcknowledged({ facts }, newest) };
   }
 
   // The seam. What goes out is one frozen brief. What comes back is an
