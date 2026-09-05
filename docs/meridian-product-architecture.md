@@ -477,3 +477,17 @@ Corrected 2026-09-04, in the commit that carries it. The rail first read Details
 The alternative considered and refused was hydrating the rail from the record after the session call, which `app/shell.js` already makes. It would have worked and it would have shown the default word on every page load and corrected itself a moment later. There is no accepted pattern for a rail label that changes after load, and the label is not worth inventing one.
 
 **Lowercase copy follows the label only where the two would contradict each other.** A screen showing the label and saying "tour" in the next sentence reads wrong. A screen with no label on it reads Tour anyway and the two agree. So `app/tour.js` on the creation screen and the direction empty state, and `app/home.js` where one sentence names the job twice, follow the label. Everything else stands, recorded in `docs/deferred-work.md` with the condition that closes it.
+
+## One ruling, 2026-09-05
+
+Recorded against the committed tree at `e07fc46c`. Extends the container ruling and the subject ruling of 2026-09-04 by saying what they are for.
+
+**Public material is about tours and the software assumes no tour.** Meridian is Higher Roads' client surface. It is not sold off a shelf, so the words a prospect reads and the words the code stores answer to different questions. What Higher Roads wants to win is tour work, and a tour manager places the pitch in one sentence. Widening the public language to cover every engagement Higher Roads might take would make the pitch land softer and would not make the software better.
+
+Underneath it, nothing assumes a job is a tour or that a subject is an artist. The middle layer provides one direction version to write against, one set of technical facts, one cast of people with permissions, and one close where facts are recorded. A residency, a festival run, and a projection mapping job need all four. The durable layer holds who the work is for, which on a mapping job is a brand, a venue, or a building.
+
+Where the two sides meet: the landing page, the pitch, and anything written to win work name tours and say what Meridian does for a tour. Interface copy reads the record's label, so a residency reads its own word and a mapping job's subject reads Client. Stored field names stay as they are, for the reasons the 2026-09-04 container ruling gave.
+
+What this does not license. No branch on a label, which the label ruling of the same day already forbids and a test already asserts. No second set of screens for engagements that are not tours. No shape field until something behaves differently because of it. A value proposition written for tours is marketing work and does not become a requirement on the tree.
+
+Assumed: that tours stay the work Higher Roads leads with. If the mapping and install work becomes the larger share, the public language is the thing that moves, and nothing in the tree has to move with it. That is the point of separating them.

@@ -10,6 +10,8 @@ Holds a durable, sourced record of who an artist is. Stores a tour's visual dire
 
 Meridian makes ideas and keeps the record. Jim's system makes the pictures.
 
+Most of the language in this repo is about tours, because tour work is what Higher Roads leads with and the pitch is stronger for being specific. The software assumes none of it. A residency, a festival run, and a projection mapping job with no music in it use the same three layers, and each record carries the word its client uses for it. Ruled 2026-09-04 and 2026-09-05 in `docs/meridian-product-architecture.md`.
+
 ## Read these first
 
 In this order. Each answers one question and none restates another.
@@ -30,7 +32,7 @@ Meridian is purpose-built. There is no generic platform layer. Shared code is ex
 
 ## Current state
 
-First artist: Dierks Bentley. First tour: Off The Map, seeded from a fixture whose direction, setup, dates, and themes are Higher Roads' sample content and are labeled as such in the file.
+First artist: Dierks Bentley. First tour: Off The Map, seeded from a fixture whose direction, setup, dates, and themes are Higher Roads' sample content and are labeled as such in the file. Both records carry an optional display label, so a job that is not a tour and a subject that is not an artist read as themselves. Nothing branches on the label.
 
 What the tree holds: the artist brain with intake, findings, and approval. A tour with its direction, dates, and production setup stored as given and versioned. Scene requests, concept proposals, and a compiled brief that freezes. A stand-in for Jim's system, a delivery module that posts a frozen brief to his receiver, and the acknowledgement fact that comes back. Higher Roads review, client review with a server-side boundary, and client approval that freezes production intent. An Intelligence surface carrying scene ideas, a direction read, and a board review. Two roles, sign in, and an admin surface.
 

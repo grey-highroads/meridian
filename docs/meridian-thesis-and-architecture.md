@@ -22,6 +22,8 @@ Three kinds of intelligence make that confidence real, and all three matter: art
 
 The first version is a Higher Roads service operated through Meridian. Higher Roads builds the artist brain, builds or inherits the tour direction, and facilitates approvals. The client gets clarity. Software the client configures comes after repeated proof.
 
+Amended 2026-09-05. This document says tour and artist throughout, and that language is kept because tours are the work Higher Roads leads with and the pitch is stronger for being specific. The software makes no such assumption. Meridian's middle layer serves a residency, a festival run, and a projection mapping job as readily as a tour, and its durable layer holds whoever the work is for, which on a mapping job is a brand, a venue, or a building. Both records carry a display label, so the interface reads the client's own word while the stored field names stay put. Read every tour in this document as the engagement in front of you and every artist as the subject the work is for. Ruled 2026-09-04 and 2026-09-05 in docs/meridian-product-architecture.md.
+
 Corrected 2026-08-24. The sentence above is about capability on our side, never a gate on the client's. Nothing requires the client to configure anything; nothing prevents an engaged client from acting directly. Higher Roads can perform every act on the client's behalf, same screens, same record. Two further rulings the same day, recorded in docs/meridian-product-architecture.md: the loop's stations are required while the tools at each station are optional, and attribution replaces permission tiers, with identity on every action and the client-facing surface rule unchanged.
 
 ## The three layers
@@ -30,7 +32,7 @@ The system has three layers. They have different lifetimes, different owners, an
 
 ### Artist layer: permanent
 
-The artist is the brand. This layer holds what the system knows about them: synthesized intelligence from the public record, evidence behind each claim, prohibitions, visual language, stage history, what past tours did and what worked.
+The artist is the brand. On a job with no artist in it the subject is the brand, the venue, or the building, and this layer does the same work for them. This layer holds what the system knows about the subject: synthesized intelligence from the public record, evidence behind each claim, prohibitions, visual language, stage history, what past tours did and what worked.
 
 It outlives every tour. It is built first because the tour cannot be helped by a system that does not know the artist, and because it is the context every tour is read against.
 
@@ -58,7 +60,7 @@ The brain is not allowed to surprise the artist's team. Anything it asserts carr
 
 ### Tour layer: one cycle
 
-The tour is the latest product, the way an album is a product and the catalog is context. It lives for one cycle and gets the full attention of everyone using the app while it is live.
+The tour is the latest product, the way an album is a product and the catalog is context. It lives for one cycle and gets the full attention of everyone using the app while it is live. A residency, a festival run, or an install lives here the same way; a tour is one shape this layer takes.
 
 It holds the tour's visual direction (often inherited from a creative director the artist hired, stored as given and versioned), the people working on it and what each may do, assignments under the direction, creative briefs written against a named version of the direction, artboards and their versions, every decision with who made it and why, feedback, approvals, and the technical details of the venues and screens that need review.
 
@@ -117,4 +119,4 @@ Three things protected from day one: the artist brain proposes ideas with eviden
 
 ## One-sentence test for any proposal
 
-Which layer does it live in, what does it do for the tour in front of us, and what does it leave behind for the next one? If a proposal cannot answer all three, it waits.
+Which layer does it live in, what does it do for the tour in front of us, and what does it leave behind for the next one? If a proposal cannot answer all three, it waits. On a job that is not a tour, read the second question as the engagement in front of us.
