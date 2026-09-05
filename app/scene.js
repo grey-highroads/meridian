@@ -38,6 +38,7 @@ const view = {
   // Whether production answered. Sending is ours and delivery is theirs, and
   // the send section says which of the two has happened.
   acknowledged: false,
+  deliveryReason: null,
   artboards: [],
   receipt: null,
   draft: { direction: "", question: "", answers: {} },
@@ -373,7 +374,10 @@ function sendWork() {
     standing = `<div class="m-drawer__result"><p class="m-copy">Production has the Scene.</p></div>`;
     controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`;
   } else if (handoff) {
-    standing = `<div class="m-drawer__result"><p class="m-copy">The brief went out. Production has not confirmed it.</p></div>`;
+    // The reason is about the last attempt in this sitting, so it shows after
+    // a send and not after a reload; the standing line is the durable truth.
+    const why = view.deliveryReason ? `<p class="m-copy">${escape(view.deliveryReason)}</p>` : "";
+    standing = `<div class="m-drawer__result"><p class="m-copy">The brief went out. Production has not confirmed it.</p>${why}</div>`;
     controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send again"}</button>${openHandoff}`;
   } else {
     controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send to production"}</button>`;
@@ -579,6 +583,7 @@ document.addEventListener("click", (event) => {
       }
       const sent = await call("send-to-production", { assignmentId: view.sceneId });
       view.brief = { brief: sent.brief, document: sent.document, sidecar: sent.sidecar };
+      view.deliveryReason = sent.acknowledged ? null : (sent.deliveryReason || null);
       view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
       const issued = await call("get-handoffs", { assignmentId: view.sceneId });
       view.handoffs = issued.handoffs;

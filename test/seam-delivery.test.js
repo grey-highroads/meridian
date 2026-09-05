@@ -263,3 +263,11 @@ test("a client reviewer is told nothing about delivery", async () => {
     /for the Higher Roads team/,
   );
 });
+
+test("a failed delivery's reason travels to the send-to-production response", async () => {
+  const fetchImpl = async () => ({ ok: false, status: 500, async json() { return { nope: true }; } });
+  const { options } = await ready({ env: CONFIGURED, deliveryFetch: fetchImpl });
+  const result = await tourAction({ action: "send-to-production", ...AT }, options);
+  assert.equal(result.acknowledged, false);
+  assert.match(String(result.deliveryReason), /status 500/, "the reason names what production answered");
+});

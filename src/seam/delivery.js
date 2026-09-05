@@ -53,6 +53,7 @@ export async function deliverBrief(sidecar, options = {}) {
   const fetchImpl = options.fetchImpl || fetch;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs || TIMEOUT_MS);
+  const startedAt = Date.now();
   let response;
   try {
     response = await fetchImpl(url, {
@@ -62,6 +63,7 @@ export async function deliverBrief(sidecar, options = {}) {
       signal: controller.signal,
     });
   } catch (error) {
+    console.log(`meridian delivery got no answer after ${Date.now() - startedAt}ms`);
     return {
       attempted: true,
       acknowledged: false,
@@ -72,6 +74,9 @@ export async function deliverBrief(sidecar, options = {}) {
   } finally {
     clearTimeout(timer);
   }
+  // One line per attempt, for the function logs. Jim times his side; this is
+  // ours, and it is a log rather than a stored field on purpose.
+  console.log(`meridian delivery answered in ${Date.now() - startedAt}ms with status ${response.status}`);
   if (!response.ok) {
     return {
       attempted: true,

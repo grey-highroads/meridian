@@ -1434,9 +1434,9 @@ export async function handleAction(body, options = {}) {
   // exists is never written twice.
   async function deliverAndRecord({ brief, record, fixture, assignment, actor, options }) {
     const facts = await record.readFacts(fixture.tour.id, assignment.id);
-    if (productionAcknowledged({ facts })) return true;
+    if (productionAcknowledged({ facts })) return { acknowledged: true, reason: null };
     const outcome = await deliverBrief(renderBriefSidecar(brief), { fetchImpl: options.deliveryFetch, env: options.env });
-    if (!outcome.acknowledged) return false;
+    if (!outcome.acknowledged) return { acknowledged: false, reason: outcome.reason || null };
     await record.appendFact(fixture.tour.id, assignment.id, {
       ...actor,
       action: PRODUCTION_ACKNOWLEDGED,
@@ -1444,7 +1444,7 @@ export async function handleAction(body, options = {}) {
       jobId: outcome.jobId,
       at: outcome.acknowledgedAt || undefined,
     });
-    return true;
+    return { acknowledged: true, reason: null };
   }
 
   // One action for the one judgement a person makes here: this is right, send
@@ -1486,8 +1486,8 @@ export async function handleAction(body, options = {}) {
       // confirmed is the retry. Production answers a repeat as a safe
       // duplicate, so it costs nothing to try again and it is the only retry
       // there is. Nothing is queued and nothing runs in the background.
-      const acknowledged = await deliverAndRecord({ brief, record, fixture, assignment, actor, options });
-      return { brief, handoff: existing, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief), acknowledged };
+      const delivery = await deliverAndRecord({ brief, record, fixture, assignment, actor, options });
+      return { brief, handoff: existing, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief), acknowledged: delivery.acknowledged, deliveryReason: delivery.reason };
     }
     const handoff = {
       handoffId: `brief-${brief.jobId}-v${brief.briefVersion}`,
@@ -1509,8 +1509,8 @@ export async function handleAction(body, options = {}) {
       version: `Brief V0${brief.briefVersion}`,
       onBehalfOf: optionalText(body.onBehalfOf),
     });
-    const acknowledged = await deliverAndRecord({ brief, record, fixture, assignment, actor, options });
-    return { brief, handoff, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief), acknowledged };
+    const delivery = await deliverAndRecord({ brief, record, fixture, assignment, actor, options });
+    return { brief, handoff, document: renderBriefDocument(brief), sidecar: renderBriefSidecar(brief), acknowledged: delivery.acknowledged, deliveryReason: delivery.reason };
   }
 
   if (body.action === "get-handoffs") {
