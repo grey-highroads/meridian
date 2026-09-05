@@ -502,4 +502,12 @@ Recorded against the committed tree at `05ec225f`, ruling on the open questions 
 
 **Durable subject facts carry a date.** A room gets renovated and a fact about it goes stale. A dated fact goes stale where a reader can see it. The artist layer already carries evidence dates; every subject kind does the same.
 
+## Two rulings, 2026-09-05, third session
+
+Recorded against the committed tree at `12eaa724`, following an outside architecture review read against that tree.
+
+**Meridian is for all Higher Roads deliverables.** Grey ruled that live versus not live is a distinction without a difference. Meridian is the client work surface for whatever Higher Roads makes: tours, mapping, installs, digital, web, social. The loop is the same on all of them. One consequence is accepted with the ruling rather than discovered later: review today accepts still images, and a web or social deliverable will eventually put a video, a link, or a multi-file package in front of a reviewer. Nothing is built for that now. When the first non-image deliverable reaches review, widening the review surface is planned work under this ruling, not scope creep.
+
+**Intelligence degrades by capability, not by page.** This amends the 2026-09-05 first-session decision that a project with no research shows a page with nothing to work from. That was too blunt. Each instrument states what it needs and runs when it has it: scene ideas can work from the direction, the references, and the request with no subject at all; the artboard check can compare an image against the direction and the frozen brief with no subject; comparing direction against a subject's history is the instrument that requires subject research, and it is the one that says so. A project with no subjects gets the instruments its own material can feed, and plain sentences on the ones it cannot. Credit where due: the amendment came from the outside review.
+
 The sequencing stands as the primer proposed, minus one step: fix the identities bug, let a project exist with no subject, then the subjects model, then research categories once a second kind's list exists from real work. A separate manual dry run was proposed by the architect and withdrawn: the app refuses a subjectless project today, so there is nothing to run by hand, and the remaining unknowns live in the intake process outside the app. The mapping job enters as soon as subjectless projects land, and doing that job is the test.
