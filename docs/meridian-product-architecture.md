@@ -502,6 +502,14 @@ Recorded against the committed tree at `05ec225f`, ruling on the open questions 
 
 **Durable subject facts carry a date.** A room gets renovated and a fact about it goes stale. A dated fact goes stale where a reader can see it. The artist layer already carries evidence dates; every subject kind does the same.
 
+## A sent Scene can version, 2026-09-05, fourth session
+
+This reverses the closed-after-send convention. The media world is messy: ideas change after a brief goes out, and the record's job is to document that mess rather than forbid it. Provenance discipline exists exactly for processes that do not hold still.
+
+A Scene with a frozen brief offers Start a new version in the operator drawer. Pressing it freezes Brief V0(n+1) from the Scene as it stands, which returns the Scene to sent-and-unconfirmed, and Send to production delivers the new version as its own delivery with its own confirmation fact. The jobId holds across versions, each version's freeze, send, and acknowledgement are separate facts naming the version, and production stores each version immutably beside the last, which its receiver already does.
+
+What this does not change: a frozen brief is never rewritten, versions already delivered stay exactly as sent, and revisions against an artboard remain their own path through the seam once artboards travel it. A new brief version says the ask changed; an artboard revision says the execution should change. Both are legitimate and the record tells them apart.
+
 ## Two rulings, 2026-09-05, third session
 
 Recorded against the committed tree at `12eaa724`, following an outside architecture review read against that tree.

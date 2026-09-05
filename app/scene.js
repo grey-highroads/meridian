@@ -370,15 +370,20 @@ function sendWork() {
     : "";
   let standing = "";
   let controls;
+  // A sent Scene can version. Ideas change after a brief goes out, and the
+  // record's job is to document that rather than forbid it: freezing again
+  // makes Brief V0(n+1) from the Scene as it stands, and sending it is a new
+  // delivery with its own confirmation. Ruled 2026-09-05.
+  const newVersion = `<button class="m-button" type="button" data-freeze-version ${view.working ? "disabled" : ""}>Start a new version</button>`;
   if (handoff && view.acknowledged) {
     standing = `<div class="m-drawer__result"><p class="m-copy">Production has the Scene.</p></div>`;
-    controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>`;
+    controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>${newVersion}`;
   } else if (handoff) {
     // The reason is about the last attempt in this sitting, so it shows after
     // a send and not after a reload; the standing line is the durable truth.
     const why = view.deliveryReason ? `<p class="m-copy">${escape(view.deliveryReason)}</p>` : "";
     standing = `<div class="m-drawer__result"><p class="m-copy">The brief went out. Production has not confirmed it.</p>${why}</div>`;
-    controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send again"}</button>${openHandoff}`;
+    controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send again"}</button>${openHandoff}${newVersion}`;
   } else {
     controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send to production"}</button>`;
   }
@@ -565,6 +570,26 @@ document.addEventListener("click", (event) => {
       view.messageAt = "questions";
       render();
     }, "questions");
+    return;
+  }
+  if (target.hasAttribute("data-freeze-version")) {
+    guard(async () => {
+      view.working = true;
+      view.message = "";
+      view.messageAt = "send";
+      render();
+      const frozen = await call("freeze-brief", { assignmentId: view.sceneId });
+      view.brief = { brief: frozen.brief, document: frozen.document, sidecar: frozen.sidecar };
+      view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
+      const issued = await call("get-handoffs", { assignmentId: view.sceneId });
+      view.handoffs = issued.handoffs;
+      view.acknowledged = Boolean(issued.acknowledged);
+      view.deliveryReason = null;
+      view.working = false;
+      view.message = "";
+      view.messageAt = "send";
+      render();
+    }, "send");
     return;
   }
   if (target.hasAttribute("data-send")) {

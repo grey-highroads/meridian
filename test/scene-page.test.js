@@ -562,3 +562,17 @@ test("the drawer stays out of the page until the reader is known to be Higher Ro
   assert.equal(admin.drawer().hidden, false, "the drawer never comes back for Higher Roads");
   assert.match(admin.drawerMarkup(), /id="ask-heading"/, "the drawer is shown without its work in it");
 });
+
+test("a sent Scene offers Start a new version in both sent states", async () => {
+  const unconfirmed = scenePage({ briefs: [FROZEN_BRIEF], handoffs: [ISSUED_HANDOFF], acknowledged: false });
+  await unconfirmed.settle();
+  assert.match(unconfirmed.drawerText(), /Start a new version/, "an unconfirmed sent Scene can start a new version");
+
+  const confirmed = scenePage({ briefs: [FROZEN_BRIEF], handoffs: [ISSUED_HANDOFF], acknowledged: true });
+  await confirmed.settle();
+  assert.match(confirmed.drawerText(), /Start a new version/, "a confirmed Scene can start a new version");
+
+  const unsent = scenePage({ briefs: [], handoffs: [], acknowledged: false });
+  await unsent.settle();
+  assert.doesNotMatch(unsent.drawerText(), /Start a new version/, "an unsent Scene has nothing to version");
+});
