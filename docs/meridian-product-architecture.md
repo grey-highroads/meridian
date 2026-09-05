@@ -491,3 +491,15 @@ Where the two sides meet: the landing page, the pitch, and anything written to w
 What this does not license. No branch on a label, which the label ruling of the same day already forbids and a test already asserts. No second set of screens for engagements that are not tours. No shape field until something behaves differently because of it. A value proposition written for tours is marketing work and does not become a requirement on the tree.
 
 Assumed: that tours stay the work Higher Roads leads with. If the mapping and install work becomes the larger share, the public language is the thing that moves, and nothing in the tree has to move with it. That is the point of separating them.
+
+## Three rulings on subjects, 2026-09-05, second session
+
+Recorded against the committed tree at `05ec225f`, ruling on the open questions in `docs/meridian-subjects-primer.md` section 6. The subjects model is not being built yet. These rulings shape it when it is.
+
+**Clients own subjects; projects apply them.** The shape is clients who pay, projects they engage Higher Roads for, and assets created inside those projects. A subject attaches to the client, so its research carries from one of that client's projects to the next, and a project applies whichever of the client's subjects it involves. This matches the organization layer as built, since accounts are the clients. One edge is left open on purpose: a subject working inside a job paid for by a different client, whose research sits under the other account. That is handled when a real job presents it, not designed for in advance.
+
+**No project has a lead subject.** Subjects are informational surfaces. Their job is to surface insight with evidence, and no subject carries authority over another because none of them decides anything; people decide. When subjects reach the brief, a new brief carries a list of subjects, each naming its own kind, with nothing marking one as primary. Frozen briefs are never rewritten, so briefs already on the production partner's side stay exactly as sent.
+
+**Durable subject facts carry a date.** A room gets renovated and a fact about it goes stale. A dated fact goes stale where a reader can see it. The artist layer already carries evidence dates; every subject kind does the same.
+
+The sequencing stands as the primer proposed, minus one step: fix the identities bug, let a project exist with no subject, then the subjects model, then research categories once a second kind's list exists from real work. A separate manual dry run was proposed by the architect and withdrawn: the app refuses a subjectless project today, so there is nothing to run by hand, and the remaining unknowns live in the intake process outside the app. The mapping job enters as soon as subjectless projects land, and doing that job is the test.
