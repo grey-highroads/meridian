@@ -8,9 +8,11 @@ import {
   DEACTIVATED,
   INVITED,
   buildPerson,
+  credentialsMarkerOf,
   displayNameFor,
   linkMatches,
   mintLink,
+  newCredentialsMarker,
   normalizeEmail,
   publicPerson,
   recordExperienceSeen,
@@ -115,6 +117,9 @@ export function publicUser(user) {
     // Roads admin carries none.
     accountId: user.accountId === undefined ? null : user.accountId,
     status: user.status || (user.password ? "active" : "invited"),
+    // What the session cookie is checked against. It is not a secret and it is
+    // not a credential; it says which password this person is on.
+    credentialsMarker: credentialsMarkerOf(user),
     introductionSeenAt: user.introductionSeenAt || user.experiencesSeen?.[CLIENT_INTRODUCTION] || null,
     reviewVersionsSeen: user.reviewVersionsSeen || reviewVersionsSeen(user),
   };
@@ -473,6 +478,7 @@ export function createOrgStore(options = {}) {
       const next = {
         ...found.person,
         password: hashPassword(String(password)),
+        credentialsMarker: newCredentialsMarker(now),
         status: ACTIVE,
         link: null,
         acceptedAt: found.person.acceptedAt || now.toISOString(),

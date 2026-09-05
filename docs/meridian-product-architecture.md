@@ -539,3 +539,39 @@ Recorded against the committed tree at `310c2f45`, building the amended ruling o
 **A run says what it read.** Every run snapshots the evidence behind it, and a run on a project with no subject has none to snapshot. Storing an empty evidence list on its own would read as research holding nothing, which is a different fact from no research at all. Every run now carries `readFrom`, a short list of plain sentences, and a subjectless run says outright that the job has no subject. On screen the lineage segment that named the approval date reads that the run had no research behind it, rather than reading a date as not recorded. The wording of that segment changed on every job so the three answers read alike.
 
 What this leaves open is in `docs/deferred-work.md`. A subjectless artboard check cannot drop an entry for citing no finding, because there are no findings; the model is instructed to stay inside the direction and the brief and nothing checks that it did. And a project's subject is set at creation and cannot be changed after, which is what a person meets when the direction comparison tells them what it needs.
+
+## Sessions end when the person does, 2026-09-05, sixth session
+
+Recorded against the committed tree at `6d4da25`, building the first of the
+three fixes in step 3 of `docs/meridian-roadmap-phase-2.md`.
+
+**A session is checked on every action, not only at sign in.** `readSessionUser`
+in `src/server/http.js` read the person from storage and never looked at their
+status, so somebody turned off mid-session kept working until they signed out. A
+person who has been turned off now returns the same null a person nobody has
+heard of returns. Every route already refuses that null, so no route needed a
+second check and no refusal sentence changed.
+
+**A new password ends the sessions signed before it.** The cookie is signed with
+a secret set on the deployment, the same one for everybody, so the secret cannot
+say anything about one person. The person record carries a marker that is minted
+fresh in `completeLink` in `src/org/store.js`, which is where a password is set
+from an invite or a reset link. The signed claim carries the value the person
+was on when the cookie was minted, and `readSessionUser` refuses a cookie whose
+value no longer matches the stored one. The marker is not a secret and not a
+credential; it names which password this person is on.
+
+Cookies minted before this carry nothing in that place and stop verifying, so
+everybody signs in once after it deploys.
+
+**A page a person arrives on signs them out rather than sitting there.** Every
+page loads `app/shell.js` and it makes one call. A 401 from that call now sends
+the browser to the sign in page. This was folded in rather than deferred because
+the commit ends every open session at once, so a quiet failure would have been
+the first thing every person met.
+
+What this does not license. No shared fetch helper, which is fourteen call sites
+and its own commit, recorded in `docs/deferred-work.md` with the condition that
+closes it. No change to the signing secret, which stays deployment-wide. No
+session length change. No new refusal vocabulary reaching a person: the two
+endings are read as no session at all, which is what they are.

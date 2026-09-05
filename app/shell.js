@@ -224,11 +224,28 @@ function mountClientIntroduction() {
   utility.prepend(link);
 }
 
+// Every page loads the shell, so this is the one call that runs wherever a
+// person arrives. A session can end while a page is open: an admin turns
+// somebody off, or a password reset lands. Both come back 401 from here, and
+// the page would otherwise sit there looking alive and doing nothing, so the
+// browser goes to the sign in page instead.
+//
+// This covers arriving on a page. Somebody already sitting on one who clicks
+// something still meets the quiet failure until their next page load, which is
+// recorded in docs/deferred-work.md.
+export const SIGN_IN_PAGE = "/landing.html";
+
 fetch("/api/tour", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(scopedBody({ action: "get-me", tourId: TOUR_ID })),
-}).then((response) => response.ok ? response.json() : null).then((body) => {
+}).then((response) => {
+  if (response.status === 401) {
+    window.location.replace(SIGN_IN_PAGE);
+    return null;
+  }
+  return response.ok ? response.json() : null;
+}).then((body) => {
   if (!body) return;
   document.querySelectorAll("[data-operator-utility]").forEach((entry) => {
     entry.hidden = body.user.role !== "higher-roads";

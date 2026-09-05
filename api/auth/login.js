@@ -1,4 +1,5 @@
 import { createOrgStore } from "../../src/org/store.js";
+import { credentialsMarkerOf } from "../../src/org/people.js";
 import { sessionCookie, sessionSecret, signSession } from "../../src/org/session.js";
 import { readJsonBody, sendJson, sendPublicError } from "../../src/server/http.js";
 
@@ -51,7 +52,10 @@ export default async function handler(request, response, options = {}) {
         sendPublicError(response, error);
         return;
       }
-      const accepted = await signSession({ userId: person.id, role: person.role }, sessionSecret());
+      const accepted = await signSession(
+        { userId: person.id, role: person.role, credentials: credentialsMarkerOf(person) },
+        sessionSecret(),
+      );
       response.setHeader("Set-Cookie", sessionCookie(accepted, { secure }));
       sendJson(response, 200, { ok: true, user: person });
       return;
@@ -75,7 +79,10 @@ export default async function handler(request, response, options = {}) {
       return;
     }
 
-    const token = await signSession({ userId: user.id, role: user.role }, sessionSecret());
+    const token = await signSession(
+      { userId: user.id, role: user.role, credentials: credentialsMarkerOf(user) },
+      sessionSecret(),
+    );
     response.setHeader("Set-Cookie", sessionCookie(token, { secure }));
     sendJson(response, 200, { ok: true, user });
   } catch (error) {

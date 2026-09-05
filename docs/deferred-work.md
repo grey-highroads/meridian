@@ -517,3 +517,24 @@ Histories are arrays inside JSON documents. `appendFact` in `src/tour/scene-reco
 Today the risk is near zero because one operator works in the app at a time. It is recorded as a gate on growth, not a rewrite to schedule now. The fix when it comes is conditional writes or an append-only store with derived views; the choice is made then, with the usage that exists then.
 
 Closes when: writes are safe under concurrency. Must close before a second person routinely works in the app at the same time as the first, and before any real client account is active.
+
+## A call made from an open page fails quietly when the session has ended
+
+Recorded 2026-09-05 with the session work. Sessions now end while a page is
+open: a person turned off, or a password reset landing, both come back 401 on
+the next API action. `app/shell.js` reads that status on the `get-me` call every
+page makes and sends the browser to the sign in page, so arriving anywhere is
+covered. Nothing else in `app/` reads a status code. Every other call goes
+through a `call` function local to its own page, and each one treats a failure
+the way `app/context.js` does: it returns null and the page carries on looking
+alive.
+
+The effect a person meets is someone sitting on a page who clicks something and
+watches nothing happen, until they load a page and get signed out. The fix is a
+shared fetch helper that all of them read, which is fourteen call sites and past
+the bar for pulling one out. It is a commit of its own and it was not folded
+into the session commit, because a change touching fourteen pages should not
+ride a change to the session path.
+
+Closes when: somebody reports a page that stopped responding rather than signing
+them out.

@@ -94,7 +94,7 @@ test("an admin row left inside an account gives that person no account scope", a
 test("an admin naming no account lands in the first account the deployment holds", async () => {
   const { backend, store } = ready();
   await store.createAccount("Stagecraft");
-  const token = await signSession({ userId: "operator", role: OPERATOR_ROLE }, SECRET);
+  const token = await signSession({ userId: "operator", role: OPERATOR_ROLE, credentials: "" }, SECRET);
   const request = { headers: { cookie: sessionCookie(token, {}).split(";")[0] } };
 
   const user = await readSessionUser(request, { orgStore: store, secret: SECRET });
@@ -136,7 +136,7 @@ test("a session verifies for the person it was signed for and for nobody else", 
 
 test("a request resolves to the stored person, and the role it uses is the stored one", async () => {
   const { backend, store } = ready();
-  const token = await signSession({ userId: "client", role: OPERATOR_ROLE }, SECRET);
+  const token = await signSession({ userId: "client", role: OPERATOR_ROLE, credentials: "" }, SECRET);
   const request = { headers: { cookie: sessionCookie(token, {}).split(";")[0] } };
 
   // The cookie claims the Higher Roads role. The user in storage is the client
@@ -151,7 +151,7 @@ test("a request resolves to the stored person, and the role it uses is the store
   const forged = { headers: { cookie: `${SESSION_COOKIE}=made.up` } };
   assert.equal(await readSessionUser(forged, { orgStore: store, secret: SECRET }), null);
 
-  const unknown = await signSession({ userId: "someone-else", role: OPERATOR_ROLE }, SECRET);
+  const unknown = await signSession({ userId: "someone-else", role: OPERATOR_ROLE, credentials: "" }, SECRET);
   assert.equal(
     await readSessionUser({ headers: { cookie: `${SESSION_COOKIE}=${unknown}` } }, { orgStore: store, secret: SECRET }),
     null,
@@ -265,4 +265,84 @@ test("the sign in page says what a person needs and no system words", () => {
   assert.match(page, /Sign in with your email address, or the login Higher Roads gave you\./);
   assert.match(page, /login, password/);
   assert.ok(!page.includes("brandworld"), "the sign in page still names the old shared login");
+});
+
+// Two things end a session that is already open. Both are read on every API
+// action, because a session checked only at sign in lasts a day whatever
+// happens to the person in the meantime.
+
+test("a person turned off mid-session is refused on an ordinary action", async () => {
+  const { store } = ready();
+  const invited = await store.invitePerson(ACCOUNT.id, {
+    firstName: "Rae", lastName: "Nolan", email: "rae@example.com", role: CLIENT_ROLE,
+  });
+  const signedIn = await store.completeLink(invited.token, "a-long-enough-password");
+  const token = await signSession(
+    { userId: signedIn.id, role: signedIn.role, credentials: signedIn.credentialsMarker },
+    SECRET,
+  );
+  const request = { headers: { cookie: `${SESSION_COOKIE}=${token}` } };
+
+  const before = await readSessionUser(request, { orgStore: store, secret: SECRET });
+  assert.equal(before.id, signedIn.id, "the session did not resolve before the person was turned off");
+
+  await store.setPersonStatus(signedIn.id, "deactivated");
+  assert.equal(
+    await readSessionUser(request, { orgStore: store, secret: SECRET }),
+    null,
+    "a person who has been turned off still had an open session",
+  );
+
+  await store.setPersonStatus(signedIn.id, "active");
+  const after = await readSessionUser(request, { orgStore: store, secret: SECRET });
+  assert.equal(after.id, signedIn.id, "turning somebody back on left their session refused");
+});
+
+test("setting a new password refuses the sessions signed before it", async () => {
+  const { store } = ready();
+  const invited = await store.invitePerson(ACCOUNT.id, {
+    firstName: "Rae", lastName: "Nolan", email: "rae@example.com", role: CLIENT_ROLE,
+  });
+  const first = await store.completeLink(invited.token, "a-long-enough-password");
+  const older = await signSession(
+    { userId: first.id, role: first.role, credentials: first.credentialsMarker },
+    SECRET,
+  );
+  const olderRequest = { headers: { cookie: `${SESSION_COOKIE}=${older}` } };
+  assert.ok(await readSessionUser(olderRequest, { orgStore: store, secret: SECRET }));
+
+  const reset = await store.mintPersonLink(first.id, "reset");
+  const second = await store.completeLink(reset.token, "a-different-long-password");
+  assert.notEqual(second.credentialsMarker, first.credentialsMarker, "the marker did not move on a reset");
+
+  assert.equal(
+    await readSessionUser(olderRequest, { orgStore: store, secret: SECRET }),
+    null,
+    "a session signed under the old password survived the reset",
+  );
+
+  const newer = await signSession(
+    { userId: second.id, role: second.role, credentials: second.credentialsMarker },
+    SECRET,
+  );
+  const newerRequest = { headers: { cookie: `${SESSION_COOKIE}=${newer}` } };
+  const user = await readSessionUser(newerRequest, { orgStore: store, secret: SECRET });
+  assert.equal(user.id, second.id, "the session minted by the reset was refused");
+});
+
+test("a cookie carrying no marker at all stops resolving", async () => {
+  const { store } = ready();
+  const token = await signSession({ userId: "operator", role: OPERATOR_ROLE }, SECRET);
+  assert.equal(
+    await readSessionUser({ headers: { cookie: `${SESSION_COOKIE}=${token}` } }, { orgStore: store, secret: SECRET }),
+    null,
+    "a cookie signed before the marker existed still resolved",
+  );
+});
+
+test("the shell sends a person whose session ended to the sign in page", () => {
+  const shell = fs.readFileSync(path.join(rootPath, "app", "shell.js"), "utf8");
+  assert.match(shell, /response\.status === 401/, "the shell does not read the status of the get-me call");
+  assert.match(shell, /window\.location\.replace\(SIGN_IN_PAGE\)/, "a 401 does not send the browser anywhere");
+  assert.match(shell, /const SIGN_IN_PAGE = "\/landing\.html"/, "the shell does not name the sign in page");
 });

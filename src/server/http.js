@@ -1,4 +1,5 @@
 import { readCookie, readSession, SESSION_COOKIE, sessionSecret } from "../org/session.js";
+import { credentialsMarkerOf, DEACTIVATED } from "../org/people.js";
 import { createOrgStore } from "../org/store.js";
 import { resolveActingAccount, selectedAccountFromRequest } from "../org/acting-account.js";
 
@@ -50,6 +51,11 @@ export async function readJsonBody(request, limit = 4 * 1024 * 1024) {
 // read from storage by the id it carries. The stored role is the one that
 // decides anything, so a cookie that survived a signature check still cannot
 // name a role its user does not have.
+//
+// Two things end a session that is already open, and both are read here rather
+// than at sign in, because a session that is only checked at sign in lasts a
+// day whatever happens to the person in the meantime. Turning somebody off
+// ends it. Setting a new password ends the ones signed before it.
 export async function readSessionUser(request, options = {}) {
   const secret = options.secret || sessionSecret();
   const claim = await readSession(readCookie(request.headers.cookie || "", SESSION_COOKIE), secret);
@@ -57,6 +63,16 @@ export async function readSessionUser(request, options = {}) {
   const store = options.orgStore || createOrgStore(options);
   const user = await store.findUser(claim.userId);
   if (!user) return null;
+  // A person who has been turned off returns the same null a person nobody has
+  // heard of returns, so every route refuses them the way it already refuses a
+  // stranger and no route needs a second check.
+  if (user.status === DEACTIVATED) return null;
+  // The cookie names which password the person was on when it was signed. A
+  // reset moves the stored value, so the cookies signed before it stop here. A
+  // cookie signed before this marker existed carries nothing in that place and
+  // stops here too, which is why everyone signs in once after it deploys.
+  if (typeof claim.credentials !== "string") return null;
+  if (claim.credentials !== credentialsMarkerOf(user)) return null;
   const acting = resolveActingAccount(user, selectedAccountFromRequest(request));
   // A Higher Roads admin belongs to no account, so a request that names none
   // opens the first account the deployment holds. Which one that is comes from

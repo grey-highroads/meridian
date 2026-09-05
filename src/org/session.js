@@ -38,8 +38,13 @@ function fromBase64Url(text) {
 
 // The key the cookie is signed with. It comes from the two values that already
 // carry the passwords, so there is nothing extra to set on the deployment and
-// nothing extra to keep in step. Changing a password ends every session signed
-// under the old one, which is the behavior a password change should have.
+// nothing extra to keep in step. Changing one of those two values ends every
+// session on the deployment.
+//
+// One person setting a new password is a different question, and the secret
+// cannot answer it, because the secret is the same for everybody. The claim
+// carries a marker naming which password that person was on, and
+// readSessionUser in src/server/http.js checks it against the stored one.
 export function sessionSecret(env = process.env) {
   return `meridian-session:${env.MERIDIAN_OPERATOR || ""}:${env.MERIDIAN_CLIENT || ""}`;
 }

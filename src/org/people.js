@@ -62,6 +62,24 @@ export function personId(now = new Date()) {
   return `person-${now.getTime().toString(36)}-${randomBytes(4).toString("hex")}`;
 }
 
+// A short value that changes every time a person sets a password. The session
+// cookie carries the value the person had when it was signed, and the session
+// is read against the stored one, so a new password ends the sessions signed
+// before it. The signing secret is set on the deployment and is the same for
+// everyone, so this is what makes one person's reset end one person's older
+// sessions. The random half is there because two resets can land in the same
+// millisecond and the marker has to move on the second one as well.
+export function newCredentialsMarker(now = new Date()) {
+  return `${now.toISOString()}.${randomBytes(4).toString("hex")}`;
+}
+
+// A person who has never set a password from a link carries no marker, and the
+// two sign in values the deployment holds mint people that way. Absence reads
+// as an empty string on both sides so those people compare equal to themselves.
+export function credentialsMarkerOf(person) {
+  return person && typeof person.credentialsMarker === "string" ? person.credentialsMarker : "";
+}
+
 export function displayNameFor(firstName, lastName) {
   return [String(firstName || "").trim(), String(lastName || "").trim()].filter(Boolean).join(" ");
 }
