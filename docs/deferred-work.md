@@ -461,3 +461,19 @@ The contradictions were fixed. Where lowercase copy sits on a screen that also s
 Three places were left on purpose and are not part of this entry: `app/admin.js` names a specific tour by name in its delete confirmation, offers to open one by default, and reports what a new account was created with. Admin lists many records and each carries its own word, so a category word there is a heading over a list rather than a name for one thing.
 
 Bring it back when: a second job with a different label reaches a screen whose lowercase copy reads wrong. That is the signal that the remaining sentences need the same treatment, and it will name which screens rather than asking for a sweep of all of them.
+
+## The approve setting on a client person is ruled and not built
+
+Ruled 2026-09-04: approval is a setting on a client person, off by default, not a third role. The code has no such setting. `client-approve` in `api/tour/index.js` checks that the version was presented and not already approved, and never asks who is allowed; `src/org/people.js` and `src/org/roles.js` carry no approve field. Any signed-in client member can approve today. Found by the 2026-09-05 outside review and verified against the tree.
+
+This is a conflict between a governing document and the code, recorded per CONTRIBUTING rather than resolved by declaring either side stale. The build is small: one field on the person, one check in one handler, one control in Admin, shipping off by default per the ruling.
+
+Closes when: the setting exists and is checked, before the first real client logs in.
+
+## Concurrent writes can silently drop a record
+
+Histories are arrays inside JSON documents. `appendFact` in `src/tour/scene-record.js` reads the whole document, appends in memory, and writes it back, and the same shape holds for reviews, approvals, versions, and intent. Two writers acting at the same moment both read version five, both write version six, and the last write wins; the other record disappears with no error. Verified against the tree 2026-09-05, found by the outside review.
+
+Today the risk is near zero because one operator works in the app at a time. It is recorded as a gate on growth, not a rewrite to schedule now. The fix when it comes is conditional writes or an append-only store with derived views; the choice is made then, with the usage that exists then.
+
+Closes when: writes are safe under concurrency. Must close before a second person routinely works in the app at the same time as the first, and before any real client account is active.
