@@ -118,6 +118,15 @@ export function reviewVersionsSeen(person) {
   return Object.fromEntries(Object.entries(seen).filter(([key]) => key.startsWith(`${REVIEW_VERSION_PREFIX}:`)));
 }
 
+// Whether this person may approve work. Ruled 2026-09-04: approval is a setting
+// on a client person, off by default, and not a role of its own. It is read
+// through the person's role rather than off the stored field alone, so a value
+// sitting on a Higher Roads person means nothing wherever it is read. A person
+// stored before the setting existed has no field and reads as off.
+export function mayApprove(person) {
+  return Boolean(person) && person.role === CLIENT_ROLE && person.canApprove === true;
+}
+
 // What an admin reads on a row. No hash and no token leave the store.
 export function publicPerson(person) {
   if (!person) return null;
@@ -132,6 +141,7 @@ export function publicPerson(person) {
     role: person.role,
     accountId: person.accountId === undefined ? null : person.accountId,
     status: person.status || (person.password ? ACTIVE : INVITED),
+    canApprove: mayApprove(person),
     invitePending: Boolean(person.link && person.link.purpose === "invite"),
     linkExpiresAt: person.link ? person.link.expiresAt : null,
     acceptedAt: person.acceptedAt || null,
@@ -174,6 +184,9 @@ export function buildPerson(fields, accountId, now = new Date()) {
     // An admin belongs to no account, whichever account they were invited from.
     accountId: role === OPERATOR_ROLE ? null : accountId,
     password: null,
+    // Off for everybody at the start. Adding somebody to an account has not
+    // given them final say.
+    canApprove: false,
     status: INVITED,
     link: null,
     acceptedAt: null,

@@ -454,6 +454,17 @@ function signedIn(options) {
     error.status = 403;
     throw error;
   }
+  // Approval is a setting on a client person, off by default, ruled 2026-09-04.
+  // Everybody on the client side comments; the people who were given final say
+  // approve. The check is here rather than in the handler, beside the guard
+  // that decides what a client may do at all, and the review page draws its
+  // control from the same setting. The page is a courtesy and this is the
+  // boundary.
+  if (user.role === CLIENT_ROLE && String(options.action || "") === "client-approve" && !user.canApprove) {
+    const error = new Error("Approving is not turned on for you. Ask whoever set up your account at Higher Roads and they can turn it on.");
+    error.status = 403;
+    throw error;
+  }
   return user;
 }
 

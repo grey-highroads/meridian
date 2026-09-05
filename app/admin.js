@@ -237,12 +237,33 @@ function personForm(entry) {
             <option value="higher-roads" ${values.role === "higher-roads" ? "selected" : ""}>Higher Roads</option>
           </select>
         </div>
+        ${editing && values.role !== "higher-roads" ? approveField(values) : ""}
         <div class="m-cluster">
           <button class="m-button m-button--primary" type="button" ${editing ? `data-save-person="${escape(entry.id)}"` : "data-invite-person"} ${view.working ? "disabled" : ""}>${view.working ? "Saving" : (editing ? "Save" : "Invite them")}</button>
           <button class="m-button" type="button" data-cancel-person>Cancel</button>
         </div>
       </div>
     </article>`;
+}
+
+// Who on a client team may approve. Everybody there can comment. This is the
+// one thing that separates a person with final say from the video programmer,
+// the lighting designer, and everyone else worth hearing from. It is offered on
+// an existing person rather than at the invitation, because somebody is
+// invited before anyone has decided that about them.
+//
+// There is no pattern for a control with its label beside it, so this uses a
+// field with a cluster inside it. The gap is in docs/deferred-work.md under
+// Design pattern requests.
+function approveField(values) {
+  return `<div class="m-field">
+      <span class="m-label">Approving work</span>
+      <div class="m-cluster">
+        <input type="checkbox" id="person-can-approve" data-person-field="canApprove" ${values.canApprove ? "checked" : ""}>
+        <label for="person-can-approve">This person can approve work.</label>
+      </div>
+      <p class="m-help">Off unless you turn it on. Everyone on a client team can comment either way.</p>
+    </div>`;
 }
 
 // The link Meridian minted, shown once. Nothing sends it, so the admin copies
@@ -487,7 +508,9 @@ function run(state, work) {
 function readPersonForm() {
   const values = {};
   for (const field of document.querySelectorAll("[data-person-field]")) {
-    values[field.getAttribute("data-person-field")] = field.value;
+    // A checkbox carries its answer in checked. Reading value off one gives the
+    // same string whether it is ticked or not.
+    values[field.getAttribute("data-person-field")] = field.type === "checkbox" ? field.checked : field.value;
   }
   return values;
 }

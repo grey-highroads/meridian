@@ -249,10 +249,13 @@ function clientActions(detail, scene) {
   const approved = detail.approvals?.some((entry) => entry.artboardVersion === value);
   if (!latest) return `<div class="m-callout"><p class="m-copy">Earlier versions are read-only history.</p></div>`;
   if (approved) return "";
+  // Approving is a setting on the person, off unless somebody turned it on.
+  // Everybody here comments. The route refuses whatever this page drew.
+  const mayApprove = Boolean(view.user.canApprove);
   return `<section class="m-review-surface__section" aria-labelledby="client-actions-heading">
-      <h2 class="m-scene-work-heading" id="client-actions-heading">Your decision</h2>
+      <h2 class="m-scene-work-heading" id="client-actions-heading">${mayApprove ? "Your decision" : "Your feedback"}</h2>
       <div class="m-field"><label class="m-label" for="client-comment">Comment</label><textarea class="m-textarea" id="client-comment" data-draft="comment" placeholder="Tell the team what should change or what they should know.">${escape(view.draft.comment)}</textarea></div>
-      <div class="m-action-bar__actions"><button class="m-button" type="button" data-comment>Send comment</button><button class="m-button m-button--primary" type="button" data-approve>Approve this version</button></div>
+      <div class="m-action-bar__actions"><button class="m-button" type="button" data-comment>Send comment</button>${mayApprove ? `<button class="m-button m-button--primary" type="button" data-approve>Approve this version</button>` : ""}</div>
       ${view.message && ["comment", "approve"].includes(view.messageAt) ? `<div class="m-callout m-callout--current"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
     </section>`;
 }

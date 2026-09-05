@@ -19,7 +19,7 @@ const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 // Two people, the way the account holds them. The actor on every fact comes
 // from here and never from a request body.
 const OPERATOR = { id: "operator", login: "ray", displayName: "Ray Mercer", role: "higher-roads", roleLabel: "Higher Roads" };
-const REVIEWER = { id: "client", login: "dana", displayName: "Dana Whitlock", role: "client-reviewer", roleLabel: "Client reviewer" };
+const REVIEWER = { id: "client", login: "dana", displayName: "Dana Whitlock", role: "client-reviewer", roleLabel: "Client reviewer", canApprove: true };
 
 const TOUR = "off-the-map-2026";
 const ASSIGNMENT = "storm-and-lightning";

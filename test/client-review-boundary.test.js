@@ -32,6 +32,9 @@ const REVIEWER = {
   role: "client-reviewer",
   roleLabel: "Client reviewer",
   accountId: ACCOUNT,
+  // The approve setting, on for both reviewers in this file, because these
+  // tests are about the client boundary rather than about who may approve.
+  canApprove: true,
 };
 
 const SECOND_REVIEWER = {
@@ -300,4 +303,60 @@ test("the upload read route signs a presented file and refuses an unpresented fi
   const operator = await uploadRead(secondPath, { user: OPERATOR, artboardStore });
   assert.equal(operator.statusCode, 200);
   assert.equal(operator.body.pathname, secondPath);
+});
+
+// Approval is a setting on a client person, off by default, ruled 2026-09-04.
+// Everybody on a client team comments. The people given final say approve.
+
+test("a client without the approve setting is refused, and one with it approves exactly as before", async () => {
+  const { artboardStore, options, asClient } = await ready();
+  await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 2 }, options);
+
+  const withoutSetting = { ...asClient, user: { ...asClient.user, canApprove: false } };
+  const before = await artboardStore.readApprovals(TOUR, ASSIGNMENT);
+  const beforeIntents = await artboardStore.readIntents(TOUR, ASSIGNMENT);
+  await assert.rejects(
+    () => tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, withoutSetting),
+    (error) => error.status === 403 && /Ask whoever set up your account/.test(error.message),
+  );
+  assert.deepEqual(await artboardStore.readApprovals(TOUR, ASSIGNMENT), before, "a refused approval still wrote");
+  assert.deepEqual(
+    await artboardStore.readIntents(TOUR, ASSIGNMENT),
+    beforeIntents,
+    "a refused approval froze an intent",
+  );
+
+  // A person stored before the setting existed carries no field at all and is
+  // refused the same way a person turned off would be.
+  const noField = { ...asClient, user: { ...asClient.user, canApprove: undefined } };
+  await assert.rejects(
+    () => tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, noField),
+    (error) => error.status === 403,
+  );
+
+  // Commenting is untouched for a client who cannot approve.
+  const commented = await tourAction(
+    { action: "client-comment", ...AT, artboardVersion: 2, text: "One note before anyone signs off." },
+    withoutSetting,
+  );
+  assert.equal(commented.comment.text, "One note before anyone signs off.");
+
+  const approved = await tourAction({ action: "client-approve", ...AT, artboardVersion: 2 }, asClient);
+  assert.equal(approved.approval.artboardVersion, 2);
+  assert.equal(approved.approval.approvedBy, "Dana Whitlock");
+  const intents = await artboardStore.readIntents(TOUR, ASSIGNMENT);
+  assert.equal(intents.length, beforeIntents.length + 1);
+  assert.equal(intents[intents.length - 1].artboardVersion, 2);
+});
+
+test("the operator path through approve-for-client is untouched by the setting", async () => {
+  const { options } = await ready();
+  const presented = await tourAction({ action: "approve-for-client", ...AT, artboardVersion: 2 }, options);
+  assert.equal(presented.readyForClient.artboardVersion, 2);
+  assert.equal(presented.readyForClient.approvedBy, "Ray Mercer");
+
+  // The operator carries no approve setting and never needs one. Clearing a
+  // version for the client to see and approving the work are different acts by
+  // different people, and this one did not move.
+  assert.equal(options.user.canApprove, undefined);
 });

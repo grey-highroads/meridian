@@ -11,6 +11,7 @@ import {
   credentialsMarkerOf,
   displayNameFor,
   linkMatches,
+  mayApprove,
   mintLink,
   newCredentialsMarker,
   normalizeEmail,
@@ -120,6 +121,10 @@ export function publicUser(user) {
     // What the session cookie is checked against. It is not a secret and it is
     // not a credential; it says which password this person is on.
     credentialsMarker: credentialsMarkerOf(user),
+    // Whether the review page draws the approval control. The page reads it and
+    // the route checks it separately, because a page that hides a button is a
+    // page.
+    canApprove: mayApprove(user),
     introductionSeenAt: user.introductionSeenAt || user.experiencesSeen?.[CLIENT_INTRODUCTION] || null,
     reviewVersionsSeen: user.reviewVersionsSeen || reviewVersionsSeen(user),
   };
@@ -400,6 +405,17 @@ export function createOrgStore(options = {}) {
         error.status = 400;
         throw error;
       }
+      // The approve setting rides this act. A form that does not send the field
+      // leaves it where it was, so editing a Higher Roads person, whose form
+      // does not carry the control, changes nothing here.
+      const canApprove = fields.canApprove === undefined
+        ? Boolean(found.person.canApprove)
+        : Boolean(fields.canApprove);
+      if (canApprove && role === OPERATOR_ROLE) {
+        const error = new Error("Approving is a setting on a client. Somebody from Higher Roads approves work already.");
+        error.status = 400;
+        throw error;
+      }
       const taken = (await this.everyPerson())
         .find((entry) => entry.person.id !== personId && normalizeEmail(entry.person.login) === email);
       if (taken) {
@@ -416,6 +432,7 @@ export function createOrgStore(options = {}) {
         email,
         login: email,
         role,
+        canApprove,
         accountId: role === OPERATOR_ROLE ? null : (found.accountId || found.person.accountId),
       };
       await this.writePerson(next, found.path);

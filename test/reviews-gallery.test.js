@@ -274,3 +274,29 @@ test("the gallery sends a human revision without manufacturing another Artboard"
   assert.equal((await artboardStore.readHandoffs(TOUR, ASSIGNMENT)).at(-1).kind, "revision");
   assert.equal((await artboardStore.readArtboards(TOUR, ASSIGNMENT)).length, 1);
 });
+
+test("the review page draws the approve control only for a client who may approve", () => {
+  const page = fs.readFileSync(path.join(rootPath, "app", "reviews.js"), "utf8");
+  const actions = page.slice(page.indexOf("function clientActions"), page.indexOf("function renderSurface"));
+
+  assert.match(actions, /const mayApprove = Boolean\(view\.user\.canApprove\)/);
+  // The approve control is inside the condition and the comment controls are not.
+  assert.match(actions, /\$\{mayApprove \? `<button class="m-button m-button--primary" type="button" data-approve>/);
+  const comment = actions.slice(0, actions.indexOf("mayApprove ? `<button"));
+  assert.match(comment, /data-comment>Send comment<\/button>/, "the comment control moved inside the condition");
+  assert.match(actions, /id="client-comment"/);
+});
+
+test("Admin offers the approve setting on a client person and never at the invitation", () => {
+  const page = fs.readFileSync(path.join(rootPath, "app", "admin.js"), "utf8");
+  assert.match(page, /\$\{editing && values\.role !== "higher-roads" \? approveField\(values\) : ""\}/);
+  assert.match(page, /data-person-field="canApprove"/);
+  assert.match(page, /field\.type === "checkbox" \? field\.checked : field\.value/);
+
+  // The control uses the accepted classes. No new class was invented for it.
+  const field = page.slice(page.indexOf("function approveField"), page.indexOf("// The link Meridian minted"));
+  for (const accepted of ["m-field", "m-label", "m-cluster", "m-help"]) {
+    assert.ok(field.includes(accepted), `the approve control does not use ${accepted}`);
+  }
+  assert.doesNotMatch(field, /style="/, "the approve control carries an inline style");
+});

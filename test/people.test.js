@@ -208,3 +208,82 @@ test("an admin cannot turn themselves off", async () => {
   const admins = JSON.parse(backend.files.get(ADMINS_PATH));
   assert.ok(!admins.users.some((entry) => entry.status === "deactivated"));
 });
+
+// Approval is a setting on a client person, off by default, ruled 2026-09-04.
+// It rides the edit act, which is already Higher Roads only.
+
+test("the approve setting is off when somebody is invited and rides the edit act", async () => {
+  const backend = createMemoryBackend();
+  const invited = await invite(backend);
+  assert.equal(invited.person.canApprove, false, "somebody was invited able to approve");
+
+  const on = await artistAction(
+    { action: "edit-person", personId: invited.person.id, person: { ...WHO, canApprove: true } },
+    options(backend),
+  );
+  assert.equal(on.person.canApprove, true);
+
+  const off = await artistAction(
+    { action: "edit-person", personId: invited.person.id, person: { ...WHO, canApprove: false } },
+    options(backend),
+  );
+  assert.equal(off.person.canApprove, false);
+
+  // A form that does not carry the field leaves the setting where it was.
+  await artistAction(
+    { action: "edit-person", personId: invited.person.id, person: { ...WHO, canApprove: true } },
+    options(backend),
+  );
+  const untouched = await artistAction(
+    { action: "edit-person", personId: invited.person.id, person: { ...WHO, phone: "615 555 0199" } },
+    options(backend),
+  );
+  assert.equal(untouched.person.canApprove, true);
+  assert.equal(untouched.person.phone, "615 555 0199");
+});
+
+test("a Higher Roads person cannot be given the approve setting", async () => {
+  const backend = createMemoryBackend();
+  const invited = await invite(backend);
+  await assert.rejects(
+    () => artistAction(
+      { action: "edit-person", personId: invited.person.id, person: { ...WHO, role: OPERATOR_ROLE, canApprove: true } },
+      options(backend),
+    ),
+    (error) => error.status === 400 && /setting on a client/.test(error.message),
+  );
+
+  // The person is unchanged: still a client, still unable to approve.
+  const [row] = JSON.parse(backend.files.get(usersPath(DEMO))).users
+    .filter((entry) => entry.id === invited.person.id);
+  assert.equal(row.role, CLIENT_ROLE);
+  assert.ok(!row.canApprove);
+
+  // A value stored on a Higher Roads person by any other route reads as off.
+  const org = createOrgStore({ backend, env: SEEDS });
+  const admins = JSON.parse(backend.files.get(ADMINS_PATH));
+  admins.users = admins.users.map((entry) => ({ ...entry, canApprove: true }));
+  backend.files.set(ADMINS_PATH, JSON.stringify({ users: admins.users }, null, 2));
+  const admin = await org.findUser("operator");
+  assert.equal(admin.canApprove, false, "a Higher Roads person read as able to approve");
+});
+
+test("a client with no stored field reads as unable to approve", async () => {
+  const backend = createMemoryBackend();
+  const invited = await invite(backend);
+  const org = createOrgStore({ backend, env: SEEDS });
+
+  // The shape a person stored before this setting existed carries.
+  const stored = JSON.parse(backend.files.get(usersPath(DEMO)));
+  stored.users = stored.users.map((entry) => {
+    const copy = { ...entry };
+    delete copy.canApprove;
+    return copy;
+  });
+  backend.files.set(usersPath(DEMO), JSON.stringify(stored, null, 2));
+
+  const found = await org.findPerson(invited.person.id);
+  assert.equal(found.person.canApprove, undefined, "the stored person was rewritten");
+  const user = await org.findUser(invited.person.id);
+  assert.equal(user.canApprove, false);
+});

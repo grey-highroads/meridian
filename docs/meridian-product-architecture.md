@@ -575,3 +575,45 @@ and its own commit, recorded in `docs/deferred-work.md` with the condition that
 closes it. No change to the signing secret, which stays deployment-wide. No
 session length change. No new refusal vocabulary reaching a person: the two
 endings are read as no session at all, which is what they are.
+
+## The approve setting on a client person, 2026-09-05, seventh session
+
+Recorded against the committed tree at `9e5f0d4`, building the third of the
+three fixes in step 3 of `docs/meridian-roadmap-phase-2.md`. The ruling of
+2026-09-04, third session, is now honored by the code. Until this commit any
+signed in client member could approve.
+
+**One field, one check, one control.** A client person carries `canApprove`,
+off unless somebody turns it on. It rides the existing edit act, which is
+already Higher Roads only, so there is no new act and no new screen. The check
+sits in `signedIn` in `api/tour/index.js`, beside the guard that already decides
+what a client may do at all, and refuses `client-approve` from a client person
+without the setting. `app/reviews.js` draws the approve control from the same
+setting and leaves the comment controls alone. The route refuses whatever the
+page drew, because a page that hides a button is a page.
+
+**The setting is read through the role, not off the stored value.** `mayApprove`
+in `src/org/people.js` answers true only for a client person carrying the field
+set. A value sitting on a Higher Roads person means nothing wherever it is read,
+and setting it on one is refused at the edit act with a plain sentence. That is
+an effect check rather than a marker check: the question asked is whether this
+person may approve, not whether a field is filled.
+
+**A person stored before this has no field and reads as off.** Nothing needed
+migrating. The deployment's built-in client login is written into the account's
+people document by `readUsers`, so it appears in Admin as an ordinary row and
+takes the setting the same way, which means nobody can be left unable to approve
+with no control to turn them back on.
+
+**The refusal sentence says who to ask.** A person told no by software with no
+way forward is worse served than one told nothing. The sentence names the person
+who can change it and carries no system vocabulary.
+
+What this does not license. No third role, which the 2026-09-04 ruling refused
+and the 2026-08-27 register entry still records. No permission model: this is
+one distinction and it stays one. No setting at the invitation, because somebody
+is invited before anyone has decided that about them. No change to
+`approve-for-client`, which is Higher Roads clearing a version for the client to
+see and a different act by a different person. No new design class: the control
+uses the nearest accepted set and the missing pattern is recorded in
+`docs/deferred-work.md` under Design pattern requests.
