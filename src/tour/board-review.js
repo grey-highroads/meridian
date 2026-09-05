@@ -55,7 +55,65 @@ const SYSTEM = [
   '{"appliedFindings":[{"id":"finding-1","why":""}],"alignment":[{"title":"","note":"","restsOn":["finding-1"]}],"departure":[{"title":"","note":"","restsOn":["finding-1"]}],"prohibition":[{"title":"","note":"","restsOn":["finding-1"]}],"openQuestions":[""]}',
 ].join("\n");
 
+// A job with no subject. The board is still read, against the direction it was
+// briefed from, the request, the concept, and whatever the brief said to
+// avoid. No artist material and no assumptions about what kind of work this is
+// reach the model. Ruled 2026-09-05.
+const SUBJECTLESS_SYSTEM = [
+  "You help a production team read one artboard against the direction it was briefed from and the concept it was built to make.",
+  "You are given the image of the board, the direction for the job in the director's own words, the request the Scene was made from, and the concept the board was briefed to build.",
+  "You are given no research about who or what the work is about. Do not invent any, and do not assume what kind of job this is. Nothing you write states a fact about anybody.",
+  "Look at the image. Everything you say about the board describes what is actually in it.",
+  "Write the read as three groups.",
+  "alignment: where the board sits with the direction and with the concept it was briefed to build. Say what you see in the board that does it.",
+  "departure: where the board leaves them. A departure is an observation, not a fault. Say what the board does instead and what that costs or opens up.",
+  "prohibition: where the board touches something the brief said to avoid. Leave this group empty when the brief said nothing to avoid.",
+  "Anything you cannot ground in the direction, the request, the concept, or the brief's avoid list goes in openQuestions.",
+  "Never write a verdict, a score, a rating, a percentage, a count, a risk level, or any sentence telling the reader whether to show this board to anyone. The groups are the read and the decision is the reader's.",
+  "Write plain language the person who asked would use. No architecture words, no em dashes.",
+  "Return JSON only, with no code fence and no preamble, shaped as:",
+  '{"alignment":[{"title":"","note":""}],"departure":[{"title":"","note":""}],"prohibition":[{"title":"","note":""}],"openQuestions":[""]}',
+].join("\n");
+
+function buildSubjectlessRequest(context, options = {}) {
+  const concept = context.chosenConcept || {};
+  const text = [
+    `Job: ${context.tourName}`,
+    `Scene: ${context.sceneTitle}`,
+    `Artboard version ${context.artboardVersion}, built against brief version ${context.briefVersion}.`,
+    "",
+    `The direction for this job, version ${context.directionVersion}, stored as the director gave it:`,
+    context.direction.words,
+    "",
+    "What was asked for:",
+    context.request,
+    "",
+    "The concept the board was briefed to build:",
+    [concept.title, concept.idea].filter(Boolean).join("\n"),
+    ...(context.conceptSummary ? ["", "How production said they read the brief:", context.conceptSummary] : []),
+    ...(context.avoid && context.avoid.length
+      ? ["", "What the brief said to avoid:", context.avoid.map((entry) => `- ${entry}`).join("\n")]
+      : ["", "The brief named nothing to avoid."]),
+  ].join("\n");
+  return {
+    model: options.model || DEFAULT_MODEL,
+    messages: [
+      { role: "system", content: SUBJECTLESS_SYSTEM },
+      {
+        role: "user",
+        content: [
+          { type: "text", text },
+          { type: "image_url", image_url: { url: context.board.dataUrl, detail: "high" } },
+        ],
+      },
+    ],
+    response_format: { type: "json_object" },
+    max_completion_tokens: options.maxCompletionTokens || BOARD_REVIEW_TOKEN_CAP,
+  };
+}
+
 export function buildBoardReviewRequest(context, options = {}) {
+  if (context.hasSubject === false) return buildSubjectlessRequest(context, options);
   const findings = context.findings.map((entry) => ({
     id: entry.findingId,
     part: entry.facetName,
@@ -102,7 +160,11 @@ export function buildBoardReviewRequest(context, options = {}) {
 
 export const GROUPS = ["alignment", "departure", "prohibition"];
 
-function group(parsed, name, known) {
+// An entry has to rest on a finding when findings were given, because a
+// departure nobody can trace would read as a fault in somebody's work. On a
+// job with no subject there are no findings to rest on, and the direction, the
+// concept, and the brief's avoid list are what ground the read instead.
+function group(parsed, name, known, grounded) {
   const rows = Array.isArray(parsed[name]) ? parsed[name] : [];
   return rows
     .map((row) => {
@@ -114,17 +176,20 @@ function group(parsed, name, known) {
         droppedCitations: cited.filter((id) => !known.has(id)),
       };
     })
-    .filter((row) => row.title && row.restsOn.length);
+    .filter((row) => row.title && (!grounded || row.restsOn.length));
 }
 
 export function checkBoardReview(parsed, context) {
+  const grounded = context.hasSubject !== false;
   const byId = new Map(context.findings.map((entry) => [entry.findingId, entry]));
   const known = new Set(byId.keys());
   const named = Array.isArray(parsed.appliedFindings) ? parsed.appliedFindings : [];
   const groups = {};
-  for (const name of GROUPS) groups[name] = group(parsed, name, known);
+  for (const name of GROUPS) groups[name] = group(parsed, name, known, grounded);
   if (!GROUPS.some((name) => groups[name].length)) {
-    throw new Error("The read came back with nothing the artist's record supports.");
+    throw new Error(grounded
+      ? "The read came back with nothing the artist's record supports."
+      : "The read came back with nothing to show.");
   }
   return {
     ...groups,

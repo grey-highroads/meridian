@@ -36,7 +36,58 @@ const SYSTEM = [
   '{"appliedFindings":[{"id":"finding-1","why":""}],"proposals":[{"title":"","idea":"","whyThisArtist":"","rhymesWith":["finding-1"],"asksOfProduction":"","whereItMightMiss":""}],"avoidNotes":[""],"openQuestions":[""]}',
 ].join("\n");
 
+// A job with no subject. The prompt carries no artist material and no
+// assumptions about what kind of work this is: no empty artist fields, no
+// song, no band, no stage, no setlist. What is left is the direction, the
+// request, and the surfaces the work plays on, which is what the ruling of
+// 2026-09-05 says this instrument can run from.
+const SUBJECTLESS_SYSTEM = [
+  "You help a production team explore what is possible for one piece of work.",
+  "You are given the direction for the job in the director's own words and one request from the person running it in theirs.",
+  "You are given no research about who or what the work is about. Do not invent any, and do not assume what kind of job this is. Nothing you write states a fact about anybody.",
+  "Propose two or three concept directions for the request. Each one is an idea a creative person can react to, not a plan and not instructions for how to build anything.",
+  "A concept describes what appears on the surfaces the work plays on and how it develops. Say what a viewer sees.",
+  "Never describe an effect the listed surfaces cannot produce. If the surfaces were not described to you, keep the concepts to what the direction and the request support and put the question in openQuestions.",
+  "Say what each proposal would ask of the production, and where it might miss the direction.",
+  "If something would help and you were not given it, put it in openQuestions rather than assuming it.",
+  "Write plain language the person who asked would use. No architecture words, no scores, no verdicts, no em dashes.",
+  "Return JSON only, with no code fence and no preamble, shaped as:",
+  '{"proposals":[{"title":"","idea":"","asksOfProduction":"","whereItMightMiss":""}],"openQuestions":[""]}',
+].join("\n");
+
+function buildSubjectlessRequest(context, options = {}) {
+  const setup = context.productionSetup;
+  const exceptions = setup && setup.venueExceptions ? setup.venueExceptions : [];
+  const user = [
+    "The direction for this job, version " + context.directionVersion + ", stored as the director gave it:",
+    context.direction.words,
+    "",
+    "What was asked for:",
+    context.request,
+    ...(setup ? [
+      "",
+      `What the work plays on, production setup version ${setup.version}, stored as production gave it:`,
+      setup.words,
+    ] : []),
+    ...(exceptions.length ? [
+      "",
+      "Dates where the rig differs:",
+      exceptions.map((entry) => `- ${entry.date}, ${entry.venue}. ${entry.text}`).join("\n"),
+    ] : []),
+  ].join("\n");
+  return {
+    model: options.model || DEFAULT_MODEL,
+    messages: [
+      { role: "system", content: SUBJECTLESS_SYSTEM },
+      { role: "user", content: user },
+    ],
+    response_format: { type: "json_object" },
+    max_completion_tokens: options.maxCompletionTokens || PROPOSAL_TOKEN_CAP,
+  };
+}
+
 export function buildProposalRequest(context, options = {}) {
+  if (context.hasSubject === false) return buildSubjectlessRequest(context, options);
   const findings = context.findings.map((entry) => ({
     id: entry.findingId,
     part: entry.facetName,

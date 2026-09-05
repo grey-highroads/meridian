@@ -260,7 +260,7 @@ test("a read renders its clusters with no score, no meter, and no entry without 
   // Version identity travels with the answer.
   assert.match(html, /TOUR DIRECTION V02/);
   assert.match(html, /RUN 02/);
-  assert.match(html, /ARTIST KNOWLEDGE APPROVED 2026-08-19/);
+  assert.match(html, /RESEARCH APPROVED 2026-08-19/);
 
   // Nothing that reads as a verdict.
   for (const word in { score: 1, verdict: 1, rating: 1, aligned: 1, "%": 1 }) {

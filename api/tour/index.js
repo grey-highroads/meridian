@@ -171,12 +171,46 @@ async function boardImage(artboard, options) {
   throw unreadable();
 }
 
+// Intelligence degrades by capability, not by page. Ruled 2026-09-05. The
+// change is which instruments ask for the brain, not what loadBrain refuses:
+// a job that names a subject still gets the same refusal when that subject's
+// research is not approved. A job that names none never asks.
+async function loadBrainIfAny(artistId, options) {
+  if (!artistId) return null;
+  return await loadBrain(artistId, options);
+}
+
 async function contextFor(body, options) {
   const tourId = sanitizeClientId(body.tourId || "");
   const fixture = await loadTour(tourId, options);
   const assignment = findAssignment(fixture, body.assignmentId);
-  const brain = await loadBrain(fixture.tour.artistId, options);
+  const brain = await loadBrainIfAny(fixture.tour.artistId, options);
   return { fixture, assignment, brain, context: assembleContext(brain, fixture.tour, assignment, options) };
+}
+
+// What a run had to read, in plain sentences, stored with the run. A run on a
+// job with no subject snapshots no evidence, and an empty evidence list on its
+// own reads as research holding nothing, which is a different thing from no
+// research at all. The run says which it was.
+function readFrom(brain, parts) {
+  return brain
+    ? [...parts, "The subject's approved research"]
+    : [...parts, "No research about a subject. This job has none."];
+}
+
+// The trail behind one answer. A run with no subject has nothing to snapshot
+// and stores nothing rather than a list of empty trails.
+function evidenceFrom(brain, applied) {
+  if (!brain) return [];
+  return applied.map((entry) => ({
+    findingId: entry.findingId,
+    part: entry.facetName,
+    text: entry.text,
+    independentSourceCount: entry.independentSourceCount,
+    tiers: entry.tiers,
+    why: entry.why,
+    ...evidenceSnapshot(brain.record, entry.findingId),
+  }));
 }
 
 // What the brand avoids is attached from the brain whether or not anyone asked
@@ -833,7 +867,8 @@ export async function handleAction(body, options = {}) {
         sceneTitle: assignment.title,
       },
       directionVersion: context.directionVersion,
-      brainApprovedAt: brain.approvedAt,
+      brainApprovedAt: brain ? brain.approvedAt : null,
+      readFrom: readFrom(brain, ["The tour direction", "The Scene request"]),
       result: {
         directions: proposed.proposals,
         avoidNotes: proposed.avoidNotes,
@@ -843,18 +878,7 @@ export async function handleAction(body, options = {}) {
       // that will have moved by the time anybody reads this back. Resolving an
       // old run against a newer brain would rewrite what a past analysis rested
       // on, which is the one thing a stored analysis exists to prevent.
-      evidence: proposed.appliedFindings.map((entry) => {
-        const trail = evidenceSnapshot(brain.record, entry.findingId);
-        return {
-          findingId: entry.findingId,
-          part: entry.facetName,
-          text: entry.text,
-          independentSourceCount: entry.independentSourceCount,
-          tiers: entry.tiers,
-          why: entry.why,
-          ...trail,
-        };
-      }),
+      evidence: evidenceFrom(brain, proposed.appliedFindings),
     });
     const stored = await analysisStore.appendAnalysis(SCENE_IDEAS, fixture.tour.id, assignment.id, analysis);
     return { tour: fixture.tour, assignment, analysis: stored.analysis, analyses: stored.analyses };
@@ -866,6 +890,15 @@ export async function handleAction(body, options = {}) {
   // made on V02 stays readable after the director's words move on.
   if (body.action === "run-direction-read") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    // The one instrument that cannot run without the subject's research, since
+    // comparing the direction against a history needs a history. The page says
+    // so rather than offering the control; this is the same sentence for
+    // anything that reaches the action anyway.
+    if (!fixture.tour.artistId) {
+      const error = new Error("This job has no subject to compare the direction against.");
+      error.status = 400;
+      throw error;
+    }
     const brain = await loadBrain(fixture.tour.artistId, options);
     const context = assembleDirectionContext(brain, fixture.tour);
     const read = await readDirection(context, options);
@@ -985,7 +1018,8 @@ export async function handleAction(body, options = {}) {
         briefVersion: entry.artboard.briefVersion,
       },
       directionVersion: briefedVersion,
-      brainApprovedAt: brain.approvedAt,
+      brainApprovedAt: brain ? brain.approvedAt : null,
+      readFrom: readFrom(brain, ["The Artboard itself", "The direction it was briefed against", "The frozen brief"]),
       result: {
         alignment: read.alignment,
         departure: read.departure,
@@ -994,18 +1028,7 @@ export async function handleAction(body, options = {}) {
       },
       // The trail as it stood at generation time, exactly as jobs one and two
       // do it.
-      evidence: read.appliedFindings.map((row) => {
-        const trail = evidenceSnapshot(brain.record, row.findingId);
-        return {
-          findingId: row.findingId,
-          part: row.facetName,
-          text: row.text,
-          independentSourceCount: row.independentSourceCount,
-          tiers: row.tiers,
-          why: row.why,
-          ...trail,
-        };
-      }),
+      evidence: evidenceFrom(brain, read.appliedFindings),
     });
     const stored = await analysisStore.appendAnalysis(
       BOARD_REVIEW,

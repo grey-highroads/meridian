@@ -1,4 +1,4 @@
-import { day, escape, evidenceGroup, pad, readActions } from "./ideas-view.js";
+import { day, escape, evidenceGroup, pad, readActions, readFromBlock, researchLineage } from "./ideas-view.js";
 
 // How an Artboard check reads.
 //
@@ -102,7 +102,7 @@ function lineageOf(analysis) {
     `RUN ${pad(analysis.run)}`,
     day(analysis.ranAt).toUpperCase(),
     `TOUR DIRECTION V${pad(analysis.directionVersion)}`,
-    `ARTIST KNOWLEDGE APPROVED ${day(analysis.brainApprovedAt).toUpperCase()}`,
+    researchLineage(analysis),
   ].join(" / ");
 }
 
@@ -119,7 +119,10 @@ export function renderBoardReview(analysis, picker = "") {
         <div class="m-stack">
           <span class="m-meta" id="result-heading">${escape(String(subject.sceneTitle || "THIS SCENE").toUpperCase())} / ARTBOARD V${pad(subject.artboardVersion)}</span>
           <span class="m-meta m-intelligence-read__lineage">${escape(lineageOf(analysis))}</span>
-          <p class="m-copy">How this Artboard compares to this artist's history and the direction it was made for. Nothing here decides anything, and presenting to the client is the same one click either way.</p>
+          <p class="m-copy">${analysis.brainApprovedAt
+            ? "How this Artboard compares to this artist's history and the direction it was made for."
+            : "How this Artboard compares to the direction it was made for and the brief it was built from."} Nothing here decides anything, and presenting to the client is the same one click either way.</p>
+          ${readFromBlock(analysis)}
         </div>
         ${picker}
       </header>

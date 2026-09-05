@@ -33,6 +33,14 @@ export function day(value) {
   return parsed.toISOString().slice(0, 10);
 }
 
+// The last segment of a run's lineage says which research stood behind it. A
+// run on a job with no subject had none, which is different from research that
+// was never approved and different again from a date nobody recorded.
+export function researchLineage(analysis) {
+  if (analysis.brainApprovedAt) return `RESEARCH APPROVED ${day(analysis.brainApprovedAt).toUpperCase()}`;
+  return "RAN WITH NO RESEARCH BEHIND IT";
+}
+
 // Old stored runs may still carry the intake file's bold markers and its
 // bookkeeping tail. The shared finding boundary removes both for readers.
 export function findingText(text) {
@@ -156,6 +164,15 @@ export function listBlock(heading, items) {
     </section>`;
 }
 
+// What the run read, when the run recorded it. It sits under the lineage
+// because a reader deciding how much to trust an answer wants to know what the
+// answer was working from.
+export function readFromBlock(analysis) {
+  const parts = Array.isArray(analysis.readFrom) ? analysis.readFrom.filter(Boolean) : [];
+  if (!parts.length) return "";
+  return `<p class="m-copy">Read from ${escape(parts.join(". "))}</p>`;
+}
+
 export function renderIdeas(analysis, picker = "", messages = {}) {
   const evidence = Array.isArray(analysis.evidence) ? analysis.evidence : [];
   const result = analysis.result || {};
@@ -165,7 +182,7 @@ export function renderIdeas(analysis, picker = "", messages = {}) {
     `RUN ${pad(analysis.run)}`,
     day(analysis.ranAt).toUpperCase(),
     `TOUR DIRECTION V${pad(analysis.directionVersion)}`,
-    `ARTIST KNOWLEDGE APPROVED ${day(analysis.brainApprovedAt).toUpperCase()}`,
+    researchLineage(analysis),
   ].join(" / ");
   const count = `${directions.length} ${directions.length === 1 ? "idea" : "ideas"}`;
   return `<section class="m-intelligence-results" aria-labelledby="result-heading">
@@ -178,6 +195,7 @@ export function renderIdeas(analysis, picker = "", messages = {}) {
           <span class="m-meta" id="result-heading">IDEAS FOR ${escape(String(subject.sceneTitle || "this Scene").toUpperCase())}</span>
           <span class="m-meta">${escape(lineage)}</span>
           <p class="m-copy">Starting points. Nothing here has been decided or approved.</p>
+          ${readFromBlock(analysis)}
         </div>
         ${picker}
       </header>

@@ -81,6 +81,13 @@ function sceneOptions() {
   return `<select class="m-select" id="scene-choice" aria-label="Scene">${rows}</select>`;
 }
 
+// A job with no subject. Two of the four instruments run on the job's own
+// material and one needs a history to compare against, so that one says what it
+// is missing in the same voice the tour stops instrument uses. Ruled 2026-09-05.
+function hasSubject() {
+  return Boolean(view.tour && view.tour.artistId);
+}
+
 function asks() {
   const ready = view.scenes.length > 0;
   const ideaControl = ready
@@ -94,7 +101,9 @@ function asks() {
       mark: "ideas",
       title: "Ideas for a Scene",
       copy: ready
-        ? "Starting points drawn from this artist's history, with the research behind each one."
+        ? (hasSubject()
+          ? "Starting points drawn from this artist's history, with the research behind each one."
+          : "Starting points drawn from the direction and what the Scene asks for. This job has no subject, so no research sits behind them.")
         : "Submit a Scene request first. Ideas are drawn from what the Scene asks for.",
       control: ideaControl,
       answer: answerDoor(SCENE_IDEAS, view.analyses, view.runId, (entry) => `Ideas run ${pad(entry.run)}`),
@@ -102,7 +111,9 @@ function asks() {
     {
       mark: "compare",
       title: "Compare the tour direction to this artist's history",
-      copy: "Where the direction matches what this artist has done before, where it goes somewhere new, and which older work it echoes.",
+      copy: hasSubject()
+        ? "Where the direction matches what this artist has done before, where it goes somewhere new, and which older work it echoes."
+        : "Needs research about who the work is for. This job has no subject, so there is no history to compare the direction against.",
       control: directionControl(),
       answer: answerDoor(
         DIRECTION_READ,
@@ -115,7 +126,9 @@ function asks() {
       mark: "artboard",
       title: "Check an Artboard before you present it",
       copy: view.boards.length
-        ? "How a finished Artboard compares to this artist's history and the direction it was made for. It does not decide anything."
+        ? (hasSubject()
+          ? "How a finished Artboard compares to this artist's history and the direction it was made for. It does not decide anything."
+          : "How a finished Artboard compares to the direction it was made for and the brief it was built from. It does not decide anything.")
         : "Meridian can check work submitted as a PNG or a JPEG. Nothing has come back yet.",
       control: boardControl(),
       answer: answerDoor(
@@ -174,6 +187,7 @@ function askTreatment(analyses) {
 // The direction read's action names what it will read and which version of it,
 // so the version is attached to the control and not only to the answer.
 function directionControl() {
+  if (!hasSubject()) return `<span class="m-state">Waiting on subject research</span>`;
   if (!view.directionVersion) return `<span class="m-state">No direction yet</span>`;
   const version = `V${pad(view.directionVersion)}`;
   return `<button class="${askTreatment(view.directionAnalyses)}" type="button" data-read ${view.reading ? "disabled" : ""}>${view.reading ? "Comparing" : `Compare direction ${escape(version)}`}</button>`;
@@ -293,6 +307,19 @@ function result() {
 }
 
 function reference() {
+  // A job with no subject has no research underneath it, so the block that
+  // points at the research says that rather than pointing at an empty page.
+  if (!hasSubject()) {
+    return `<section class="m-work" aria-labelledby="reference-heading">
+      <div class="m-section-lead">
+        <div class="m-stack">
+          <span class="m-label">Underneath</span>
+          <h2 id="reference-heading" class="m-section-heading">This job has no subject</h2>
+          <p class="m-copy">Answers here are read from the direction, the request, and the work that comes back. Adding a subject gives them a history to draw on.</p>
+        </div>
+      </div>
+    </section>`;
+  }
   return `<section class="m-work" aria-labelledby="reference-heading">
       <div class="m-section-lead">
         <div class="m-stack">
@@ -313,7 +340,9 @@ function render() {
       <div class="m-job-header__copy">
         <span class="m-label">Higher Roads only</span>
         <h1 class="m-heading">Intelligence</h1>
-        <p class="m-copy">Four things you can ask about this artist. Every answer carries the research it came from.</p>
+        <p class="m-copy">${hasSubject()
+          ? "Four things you can ask about this artist. Every answer carries the research it came from."
+          : "Four things you can ask about this job. Each one says what it needs and runs when it has it, and every answer says what it was read from."}</p>
       </div>
     </header>
     ${view.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>` : ""}

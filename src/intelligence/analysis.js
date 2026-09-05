@@ -76,6 +76,12 @@ export function buildAnalysis(entry = {}) {
     // number of its own yet, so the date it was approved is the reference.
     // Recorded in docs/deferred-work.md.
     brainApprovedAt: entry.brainApprovedAt || null,
+    // What the run had to read, in plain sentences. A run on a job with no
+    // subject snapshots no evidence, and an empty evidence list on its own
+    // reads as research holding nothing rather than as no research at all. A
+    // run stored before this field existed carries none and the reader falls
+    // back to the approval date beside it.
+    readFrom: Array.isArray(entry.readFrom) ? entry.readFrom : [],
     result: entry.result || {},
     evidence: Array.isArray(entry.evidence) ? entry.evidence : [],
   };

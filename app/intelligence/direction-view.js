@@ -1,4 +1,4 @@
-import { day, escape, evidenceGroup, pad, readActions } from "./ideas-view.js";
+import { day, escape, evidenceGroup, pad, readActions, researchLineage } from "./ideas-view.js";
 
 // How a direction read reads on the page.
 //
@@ -82,7 +82,7 @@ export function renderDirectionRead(analysis, picker = "") {
     `RUN ${pad(analysis.run)}`,
     day(analysis.ranAt).toUpperCase(),
     `TOUR DIRECTION V${pad(analysis.directionVersion)}`,
-    `ARTIST KNOWLEDGE APPROVED ${day(analysis.brainApprovedAt).toUpperCase()}`,
+    researchLineage(analysis),
   ].join(" / ");
   const entries = CLUSTERS.reduce((total, cluster) =>
     total + (Array.isArray(result[cluster.key]) ? result[cluster.key].length : 0), 0);

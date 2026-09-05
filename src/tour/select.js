@@ -43,6 +43,8 @@ function shape(finding) {
 // is for; a tour holds no such field, so the direction is read against every
 // finding the approved record holds for this artist rather than against a
 // default identity nobody chose.
+// The direction read is the instrument that needs the subject's research, so
+// it is never assembled without a brain. The caller refuses first.
 export function assembleDirectionContext(brain, tour) {
   const findings = (brain.groups || []).flatMap((group) => group.findings).map(shape);
   return {
@@ -55,11 +57,16 @@ export function assembleDirectionContext(brain, tour) {
   };
 }
 
+// A job with no subject has no brain to read, and the instruments that can
+// work without one still get their context. Intelligence degrades by
+// capability, not by page, ruled 2026-09-05. The findings are absent rather
+// than empty, and hasSubject is what the instruments read to say so.
 export function assembleContext(brain, tour, assignment) {
   const identity = assignment.identity || "main-stage";
-  const { all, inScope } = scopeFindings(brain, identity);
+  const { all, inScope } = brain ? scopeFindings(brain, identity) : { all: [], inScope: [] };
   const findings = inScope.map(shape);
   return {
+    hasSubject: Boolean(brain),
     tourId: tour.id,
     assignmentId: assignment.id,
     directionVersion: tour.direction.version,

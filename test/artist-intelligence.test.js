@@ -442,7 +442,7 @@ test("the ideas stack in one column and their titles are the largest text", () =
   assert.match(read("app/intelligence.js"), /<h1 class="m-heading">Intelligence<\/h1>/, "the page name was shrunk to section scale");
 
   // The run and its lineage are context, carried at meta scale.
-  assert.match(html, /RUN 02 \/ 2026-08-28 \/ TOUR DIRECTION V01 \/ ARTIST KNOWLEDGE APPROVED 2026-08-20/);
+  assert.match(html, /RUN 02 \/ 2026-08-28 \/ TOUR DIRECTION V01 \/ RESEARCH APPROVED 2026-08-20/);
 
   // And the surface does not run the full width of the window.
   assert.doesNotMatch(markup, /m-page--fluid/, "the page runs the full width of the window");
