@@ -261,6 +261,7 @@ export async function handleAction(body, options = {}) {
       name: body.name,
       identities: body.identities,
       label: body.label,
+      kind: body.kind,
     });
     await directory.appendArtistFact({
       actor: options.user ? options.user.displayName : RECORD_ACTOR,

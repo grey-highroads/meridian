@@ -42,7 +42,7 @@ const view = {
 
 const acts = {
   account: { working: false, result: null, message: "", name: "", artistName: "", artistLabel: "" },
-  artist: { working: false, result: null, message: "", name: "", label: "" },
+  artist: { working: false, result: null, message: "", name: "", label: "", kind: "" },
 };
 
 async function post(route, payload) {
@@ -344,6 +344,11 @@ function artistContent() {
         <input class="m-input" id="artist-label" data-field="artist-label" value="${escape(acts.artist.label)}" placeholder="${escape(ARTIST_LABEL)}">
         <span class="m-help">Optional. Leave it blank for ${escape(ARTIST_LABEL)}. You can change it later.</span>
       </div>
+      <div class="m-field">
+        <label class="m-label" for="artist-kind">What kind of subject this is</label>
+        <input class="m-input" id="artist-kind" data-field="artist-kind" value="${escape(acts.artist.kind)}" placeholder="artist">
+        <span class="m-help">Optional. A word like artist, venue, or organization. It decides what research fits, nothing else.</span>
+      </div>
       <div class="m-cluster">
         <button class="m-button m-button--primary" type="button" data-create-artist ${acts.artist.working ? "disabled" : ""}>${acts.artist.working ? "Creating" : "Create the artist"}</button>
       </div>
@@ -496,6 +501,7 @@ document.addEventListener("input", (event) => {
   if (which === "artist") acts.artist.name = field.value;
   if (which === "account-artist-label") acts.account.artistLabel = field.value;
   if (which === "artist-label") acts.artist.label = field.value;
+  if (which === "artist-kind") acts.artist.kind = field.value;
   if (which === "row-artist-label") view.artistLabelDraft = field.value;
   if (which === "confirm") {
     view.confirmName = field.value;
@@ -739,6 +745,7 @@ document.addEventListener("click", (event) => {
         action: "create-artist",
         name: acts.artist.name,
         label: acts.artist.label,
+        kind: acts.artist.kind,
       });
       return { summary: `${artist.name} was added to ${accountName()}. Import the intake files when they are ready.` };
     });

@@ -180,3 +180,15 @@ test("the label is a word and nothing reads it to decide anything", async () => 
   assert.equal(storedLabel(null), null);
   assert.equal(storedLabel("x".repeat(80)).length, 40, "a long word is not cut to a length a rail can hold");
 });
+
+test("a stored row without a kind reads as an artist, and a created row keeps its kind", async () => {
+  const backend = createMemoryBackend();
+  await backend.write(artistsPath("acct-k"), JSON.stringify({ artists: [{ id: "old-row", name: "Old Row", identities: ["main-stage"] }] }));
+  const directory = createArtistDirectory({ backend, accountId: "acct-k" });
+  const rows = await directory.readArtists();
+  assert.equal(rows[0].kind, "artist", "a row from before kinds existed reads as an artist");
+  const venue = await directory.createArtist({ name: "The Pinnacle", kind: "Venue" });
+  assert.equal(venue.kind, "venue", "a created row keeps its kind, lowercased");
+  const plain = await directory.createArtist({ name: "Wren Halloway" });
+  assert.equal(plain.kind, "artist", "kind defaults to artist");
+});

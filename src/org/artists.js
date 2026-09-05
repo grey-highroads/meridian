@@ -33,6 +33,7 @@ export const DEMO_ACCOUNT_ID = "dierks-bentley";
 export const DEFAULT_IDENTITIES = ["main-stage", "shared"];
 
 export const DEMO_ARTIST = {
+  kind: "artist",
   id: "dierks-bentley",
   name: "Dierks Bentley",
   identities: ["main-stage", "hot-country-knights", "shared"],
@@ -86,7 +87,11 @@ export function createArtistDirectory(options = {}) {
       const body = await backend.read(artistsPath(accountId));
       if (body !== null && body !== undefined) {
         const stored = JSON.parse(body);
-        if (Array.isArray(stored.artists) && stored.artists.length) return stored.artists;
+        // Rows written before kinds existed carry none. They are artists,
+        // resolved at read so nothing stored is rewritten.
+        if (Array.isArray(stored.artists) && stored.artists.length) {
+          return stored.artists.map((entry) => (entry.kind ? entry : { ...entry, kind: "artist" }));
+        }
       }
       if (accountId !== DEMO_ACCOUNT_ID) return [];
       const artists = [{ ...DEMO_ARTIST, identities: [...DEMO_ARTIST.identities] }];
@@ -102,7 +107,7 @@ export function createArtistDirectory(options = {}) {
       return artists.find((entry) => entry.id === artistId) || null;
     },
 
-    async createArtist({ name, identities, label } = {}) {
+    async createArtist({ name, identities, label, kind } = {}) {
       const cleaned = String(name || "").trim();
       if (!cleaned) {
         const error = new Error("Name the artist before creating it.");
@@ -126,9 +131,14 @@ export function createArtistDirectory(options = {}) {
       const chosen = Array.isArray(identities)
         ? identities.map((entry) => sanitizeArtistId(entry)).filter((entry) => entry !== "default")
         : [];
+      // What this row is: an artist, a venue, an organization. A word, not a
+      // branch. Research categories will belong to the kind; nothing else
+      // reads it. Absent means artist.
+      const cleanedKind = String(kind || "").trim().toLowerCase() || "artist";
       const created = {
         id,
         name: cleaned,
+        kind: cleanedKind,
         identities: chosen.length ? chosen : [...DEFAULT_IDENTITIES],
         // What this subject is called on screen. Absent when nobody typed
         // one, and an absent label reads Artist.
