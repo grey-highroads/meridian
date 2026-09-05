@@ -238,16 +238,22 @@ export function renderBriefDocument(brief) {
     "",
     "## What to avoid",
     "",
-    brief.avoid.length ? bullets(brief.avoid) : "Nothing on record that this artist avoids.",
+    brief.avoid.length
+      ? bullets(brief.avoid)
+      : (brief.artistId ? "Nothing on record that this artist avoids." : "Nothing on record to avoid."),
     "",
     "## What was asked for",
     "",
     brief.assignment.request,
     "",
-    "## The artist behind this",
-    "",
-    context.length ? context.join("\n") : "- None recorded.",
-    "",
+    // A job with no subject has no artist section. The brief still carries
+    // artistId and artistContext, as null and empty, so its shape and the
+    // production receiver's checks are untouched. A heading over nothing is
+    // what changes.
+    brief.artistId ? "## The artist behind this" : null,
+    brief.artistId ? "" : null,
+    brief.artistId ? (context.length ? context.join("\n") : "- None recorded.") : null,
+    brief.artistId ? "" : null,
     "## The tour's direction",
     "",
     `Set by ${brief.tourDirection.setBy} on ${brief.tourDirection.setOn}. Version ${brief.tourDirection.version}.`,

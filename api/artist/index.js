@@ -216,25 +216,25 @@ export async function handleAction(body, options = {}) {
     const [people, admins] = await Promise.all([org.readUsers(), org.readAdmins()]);
     return { accountId, people: people.map(publicPerson), admins: admins.map(publicPerson) };
   }
-  // An account with no artist is an account nobody can do anything in, because
-  // a tour needs an artist. The two are made in one act, and the artist name is
-  // checked before the account is written so an unusable name never leaves half
-  // an account behind. If the artist still fails after the account exists, the
-  // account comes back with the reason the artist did not, and the caller says
-  // which half it was.
+  // An account and its first artist are made in one act when a name is given.
+  // The artist is optional: a client can be a client before anybody has said
+  // who the work is about, and a project can run on its own material. An
+  // account made without one is an account, and an artist is added to it later
+  // from this same page.
+  //
+  // When a name is given it is checked before the account is written, so an
+  // unusable name never leaves half an account behind. If the artist still
+  // fails after the account exists, the account comes back with the reason the
+  // artist did not and the caller says which half it was.
   if (body.action === "create-account" && options.user && options.user.role === OPERATOR_ROLE) {
     const artistName = String(body.artistName || "").trim();
-    if (!artistName) {
-      const error = new Error("Name the artist this account works on before creating it.");
-      error.status = 400;
-      throw error;
-    }
-    if (sanitizeArtistId(artistName) === "default") {
+    if (artistName && sanitizeArtistId(artistName) === "default") {
       const error = new Error("That artist name does not make a usable artist id. Use letters or numbers.");
       error.status = 400;
       throw error;
     }
     const account = await openAccounts(options, store).createAccount(body.name);
+    if (!artistName) return { account, artist: null };
     const directory = openDirectory(options, store, account.id, account.id);
     try {
       const artist = await directory.createArtist({

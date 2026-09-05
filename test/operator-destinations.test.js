@@ -111,13 +111,30 @@ test("creating an account creates its artist, and a tour can be made in it at on
 
 test("an unusable artist name is refused before any account is written", async () => {
   const backend = createMemoryBackend();
-  for (const artistName of ["", "   ", "!!!"]) {
-    await assert.rejects(
-      () => artistAction({ action: "create-account", name: "Northstar Live", artistName }, artistOptions(backend, OPERATOR)),
-      (error) => error.status === 400,
-    );
-  }
+  await assert.rejects(
+    () => artistAction({ action: "create-account", name: "Northstar Live", artistName: "!!!" }, artistOptions(backend, OPERATOR)),
+    (error) => error.status === 400,
+  );
   assert.equal(backend.files.size, 0, "half an account was left behind");
+});
+
+test("an account can be created with no artist at all", async () => {
+  for (const artistName of ["", "   ", undefined]) {
+    const backend = createMemoryBackend();
+    const created = await artistAction(
+      { action: "create-account", name: "Northstar Live", artistName },
+      artistOptions(backend, OPERATOR),
+    );
+    assert.equal(created.account.id, ACCOUNT_B);
+    // Absence, not a failure. Nothing reports a half that did not happen.
+    assert.equal(created.artist, null);
+    assert.equal(created.artistError, undefined);
+    // The account is written and no artist list is, so the account reads as
+    // holding none rather than holding an empty row.
+    const accounts = JSON.parse(await backend.read("brand-world-system/org/accounts.json"));
+    assert.ok(accounts.accounts.some((entry) => entry.id === ACCOUNT_B));
+    assert.equal(await backend.read(`brand-world-system/clients/${ACCOUNT_B}/org/artists.json`), null);
+  }
 });
 
 test("a half-failed create names the half that failed and keeps the account", async () => {
@@ -160,7 +177,12 @@ test("Tour details names the tour and points a Higher Roads reader at the artist
   assert.match(page, /<span class="m-label">Start the \$\{escape\(lower\)\}<\/span>/, "the eyebrow no longer says start the job");
   assert.match(page, /<h1 class="m-heading">Name the \$\{escape\(lower\)\}<\/h1>/, "the page does not lead with the one required action");
   assert.doesNotMatch(page, /Higher Roads adds the artist/, "the page still tells Higher Roads that Higher Roads will do it");
-  assert.match(page, /Higher Roads needs to add the artist before you can start a tour/, "the client does not get a plain explanation when the artist is missing");
-  assert.match(page, /Add an artist to this account before starting a tour/, "Higher Roads does not get a direct next step when the artist is missing");
+  // An account holding no artist can still start a job. The field says so
+  // rather than refusing, and a Higher Roads reader still gets the way to add
+  // one. Ruled 2026-09-05 in docs/meridian-roadmap-phase-2.md, step 2.
+  assert.match(page, /has no \$\{escape\(word\)\} stored/, "an account with no artist is not told it can start anyway");
+  assert.match(page, /The job starts without one and can have one added later/, "the reader is not told what happens without an artist");
+  assert.match(page, /<option value=""\$\{view\.artistId \? "" : " selected"\}>No /, "the artist choice offers no way to pick none");
+  assert.doesNotMatch(page, /data-create-tour \$\{view\.working \|\| !view\.artists\.length/, "the create button is still disabled by a missing artist");
   assert.match(page, /view\.role === "higher-roads" \? .*admin\.html/, "a Higher Roads reader gets no way to add the artist");
 });

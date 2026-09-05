@@ -102,8 +102,11 @@ export function parseProductionSetup(text) {
 export function parseTour(text) {
   const title = (String(text).match(/^#\s+(.+)$/m) || [])[1];
   const id = field(text, "Tour id");
+  // A tour file names an artist when the job has one. A job that runs on its
+  // own material names none and parses to null, the same value a project
+  // created without one stores.
   const artistId = field(text, "Artist");
-  if (!title || !id || !artistId) fail("A tour file needs a title, a tour id, and an artist.");
+  if (!title || !id) fail("A tour file needs a title and a tour id.");
 
   const heading = String(text).match(/^##\s+Direction,\s+version\s+(\d+)\s*$/im);
   if (!heading) fail("A tour file needs a direction with a version.");

@@ -70,18 +70,27 @@ function paragraphs(text) {
     .join("");
 }
 
+// Who the job is about, when it is about somebody. A projection mapping job or
+// an install runs on the direction and the request, so the choice includes not
+// naming one and an account holding none can still start a job.
 function artistField() {
+  const word = ARTIST_LABEL.toLowerCase();
   if (!view.artists.length) {
-    return `<div class="m-callout m-callout--change">
-        <p class="m-copy">${view.role === "higher-roads" ? "Add an artist to this account before starting a tour." : "Higher Roads needs to add the artist before you can start a tour."}</p>
-        ${view.role === "higher-roads" ? '<div class="m-cluster"><a class="m-button m-button--small" href="./admin.html">Add the artist</a></div>' : ""}
+    return `<div class="m-field">
+        <span class="m-label">${escape(ARTIST_LABEL)}</span>
+        <p class="m-copy">This account has no ${escape(word)} stored. The job starts without one and can have one added later.</p>
+        ${view.role === "higher-roads" ? '<div class="m-cluster"><a class="m-button m-button--small" href="./admin.html">Add one</a></div>' : ""}
       </div>`;
   }
-  if (view.artists.length === 1) {
-    return `<div class="m-field"><span class="m-label">${escape(artistLabel(view.artists[0]))}</span><p class="m-copy">${escape(view.artists[0].name)}</p></div>`;
-  }
-  const options = view.artists.map((entry) => `<option value="${escape(entry.id)}"${entry.id === view.artistId ? " selected" : ""}>${escape(entry.name)}</option>`).join("");
-  return `<div class="m-field"><label class="m-label" for="artist">${escape(ARTIST_LABEL)}</label><select class="m-select" id="artist" data-field="artistId">${options}</select></div>`;
+  const rows = [
+    `<option value=""${view.artistId ? "" : " selected"}>No ${escape(word)}</option>`,
+    ...view.artists.map((entry) => `<option value="${escape(entry.id)}"${entry.id === view.artistId ? " selected" : ""}>${escape(entry.name)}</option>`),
+  ].join("");
+  return `<div class="m-field">
+      <label class="m-label" for="artist">${escape(view.artists.length === 1 ? artistLabel(view.artists[0]) : ARTIST_LABEL)}</label>
+      <select class="m-select" id="artist" data-field="artistId">${rows}</select>
+      <span class="m-help">Optional. Leave it without one if the job is not about an ${escape(word)}.</span>
+    </div>`;
 }
 
 // What the creation screen calls the job. Nothing is stored yet, so it reads
@@ -123,7 +132,7 @@ function paintTourCreation() {
         </div>
         ${view.message ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.message)}</p></div>` : ""}
         <div class="m-cluster">
-          <button class="m-button m-button--primary" type="button" data-create-tour ${view.working || !view.artists.length ? "disabled" : ""}>${view.working ? "Starting" : `Start the ${escape(lower)}`}</button>
+          <button class="m-button m-button--primary" type="button" data-create-tour ${view.working ? "disabled" : ""}>${view.working ? "Starting" : `Start the ${escape(lower)}`}</button>
         </div>
       </div>
     </div>`;

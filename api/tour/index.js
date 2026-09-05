@@ -539,12 +539,10 @@ export async function handleAction(body, options = {}) {
       error.status = 400;
       throw error;
     }
-    const artistId = String(body.artistId || "").trim();
-    if (!artistId) {
-      const error = new Error("Name the artist this tour belongs to.");
-      error.status = 400;
-      throw error;
-    }
+    // A project can run on its own material. An artistId that is given is
+    // verified exactly as before; one that is not is stored as null and the
+    // project proceeds. Nothing branches on the difference after this point.
+    const artistId = String(body.artistId || "").trim() || null;
     const id = sanitizeClientId(name);
     if (id === "default") {
       // sanitizeClientId falls back to "default", which is the inherited BWS
@@ -561,7 +559,7 @@ export async function handleAction(body, options = {}) {
         : {}),
       accountId: actingAccount,
     });
-    if (!await artistDirectory.findArtist(artistId)) {
+    if (artistId && !await artistDirectory.findArtist(artistId)) {
       const error = new Error("No artist is stored under that name in this account.");
       error.status = 404;
       throw error;

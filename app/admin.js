@@ -104,14 +104,20 @@ function accountRow(entry) {
 }
 
 function tourRow(entry) {
-  const artist = view.artists.find((candidate) => candidate.id === entry.artistId);
+  // A job that names nobody and a job whose named subject is gone read
+  // differently. The first is a job about its own material and says so. The
+  // second is a row pointing at something that is not there.
+  const artist = entry.artistId ? view.artists.find((candidate) => candidate.id === entry.artistId) : null;
+  const subjectLine = entry.artistId
+    ? (artist ? artist.name : `${ARTIST_LABEL} not found`)
+    : `No ${ARTIST_LABEL.toLowerCase()} on this job`;
   const subject = artistLabel(artist).toLowerCase();
   const active = entry.id === view.activeTourId;
   const arming = view.deletingTour === entry.id;
   const armed = view.confirmTourName.trim() === entry.name;
   const remove = arming
     ? `<div class="m-admin-confirm">
-         <p class="m-copy">Deleting ${escape(entry.name)} removes its Scenes, files, reviews, and approvals. The ${escape(subject)} and ${escape(artistLabel(artist))} Brain stay in the account. This cannot be undone.</p>
+         <p class="m-copy">Deleting ${escape(entry.name)} removes its Scenes, files, reviews, and approvals.${entry.artistId ? ` The ${escape(subject)} and ${escape(artistLabel(artist))} Brain stay in the account.` : ""} This cannot be undone.</p>
          <div class="m-admin-confirm__actions">
            <input class="m-input" data-field="confirm-tour" value="${escape(view.confirmTourName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the tour name to delete it">
            <button class="m-button m-button--change" type="button" data-delete-tour="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete tour"}</button>
@@ -127,7 +133,7 @@ function tourRow(entry) {
       <div class="m-stack">
         <span class="m-rule-row__title">${escape(entry.name || entry.id)}</span>
         ${active ? '<span class="m-meta">Default tour</span>' : ""}
-        <span class="m-meta">${escape(artist ? artist.name : `${ARTIST_LABEL} not found`)}</span>
+        <span class="m-meta">${escape(subjectLine)}</span>
       </div>
       <div class="m-cluster">${controls}</div>
       ${remove}
@@ -269,7 +275,7 @@ function sectionHead(id, title, count, action = "") {
 function accountForm() {
   if (!view.creatingAccount) return "";
   return `<div class="m-admin-account-form" id="admin-account-form">
-      <p class="m-copy">Create the client account and its first artist together.</p>
+      <p class="m-copy">Create the client account, with its first ${escape(ARTIST_LABEL.toLowerCase())} if the work is about one.</p>
       <div class="m-field">
         <label class="m-label" for="account-name">Account name</label>
         <input class="m-input" id="account-name" data-field="account" value="${escape(acts.account.name)}" placeholder="For example, Northstar Live">
@@ -277,6 +283,7 @@ function accountForm() {
       <div class="m-field">
         <label class="m-label" for="account-artist">${escape(ARTIST_LABEL)} name</label>
         <input class="m-input" id="account-artist" data-field="account-artist" value="${escape(acts.account.artistName)}" placeholder="For example, Wren Halloway">
+        <span class="m-help">Optional. Leave it blank for an account whose work is not about an ${escape(ARTIST_LABEL.toLowerCase())}, or add one here later.</span>
       </div>
       <div class="m-field">
         <label class="m-label" for="account-artist-label">What to call this subject</label>
@@ -690,13 +697,16 @@ document.addEventListener("click", (event) => {
       // The account can arrive without its artist. When it does, the account is
       // reported as made and the artist is reported as the half that failed,
       // in the words the server used.
-      if (!created.artist) {
+      if (created.artistError) {
         return {
           summary: `${created.account.name} was created, but the artist was not: ${created.artistError}`,
           lines: ["Open the account above and add the artist there."],
         };
       }
       view.creatingAccount = false;
+      if (!created.artist) {
+        return { summary: `${created.account.name} was created. Open the account above to start the first job.` };
+      }
       return { summary: `${created.account.name} was created with ${created.artist.name}. Open the account above to start the tour.` };
     });
   }
