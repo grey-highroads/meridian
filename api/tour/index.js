@@ -925,12 +925,10 @@ export async function handleAction(body, options = {}) {
       error.status = 400;
       throw error;
     }
-    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
-    if (briefs.some((entry) => entry.status === "frozen")) {
-      const error = new Error("A brief is already frozen for this Scene. A change now needs a new brief version.");
-      error.status = 409;
-      throw error;
-    }
+    // A frozen brief no longer locks the Scene's working state. Ruled
+    // 2026-09-05, fourth session: a sent Scene can version, and changing the
+    // direction is how the next version gets its meaning. Frozen briefs are
+    // untouched by this; the change lands in the next freeze.
     const concept = {
       title: String(source.title).trim(),
       idea: sceneIdea(source.idea, assignment),
@@ -1255,12 +1253,9 @@ export async function handleAction(body, options = {}) {
       error.status = 400;
       throw error;
     }
-    const briefs = await tourStore.readBriefs(fixture.tour.id, assignment.id);
-    if (briefs.some((entry) => entry.status === "frozen")) {
-      const error = new Error("A brief is already frozen for this Scene. Changing the concept now means a new brief version.");
-      error.status = 409;
-      throw error;
-    }
+    // Same ruling as the Scene direction above: a frozen brief locks itself,
+    // not the Scene. The changed concept is recorded and lands in the next
+    // frozen version.
     // Intent, interpretation, and decision stay three separate things. What the
     // brain proposed is kept next to what the person made of it.
     const concept = {

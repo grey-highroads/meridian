@@ -138,11 +138,13 @@ test("sending twice does not produce a second brief", async () => {
   assert.deepEqual(list.briefs.map((entry) => entry.briefVersion), [1]);
   const { handoffs } = await tourAction({ action: "get-handoffs", ...AT }, options);
   assert.equal(handoffs.filter((entry) => entry.kind === "brief").length, 1);
-  // The refusal that protects a frozen brief still fires after a send.
-  await assert.rejects(
-    () => withConcept(options, { title: "A different idea" }),
-    /A brief is already frozen for this Scene/,
-  );
+  // A sent Scene stays workable. Ruled 2026-09-05: changing the concept after
+  // a send is allowed, lands in the next frozen version, and touches nothing
+  // already frozen.
+  const changed = await withConcept(options, { title: "A different idea" });
+  assert.equal(changed.concept.title, "A different idea");
+  const unchanged = await tourAction({ action: "get-brief", ...AT, briefVersion: 1 }, options);
+  assert.notEqual(unchanged.brief.chosenConcept.title, "A different idea", "the frozen brief did not move");
 });
 
 test("a chosen concept records who shaped it and what it came from", async () => {
@@ -351,16 +353,19 @@ test("freezing stores the version, and a frozen version is never rewritten", asy
   const briefsPath = tourPathFor(TOUR, ASSIGNMENT, "briefs", DEMO_ACCOUNT);
   assert.ok(stored.has(briefsPath));
 
-  // Changing the concept after a freeze is refused rather than silently
-  // rewriting what someone was handed.
-  await assert.rejects(
-    () => withConcept(options, { title: "A different idea" }),
-    /A brief is already frozen for this Scene/,
-  );
-  assert.equal(tourBackend.files.get(briefsPath), stored.get(briefsPath));
+  // Changing the concept after a freeze is allowed under the 2026-09-05
+  // versioning ruling. What it must never do is rewrite the frozen brief:
+  // the stored briefs are byte-identical after the change, and the next
+  // freeze is where the change lands.
+  await withConcept(options, { title: "A different idea" });
+  assert.equal(tourBackend.files.get(briefsPath), stored.get(briefsPath), "frozen briefs did not move");
 
   const again = await tourAction({ action: "get-brief", ...AT, briefVersion: 1 }, options);
   assert.deepEqual(again.brief, frozen.brief);
+
+  const second = await tourAction({ action: "freeze-brief", ...AT }, options);
+  assert.equal(second.brief.briefVersion, 2);
+  assert.equal(second.brief.chosenConcept.title, "A different idea", "the change landed in the next version");
 });
 
 test("the next brief after a freeze is a new version, not an edit", async () => {
