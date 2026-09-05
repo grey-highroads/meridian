@@ -210,3 +210,20 @@ test("a subject from another account cannot be attached, and a subjectless proje
   const attach = await tourAction({ action: "attach-subject", tourId: "bare-job", subjectId: org.id }, options);
   assert.deepEqual(attach.subjectIds, ["charity-org"], "a project created with nobody gains its first subject later");
 });
+
+test("an attached artist subject feeds the research instruments; a venue alone does not", async () => {
+  const backend = createMemoryBackend();
+  const options = tourOptions(backend);
+  const directory = createArtistDirectory({ backend, accountId: ACCOUNT });
+  const venue = await directory.createArtist({ name: "The Pinnacle", kind: "venue" });
+  await directory.createArtist({ name: "Wren Halloway" });
+  await tourAction({ action: "create-tour", name: "Gained Later" }, options);
+  await tourAction({ action: "attach-subject", tourId: "gained-later", subjectId: venue.id }, options);
+  await assert.rejects(
+    tourAction({ action: "run-direction-read", tourId: "gained-later" }, options),
+    /no subject to compare/, "a venue-kind subject alone does not feed the comparison yet");
+  await tourAction({ action: "attach-subject", tourId: "gained-later", subjectId: "wren-halloway" }, options);
+  await assert.rejects(
+    tourAction({ action: "run-direction-read", tourId: "gained-later" }, options),
+    /Approve this artist's brain/, "an attached artist resolves and hits the approval gate, not the no-subject gate");
+});

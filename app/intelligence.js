@@ -85,7 +85,9 @@ function sceneOptions() {
 // material and one needs a history to compare against, so that one says what it
 // is missing in the same voice the tour stops instrument uses. Ruled 2026-09-05.
 function hasSubject() {
-  return Boolean(view.tour && view.tour.artistId);
+  if (!view.tour) return false;
+  const ids = Array.isArray(view.tour.subjectIds) ? view.tour.subjectIds : [];
+  return Boolean(view.tour.artistId || ids.length);
 }
 
 function asks() {

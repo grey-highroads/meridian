@@ -187,12 +187,35 @@ async function loadBrainIfAny(artistId, options) {
   return await loadBrain(artistId, options);
 }
 
+// Which subject feeds the research instruments. The list is walked in order,
+// artistId first, and the first artist-kind subject wins, so a job created
+// with an artist behaves exactly as before and a job that gained its subject
+// through attach-subject resolves the same way. Only artist-kind rows have
+// research today; other kinds are skipped until their research exists, which
+// is step 5 of the Phase 2 roadmap.
+async function resolveResearchSubject(tour, options) {
+  const ids = Array.isArray(tour.subjectIds) ? tour.subjectIds : (tour.artistId ? [tour.artistId] : []);
+  if (!ids.length) return null;
+  const artistDirectory = options.artists || createArtistDirectory({
+    ...((options.store?.backend || options.tourStore?.backend)
+      ? { backend: options.store?.backend || options.tourStore.backend }
+      : {}),
+    accountId: options.actingAccount,
+  });
+  for (const id of ids) {
+    const row = await artistDirectory.findArtist(id);
+    if (row && (row.kind || "artist") === "artist") return row;
+  }
+  return null;
+}
+
 async function contextFor(body, options) {
   const tourId = sanitizeClientId(body.tourId || "");
   const fixture = await loadTour(tourId, options);
   const assignment = findAssignment(fixture, body.assignmentId);
-  const brain = await loadBrainIfAny(fixture.tour.artistId, options);
-  return { fixture, assignment, brain, context: assembleContext(brain, fixture.tour, assignment, options) };
+  const subject = await resolveResearchSubject(fixture.tour, options);
+  const brain = await loadBrainIfAny(subject ? subject.id : null, options);
+  return { fixture, assignment, brain, subject, context: assembleContext(brain, fixture.tour, assignment, options) };
 }
 
 // What a run had to read, in plain sentences, stored with the run. A run on a
@@ -977,12 +1000,13 @@ export async function handleAction(body, options = {}) {
     // comparing the direction against a history needs a history. The page says
     // so rather than offering the control; this is the same sentence for
     // anything that reaches the action anyway.
-    if (!fixture.tour.artistId) {
+    const subject = await resolveResearchSubject(fixture.tour, options);
+    if (!subject) {
       const error = new Error("This job has no subject to compare the direction against.");
       error.status = 400;
       throw error;
     }
-    const brain = await loadBrain(fixture.tour.artistId, options);
+    const brain = await loadBrain(subject.id, options);
     const context = assembleDirectionContext(brain, fixture.tour);
     const read = await readDirection(context, options);
     const analysisStore = options.analysisStore || createAnalysisStore({ accountId: actingAccount });
