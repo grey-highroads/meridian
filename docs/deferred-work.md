@@ -264,13 +264,17 @@ Recorded 2026-08-26 when the demo tour fallback came out of `app/context.js`. Up
 
 Bring it back when: Grey reviews the empty state on the live app and says what each of the three should say in that condition.
 
-## Facts and approvals name people by display name, not by id
+## Approvals name people by display name, not by id
 
-Recorded 2026-08-26 with brief 4 of the admin surface. Updated 2026-08-27 when the client review boundary began returning the whole tour team's client feedback. `src/org/artists.js`, `src/tour/scene-record.js`, `api/tour/index.js`, and `api/tour-upload.js` all write `actor` as the person's display name. Nothing on a fact points back at the person record. The approvals document also records `approvedBy` and `writtenBy` as display names without person ids.
+Recorded 2026-08-26 with brief 4 of the admin surface. Updated 2026-08-27 when the client review boundary began returning the whole tour team's client feedback. Updated 2026-09-05 when the facts half shipped.
 
-Three effects. Editing somebody's name leaves earlier facts and approvals reading the name they had then, which is right for a record of who decided what and wrong for anyone trying to gather one person's acts. Two people with the same display name cannot be distinguished in the approvals document. And the delete guard cannot ask whether a person ever acted, which is why brief 4 reads never done anything as never signed in.
+Facts are done. `appendFact` in `src/tour/scene-record.js` and `appendArtistFact` in `src/org/artists.js` write `actorId` beside `actor`, filled from the signed in person at all five call sites: `api/tour/index.js`, `api/tour-upload.js`, and the three in `api/artist/index.js`. `appendTourFact` in `src/tour/store.js` spreads the fact it is handed, so tour facts carry the id without a shape change. Display names are unchanged, because a record of who decided what should read the name the person carried then. Facts stored before that commit carry no id and read as they always did.
 
-Bring it back when: something needs one person's acts or review decisions gathered, such as a page showing what somebody decided, or a delete guard that reads the ruling as written. The change is stable person ids written beside `actor`, `approvedBy`, and `writtenBy`, with the display names kept as they are so old records still read.
+Approvals are not. `approvedBy` and `writtenBy` in the approvals document are still display names alone, written in `approve-for-client`, `client-approve`, and `client-comment` in `api/tour/index.js`, and copied into the frozen production intent. Two effects are left. Two people with the same display name cannot be told apart in that document. And the delete guard still cannot ask whether a person ever approved anything, which is why it reads never done anything as never signed in.
+
+The reason approvals were not done with the facts: production intent is frozen and never rewritten, so a field added to it is permanent from the first one written. That is a contract decision and belongs with the brief contract work in step 6 of `docs/meridian-roadmap-phase-2.md`, not folded into a fix to the fact writers.
+
+Bring it back when: something needs one person's review decisions gathered, or the brief contract changes shape in step 6, whichever comes first. The change is a person id written beside `approvedBy` and `writtenBy`, added rather than replacing, with the display names kept as they are so records already frozen still read.
 
 ## Nobody can be invited into an account with no artist
 

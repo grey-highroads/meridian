@@ -307,3 +307,42 @@ test("a cleared version tells the client work is ready and tells us to review it
 test("a caller that names no role is treated as Higher Roads", () => {
   assert.equal(sceneLifecycle({ request: REQUEST }).nextAction, "Develop this Scene.");
 });
+
+// A fact says who did it in two ways now: the display name they carried at the
+// time, which is what the record reads, and a stable id, which is what anyone
+// gathering one person's acts needs.
+
+test("a fact written by a signed in person carries their id beside their name", async () => {
+  const { options } = await ready();
+  await tourAction({ action: "choose-concept", ...AT, concept: CONCEPT }, options);
+  await tourAction({ action: "freeze-brief", ...AT }, options);
+  const { facts } = await tourAction({ action: "get-scene-record", ...AT }, options);
+  const written = facts.find((entry) => entry.action === "Froze the brief");
+  assert.equal(written.actor, "Ray Mercer");
+  assert.equal(written.actorId, "operator");
+});
+
+test("a fact written with no person carries the record actor and a null id", async () => {
+  const { sceneRecord } = await ready();
+  await sceneRecord.appendFact(TOUR, ASSIGNMENT, { action: "Left a comment" });
+  const facts = await sceneRecord.readFacts(TOUR, ASSIGNMENT);
+  const written = facts[facts.length - 1];
+  assert.equal(written.actor, "Higher Roads");
+  assert.equal(written.actorId, null, "a fact with nobody behind it invented an id");
+});
+
+test("a fact stored before ids were written still reads", async () => {
+  const { sceneRecord, tourBackend } = await ready();
+  await sceneRecord.appendFact(TOUR, ASSIGNMENT, { actor: "Ray Mercer", action: "Froze the brief" });
+  const [storedPath] = [...tourBackend.files.keys()].filter((key) => key.endsWith("scene-record.json"));
+  const stored = JSON.parse(tourBackend.files.get(storedPath));
+
+  // The shape a fact had before this commit: a name and no id at all.
+  delete stored.facts[0].actorId;
+  tourBackend.files.set(storedPath, JSON.stringify(stored, null, 2));
+
+  const facts = await sceneRecord.readFacts(TOUR, ASSIGNMENT);
+  assert.equal(facts[0].actor, "Ray Mercer");
+  assert.equal(facts[0].action, "Froze the brief");
+  assert.equal(facts[0].actorId, undefined, "a stored fact was rewritten on read");
+});

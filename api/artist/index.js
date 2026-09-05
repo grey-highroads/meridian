@@ -244,6 +244,7 @@ export async function handleAction(body, options = {}) {
       });
       await directory.appendArtistFact({
         actor: options.user.displayName,
+        actorId: options.user.id,
         role: options.user.roleLabel || null,
         account: account.id,
         action: "Created the artist",
@@ -265,6 +266,7 @@ export async function handleAction(body, options = {}) {
     });
     await directory.appendArtistFact({
       actor: options.user ? options.user.displayName : RECORD_ACTOR,
+      actorId: options.user ? options.user.id : null,
       role: options.user ? options.user.roleLabel || null : null,
       account: accountId,
       action: "Created the artist",
@@ -282,6 +284,7 @@ export async function handleAction(body, options = {}) {
     const updated = await directory.setArtistLabel(wanted, body.label);
     await directory.appendArtistFact({
       actor: options.user.displayName,
+      actorId: options.user.id,
       role: options.user.roleLabel || null,
       account: accountId,
       action: updated.label ? `Called this subject ${updated.label}` : "Went back to the default word for this subject",

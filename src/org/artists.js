@@ -179,6 +179,9 @@ export function createArtistDirectory(options = {}) {
       const facts = await this.readArtistFacts();
       const entry = {
         actor: fact.actor || RECORD_ACTOR,
+        // The person behind the display name. The same shape the Scene record
+        // writes, for the same reason.
+        actorId: fact.actorId || null,
         role: fact.role || null,
         account: fact.account || accountId,
         action: String(fact.action || "").trim(),

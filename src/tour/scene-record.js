@@ -41,6 +41,13 @@ export function createSceneRecord(options = {}) {
       const facts = await readAll(tourId, assignmentId);
       const entry = {
         actor: fact.actor || RECORD_ACTOR,
+        // The person the display name belonged to. The name is what the record
+        // reads, because a record of who decided what should say the name they
+        // carried then, and the id is what a reader gathering one person's acts
+        // needs. Facts stored before 2026-09-05 carry null and read as they
+        // always did. A fact with no signed in person behind it carries null
+        // too, beside the record actor.
+        actorId: fact.actorId || null,
         role: fact.role || null,
         action: String(fact.action || "").trim(),
         version: fact.version || null,

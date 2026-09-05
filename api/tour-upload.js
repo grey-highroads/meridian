@@ -59,6 +59,7 @@ export default async function handler(request, response, options = {}) {
       if (!pathname.startsWith(prefix)) throw new Error("That file is outside this Scene.");
       await record.appendFact(tourId, assignmentId, {
         actor: user.displayName,
+        actorId: user.id,
         role: user.roleLabel,
         account: accountId,
         action: "Added reference",

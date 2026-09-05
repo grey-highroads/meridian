@@ -463,7 +463,7 @@ export async function handleAction(body, options = {}) {
   // Roads session may name another account and that choice is recorded on the
   // facts it writes. Brief 2 of docs/spec-accounts-artists-tours.md.
   const actingAccount = resolveActingAccount(user, body.accountId || user.actingAccount);
-  const actor = { actor: user.displayName, role: user.roleLabel, account: actingAccount };
+  const actor = { actor: user.displayName, actorId: user.id, role: user.roleLabel, account: actingAccount };
   options = { ...options, actingAccount };
 
   if (body.action === "get-me") return { user, actingAccount };
