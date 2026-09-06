@@ -1457,6 +1457,11 @@ export async function handleAction(body, options = {}) {
     const versions = await tourStore.readBriefs(fixture.tour.id, assignment.id);
     const frozenVersions = versions.filter((entry) => entry.status === "frozen");
     let brief = frozenVersions[frozenVersions.length - 1] || null;
+    // Sending a fresh version freezes the Scene as it stands right now and
+    // delivers that, rather than resending the newest frozen brief. This is
+    // how a change made after a send reaches production: the person edits,
+    // then sends the next version. Ruled 2026-09-05, fourth session.
+    if (body.freshVersion && brief) brief = null;
     if (!brief) {
       const compiled = compileBrief({
         tour: fixture.tour,

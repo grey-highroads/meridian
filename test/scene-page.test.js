@@ -305,8 +305,8 @@ test("a brief that went out and has not been confirmed says so and offers the se
   const words = page.drawerText();
   const drawer = page.drawerMarkup();
 
-  assert.match(words, /The brief went out\. Production has not confirmed it\./);
-  assert.doesNotMatch(words, /Production has the Scene/, "the Scene claims production has it before production said so");
+  assert.match(words, /Version 1 went out\. Production has not confirmed it\./);
+  assert.doesNotMatch(words, /Production has version/, "the Scene claims production has it before production said so");
   assert.match(drawer, /data-send[^>]*>\s*Send again/, "there is no way to send it again");
   // The handoff is still reachable. Sending again is the thing to do, so it
   // leads.
@@ -319,7 +319,7 @@ test("a brief production confirmed keeps the sentence and stops offering the sen
   const words = page.drawerText();
   const drawer = page.drawerMarkup();
 
-  assert.match(words, /Production has the Scene\./);
+  assert.match(words, /Production has version 1\./);
   assert.doesNotMatch(words, /has not confirmed/);
   assert.doesNotMatch(drawer, /data-send[ >]/, "an acknowledged brief still offers the send");
   assert.match(drawer, /Open handoff/);
@@ -330,7 +330,7 @@ test("a Scene nobody has sent says neither thing", async () => {
   await page.settle();
   const words = page.drawerText();
 
-  assert.doesNotMatch(words, /Production has the Scene/);
+  assert.doesNotMatch(words, /Production has version/);
   assert.doesNotMatch(words, /has not confirmed/);
   assert.match(page.drawerMarkup(), /data-send[^>]*>\s*Send to production/);
 });
@@ -563,16 +563,30 @@ test("the drawer stays out of the page until the reader is known to be Higher Ro
   assert.match(admin.drawerMarkup(), /id="ask-heading"/, "the drawer is shown without its work in it");
 });
 
-test("a sent Scene offers Start a new version in both sent states", async () => {
+test("a sent Scene offers the next version, and starting it reopens the working state", async () => {
   const unconfirmed = scenePage({ briefs: [FROZEN_BRIEF], handoffs: [ISSUED_HANDOFF], acknowledged: false });
   await unconfirmed.settle();
-  assert.match(unconfirmed.drawerText(), /Start a new version/, "an unconfirmed sent Scene can start a new version");
+  assert.match(unconfirmed.drawerText(), /Start version 2/, "an unconfirmed sent Scene can start the next version");
 
   const confirmed = scenePage({ briefs: [FROZEN_BRIEF], handoffs: [ISSUED_HANDOFF], acknowledged: true });
   await confirmed.settle();
-  assert.match(confirmed.drawerText(), /Start a new version/, "a confirmed Scene can start a new version");
+  assert.match(confirmed.drawerText(), /Start version 2/, "a confirmed Scene can start the next version");
+
+  const startButton = {
+    closest: () => startButton,
+    hasAttribute: (name) => name === "data-start-version",
+    getAttribute: () => null,
+    dataset: {},
+  };
+  confirmed.handlers.click({ target: startButton });
+  await confirmed.settle();
+  const preparing = confirmed.drawerText();
+  assert.match(preparing, /You are preparing version 2\./, "starting reopens the working state under the next version's name");
+  assert.match(preparing, /Version 1 is with production and stays as sent\./);
+  assert.match(preparing, /Send version 2/, "the send control names the version it will freeze and deliver");
+  assert.match(preparing, /Never mind/, "the person can step back out without freezing anything");
 
   const unsent = scenePage({ briefs: [], handoffs: [], acknowledged: false });
   await unsent.settle();
-  assert.doesNotMatch(unsent.drawerText(), /Start a new version/, "an unsent Scene has nothing to version");
+  assert.doesNotMatch(unsent.drawerText(), /Start version/, "an unsent Scene has nothing to version");
 });

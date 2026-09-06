@@ -39,6 +39,7 @@ const view = {
   // the send section says which of the two has happened.
   acknowledged: false,
   deliveryReason: null,
+  preparingVersion: false,
   artboards: [],
   receipt: null,
   draft: { direction: "", question: "", answers: {} },
@@ -371,19 +372,25 @@ function sendWork() {
   let standing = "";
   let controls;
   // A sent Scene can version. Ideas change after a brief goes out, and the
-  // record's job is to document that rather than forbid it: freezing again
-  // makes Brief V0(n+1) from the Scene as it stands, and sending it is a new
-  // delivery with its own confirmation. Ruled 2026-09-05.
-  const newVersion = `<button class="m-button" type="button" data-freeze-version ${view.working ? "disabled" : ""}>Start a new version</button>`;
-  if (handoff && view.acknowledged) {
-    standing = `<div class="m-drawer__result"><p class="m-copy">Production has the Scene.</p></div>`;
-    controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>${newVersion}`;
+  // record's job is to document that rather than forbid it. Starting the next
+  // version reopens the working state; the freeze happens when the person
+  // sends, so what goes out is the Scene as edited, not as it stood when the
+  // button was pressed. Ruled 2026-09-05.
+  const sentVersion = latestBrief ? latestBrief.briefVersion : null;
+  const nextVersion = sentVersion ? sentVersion + 1 : 1;
+  const startNext = `<button class="m-button" type="button" data-start-version ${view.working ? "disabled" : ""}>Start version ${nextVersion}</button>`;
+  if (handoff && view.preparingVersion) {
+    standing = `<div class="m-drawer__result"><p class="m-copy">You are preparing version ${nextVersion}. Version ${sentVersion} ${view.acknowledged ? "is with production" : "went out"} and stays as sent. Make your changes on this page, then send.</p></div>`;
+    controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : `Send version ${nextVersion}`}</button><button class="m-button" type="button" data-cancel-version ${view.working ? "disabled" : ""}>Never mind</button>`;
+  } else if (handoff && view.acknowledged) {
+    standing = `<div class="m-drawer__result"><p class="m-copy">Production has version ${sentVersion}.</p></div>`;
+    controls = `<a class="m-button m-button--primary" href="./handoff.html?tour=${escape(TOUR_ID)}&amp;scene=${escape(view.sceneId)}&amp;brief=${escape(latestBrief.briefVersion)}">Open handoff</a>${startNext}`;
   } else if (handoff) {
     // The reason is about the last attempt in this sitting, so it shows after
     // a send and not after a reload; the standing line is the durable truth.
     const why = view.deliveryReason ? `<p class="m-copy">${escape(view.deliveryReason)}</p>` : "";
-    standing = `<div class="m-drawer__result"><p class="m-copy">The brief went out. Production has not confirmed it.</p>${why}</div>`;
-    controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send again"}</button>${openHandoff}${newVersion}`;
+    standing = `<div class="m-drawer__result"><p class="m-copy">Version ${sentVersion} went out. Production has not confirmed it.</p>${why}</div>`;
+    controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send again"}</button>${openHandoff}${startNext}`;
   } else {
     controls = `<button class="m-button m-button--primary" type="button" data-send ${view.working ? "disabled" : ""}>${view.working ? "Sending" : "Send to production"}</button>`;
   }
@@ -572,24 +579,15 @@ document.addEventListener("click", (event) => {
     }, "questions");
     return;
   }
-  if (target.hasAttribute("data-freeze-version")) {
-    guard(async () => {
-      view.working = true;
-      view.message = "";
-      view.messageAt = "send";
-      render();
-      const frozen = await call("freeze-brief", { assignmentId: view.sceneId });
-      view.brief = { brief: frozen.brief, document: frozen.document, sidecar: frozen.sidecar };
-      view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;
-      const issued = await call("get-handoffs", { assignmentId: view.sceneId });
-      view.handoffs = issued.handoffs;
-      view.acknowledged = Boolean(issued.acknowledged);
-      view.deliveryReason = null;
-      view.working = false;
-      view.message = "";
-      view.messageAt = "send";
-      render();
-    }, "send");
+  if (target.hasAttribute("data-start-version")) {
+    view.preparingVersion = true;
+    view.deliveryReason = null;
+    render();
+    return;
+  }
+  if (target.hasAttribute("data-cancel-version")) {
+    view.preparingVersion = false;
+    render();
     return;
   }
   if (target.hasAttribute("data-send")) {
@@ -606,7 +604,8 @@ document.addEventListener("click", (event) => {
         };
         view.concept = (await call("choose-concept", { assignmentId: view.sceneId, concept })).concept;
       }
-      const sent = await call("send-to-production", { assignmentId: view.sceneId });
+      const sent = await call("send-to-production", { assignmentId: view.sceneId, freshVersion: view.preparingVersion || undefined });
+      view.preparingVersion = false;
       view.brief = { brief: sent.brief, document: sent.document, sidecar: sent.sidecar };
       view.deliveryReason = sent.acknowledged ? null : (sent.deliveryReason || null);
       view.briefs = (await call("list-briefs", { assignmentId: view.sceneId })).briefs;

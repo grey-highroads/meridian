@@ -301,3 +301,29 @@ test("a second frozen brief is its own delivery: v1 stays confirmed, v2 posts an
   const after = await tourAction({ action: "get-handoffs", ...AT }, options);
   assert.equal(after.acknowledged, true);
 });
+
+test("sending a fresh version freezes the Scene as it stands and delivers that", async () => {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    const posted = JSON.parse(init.body);
+    calls.push(posted);
+    return { ok: true, status: 201, async json() { return { jobId: posted.jobId, receivedAt: "2026-09-05T23:50:00.000Z" }; } };
+  };
+  const { options } = await ready({ env: CONFIGURED, deliveryFetch: fetchImpl });
+
+  const first = await tourAction({ action: "send-to-production", ...AT }, options);
+  assert.equal(first.brief.briefVersion, 1);
+  assert.equal(first.acknowledged, true);
+
+  await tourAction({ action: "choose-concept", ...AT, concept: { ...CONCEPT, title: "The revised idea" } }, options);
+  const second = await tourAction({ action: "send-to-production", ...AT, freshVersion: true }, options);
+  assert.equal(second.brief.briefVersion, 2, "a fresh send freezes the next version");
+  assert.equal(second.brief.chosenConcept.title, "The revised idea", "the version carries the edit made after the first send");
+  assert.equal(second.acknowledged, true);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].briefVersion, 2);
+  assert.equal(calls[0].jobId, calls[1].jobId);
+
+  const plain = await tourAction({ action: "send-to-production", ...AT }, options);
+  assert.equal(plain.brief.briefVersion, 2, "a plain send still reuses the newest frozen version");
+});
