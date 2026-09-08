@@ -662,3 +662,51 @@ second word for the same record depending on where you are reading it. No change
 to the stored words `tour` and `artistId` or to the routes, which the 2026-09-05
 rulings on subjects already settled. No field set invented ahead of a real
 project needing it.
+
+## Two corrections, 2026-09-08, second session
+
+Recorded against the committed tree at `3ff2c15`. The first entry corrects a block
+this architect pushed earlier the same day. The second reverses part of a ruling of
+2026-09-04.
+
+**The project kind block of 2026-09-08 was written against a settled decision and is
+withdrawn.** Commit `b1f5506` records a ruling that a project carries a kind, with
+touring and mapping as the two values, and that the kind picks the field set. That
+should not have been written. A gig kind on the project was proposed and killed on
+2026-09-05, in the session that produced `docs/meridian-subjects-primer.md`. The
+reasoning that killed it stands unchanged: an artist doing projection mapping for a
+charity at a restaurant carries an artist, a charity, and a venue at once, so a kind on
+the project picks the wrong research and drops the artist brain from a job where the
+artist is the point. Research categories belong to the subject's kind. The 2026-09-04
+container ruling adds the rest, that there is no shape field until something behaves
+differently because of it, and a test asserts the stored project gains no `shape`,
+`type`, `kind`, `container`, or `recordType` key.
+
+How it happened, because the shape repeats. The architect audited the word tour by
+reading the code rather than the ruling record, inferred a model from what the code
+does, proposed it to Grey as new, and pushed it when Grey agreed. Reading the tree is
+not reading the record. A proposal that touches a concept already argued gets checked
+against the dated rulings before it reaches Grey.
+
+Nothing was built against `b1f5506`. No field, no selector, no field set.
+
+**Interface copy reads the word project, not the record's label.** Ruled by Grey in
+this session. The 2026-09-04 fifth-session entry ruled that lowercase copy follows the
+label where a screen would otherwise contradict itself, so a residency read "the
+residency" in prose. That is reversed. Project is the container word and it is what
+appears in a sentence. A residency, a tour, and a projection mapping job are types of
+project, and a type is not a replacement for the container word.
+
+Where this lands, read from the tree at `3ff2c15`: seven reads in `app/tour.js`, three
+in `app/direction.js`, four in `app/home.js`, one in `app/handoff.js`, and the two in
+`app/scenes.js` that shipped earlier today in `3ff2c15` itself. Every other place was
+writing the word tour literally and becomes project.
+
+The label stays on the project record, stays settable, and stops reaching prose. Where
+a project's type belongs on screen is open and not urgent. The label is not removed,
+because it is stored on live records. The subject label is a different field and is
+untouched, so the mapping job's subject still reads Client.
+
+What this does not license. No removal of the label field. No new type field, which the
+first correction above forbids. No change to the rail, which has read Project since
+2026-09-04. No change to stored words or routes.
