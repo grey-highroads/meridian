@@ -716,3 +716,40 @@ untouched, so the mapping job's subject still reads Client.
 What this does not license. No removal of the label field. No new type field, which the
 first correction above forbids. No change to the rail, which has read Project since
 2026-09-04. No change to stored words or routes.
+
+## A project carries its surfaces, 2026-09-08, third session
+
+Recorded against the committed tree at `fc21867`. Ruled by Grey after entering the
+projection mapping job in the live app, which is the acceptance this roadmap step
+was waiting on. Not built yet.
+
+**What the job showed.** The Project details sidebar models a touring route. The dates
+block is an ordered itinerary with a full-itinerary disclosure and an empty state
+reading that the route is still taking shape. The production setup carries exceptions
+per venue under a heading reading "Setup changes by venue." The mapping job is one
+night in one tent.
+
+The defining fact of that job reached the record nowhere. The direction text names the
+side tent walls and the ceiling above the stage. Those are the surfaces the media plays
+on, and the project has no field for them, so they can only arrive as prose inside the
+production setup or not at all. Meanwhile `src/tour/propose.js` already instructs the
+model never to describe an effect the listed surfaces cannot produce, and to raise an
+open question when the surfaces were not described to it. The concept engine asks for
+something the record cannot hold.
+
+**Surfaces belong to the project.** A list on the project record, each entry a name and
+a short description, in the words a person would use: side tent walls, ceiling above
+the stage, upstage screen. This is the surfaces concept ruled 2026-09-04, whose seam
+note holds: a surface is a physical thing in the room that content plays on, and it does
+not correspond to a mapped region in MadMapper or disguise.
+
+Held open on purpose: a project whose dates have different surfaces, which a two-night
+job in two rooms would produce. Surfaces sit on the project until a real job presents
+that, at which point the question is reopened with the job in front of us rather than
+in the abstract.
+
+What this does not license. No surfaces on a Scene, which was sequenced after this and
+stays after it. No geometry, projector positions, throw distances, or anything a
+production tool owns. No change to the frozen brief payload, which is contract work and
+belongs with the brief contract version in the phase 2 roadmap. Feeding the list to
+concept development is internal and is fair.
