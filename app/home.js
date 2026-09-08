@@ -9,7 +9,7 @@ const homeView = { user: null, tour: null, label: TOUR_LABEL, assignments: [], i
 async function call(action, extra = {}) {
   const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })) });
   const body = await response.json();
-  if (!response.ok) throw new Error(body.error || "Meridian could not load this tour. Refresh the page and try again.");
+  if (!response.ok) throw new Error(body.error || "Meridian could not load this page. Refresh and try again.");
   return body;
 }
 
@@ -56,11 +56,11 @@ function emptyGlyph(kind) {
 // the account already resolved rather than waiting on a tour load.
 function introductionCards(label) {
   return [
-    { title: "Home", copy: "Your snapshot into everything happening with the tour creative.", kind: "tour", calibration: `${label} / Not started` },
+    { title: "Home", copy: "Your snapshot into everything happening on this project.", kind: "tour", calibration: `${label} / Not started` },
     { title: "Scenes", copy: "A Scene can be a song, an intro, a transition, or any moment that needs screen content.", kind: "scene", calibration: "Scene register / Open" },
     { title: "Reviews", copy: "Provide feedback, request changes, or approve the work for final production.", kind: "review", calibration: "Decision queue / Clear" },
-    { title: `${label} details`, copy: "Instructions that guide the creative work across all the scenes of the tour.", kind: "direction", calibration: `${label} direction / Not set` },
-    { title: "Get Started", copy: `Start by adding ${label} visual direction and details so the creative process can begin.`, kind: "tour", calibration: `${label} / Not started` },
+    { title: "Project details", copy: "Instructions that guide the creative work across all the Scenes in this project.", kind: "direction", calibration: `${label} direction / Not set` },
+    { title: "Get Started", copy: "Start by adding the project's visual direction and details so the creative process can begin.", kind: "tour", calibration: `${label} / Not started` },
   ];
 }
 
@@ -97,18 +97,17 @@ function explainedCard(id, title, copy, kind, calibration, state = "") {
 // team works. The same three cards appear whether the tour exists or not.
 function explainedHome(user, tour) {
   const label = tour ? tourLabel(tour) : homeView.label;
-  const action = tour ? `Open ${label} details` : "Start the tour";
-  const lower = label.toLowerCase();
+  const action = tour ? "Open Project details" : "Start the project";
   const reason = tour
-    ? `Add the ${lower} direction and details there so the creative work has a shared foundation.`
-    : `Create the ${lower} in ${label} details so Meridian has a place for its direction, Scenes, reviews, and production information.`;
-  locationBar.innerHTML = tour ? `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(tour.name)}</span>` : "";
+    ? "Add the project direction and details there so the creative work has a shared foundation."
+    : "Create the project in Project details so Meridian has a place for its direction, Scenes, reviews, and production information.";
+  locationBar.innerHTML = tour ? `<span class="m-meta">ACTIVE PROJECT</span><span class="m-state m-state--current">${escape(tour.name)}</span>` : "";
   reviewCount.textContent = "";
-  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Home</span><h1 class="m-heading">Welcome, ${escape(firstName(user))}</h1><p class="m-copy m-copy--large">Home is your snapshot of what needs you and what is moving across the tour creative.</p><p class="m-copy">${escape(reason)}</p></div><a class="m-button m-button--primary" href="./tour.html">${escape(action)}</a></header>
+  root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">Home</span><h1 class="m-heading">Welcome, ${escape(firstName(user))}</h1><p class="m-copy m-copy--large">Home is your snapshot of what needs you and what is moving on this project.</p><p class="m-copy">${escape(reason)}</p></div><a class="m-button m-button--primary" href="./tour.html">${escape(action)}</a></header>
     <div class="m-stack">
       ${explainedCard("home-scenes-heading", "Scenes", "Scene requests, current work, and the next step for each Scene will appear here.", "scene", "Scene register / Open", "m-empty-state--action")}
       ${explainedCard("home-reviews-heading", "Reviews", "Work waiting for your feedback, changes, or approval will appear here.", "review", "Decision queue / Clear", "m-empty-state--clear")}
-      ${explainedCard("home-tour-details-heading", `${label} details`, "Creative direction, dates, venues, and production details will live here.", "direction", `${label} direction / Not set`, "m-empty-state--waiting")}
+      ${explainedCard("home-tour-details-heading", "Project details", "Creative direction, dates, venues, and production details will live here.", "direction", `${label} direction / Not set`, "m-empty-state--waiting")}
     </div>`;
 }
 
@@ -178,7 +177,7 @@ function tourReference(tour) {
     { label: "Dates and venues", ready: Boolean((tour.dates || []).length), detail: (tour.dates || []).length ? `${tour.dates.length} dates` : "Not added" },
     { label: "Playback system", ready: Boolean(tour.playbackSystem), detail: tour.playbackSystem ? "Recorded" : "Not added" },
     { label: "Production details", ready: Boolean(tour.productionSetup?.words), detail: tour.productionSetup?.words ? `Version V${version(tour.productionSetup.version)}` : "Not added" },
-    { label: `${label}-wide themes`, ready: Boolean((tour.themes || []).length), optional: true, detail: (tour.themes || []).length ? `${tour.themes.length} themes` : "Add if useful" },
+    { label: "Project-wide themes", ready: Boolean((tour.themes || []).length), optional: true, detail: (tour.themes || []).length ? `${tour.themes.length} themes` : "Add if useful" },
   ];
   const rows = categories.map((item) => {
     const state = item.ready ? "Added" : item.optional ? "Optional" : "Not added";
@@ -199,9 +198,9 @@ function recent(facts, user) {
     const action = String(fact.action || "Updated");
     const verb = action.charAt(0).toLowerCase() + action.slice(1);
     const copy = `${isYou ? "You" : actor} ${verb}${fact.version ? ` ${fact.version}` : ""}`;
-    return `<div class="m-activity-row"><span class="m-activity-row__marker ${action.includes("Approved") ? "m-activity-row__marker--approved" : ""}"></span><div><p class="m-activity-row__copy">${escape(copy)}</p><span class="m-meta">${escape(fact.sceneTitle || "TOUR")} · ${escape(fact.at)}</span></div></div>`;
+    return `<div class="m-activity-row"><span class="m-activity-row__marker ${action.includes("Approved") ? "m-activity-row__marker--approved" : ""}"></span><div><p class="m-activity-row__copy">${escape(copy)}</p><span class="m-meta">${escape(fact.sceneTitle || "PROJECT")} · ${escape(fact.at)}</span></div></div>`;
   }).join("");
-  const empty = `<div class="m-empty-inline"><p class="m-copy">Requests, feedback, and approvals will appear here as the tour moves.</p></div>`;
+  const empty = `<div class="m-empty-inline"><p class="m-copy">Requests, feedback, and approvals will appear here as the work moves.</p></div>`;
   return `<section class="m-home__activity" aria-labelledby="activity-heading"><header class="m-home__reference-head"><span class="m-label">Recent activity</span><h2 id="activity-heading" class="m-section-heading">Since your last visit</h2></header><div class="m-activity-list">${rows || empty}</div></section>`;
 }
 
@@ -290,7 +289,7 @@ async function load() {
   }
   const reviews = assignments.filter((scene) => needsUser(scene, user) && ["Production review", "Concept review"].includes(scene.stage));
   reviewCount.textContent = reviews.length ? String(reviews.length) : "";
-  locationBar.innerHTML = `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(tour.name)}</span>`;
+  locationBar.innerHTML = `<span class="m-meta">ACTIVE PROJECT</span><span class="m-state m-state--current">${escape(tour.name)}</span>`;
   root.innerHTML = `<header class="m-home__header"><div class="m-home__header-copy"><span class="m-label">${escape(todayLabel())}</span><h1 class="m-heading">Today</h1><p class="m-copy m-copy--large">${escape(homeSummary(assignments, user))}</p></div>${assignments.length ? `<a class="m-button m-button--primary" href="./request.html?tour=${escape(TOUR_ID)}">Request a Scene</a>` : ""}</header><div class="m-home__layout"><div class="m-home__primary">${currentWork(assignments, user)}</div><aside class="m-home__sidecar m-home__reference">${recent(facts, user)}${tourReference(tour)}</aside></div>`;
 }
 

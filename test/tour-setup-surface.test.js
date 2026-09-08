@@ -215,7 +215,7 @@ test("Home explains its sections before Scenes and keeps the operational Home in
     "Work waiting for your feedback, changes, or approval will appear here.",
     "Creative direction, dates, venues, and production details will live here.",
   ]) assert.match(home, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(home, /Create the \$\{lower\} in \$\{label\} details so Meridian has a place/, "the creation action has no reason attached");
+  assert.match(home, /Create the project in Project details so Meridian has a place/, "the creation action has no reason attached");
   assert.match(home, /href="\.\/tour\.html"/, "tour creation does not go to Tour details");
 
   for (const kept of ["Nothing needs a decision right now", "Current work", "Welcome,", "m-home__layout"]) {

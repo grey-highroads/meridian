@@ -68,17 +68,19 @@ test("Higher Roads cannot mark or receive the client introduction", async () => 
 test("the five introduction cards use the existing empty state and exact copy", () => {
   const home = read("app/home.js");
   for (const copy of [
-    "Home\", copy: \"Your snapshot into everything happening with the tour creative.",
+    "Home\", copy: \"Your snapshot into everything happening on this project.",
     "Scenes\", copy: \"A Scene can be a song, an intro, a transition, or any moment that needs screen content.",
     "Reviews\", copy: \"Provide feedback, request changes, or approve the work for final production.",
-    "Instructions that guide the creative work across all the scenes of the tour.",
-    "visual direction and details so the creative process can begin.",
+    "Instructions that guide the creative work across all the Scenes in this project.",
+    "Start by adding the project's visual direction and details so the creative process can begin.",
   ]) assert.ok(home.includes(copy), `introduction copy changed: ${copy}`);
   for (const calibration of ["Scene register / Open", "Decision queue / Clear", "${label} direction / Not set", "${label} / Not started"]) {
     assert.ok(home.includes(calibration), `introduction lost ${calibration}`);
   }
-  // Two cards name the job by the word the account chose. Ruled 2026-09-04.
-  assert.match(home, /title: `\$\{label\} details`/, "the details card does not read the record's word");
+  // The details card reads the container word. The record's label stopped
+  // reaching prose on 2026-09-08.
+  assert.match(home, /title: "Project details"/, "the details card does not read the word project");
+  assert.doesNotMatch(home, /title: `\$\{label\} details`/, "the details card still reads the record's label");
   assert.match(home, /<section class="m-empty-state m-empty-state--action"/);
   assert.match(home, /data-next-introduction/);
   assert.match(home, /data-skip-introduction/);
