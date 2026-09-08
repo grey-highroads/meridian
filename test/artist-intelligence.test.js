@@ -559,7 +559,7 @@ test("the four asks are on the page in the words of the person making them", () 
   // job three is the Artboard that came back, never a concept.
   for (const ask of [
     "Ideas for a Scene",
-    "Compare the tour direction to this artist's history",
+    "Compare the project direction to this artist's history",
     "Check an Artboard before you present it",
     "Check the tour stops",
   ]) {

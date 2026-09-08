@@ -1,5 +1,4 @@
 import { TOUR_ID, scopedBody } from "./context.js";
-import { TOUR_LABEL } from "./label.js";
 import { escape, pad, renderIdeas } from "./intelligence/ideas-view.js";
 import { renderAsks } from "./intelligence/asks-view.js";
 import { renderDirectionRead } from "./intelligence/direction-view.js";
@@ -112,7 +111,7 @@ function asks() {
     },
     {
       mark: "compare",
-      title: "Compare the tour direction to this artist's history",
+      title: "Compare the project direction to this artist's history",
       copy: hasSubject()
         ? "Where the direction matches what this artist has done before, where it goes somewhere new, and which older work it echoes."
         : "Needs research about who the work is for. This job has no subject, so there is no history to compare the direction against.",
@@ -336,7 +335,7 @@ function reference() {
 
 function render() {
   locationBar.innerHTML = view.tour
-    ? `<span class="m-meta">ACTIVE TOUR</span><span class="m-state m-state--current">${escape(view.tour.name)}</span>`
+    ? `<span class="m-meta">ACTIVE PROJECT</span><span class="m-state m-state--current">${escape(view.tour.name)}</span>`
     : "";
   root.innerHTML = `<header class="m-job-header">
       <div class="m-job-header__copy">
@@ -683,8 +682,7 @@ async function load() {
     return;
   }
   if (!TOUR_ID) {
-    // No tour is in scope here, so this reads the default word.
-    view.message = `Start a tour in ${TOUR_LABEL} details before asking about a Scene.`;
+    view.message = "Start a project in Project details before asking about a Scene.";
     render();
     return;
   }
