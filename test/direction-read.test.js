@@ -253,7 +253,7 @@ test("a read renders its clusters with no score, no meter, and no entry without 
   assert.ok(!html.includes("Where it leaves the record"), "an empty cluster rendered its heading");
 
   // Every entry carries the finding it rests on, in full, under the one label.
-  assert.match(html, /What this rests on in the artist&#039;s history|What this rests on in the artist's history/);
+  assert.match(html, /What this rests on in this artist&#039;s history|What this rests on in this artist's history/);
   assert.match(html, /He has staged weather as structure before/);
   assert.match(html, /It is the precedent the direction is leaning on/);
 

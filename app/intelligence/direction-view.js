@@ -1,4 +1,4 @@
-import { day, escape, evidenceGroup, pad, readActions, researchLineage } from "./ideas-view.js";
+import { day, escape, evidenceGroup, pad, readActions, researchLineage, SUBJECT_FALLBACK } from "./ideas-view.js";
 
 // How a direction read reads on the page.
 //
@@ -19,39 +19,43 @@ import { day, escape, evidenceGroup, pad, readActions, researchLineage } from ".
 // There is no verdict line, no meter, and no count of how aligned the direction
 // is. Reading the three groups is the read.
 
-export const CLUSTERS = [
+// The three clusters, in the word the reader uses for what this project is
+// about. The keys never move; only the sentences do.
+export function clusters(word = SUBJECT_FALLBACK) {
+  return [
   {
     key: "continuity",
     heading: "What the direction keeps",
-    copy: "Where it stays with who this artist has been.",
+    copy: `Where it stays with who this ${word} has been.`,
   },
   {
     key: "departure",
     heading: "Where it leaves the record",
-    copy: "Where it goes somewhere the artist's record has not been.",
+    copy: `Where it goes somewhere the ${word}'s record has not been.`,
   },
   {
     key: "echo",
     heading: "What it echoes",
     copy: "Older themes and imagery it rhymes with, including the ones only a fan who knows the catalog would catch.",
   },
-];
+  ];
+}
 
 // One observation: what it is called, what it says, and the findings under it.
 // The evidence cluster is the one the ideas view recruits, so a finding reads
 // the same way whichever job cited it.
-export function entryBlock(entry, evidence, groupKey, index) {
+export function entryBlock(entry, evidence, groupKey, index, word = SUBJECT_FALLBACK) {
   const byId = new Map(evidence.map((row) => [row.findingId, row]));
   const cited = (entry.restsOn || []).map((id) => byId.get(id)).filter(Boolean);
   return `<article class="m-intelligence-principle">
       <h4 class="m-copy m-copy--large">${escape(entry.title)}</h4>
       ${entry.note ? `<p class="m-copy">${escape(entry.note)}</p>` : ""}
-      ${evidenceGroup(cited)}
+      ${evidenceGroup(cited, word)}
       ${readActions("direction", `${groupKey}:${index}`, "Observation")}
     </article>`;
 }
 
-export function clusterBlock(cluster, entries, evidence) {
+export function clusterBlock(cluster, entries, evidence, word = SUBJECT_FALLBACK) {
   if (!entries.length) return "";
   const count = `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`;
   return `<section class="m-intelligence-read-group" aria-labelledby="cluster-${escape(cluster.key)}">
@@ -62,7 +66,7 @@ export function clusterBlock(cluster, entries, evidence) {
         </div>
         <span class="m-meta">${escape(count).toUpperCase()}</span>
       </div>
-      <div class="m-intelligence-principles">${entries.map((entry, index) => entryBlock(entry, evidence, cluster.key, index)).join("")}</div>
+      <div class="m-intelligence-principles">${entries.map((entry, index) => entryBlock(entry, evidence, cluster.key, index, word)).join("")}</div>
     </section>`;
 }
 
@@ -74,7 +78,7 @@ export function listBlock(heading, items) {
     </section>`;
 }
 
-export function renderDirectionRead(analysis, picker = "") {
+export function renderDirectionRead(analysis, picker = "", word = SUBJECT_FALLBACK) {
   const evidence = Array.isArray(analysis.evidence) ? analysis.evidence : [];
   const result = analysis.result || {};
   const subject = analysis.subject || {};
@@ -84,11 +88,12 @@ export function renderDirectionRead(analysis, picker = "") {
     `TOUR DIRECTION V${pad(analysis.directionVersion)}`,
     researchLineage(analysis),
   ].join(" / ");
-  const entries = CLUSTERS.reduce((total, cluster) =>
+  const shape = clusters(word);
+  const entries = shape.reduce((total, cluster) =>
     total + (Array.isArray(result[cluster.key]) ? result[cluster.key].length : 0), 0);
   const count = `${entries} ${entries === 1 ? "entry" : "entries"}`;
-  const clusters = CLUSTERS
-    .map((cluster) => clusterBlock(cluster, Array.isArray(result[cluster.key]) ? result[cluster.key] : [], evidence))
+  const blocks = shape
+    .map((cluster) => clusterBlock(cluster, Array.isArray(result[cluster.key]) ? result[cluster.key] : [], evidence, word))
     .join("");
   return `<section class="m-intelligence-results" aria-labelledby="result-heading">
       <div class="m-intelligence-results__handoff">
@@ -97,14 +102,14 @@ export function renderDirectionRead(analysis, picker = "") {
       </div>
       <header class="m-intelligence-reader__head m-intelligence-read__head">
         <div class="m-stack">
-          <span class="m-meta" id="result-heading">THE DIRECTION AGAINST THE ARTIST'S RECORD</span>
+          <span class="m-meta" id="result-heading">${escape(`THE DIRECTION AGAINST THE ${word.toUpperCase()}'S RECORD`)}</span>
           <span class="m-meta m-intelligence-read__lineage">${escape(lineage)}</span>
-          <p class="m-copy">How the director's words${subject.directionSetBy ? `, set by ${escape(subject.directionSetBy)}` : ""}, compare to everything Meridian knows about this artist. Nothing here decides anything.</p>
+          <p class="m-copy">How the director's words${subject.directionSetBy ? `, set by ${escape(subject.directionSetBy)}` : ""}, compare to everything Meridian knows about this ${escape(word)}. Nothing here decides anything.</p>
         </div>
         ${picker}
       </header>
       <div class="m-intelligence-read">
-        ${clusters}
+        ${blocks}
         ${listBlock("Open questions", result.openQuestions)}
         ${readActions("direction", "whole", "Whole read")}
       </div>

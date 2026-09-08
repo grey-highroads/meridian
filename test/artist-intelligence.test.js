@@ -332,7 +332,7 @@ test("the evidence cluster recruits whole findings once and promises what it hol
   // what it recruits and counts unique findings, not overlapping sources.
   assert.match(html, /<details class="m-intelligence-evidence">/);
   assert.doesNotMatch(html, /<details class="m-intelligence-evidence" open>/);
-  assert.match(html, /What this rests on in the artist's history/);
+  assert.match(html, /What this rests on in this artist's history/);
   assert.match(html, /2 FINDINGS/);
 
   // Once recruited, each finding and its reason are present whole. They do not
@@ -559,7 +559,10 @@ test("the four asks are on the page in the words of the person making them", () 
   // job three is the Artboard that came back, never a concept.
   for (const ask of [
     "Ideas for a Scene",
-    "Compare the project direction to this artist's history",
+    // The second ask names the subject in that subject's own word, so the
+    // sentence is built rather than stored. The rendered forms are asserted in
+    // test/subject-word-on-pages.test.js.
+    "Compare the project direction to this ${escape(word())}",
     "Check an Artboard before you present it",
     "Check the tour stops",
   ]) {

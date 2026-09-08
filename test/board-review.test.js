@@ -427,7 +427,7 @@ test("a read renders its groups with no verdict and no entry without its trail",
   assert.ok(!html.includes("Where it goes somewhere new"), "an empty group rendered its heading");
 
   // Every entry carries the finding it rests on, in full, under the one label.
-  assert.match(html, /What this rests on in the artist&#039;s history|What this rests on in the artist's history/);
+  assert.match(html, /What this rests on in this artist&#039;s history|What this rests on in this artist's history/);
   assert.match(html, /He has staged weather as structure before/);
   assert.match(html, /It is the precedent this board is leaning on/);
 

@@ -18,6 +18,11 @@ import { findingStatement } from "../../src/artist/finding.js";
 //   disclosure appears only when a trail carries actual sources.
 //   Feedback appears beside the action that produced it.
 
+// What the reader calls the thing this project is about. It arrives from the
+// page, which reads it off the project's subject. The default keeps a caller
+// that has no subject in hand reading the way it always did.
+export const SUBJECT_FALLBACK = "artist";
+
 export function escape(value) {
   return String(value === null || value === undefined ? "" : value)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -73,7 +78,7 @@ function sourceItems(entry) {
     : `<li class="m-copy">${escape(source.title)}</li>`)).join("");
 }
 
-// One thing the artist's record says, under the idea it supports.
+// One thing the subject's record says, under the idea it supports.
 //
 // Once the evidence cluster is recruited, the finding and why it belongs here
 // are read in full. What degrades is the trail. With counts and tiers alone it
@@ -99,14 +104,14 @@ export function evidenceEntry(entry) {
     </div>`;
 }
 
-export function evidenceGroup(cited) {
+export function evidenceGroup(cited, word = SUBJECT_FALLBACK) {
   const unique = [...new Map(cited.map((entry) => [entry.findingId, entry])).values()];
   if (!unique.length) return "";
   const count = `${unique.length} ${unique.length === 1 ? "finding" : "findings"}`;
   return `<details class="m-intelligence-evidence">
       <summary>
         <span class="m-intelligence-evidence__summary">
-          <span class="m-label">What this rests on in the artist's history</span>
+          <span class="m-label">What this rests on in this ${escape(word)}'s history</span>
           <span class="m-meta">${escape(count).toUpperCase()}</span>
         </span>
       </summary>
@@ -134,9 +139,10 @@ export function readActions(kind, scope, label) {
 
 // One idea, read top to bottom: what it is called, what it is, the three notes
 // that qualify it, what it rests on, and the two things a person does with it.
-export function ideaBlock(direction, index, evidence, message = "") {
+export function ideaBlock(direction, index, evidence, message = "", word = SUBJECT_FALLBACK) {
   const byId = new Map(evidence.map((entry) => [entry.findingId, entry]));
   const cited = (direction.rhymesWith || []).map((id) => byId.get(id)).filter(Boolean);
+  const evidenceBlock = evidenceGroup(cited, word);
   const notes = [
     direction.whyThisArtist ? `Why this artist: ${direction.whyThisArtist}` : "",
     direction.asksOfProduction ? `What it asks of production: ${direction.asksOfProduction}` : "",
@@ -147,7 +153,7 @@ export function ideaBlock(direction, index, evidence, message = "") {
       <h3 class="m-intelligence-principle__heading">${escape(direction.title)}</h3>
       <p class="m-intelligence-principle__copy">${escape(direction.idea)}</p>
       ${notes.length ? `<div class="m-stack">${notes.map((note) => `<p class="m-copy">${escape(note)}</p>`).join("")}</div>` : ""}
-      ${evidenceGroup(cited)}
+      ${evidenceBlock}
       <div class="m-cluster">
         <button class="m-button m-button--small" type="button" data-idea-download="${escape(String(index))}">Download idea</button>
         <button class="m-button m-button--small" type="button" data-idea-copy="${escape(String(index))}">Copy idea</button>
@@ -173,7 +179,7 @@ export function readFromBlock(analysis) {
   return `<p class="m-copy">Read from ${escape(parts.join(". "))}</p>`;
 }
 
-export function renderIdeas(analysis, picker = "", messages = {}) {
+export function renderIdeas(analysis, picker = "", messages = {}, word = SUBJECT_FALLBACK) {
   const evidence = Array.isArray(analysis.evidence) ? analysis.evidence : [];
   const result = analysis.result || {};
   const directions = Array.isArray(result.directions) ? result.directions : [];
@@ -200,8 +206,8 @@ export function renderIdeas(analysis, picker = "", messages = {}) {
         ${picker}
       </header>
       <div class="m-intelligence-principles">
-        ${directions.map((direction, index) => ideaBlock(direction, index, evidence, messages[index])).join("")}
-        ${listBlock("What this artist stays away from", result.avoidNotes)}
+        ${directions.map((direction, index) => ideaBlock(direction, index, evidence, messages[index], word)).join("")}
+        ${listBlock(`What this ${escape(word)} stays away from`, result.avoidNotes)}
         ${listBlock("Open questions", result.openQuestions)}
       </div>
     </section>`;

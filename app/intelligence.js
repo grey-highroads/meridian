@@ -1,11 +1,12 @@
 import { TOUR_ID, scopedBody } from "./context.js";
+import { subjectWord } from "./label.js";
 import { escape, pad, renderIdeas } from "./intelligence/ideas-view.js";
 import { renderAsks } from "./intelligence/asks-view.js";
 import { renderDirectionRead } from "./intelligence/direction-view.js";
 import { renderBoardReview } from "./intelligence/board-view.js";
 
-// Intelligence. Four things a Higher Roads person can ask about the
-// artist, and the research they draw on underneath.
+// Intelligence. Four things a Higher Roads person can ask about the subject
+// of the project, and the research they draw on underneath.
 //
 // The old home for this was a panel on the Scene page that held the content and
 // answered no question. So this page leads with the asks, in the words of the
@@ -29,6 +30,7 @@ const BOARD_REVIEW = "board-review";
 const view = {
   user: null,
   tour: null,
+  subject: null,
   scenes: [],
   sceneId: "",
   running: false,
@@ -83,6 +85,13 @@ function sceneOptions() {
 // A job with no subject. Two of the four instruments run on the job's own
 // material and one needs a history to compare against, so that one says what it
 // is missing in the same voice the tour stops instrument uses. Ruled 2026-09-05.
+// What this project's reader calls the thing it is about. Lowercase, because
+// every sentence on this page carries it in the middle. A project with no
+// subject reads the no-subject copy instead and never reaches this.
+function word() {
+  return subjectWord(view.subject).toLowerCase();
+}
+
 function hasSubject() {
   if (!view.tour) return false;
   const ids = Array.isArray(view.tour.subjectIds) ? view.tour.subjectIds : [];
@@ -103,7 +112,7 @@ function asks() {
       title: "Ideas for a Scene",
       copy: ready
         ? (hasSubject()
-          ? "Starting points drawn from this artist's history, with the research behind each one."
+          ? `Starting points drawn from this ${escape(word())}'s history, with the research behind each one.`
           : "Starting points drawn from the direction and what the Scene asks for. This job has no subject, so no research sits behind them.")
         : "Submit a Scene request first. Ideas are drawn from what the Scene asks for.",
       control: ideaControl,
@@ -111,9 +120,9 @@ function asks() {
     },
     {
       mark: "compare",
-      title: "Compare the project direction to this artist's history",
+      title: `Compare the project direction to this ${escape(word())}'s history`,
       copy: hasSubject()
-        ? "Where the direction matches what this artist has done before, where it goes somewhere new, and which older work it echoes."
+        ? `Where the direction matches what this ${escape(word())} has done before, where it goes somewhere new, and which older work it echoes.`
         : "Needs research about who the work is for. This job has no subject, so there is no history to compare the direction against.",
       control: directionControl(),
       answer: answerDoor(
@@ -128,7 +137,7 @@ function asks() {
       title: "Check an Artboard before you present it",
       copy: view.boards.length
         ? (hasSubject()
-          ? "How a finished Artboard compares to this artist's history and the direction it was made for. It does not decide anything."
+          ? `How a finished Artboard compares to this ${escape(word())}'s history and the direction it was made for. It does not decide anything.`
           : "How a finished Artboard compares to the direction it was made for and the brief it was built from. It does not decide anything.")
         : "Meridian can check work submitted as a PNG or a JPEG. Nothing has come back yet.",
       control: boardControl(),
@@ -288,7 +297,7 @@ function result() {
       "data-direction-run-id",
       (entry) => `V${pad(entry.directionVersion)} run ${pad(entry.run)}`,
     );
-    return renderDirectionRead(analysis, runHistory(rows));
+    return renderDirectionRead(analysis, runHistory(rows), word());
   }
   if (view.activeJob === BOARD_REVIEW) {
     const analysis = currentBoardAnalysis();
@@ -299,12 +308,12 @@ function result() {
       "data-board-run-id",
       (entry) => `V${pad((entry.subject || {}).artboardVersion)} run ${pad(entry.run)}`,
     );
-    return renderBoardReview(analysis, runHistory(rows));
+    return renderBoardReview(analysis, runHistory(rows), word());
   }
   const analysis = currentAnalysis();
   if (!analysis) return emptyResult();
   const rows = picker(view.analyses, analysis.runId, "data-run-id", (entry) => `Run ${pad(entry.run)}`);
-  return renderIdeas(analysis, runHistory(rows), view.ideaMessages);
+  return renderIdeas(analysis, runHistory(rows), view.ideaMessages, word());
 }
 
 function reference() {
@@ -325,8 +334,8 @@ function reference() {
       <div class="m-section-lead">
         <div class="m-stack">
           <span class="m-label">Underneath</span>
-          <h2 id="reference-heading" class="m-section-heading">What Meridian knows about this artist</h2>
-          <p class="m-copy">The research these answers are drawn from, by part of the artist, with the sources behind each entry.</p>
+          <h2 id="reference-heading" class="m-section-heading">What Meridian knows about this ${escape(word())}</h2>
+          <p class="m-copy">The research these answers are drawn from, by part of the ${escape(word())}, with the sources behind each entry.</p>
         </div>
         <a class="m-button" href="./artist.html">Open the research</a>
       </div>
@@ -342,7 +351,7 @@ function render() {
         <span class="m-label">Higher Roads only</span>
         <h1 class="m-heading">Intelligence</h1>
         <p class="m-copy">${hasSubject()
-          ? "Four things you can ask about this artist. Every answer carries the research it came from."
+          ? `Four things you can ask about this ${escape(word())}. Every answer carries the research it came from.`
           : "Four things you can ask about this job. Each one says what it needs and runs when it has it, and every answer says what it was read from."}</p>
       </div>
     </header>
@@ -686,8 +695,9 @@ async function load() {
     render();
     return;
   }
-  const { tour, assignments } = await call("get-tour");
+  const { tour, assignments, subject } = await call("get-tour");
   view.tour = tour;
+  view.subject = subject || null;
   view.scenes = submittedScenes(assignments || []);
   view.sceneId = view.scenes.length ? view.scenes[0].id : "";
   render();

@@ -1,6 +1,6 @@
 import { escape } from "./ideas-view.js";
 
-// The four asks are instruments over the same artist record. They are not
+// The four asks are instruments over the same subject record. They are not
 // rows in a directory: each one names a job, says what it returns, and carries
 // its own action or honest state at the foot of the instrument.
 //
