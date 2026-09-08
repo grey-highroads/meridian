@@ -58,12 +58,18 @@ const SUBJECTLESS_SYSTEM = [
 function buildSubjectlessRequest(context, options = {}) {
   const setup = context.productionSetup;
   const exceptions = setup && setup.venueExceptions ? setup.venueExceptions : [];
+  const surfaces = Array.isArray(context.surfaces) ? context.surfaces : [];
   const user = [
     "The direction for this job, version " + context.directionVersion + ", stored as the director gave it:",
     context.direction.words,
     "",
     "What was asked for:",
     context.request,
+    ...(surfaces.length ? [
+      "",
+      "The surfaces this work plays on, named by the team:",
+      surfaces.map((entry) => `- ${entry.name}. ${entry.description}`).join("\n"),
+    ] : []),
     ...(setup ? [
       "",
       `What the work plays on, production setup version ${setup.version}, stored as production gave it:`,
@@ -97,6 +103,7 @@ export function buildProposalRequest(context, options = {}) {
   }));
   const setup = context.productionSetup;
   const exceptions = setup && setup.venueExceptions ? setup.venueExceptions : [];
+  const surfaces = Array.isArray(context.surfaces) ? context.surfaces : [];
   const user = [
     "Tour direction, version " + context.directionVersion + ", stored as the director gave it:",
     context.direction.words,
@@ -106,6 +113,11 @@ export function buildProposalRequest(context, options = {}) {
     "",
     // The surfaces come before the findings, because a concept that the rig
     // cannot show is not a concept for this tour.
+    ...(surfaces.length ? [
+      "The surfaces this work plays on, named by the team:",
+      surfaces.map((entry) => `- ${entry.name}. ${entry.description}`).join("\n"),
+      "",
+    ] : []),
     ...(setup ? [
       `What the show plays on, production setup version ${setup.version}, stored as production gave it:`,
       setup.words,

@@ -76,7 +76,13 @@ export function assembleContext(brain, tour, assignment) {
     // the paragraph the brief carries.
     directionParagraphs: directionParagraphs(tour.direction),
     // What the show plays on. A concept is for these surfaces, so the setup
-    // travels with the context rather than waiting for the brief.
+    // travels with the context rather than waiting for the brief. The surfaces
+    // are the named things in the room the media plays on, in the words a
+    // person used. The proposal instructions already tell the model never to
+    // describe an effect the listed surfaces cannot produce, so the list has to
+    // reach it. Absent on a project that has not recorded any, which is what
+    // the open-question instruction is for.
+    surfaces: Array.isArray(tour.surfaces) ? tour.surfaces : [],
     productionSetup: tour.productionSetup || null,
     setupVersion: tour.productionSetup ? tour.productionSetup.version : null,
     venueExceptions: venueExceptions(tour.productionSetup),
