@@ -694,8 +694,14 @@ Nothing was built against `b1f5506`. No field, no selector, no field set.
 this session. The 2026-09-04 fifth-session entry ruled that lowercase copy follows the
 label where a screen would otherwise contradict itself, so a residency read "the
 residency" in prose. That is reversed. Project is the container word and it is what
-appears in a sentence. A residency, a tour, and a projection mapping job are types of
-project, and a type is not a replacement for the container word.
+appears in a sentence. A residency, a tour, and a projection mapping job are all
+projects. The word someone types on a project record is a label and nothing more, and
+a label does not replace the container word in a sentence.
+
+Corrected 2026-09-08, in the commit that carries it. This paragraph first called a
+residency a type of project. There is no project type. The first correction in this
+entry withdraws the block that proposed one, and 2026-09-05 killed the concept before
+that. The word type had no business in the sentence that reverses the label rule.
 
 Where this lands, read from the tree at `3ff2c15`: seven reads in `app/tour.js`, three
 in `app/direction.js`, four in `app/home.js`, one in `app/handoff.js`, and the two in
