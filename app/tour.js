@@ -16,6 +16,7 @@ const view = {
   tour: null,
   editing: null,
   dates: [],
+  surfaces: [],
   words: "",
   suppliedBy: "",
   message: "",
@@ -205,7 +206,7 @@ function datesSection(tour) {
   const dates = tour.dates || [];
   const first = dates.slice(0, 2).map(dateRow).join("");
   const rest = dates.slice(2).map(dateRow).join("");
-  const reading = `${dates.length ? `<ol class="m-compact-itinerary">${first}</ol>` : `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Dates and venues not added</span><p class="m-copy">The route is still taking shape. Add dates and venues when you have them.</p></div>`}
+  const reading = `${dates.length ? `<ol class="m-compact-itinerary">${first}</ol>` : `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Dates and venues not added</span><p class="m-copy">Add each date and where it happens, whether that is one night or a full run.</p></div>`}
       ${rest ? `<details class="m-compact-disclosure">
         <summary>Full itinerary</summary>
         <ol class="m-compact-itinerary">${rest}</ol>
@@ -216,6 +217,52 @@ function datesSection(tour) {
         ${view.editing === "dates" ? "" : `<button class="m-button m-button--small" type="button" data-edit-dates>${dates.length ? "Edit the dates" : "Add the dates"}</button>`}
       </div>
       ${view.editing === "dates" ? datesEditor() : reading}
+    </section>`;
+}
+
+function blankSurface() {
+  return { name: "", description: "" };
+}
+
+function surfaceFields(entry, index) {
+  return `<li class="m-field">
+      <label class="m-label" for="surface-${index}">Surface ${index + 1}</label>
+      <input class="m-input" id="surface-${index}" data-surface-row="${index}" data-surface-field="name" value="${escape(entry.name)}" placeholder="Side tent walls" />
+      <input class="m-input" data-surface-row="${index}" data-surface-field="description" value="${escape(entry.description)}" placeholder="What and where it is" aria-label="Description for surface ${index + 1}" />
+    </li>`;
+}
+
+function surfacesEditor() {
+  return `<div class="m-stack">
+      <ol class="m-stack">${view.surfaces.map(surfaceFields).join("")}</ol>
+      <div class="m-cluster">
+        <button class="m-button m-button--small" type="button" data-add-surface>Add another surface</button>
+      </div>
+      ${editorMessage("surfaces")}
+      <div class="m-cluster">
+        <button class="m-button m-button--primary" type="button" data-save-surfaces ${view.working ? "disabled" : ""}>${view.working ? "Saving" : "Save the surfaces"}</button>
+        <button class="m-button m-button--quiet" type="button" data-cancel>Cancel</button>
+      </div>
+    </div>`;
+}
+
+// What the media plays on, in the words a person used. Names and descriptions
+// only. Anything a production tool owns, geometry included, is not this.
+function surfacesSection(tour) {
+  const surfaces = tour.surfaces || [];
+  const rows = surfaces.map((entry) => `<div class="m-compact-definition__row">
+      <dt class="m-label">${escape(entry.name)}</dt>
+      <dd>${escape(entry.description)}</dd>
+    </div>`).join("");
+  const reading = surfaces.length
+    ? `<dl class="m-compact-definition">${rows}</dl>`
+    : `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">Surfaces not added</span><p class="m-copy">Add what the media plays on, such as side tent walls or the ceiling above the stage.</p></div>`;
+  return `<section class="m-orientation__section" aria-labelledby="surfaces-heading">
+      <div class="m-orientation__section-head">
+        <div class="m-stack"><h3 id="surfaces-heading" class="m-label">Surfaces</h3>${surfaces.length ? `<span class="m-meta">${escape(surfaces.length)} ${surfaces.length === 1 ? "SURFACE" : "SURFACES"}</span>` : ""}</div>
+        ${view.editing === "surfaces" ? "" : `<button class="m-button m-button--small" type="button" data-edit-surfaces>${surfaces.length ? "Edit the surfaces" : "Add the surfaces"}</button>`}
+      </div>
+      ${view.editing === "surfaces" ? surfacesEditor() : reading}
     </section>`;
 }
 
@@ -316,6 +363,7 @@ function supportingReference(tour) {
         <h2 id="tour-facts-heading" class="m-section-heading">Project details</h2>
       </header>
       ${datesSection(tour)}
+      ${surfacesSection(tour)}
       ${setupSection(tour)}
       ${themesSection(tour)}
       ${subjectsSection(tour)}
@@ -380,6 +428,12 @@ document.addEventListener("input", (event) => {
     if (view.dates[index]) view.dates[index][row.getAttribute("data-date-field")] = event.target.value;
     return;
   }
+  const surface = event.target.closest("[data-surface-row]");
+  if (surface) {
+    const index = Number(surface.getAttribute("data-surface-row"));
+    if (view.surfaces[index]) view.surfaces[index][surface.getAttribute("data-surface-field")] = event.target.value;
+    return;
+  }
   const field = event.target.closest("[data-field]");
   if (field) view[field.getAttribute("data-field")] = field.value;
 });
@@ -437,6 +491,20 @@ document.addEventListener("click", (event) => {
     view.message = "";
     paint();
   }
+  if (target.hasAttribute("data-edit-surfaces")) {
+    const stored = (view.tour.surfaces || []).map((entry) => ({
+      name: entry.name || "",
+      description: entry.description || "",
+    }));
+    view.surfaces = stored.length ? stored : [blankSurface()];
+    view.editing = "surfaces";
+    view.message = "";
+    paint();
+  }
+  if (target.hasAttribute("data-add-surface")) {
+    view.surfaces = [...view.surfaces, blankSurface()];
+    paint();
+  }
   if (target.hasAttribute("data-add-date")) {
     view.dates = [...view.dates, blankDate()];
     paint();
@@ -455,6 +523,7 @@ document.addEventListener("click", (event) => {
     paint();
   }
   if (target.hasAttribute("data-save-dates")) void save("save-tour-dates", { dates: view.dates });
+  if (target.hasAttribute("data-save-surfaces")) void save("save-tour-surfaces", { surfaces: view.surfaces });
   if (target.hasAttribute("data-save-setup")) void save("save-production-setup", { words: view.words, suppliedBy: view.suppliedBy });
   if (target.hasAttribute("data-attach-subject")) {
     if (!view.attachSubject) {
