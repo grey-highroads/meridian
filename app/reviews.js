@@ -101,7 +101,7 @@ function emptyGallery() {
       <div class="m-empty-state__body">
         <span class="m-label">No Artboards yet</span>
         <h2 id="empty-reviews-heading" class="m-section-heading">Versions will appear here</h2>
-        <p class="m-copy m-copy--large">${client ? "Each version appears when it is ready for the tour team." : "A Scene appears here when its first Artboard comes back."}</p>
+        <p class="m-copy m-copy--large">${client ? "Each version appears when it is ready for your team." : "A Scene appears here when its first Artboard comes back."}</p>
         <div class="m-empty-state__actions"><a class="m-button" href="./scenes.html">Open Scenes</a></div>
       </div>
     </section>`;

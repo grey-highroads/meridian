@@ -245,8 +245,8 @@ test("empty screens speak to the person holding the work", () => {
   assert.match(tour, /You can still request and develop Scenes/, "optional themes read like a blocker");
 
   const scene = read("app/scene.js");
-  assert.match(scene, /Dates and venues are added on the tour page/, "Scene does not say where missing dates come from");
-  assert.match(scene, /Confirmed playback and screen details are added on the tour page/, "missing setup does not say where it comes from");
+  assert.match(scene, /Dates and venues are added on the Project page/, "Scene does not say where missing dates come from");
+  assert.match(scene, /Confirmed playback and screen details are added on the Project page/, "missing setup does not say where it comes from");
   assert.match(scene, /Nothing is needed from you/, "the client Scene never says the work is not waiting on them");
 
   const request = read("app/request.js");

@@ -278,7 +278,7 @@ function page() {
 function dateRows() {
   const dates = (view.tour && view.tour.dates) || [];
   if (!dates.length) {
-    return `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">No dates yet</span><p class="m-copy">Dates and venues are added on the tour page.</p></div>`;
+    return `<div class="m-empty-inline m-empty-inline--waiting"><span class="m-label">No dates yet</span><p class="m-copy">Dates and venues are added on the Project page.</p></div>`;
   }
   const rows = dates.map((entry) => {
     const place = entry.place ? `, ${escape(entry.place)}` : "";
@@ -292,14 +292,14 @@ function rigRows() {
   const exceptions = view.context.venueExceptions || [];
   const setupCopy = setup && setup.words
     ? paragraphs(setup.words)
-    : `<div class="m-empty-inline"><span class="m-label">No production setup yet</span><p class="m-copy">Confirmed playback and screen details are added on the tour page.</p></div>`;
+    : `<div class="m-empty-inline"><span class="m-label">No production setup yet</span><p class="m-copy">Confirmed playback and screen details are added on the Project page.</p></div>`;
   const rows = exceptions.map((entry) => (
     `<li class="m-copy"><strong>${escape(entry.venue)}</strong>, ${escape(entry.date)}. ${escape(entry.text)}</li>`
   )).join("");
   const differing = rows
     ? `<div class="m-stack"><span class="m-label">Dates where the rig differs</span><ul>${rows}</ul></div>`
     : setup && setup.words
-      ? `<div class="m-empty-inline m-empty-inline--clear"><span class="m-label">Standard setup</span><p class="m-copy">No date on this tour was recorded as differing from the setup above.</p></div>`
+      ? `<div class="m-empty-inline m-empty-inline--clear"><span class="m-label">Standard setup</span><p class="m-copy">No date on this project was recorded as differing from the setup above.</p></div>`
       : "";
   return `${setupCopy}${differing}`;
 }

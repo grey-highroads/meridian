@@ -4,11 +4,11 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
-import { TOUR_LABEL, tourLabel } from "../app/label.js";
 
-// Pages that name the engagement read the project record's own word. A project
-// carrying a word renders that word, a project carrying none renders Tour, and
-// what is asserted here is the sentence a person reads rather than a call.
+// Pages that name the engagement read the word project. The word stored on the
+// record is a label and stops reaching prose, so a project carrying one renders
+// the same sentence as a project carrying none. Ruled 2026-09-08. What is
+// asserted here is the sentence a person reads rather than a call.
 
 const rootPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -22,7 +22,6 @@ function baseContext(elements) {
   return {
     URLSearchParams, JSON, Number, String, Array, Set, Boolean, Object, Date, console,
     encodeURIComponent, decodeURIComponent, URL, Promise, setTimeout, Math,
-    TOUR_LABEL, tourLabel,
     ACCOUNT_ID: null,
     TOUR_ID: TOUR,
     scopedBody: (body) => ({ accountId: null, ...body }),
@@ -71,14 +70,17 @@ async function scenesPage(label) {
   return elements;
 }
 
-test("the Scenes directory reads the word the project carries", async () => {
+test("the Scenes directory reads project and not the word the record carries", async () => {
   const elements = await scenesPage("Residency");
-  assert.equal(elements["scenes-intro"].textContent, "Every Scene on the residency, from request through delivery.");
-  assert.equal(elements["scene-list-heading"].textContent, "Scenes on this residency");
+  assert.equal(elements["scenes-intro"].textContent, "Every Scene in this project, from request through delivery.");
+  assert.equal(elements["scene-list-heading"].textContent, "Scenes in this project");
+  for (const id of ["scenes-intro", "scene-list-heading"]) {
+    assert.doesNotMatch(elements[id].textContent, /residency/i, `${id} still reads the record's label`);
+  }
 });
 
-test("the Scenes directory reads Tour for a project carrying no word", async () => {
+test("the Scenes directory reads project for a record carrying no word", async () => {
   const elements = await scenesPage(null);
-  assert.equal(elements["scenes-intro"].textContent, "Every Scene on the tour, from request through delivery.");
-  assert.equal(elements["scene-list-heading"].textContent, "Scenes on this tour");
+  assert.equal(elements["scenes-intro"].textContent, "Every Scene in this project, from request through delivery.");
+  assert.equal(elements["scene-list-heading"].textContent, "Scenes in this project");
 });
