@@ -351,29 +351,28 @@ function artistContent() {
           undefined,
           `<button class="m-button m-button--quiet m-button--small" type="button" data-edit-artist-label="${escape(entry.id)}">Change the word</button>`,
         ))),
-      "No artists yet.",
+      "No sources yet.",
     );
   }
   return `<div class="m-admin-empty">
-      <p class="m-copy">Add the artist this account works on.</p>
+      <p class="m-copy">Meridian researches these and shows what it finds while you develop a Scene. On a tour that is the artist. On a mapping job it is the building, or the brand the piece is for.</p>
       <div class="m-field">
-        <label class="m-label" for="artist-name">${escape(ARTIST_LABEL)} name</label>
+        <label class="m-label" for="artist-kind">What this is</label>
+        <select class="m-input" id="artist-kind" data-field="artist-kind">
+          <option value="artist"${acts.artist.kind === "venue" || acts.artist.kind === "organization" ? "" : " selected"}>Artist</option>
+          <option value="venue"${acts.artist.kind === "venue" ? " selected" : ""}>Venue or building</option>
+          <option value="organization"${acts.artist.kind === "organization" ? " selected" : ""}>Company or organization</option>
+        </select>
+        <span class="m-help">This decides what Meridian researches. An artist gets asked about catalog and live history. A venue gets asked about the building itself.</span>
+      </div>
+      <div class="m-field">
+        <label class="m-label" for="artist-name">Name</label>
         <input class="m-input" id="artist-name" data-field="artist" value="${escape(acts.artist.name)}" placeholder="For example, Wren Halloway">
       </div>
-      <div class="m-field">
-        <label class="m-label" for="artist-label">What to call this subject</label>
-        <input class="m-input" id="artist-label" data-field="artist-label" value="${escape(acts.artist.label)}" placeholder="${escape(ARTIST_LABEL)}">
-        <span class="m-help">Optional. Leave it blank for ${escape(ARTIST_LABEL)}. You can change it later.</span>
-      </div>
-      <div class="m-field">
-        <label class="m-label" for="artist-kind">What kind of subject this is</label>
-        <input class="m-input" id="artist-kind" data-field="artist-kind" value="${escape(acts.artist.kind)}" placeholder="artist">
-        <span class="m-help">Optional. A word like artist, venue, or organization. It decides what research fits, nothing else.</span>
-      </div>
       <div class="m-cluster">
-        <button class="m-button m-button--primary" type="button" data-create-artist ${acts.artist.working ? "disabled" : ""}>${acts.artist.working ? "Creating" : "Create the artist"}</button>
+        <button class="m-button m-button--primary" type="button" data-create-artist ${acts.artist.working ? "disabled" : ""}>${acts.artist.working ? "Adding" : "Add"}</button>
       </div>
-      ${resultBlock(acts.artist, `${artistLabel(acts.artist.result)} created`)}
+      ${resultBlock(acts.artist, `${artistLabel(acts.artist.result)} added`)}
     </div>`;
 }
 
@@ -393,7 +392,7 @@ function render() {
       <div class="m-job-header__copy">
         <span class="m-label">Higher Roads</span>
         <h1 class="m-heading">Admin</h1>
-        <p class="m-copy m-copy--large">Manage accounts, artists, tours, and people.</p>
+        <p class="m-copy m-copy--large">Manage accounts, projects, people, and Intelligence sources.</p>
       </div>
     </header>
     ${view.error ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(view.error)}</p></div>` : ""}
@@ -416,7 +415,7 @@ function render() {
         </header>
         <div class="m-admin-account__body">
           <section class="m-admin-section" aria-labelledby="artists-heading">
-            ${sectionHead("artists-heading", "Artists", view.artists.length)}
+            ${sectionHead("artists-heading", "Intelligence sources", view.artists.length)}
             ${artistContent()}
           </section>
           <section class="m-admin-section" aria-labelledby="tours-heading">

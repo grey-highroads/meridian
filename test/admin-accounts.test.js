@@ -345,7 +345,7 @@ test("Admin scopes artists, tours, and people inside the selected account", () =
   const admin = readSource("app/admin.js", "utf8");
   assert.match(admin, /class="m-admin-workspace"/, "Admin has no account workspace");
   assert.match(admin, /class="m-admin-accounts"/, "accounts are not the workspace scope");
-  assert.match(admin, /sectionHead\("artists-heading", "Artists"/, "Admin has no Artists list");
+  assert.match(admin, /sectionHead\("artists-heading", "Intelligence sources"/, "Admin has no Intelligence sources list");
   assert.match(admin, /sectionHead\("tours-heading", "Projects"/, "Admin has no Projects list");
   assert.match(admin, /sectionHead\("people-heading", "People"/, "Admin has no People list");
   assert.match(admin, /action: "list-people"/, "Admin does not read the account's people");

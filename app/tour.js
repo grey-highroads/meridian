@@ -295,16 +295,16 @@ function subjectsSection(tour) {
   const attach = attachable.length
     ? `<div class="m-cluster">
         <select class="m-input" data-field="attachSubject" aria-label="Subject to add">
-          <option value="">Choose who to add</option>${options}
+          <option value="">Choose a source</option>${options}
         </select>
         <button class="m-button m-button--small" type="button" data-attach-subject ${view.working ? "disabled" : ""}>Add to this job</button>
       </div>`
     : "";
   return `<section class="m-orientation__section" aria-labelledby="subjects-heading">
       <div class="m-orientation__section-head">
-        <div class="m-stack"><h3 id="subjects-heading" class="m-label">Who this work is for</h3></div>
+        <div class="m-stack"><h3 id="subjects-heading" class="m-label">Intelligence sources</h3></div>
       </div>
-      ${rows ? `<dl class="m-compact-definition">${rows}</dl>` : `<div class="m-empty-inline"><span class="m-label">Optional</span><p class="m-copy">Nobody is attached yet. The job runs on its own material either way.</p></div>`}
+      ${rows ? `<dl class="m-compact-definition">${rows}</dl>` : `<div class="m-empty-inline"><span class="m-label">Optional</span><p class="m-copy">No sources yet. The project runs on its own material either way.</p></div>`}
       ${attach}
       ${editorMessage("subjects")}
     </section>`;
