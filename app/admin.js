@@ -82,7 +82,7 @@ function accountRow(entry) {
   const armed = view.confirmName.trim() === entry.name;
   const controls = arming
     ? `<div class="m-admin-confirm">
-         <p class="m-copy">Deleting ${escape(entry.name)} removes its artists, its brains, its tours, and every approval on record. Nothing brings it back.</p>
+         <p class="m-copy">Deleting ${escape(entry.name)} removes its artists, its brains, its projects, and every approval on record. Nothing brings it back.</p>
          <div class="m-admin-confirm__actions">
            <input class="m-input" data-field="confirm" value="${escape(view.confirmName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the account name to delete it">
            <button class="m-button m-button--change" type="button" data-delete-account="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete account"}</button>
@@ -119,20 +119,20 @@ function tourRow(entry) {
     ? `<div class="m-admin-confirm">
          <p class="m-copy">Deleting ${escape(entry.name)} removes its Scenes, files, reviews, and approvals.${entry.artistId ? ` The ${escape(subject)} and ${escape(artistLabel(artist))} Brain stay in the account.` : ""} This cannot be undone.</p>
          <div class="m-admin-confirm__actions">
-           <input class="m-input" data-field="confirm-tour" value="${escape(view.confirmTourName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the tour name to delete it">
-           <button class="m-button m-button--change" type="button" data-delete-tour="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete tour"}</button>
-           <button class="m-button" type="button" data-cancel-tour-delete>Keep tour</button>
+           <input class="m-input" data-field="confirm-tour" value="${escape(view.confirmTourName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the project name to delete it">
+           <button class="m-button m-button--change" type="button" data-delete-tour="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete project"}</button>
+           <button class="m-button" type="button" data-cancel-tour-delete>Keep project</button>
          </div>
        </div>`
     : "";
   const controls = [
-    active ? "" : `<button class="m-button m-button--small" type="button" data-make-active="${escape(entry.id)}">Open this tour by default</button>`,
-    arming ? "" : `<button class="m-button m-button--quiet m-button--small" type="button" data-arm-tour-delete="${escape(entry.id)}">Delete tour</button>`,
+    active ? "" : `<button class="m-button m-button--small" type="button" data-make-active="${escape(entry.id)}">Open this project by default</button>`,
+    arming ? "" : `<button class="m-button m-button--quiet m-button--small" type="button" data-arm-tour-delete="${escape(entry.id)}">Delete project</button>`,
   ].join("");
   return `<article class="m-admin-row">
       <div class="m-stack">
         <span class="m-rule-row__title">${escape(entry.name || entry.id)}</span>
-        ${active ? '<span class="m-meta">Default tour</span>' : ""}
+        ${active ? '<span class="m-meta">Default project</span>' : ""}
         <span class="m-meta">${escape(subjectLine)}</span>
       </div>
       <div class="m-cluster">${controls}</div>
@@ -420,8 +420,8 @@ function render() {
             ${artistContent()}
           </section>
           <section class="m-admin-section" aria-labelledby="tours-heading">
-            ${sectionHead("tours-heading", "Tours", view.tours.length)}
-            ${rows(view.tours.map(tourRow), "No tours yet.")}
+            ${sectionHead("tours-heading", "Projects", view.tours.length)}
+            ${rows(view.tours.map(tourRow), "No projects yet.")}
           </section>
           <section class="m-admin-section" aria-labelledby="people-heading">
             ${sectionHead("people-heading", "People", view.people.length, view.editing === "new" ? "" : '<button class="m-button m-button--primary m-button--small" type="button" data-new-person>Invite somebody</button>')}
