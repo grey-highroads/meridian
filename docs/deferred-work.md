@@ -545,3 +545,22 @@ ride a change to the session path.
 
 Closes when: somebody reports a page that stopped responding rather than signing
 them out.
+
+## Nothing on screen asks a project for its own word
+
+Recorded 2026-09-08 with the copy work that made interface sentences read the
+word project. The create form asked for a word and the Project page offered a
+control to change it. Both are removed. The field is still stored, `create-tour`
+still accepts it, `save-tour-label` still writes it, and `parseTour`,
+`readTours`, and `src/label.js` are untouched, so no live record loses anything.
+
+The controls came off because the sentences that used to read the word now say
+project, so the form was asking a person for something they would never see the
+effect of.
+
+Closes when: a project's own word does a job on screen that the word project
+cannot do. Two reads still stand in `app/tour.js`, the aside heading in
+`supportingReference` and the breadcrumb link in `paint`, and they were not part
+of this work. If they stay, they are the job and the control comes back. If they
+become project as well, nothing reads the word and the control stays off until
+something else needs it.

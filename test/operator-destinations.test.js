@@ -174,8 +174,8 @@ test("Admin asks for the initial artist and keeps both values on a failure", () 
 
 test("Tour details names the tour and points a Higher Roads reader at the artist", () => {
   const page = read("app/tour.js");
-  assert.match(page, /<span class="m-label">Start the \$\{escape\(lower\)\}<\/span>/, "the eyebrow no longer says start the job");
-  assert.match(page, /<h1 class="m-heading">Name the \$\{escape\(lower\)\}<\/h1>/, "the page does not lead with the one required action");
+  assert.match(page, /<span class="m-label">Start the project<\/span>/, "the eyebrow no longer says start the job");
+  assert.match(page, /<h1 class="m-heading">Name the project<\/h1>/, "the page does not lead with the one required action");
   assert.doesNotMatch(page, /Higher Roads adds the artist/, "the page still tells Higher Roads that Higher Roads will do it");
   // An account holding no artist can still start a job. The field says so
   // rather than refusing, and a Higher Roads reader still gets the way to add

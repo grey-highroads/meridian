@@ -241,7 +241,7 @@ test("empty screens speak to the person holding the work", () => {
   assert.match(scenes, /One sentence is enough/, "Scenes makes a first request feel heavier than it is");
 
   const tour = read("app/tour.js");
-  assert.match(tour, /What should guide the creative work across the \$\{escape\(lower\)\}\?/, "the direction empty state does not ask for the direction plainly");
+  assert.match(tour, /What should guide the creative work across the project\?/, "the direction empty state does not ask for the direction plainly");
   assert.match(tour, /You can still request and develop Scenes/, "optional themes read like a blocker");
 
   const scene = read("app/scene.js");
