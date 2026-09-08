@@ -39,6 +39,13 @@
       <summary id="scene-drawer-trigger"><span class="m-label">Work on this Scene</span><span class="m-drawer__close">Close</span></summary>
       <div class="m-drawer__body" id="scene-drawer-body"></div>
     </details>
+    <dialog class="m-dialog m-client-shell" id="reference-viewer" aria-labelledby="reference-viewer-title">
+      <header class="m-client-shell__bar">
+        <div class="m-stack"><span class="m-label">Attached</span><h1 class="m-scene-work-heading" id="reference-viewer-title">Reference</h1></div>
+        <button class="m-button m-button--quiet" type="button" data-close-reference aria-label="Close reference">X</button>
+      </header>
+      <div class="m-client-review__frame m-review-artifact" id="reference-viewer-artifact" data-view-size="fit"></div>
+    </dialog>
     <script type="module" src="./shell.js"></script><script type="module" src="./scene.js?v=2026-08-28-drawer-pattern"></script>
   </body>
 </html>

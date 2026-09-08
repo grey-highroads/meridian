@@ -13,7 +13,8 @@ import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
 // server never sends them what is in it.
 //
 // Attaching a reference image happens where the asking happens, on the request
-// screen. The page shows what is attached; it takes no upload.
+// screen. The page shows what is attached as pictures, and opens one full size
+// when it is clicked; it takes no upload.
 
 const PARAMS = new URLSearchParams(window.location.search);
 
@@ -21,6 +22,9 @@ const locationBar = document.getElementById("location");
 const root = document.getElementById("scene");
 let drawer = document.getElementById("scene-drawer");
 let drawerBody = document.getElementById("scene-drawer-body");
+const viewer = document.getElementById("reference-viewer");
+const viewerTitle = document.getElementById("reference-viewer-title");
+const viewerArtifact = document.getElementById("reference-viewer-artifact");
 
 const view = {
   sceneId: PARAMS.get("scene") || null,
@@ -30,6 +34,9 @@ const view = {
   state: null,
   context: null,
   references: [],
+  // Each attached file resolved to a link the browser can show. A path that
+  // will not open is held as null so the page stops asking for it.
+  referenceSources: {},
   concept: null,
   questions: [],
   brief: null,
@@ -225,13 +232,22 @@ function statusSection() {
 // What was asked for, in the words it was asked in.
 // ---------------------------------------------------------------------------
 
+function referenceTile(entry, index) {
+  const name = entry.filename || "Reference";
+  const source = view.referenceSources[entry.pathname];
+  const frame = source
+    ? `<span class="m-work-frame m-client-review__frame"><img src="${escape(source)}" alt="" /></span>`
+    : `<span class="m-work-frame m-client-review__frame"><span class="m-artboard__shape"></span></span>`;
+  return `<button class="m-button" type="button" data-reference="${escape(index)}" aria-label="Open ${escape(name)}">
+      <span class="m-stack">${frame}<span class="m-meta">${escape(name)}</span></span>
+    </button>`;
+}
+
 function attachedReferences() {
   const items = view.references || [];
   if (!items.length) return "";
-  const rows = items.map((entry) => (
-    `<li class="m-copy">${escape(entry.filename || "Reference")}</li>`
-  )).join("");
-  return `<div class="m-stack"><span class="m-label">Attached</span><ul>${rows}</ul></div>`;
+  const tiles = items.map((entry, index) => referenceTile(entry, index)).join("");
+  return `<div class="m-stack"><span class="m-label">Attached</span><div class="m-reference-grid">${tiles}</div></div>`;
 }
 
 function requestSection() {
@@ -489,7 +505,10 @@ async function load() {
     ? await call("assignment-context", { assignmentId: view.sceneId })
     : await call("get-scene-workspace", { assignmentId: view.sceneId });
   view.assignment = context.assignment;
-  refreshReferences().then(() => { try { render(); } catch (_) {} });
+  refreshReferences()
+    .then(() => { try { render(); } catch (_) {} })
+    .then(loadReferenceSources)
+    .then(() => { try { render(); } catch (_) {} });
   view.context = context.context;
   view.concept = isOperator()
     ? (await call("get-concept", { assignmentId: view.sceneId })).concept
@@ -621,6 +640,14 @@ document.addEventListener("click", (event) => {
     }, "send");
     return;
   }
+  if (target.dataset.reference !== undefined) {
+    openReference(Number(target.dataset.reference));
+    return;
+  }
+  if (target.hasAttribute("data-close-reference")) {
+    if (viewer && viewer.open) viewer.close();
+    return;
+  }
   if (target.dataset.download) download(target.dataset.download);
 });
 
@@ -645,6 +672,43 @@ async function refreshReferences() {
   } catch (_error) {
     // A page in a test harness or a failing network never blocks load.
   }
+}
+
+// One attached file, exchanged for a link that opens. The same route the
+// Reviews gallery reads work through, asked for a file the client attached.
+async function referenceSource(pathname) {
+  try {
+    const response = await fetch("/api/tour-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accountId: ACCOUNT_ID, tourId: TOUR_ID, assignmentId: view.sceneId, mode: "read", pathname }) });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.presignedUrl || null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+// One at a time rather than all at once, because a Scene can carry several
+// large photographs and a burst of reads slows the page down for no gain.
+async function loadReferenceSources() {
+  for (const entry of view.references) {
+    if (!entry.pathname) continue;
+    if (view.referenceSources[entry.pathname] !== undefined) continue;
+    view.referenceSources[entry.pathname] = await referenceSource(entry.pathname);
+  }
+}
+
+function openReference(index) {
+  const entry = (view.references || [])[index];
+  if (!entry || !viewer || typeof viewer.showModal !== "function") return;
+  const name = entry.filename || "Reference";
+  const source = view.referenceSources[entry.pathname];
+  if (viewerTitle) viewerTitle.textContent = name;
+  if (viewerArtifact) {
+    viewerArtifact.innerHTML = source
+      ? `<img src="${escape(source)}" alt="${escape(name)}" />`
+      : `<div class="m-empty-inline"><span class="m-label">Reference unavailable</span><p class="m-copy">The stored file could not be opened.</p></div>`;
+  }
+  if (!viewer.open) viewer.showModal();
 }
 
 guard(load);

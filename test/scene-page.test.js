@@ -103,6 +103,7 @@ function scenePage({ user = OPERATOR, questions = [], references = [], state = S
     const sent = JSON.parse(init.body);
     if (url === "/api/tour-upload") {
       uploadCalls.push(sent);
+      if (sent.mode === "read") return okReply({ pathname: sent.pathname, presignedUrl: `https://files.example/${encodeURIComponent(sent.pathname)}` });
       return okReply({ references });
     }
     asked.push(sent.action);
@@ -423,6 +424,32 @@ test("an attached reference shows on the page for both and neither uploads", asy
     assert.doesNotMatch(markup, /data-reference="input"/, `${user.role} is offered an uploader on the Scene`);
     assert.equal(page.uploadCalls.filter((entry) => entry.mode === "reference-record").length, 0);
   }
+});
+
+// An attached photograph is read as a picture, not as a filename. Ruled
+// 2026-09-08, for everyone who can open the Scene.
+test("an attached reference is shown as a picture that opens full size, for both readers", async () => {
+  for (const user of [OPERATOR, CLIENT]) {
+    const page = scenePage({ user, references: [REFERENCE] });
+    await page.settle();
+    const markup = page.markup();
+    const read = page.uploadCalls.filter((entry) => entry.mode === "read");
+    assert.equal(read.length, 1, `${user.role} did not ask for the attached file`);
+    assert.equal(read[0].pathname, REFERENCE.pathname);
+    assert.equal(read[0].assignmentId, ASSIGNMENT);
+    assert.match(markup, /<img src="https:\/\/files\.example\//, `${user.role} sees no picture`);
+    assert.match(markup, /data-reference="0"/, `${user.role} cannot open the picture full size`);
+  }
+});
+
+// A path that will not open leaves the tile standing with its name on it, and
+// the page asks for it once rather than on every redraw.
+test("a reference that cannot be opened leaves the page whole and is asked for once", async () => {
+  const page = scenePage({ user: OPERATOR, references: [{ ...REFERENCE, pathname: "" }] });
+  await page.settle();
+  assert.equal(page.uploadCalls.filter((entry) => entry.mode === "read").length, 0);
+  assert.match(page.markup(), /sky-reference\.jpg/);
+  assert.doesNotMatch(page.markup(), /<img src=/);
 });
 
 // ---------------------------------------------------------------------------
