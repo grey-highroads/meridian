@@ -1,7 +1,8 @@
 import { TOUR_ID, scopedBody } from "./context.js";
 import { showNoTour } from "./no-tour.js";
+import { tourLabel } from "./label.js";
 
-// The Scenes directory. One tour, the Scenes under it, read from the tour
+// The Scenes directory. One project, the Scenes under it, read from the tour
 // handler. Nothing is stored here and nothing is decided here. A Scene row is
 // the way into the work.
 //
@@ -76,6 +77,14 @@ async function load() {
 
   const tour = body.tour;
   const assignments = body.assignments || [];
+  // Two sentences on this page name the engagement. The markup carries the
+  // default word so the page reads correctly before the record arrives, and
+  // both are rewritten here from the record the page already loaded.
+  const word = tourLabel(tour).toLowerCase();
+  const intro = document.getElementById("scenes-intro");
+  if (intro) intro.textContent = `Every Scene on the ${word}, from request through delivery.`;
+  const listHeading = document.getElementById("scene-list-heading");
+  if (listHeading) listHeading.textContent = `Scenes on this ${word}`;
   const tourLink = `./tour.html?tour=${encodeURIComponent(TOUR_ID)}`;
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
       <a href="${escape(tourLink)}">${escape(tour.name)}</a>
