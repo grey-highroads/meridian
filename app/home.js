@@ -1,10 +1,9 @@
 import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
-import { TOUR_LABEL, tourLabel } from "./label.js";
 const locationBar = document.getElementById("location");
 const root = document.getElementById("home");
 const reviewCount = document.getElementById("review-count");
 const params = new URLSearchParams(window.location.search);
-const homeView = { user: null, tour: null, label: TOUR_LABEL, assignments: [], introductionStep: 0, introductionWorking: false, introductionMessage: "" };
+const homeView = { user: null, tour: null, assignments: [], introductionStep: 0, introductionWorking: false, introductionMessage: "" };
 
 async function call(action, extra = {}) {
   const response = await fetch("/api/tour", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(scopedBody({ action, tourId: TOUR_ID, ...extra })) });
@@ -52,20 +51,18 @@ function emptyGlyph(kind) {
   return `<svg class="m-empty-state__glyph" viewBox="0 0 64 64" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 44h40M16 36h32M22 28h20"></path><circle cx="32" cy="16" r="4"></circle></svg>`;
 }
 
-// The introduction runs before the tour itself is read, so it takes the word
-// the account already resolved rather than waiting on a tour load.
-function introductionCards(label) {
+function introductionCards() {
   return [
-    { title: "Home", copy: "Your snapshot into everything happening on this project.", kind: "tour", calibration: `${label} / Not started` },
+    { title: "Home", copy: "Your snapshot into everything happening on this project.", kind: "tour", calibration: "Project / Not started" },
     { title: "Scenes", copy: "A Scene can be a song, an intro, a transition, or any moment that needs screen content.", kind: "scene", calibration: "Scene register / Open" },
     { title: "Reviews", copy: "Provide feedback, request changes, or approve the work for final production.", kind: "review", calibration: "Decision queue / Clear" },
-    { title: "Project details", copy: "Instructions that guide the creative work across all the Scenes in this project.", kind: "direction", calibration: `${label} direction / Not set` },
-    { title: "Get Started", copy: "Start by adding the project's visual direction and details so the creative process can begin.", kind: "tour", calibration: `${label} / Not started` },
+    { title: "Project details", copy: "Instructions that guide the creative work across all the Scenes in this project.", kind: "direction", calibration: "Project direction / Not set" },
+    { title: "Get Started", copy: "Start by adding the project's visual direction and details so the creative process can begin.", kind: "tour", calibration: "Project / Not started" },
   ];
 }
 
 function introduction() {
-  const cards = introductionCards(homeView.label);
+  const cards = introductionCards();
   const card = cards[homeView.introductionStep];
   const last = homeView.introductionStep === cards.length - 1;
   locationBar.innerHTML = "";
@@ -78,7 +75,7 @@ function introduction() {
         <p class="m-copy m-copy--large">${escape(card.copy)}</p>
         ${homeView.introductionMessage ? `<div class="m-callout m-callout--change"><p class="m-copy">${escape(homeView.introductionMessage)}</p></div>` : ""}
         <div class="m-empty-state__actions">
-          <button class="m-button m-button--primary" type="button" ${last ? "data-finish-introduction" : "data-next-introduction"} ${homeView.introductionWorking ? "disabled" : ""}>${last ? `Go to ${escape(homeView.label)} details` : "Next"}</button>
+          <button class="m-button m-button--primary" type="button" ${last ? "data-finish-introduction" : "data-next-introduction"} ${homeView.introductionWorking ? "disabled" : ""}>${last ? "Go to Project details" : "Next"}</button>
           <button class="m-button m-button--quiet" type="button" data-skip-introduction ${homeView.introductionWorking ? "disabled" : ""}>Skip introduction</button>
           <span class="m-meta">${homeView.introductionStep + 1} OF ${cards.length}</span>
         </div>
@@ -96,7 +93,6 @@ function explainedCard(id, title, copy, kind, calibration, state = "") {
 // Before Scenes exist, Home explains the sections that will fill in as the
 // team works. The same three cards appear whether the tour exists or not.
 function explainedHome(user, tour) {
-  const label = tour ? tourLabel(tour) : homeView.label;
   const action = tour ? "Open Project details" : "Start the project";
   const reason = tour
     ? "Add the project direction and details there so the creative work has a shared foundation."
@@ -107,7 +103,7 @@ function explainedHome(user, tour) {
     <div class="m-stack">
       ${explainedCard("home-scenes-heading", "Scenes", "Scene requests, current work, and the next step for each Scene will appear here.", "scene", "Scene register / Open", "m-empty-state--action")}
       ${explainedCard("home-reviews-heading", "Reviews", "Work waiting for your feedback, changes, or approval will appear here.", "review", "Decision queue / Clear", "m-empty-state--clear")}
-      ${explainedCard("home-tour-details-heading", "Project details", "Creative direction, dates, venues, and production details will live here.", "direction", `${label} direction / Not set`, "m-empty-state--waiting")}
+      ${explainedCard("home-tour-details-heading", "Project details", "Creative direction, dates, venues, and production details will live here.", "direction", "Project direction / Not set", "m-empty-state--waiting")}
     </div>`;
 }
 
@@ -171,7 +167,6 @@ function currentWork(assignments, user) {
 }
 
 function tourReference(tour) {
-  const label = tourLabel(tour);
   const categories = [
     { label: "Creative direction", ready: Boolean(tour.direction?.words), detail: tour.direction?.words ? `Direction V${version(tour.direction.version)}` : "Not added" },
     { label: "Dates and venues", ready: Boolean((tour.dates || []).length), detail: (tour.dates || []).length ? `${tour.dates.length} dates` : "Not added" },
@@ -186,9 +181,9 @@ function tourReference(tour) {
   }).join("");
   const missing = categories.filter((item) => !item.ready && !item.optional);
   const next = missing[0];
-  const heading = next ? `${next.label} not added` : `${label} foundation is in place`;
+  const heading = next ? `${next.label} not added` : "Project foundation is in place";
   const action = next ? `Add ${next.label.toLowerCase()}` : "View the project";
-  return `<section class="m-home__tour" aria-labelledby="tour-reference-heading"><header class="m-home__reference-head"><span class="m-label">${escape(label)} foundation</span><h2 id="tour-reference-heading" class="m-section-heading">${escape(heading)}</h2></header><div class="m-home__tour-actions"><a class="m-button ${next ? "m-button--primary" : ""}" href="./tour.html?tour=${escape(TOUR_ID)}">${escape(action)}</a>${next ? `<a class="m-home__section-link" href="./tour.html?tour=${escape(TOUR_ID)}">View the whole project</a>` : ""}</div><details class="m-home__tour-details"><summary>Show ${escape(label.toLowerCase())} foundation</summary><div class="m-readiness-list">${rows}</div></details></section>`;
+  return `<section class="m-home__tour" aria-labelledby="tour-reference-heading"><header class="m-home__reference-head"><span class="m-label">Project foundation</span><h2 id="tour-reference-heading" class="m-section-heading">${escape(heading)}</h2></header><div class="m-home__tour-actions"><a class="m-button ${next ? "m-button--primary" : ""}" href="./tour.html?tour=${escape(TOUR_ID)}">${escape(action)}</a>${next ? `<a class="m-home__section-link" href="./tour.html?tour=${escape(TOUR_ID)}">View the whole project</a>` : ""}</div><details class="m-home__tour-details"><summary>Show project foundation</summary><div class="m-readiness-list">${rows}</div></details></section>`;
 }
 
 function recent(facts, user) {
@@ -238,7 +233,7 @@ document.addEventListener("click", (event) => {
   const target = event.target.closest("button");
   if (!target) return;
   if (target.hasAttribute("data-next-introduction")) {
-    homeView.introductionStep = Math.min(homeView.introductionStep + 1, introductionCards(homeView.label).length - 1);
+    homeView.introductionStep = Math.min(homeView.introductionStep + 1, introductionCards().length - 1);
     homeView.introductionMessage = "";
     introduction();
   }
@@ -246,26 +241,11 @@ document.addEventListener("click", (event) => {
   if (target.hasAttribute("data-finish-introduction")) void completeIntroduction("tour");
 });
 
-// The word this account calls its tour, read from the account's own list. The
-// introduction runs before the tour is loaded, so it reads the word here
-// rather than showing the default and correcting itself a moment later.
-async function resolveLabel() {
-  if (!TOUR_ID) return TOUR_LABEL;
-  try {
-    const { tours } = await call("list-tours");
-    const found = (Array.isArray(tours) ? tours : []).find((entry) => entry.id === TOUR_ID);
-    return tourLabel(found);
-  } catch {
-    return TOUR_LABEL;
-  }
-}
-
 async function load() {
   const { user } = await call("get-me");
   homeView.user = user;
   document.querySelectorAll("[data-operator-utility]").forEach((entry) => { entry.hidden = user.role !== "higher-roads"; });
   if (user.role !== "higher-roads" && (params.has("introduction") || !user.introductionSeenAt)) {
-    homeView.label = await resolveLabel();
     introduction();
     return;
   }

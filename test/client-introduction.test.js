@@ -74,7 +74,7 @@ test("the five introduction cards use the existing empty state and exact copy", 
     "Instructions that guide the creative work across all the Scenes in this project.",
     "Start by adding the project's visual direction and details so the creative process can begin.",
   ]) assert.ok(home.includes(copy), `introduction copy changed: ${copy}`);
-  for (const calibration of ["Scene register / Open", "Decision queue / Clear", "${label} direction / Not set", "${label} / Not started"]) {
+  for (const calibration of ["Scene register / Open", "Decision queue / Clear", "Project direction / Not set", "Project / Not started"]) {
     assert.ok(home.includes(calibration), `introduction lost ${calibration}`);
   }
   // The details card reads the container word. The record's label stopped

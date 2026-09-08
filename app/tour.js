@@ -1,5 +1,5 @@
 import { ACCOUNT_ID, TOUR_ID, scopedBody } from "./context.js";
-import { ARTIST_LABEL, artistLabel, tourLabel } from "./label.js";
+import { ARTIST_LABEL, artistLabel } from "./label.js";
 
 // The tour home. The tour record and the direction as the director gave it.
 // The route and the production setup can be written here, each on its own and
@@ -313,7 +313,7 @@ function subjectsSection(tour) {
 function supportingReference(tour) {
   return `<aside class="m-orientation__aside" aria-labelledby="tour-facts-heading">
       <header class="m-orientation__aside-head">
-        <h2 id="tour-facts-heading" class="m-section-heading">${escape(tourLabel(tour))} details</h2>
+        <h2 id="tour-facts-heading" class="m-section-heading">Project details</h2>
       </header>
       ${datesSection(tour)}
       ${setupSection(tour)}
@@ -325,13 +325,13 @@ function supportingReference(tour) {
 function paint() {
   const tour = view.tour;
   locationBar.innerHTML = `<nav class="m-breadcrumb" aria-label="Breadcrumb">
-      <a href="./tour.html?tour=${escape(TOUR_ID)}">${escape(tourLabel(tour))}</a>
+      <a href="./tour.html?tour=${escape(TOUR_ID)}">Project</a>
       <span aria-hidden="true">/</span>
       <span class="m-breadcrumb__current">${escape(tour.name)}</span>
     </nav>`;
   root.innerHTML = `<header class="m-job-header m-tour-header">
       <div class="m-job-header__copy">
-        <span class="m-label">Upcoming tour</span>
+        <span class="m-label">Upcoming project</span>
         <h1 class="m-heading">${escape(tour.name)}</h1>
         <p class="m-meta">${escape(run(tour.dates || []))}</p>
         ${tour.cycle ? `<p class="m-copy">${escape(tour.cycle)}</p>` : ""}
