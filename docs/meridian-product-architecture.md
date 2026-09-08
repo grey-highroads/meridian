@@ -625,3 +625,40 @@ is invited before anyone has decided that about them. No change to
 see and a different act by a different person. No new design class: the control
 uses the nearest accepted set and the missing pattern is recorded in
 `docs/deferred-work.md` under Design pattern requests.
+
+## A project carries a kind, 2026-09-08
+
+Recorded against the committed tree at `d8aa3b4`, after an audit of every place
+the word tour reaches a person. Ruled by Grey in the session. Nothing here is
+built yet.
+
+**The audit found four different jobs, not one word.** Naming the engagement,
+where the record is in hand and already carries a display label. Fields that
+assume touring, which is structure and not wording. Naming who the work is for,
+which belongs to the account and never to the gig type. And the stored words and
+routes, which are ruled to stay. The workflow vocabulary needs no change at all:
+Scene, Artboard, Direction, Review, Brief, and production intent read correctly
+for a job that is not a tour.
+
+**A project carries a kind, the same way a subject does.** Kind is semantic. It
+picks the field set the project offers and the default word on screen. The
+display label stays presentation, stays overridable, and branches nothing. One
+selector, at project creation, and nowhere else. Every other page reads what the
+project carries.
+
+**Two kinds, not five.** Touring, which the pilot is, and the mapping job, which
+is the real project in front of us. A third kind is added when a third real
+project arrives.
+
+**The mapping field set is not designed here.** A building has no stops, and
+Dates and venues, Playback system, and Production setup were written for an
+itinerary. What the mapping kind carries comes from entering that job in the
+live app, which is the acceptance for steps 1 and 2 of
+`docs/meridian-roadmap-phase-2.md`. Designing the field set before entering the
+job would be building against a guess.
+
+What this does not license. No kind selector on any page other than creation. No
+second word for the same record depending on where you are reading it. No change
+to the stored words `tour` and `artistId` or to the routes, which the 2026-09-05
+rulings on subjects already settled. No field set invented ahead of a real
+project needing it.
