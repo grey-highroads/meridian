@@ -215,6 +215,30 @@ async function resolveResearchSubject(tour, options) {
   return null;
 }
 
+// What the reader calls the thing this project is about. The first subject the
+// project holds, in the order get-tour already derives, because multi-subject
+// wording waits for step 4 of the phase 2 roadmap. This is not
+// resolveResearchSubject: that answers which subject has research, and this
+// answers what to call the one a sentence names.
+async function leadSubject(tour, options) {
+  const ids = Array.isArray(tour.subjectIds) ? tour.subjectIds : [];
+  if (!ids.length) return null;
+  const artistDirectory = options.artists || createArtistDirectory({
+    ...((options.store?.backend || options.tourStore?.backend)
+      ? { backend: options.store?.backend || options.tourStore.backend }
+      : {}),
+    accountId: options.actingAccount,
+  });
+  const row = await artistDirectory.findArtist(ids[0]);
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    label: row.label === undefined ? null : row.label,
+    kind: row.kind || null,
+  };
+}
+
 async function contextFor(body, options) {
   const tourId = sanitizeClientId(body.tourId || "");
   const fixture = await loadTour(tourId, options);
@@ -583,7 +607,12 @@ export async function handleAction(body, options = {}) {
         ...state,
       });
     }
-    return { tour: fixture.tour, assignments };
+    // A client is shown the work, not the vocabulary behind it, so no subject
+    // block reaches that projection. Null for a project with no subject, which
+    // is what the no-subject copy on every page already reads.
+    if (user.role === CLIENT_ROLE) return { tour: fixture.tour, assignments };
+    const subject = await leadSubject(fixture.tour, { ...options, actingAccount });
+    return { tour: fixture.tour, assignments, subject };
   }
   if (body.action === "add-tour-direction") {
     const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
