@@ -290,19 +290,45 @@ async function uploadRead(pathname, options) {
 }
 
 test("the upload read route signs a presented file and refuses an unpresented file for a client while Higher Roads still reads both", async () => {
-  const { artboardStore, firstPath, secondPath } = await ready();
-  const presented = await uploadRead(firstPath, { user: REVIEWER, artboardStore });
+  const { artboardStore, options, firstPath, secondPath } = await ready();
+  const presented = await uploadRead(firstPath, { ...options, user: REVIEWER, artboardStore });
   assert.equal(presented.statusCode, 200);
   assert.equal(presented.body.pathname, firstPath);
   assert.match(presented.body.presignedUrl, /^https:\/\/files\.example\//);
 
-  const refused = await uploadRead(secondPath, { user: REVIEWER, artboardStore });
+  const refused = await uploadRead(secondPath, { ...options, user: REVIEWER, artboardStore });
   assert.equal(refused.statusCode, 403);
   assert.deepEqual(refused.body, { error: "That part of Meridian is for the Higher Roads team." });
 
-  const operator = await uploadRead(secondPath, { user: OPERATOR, artboardStore });
+  const operator = await uploadRead(secondPath, { ...options, user: OPERATOR, artboardStore });
   assert.equal(operator.statusCode, 200);
   assert.equal(operator.body.pathname, secondPath);
+});
+
+// A reference image is what the client attached when she asked for the Scene,
+// so everyone who can open the Scene can open it. Ruled 2026-09-08. What the
+// record names is what opens; a file sitting in the same folder with no fact
+// behind it stays refused.
+test("a client opens a reference image attached to her Scene, and an unrecorded file in the same folder stays refused", async () => {
+  const { artboardStore, options } = await ready();
+  const referencePath = uploadPathFor(TOUR, ASSIGNMENT, "stage.png", ACCOUNT, "reference-one");
+  const strayPath = uploadPathFor(TOUR, ASSIGNMENT, "stray.png", ACCOUNT, "never-recorded");
+
+  const recorded = responseRecorder();
+  await tourUpload({
+    method: "POST",
+    headers: {},
+    body: { mode: "reference-record", ...AT, pathname: referencePath, filename: "stage.png", contentType: "image/png" },
+  }, recorded, { ...options, user: REVIEWER });
+  assert.deepEqual(recorded.body, { ok: true });
+
+  const opened = await uploadRead(referencePath, { ...options, user: REVIEWER, artboardStore });
+  assert.equal(opened.statusCode, 200);
+  assert.equal(opened.body.pathname, referencePath);
+
+  const refused = await uploadRead(strayPath, { ...options, user: REVIEWER, artboardStore });
+  assert.equal(refused.statusCode, 403);
+  assert.deepEqual(refused.body, { error: "That part of Meridian is for the Higher Roads team." });
 });
 
 // Approval is a setting on a client person, off by default, ruled 2026-09-04.

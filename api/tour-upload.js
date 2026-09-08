@@ -19,6 +19,18 @@ function clientSurfaceError() {
   return error;
 }
 
+async function sceneRecordFor(accountId, options) {
+  if (options.sceneRecord) return options.sceneRecord;
+  const { createSceneRecord } = await import("../src/tour/scene-record.js");
+  return createSceneRecord({ accountId });
+}
+
+async function isRecordedReference(accountId, tourId, assignmentId, pathname, options) {
+  const record = await sceneRecordFor(accountId, options);
+  const facts = await record.readFacts(tourId, assignmentId);
+  return facts.some((fact) => fact.action === "Added reference" && fact.pathname === pathname);
+}
+
 export default async function handler(request, response, options = {}) {
   const user = options.user || await requireUser(request, response, options);
   if (!user) return;
@@ -39,8 +51,7 @@ export default async function handler(request, response, options = {}) {
     const presign = options.presignUrl || presignUrl;
 
     if (String(body.mode || "") === "reference-list") {
-      const { createSceneRecord } = await import("../src/tour/scene-record.js");
-      const record = createSceneRecord({ accountId });
+      const record = await sceneRecordFor(accountId, options);
       const facts = await record.readFacts(tourId, assignmentId);
       const references = facts.filter((fact) => fact.action === "Added reference").map((fact) => ({
         pathname: fact.pathname,
@@ -53,8 +64,7 @@ export default async function handler(request, response, options = {}) {
       return;
     }
     if (String(body.mode || "") === "reference-record") {
-      const { createSceneRecord } = await import("../src/tour/scene-record.js");
-      const record = createSceneRecord({ accountId });
+      const record = await sceneRecordFor(accountId, options);
       const pathname = String(body.pathname || "");
       if (!pathname.startsWith(prefix)) throw new Error("That file is outside this Scene.");
       await record.appendFact(tourId, assignmentId, {
@@ -84,7 +94,12 @@ export default async function handler(request, response, options = {}) {
           visible.has(Number(entry.artboard.artboardVersion))
           && entry.artboard.artifact?.blobPathname === pathname
         ));
-        if (!presented) throw clientSurfaceError();
+        // A reference image is what the client attached when she asked, and
+        // everyone who can open the Scene can see it. Ruled 2026-09-08. The
+        // file has to be one the record names, not merely one sitting in the
+        // Scene's folder, so an unrecorded upload is still refused.
+        const attached = presented ? false : await isRecordedReference(accountId, tourId, assignmentId, pathname, options);
+        if (!presented && !attached) throw clientSurfaceError();
       }
       const validUntil = Date.now() + 15 * 60 * 1000;
       const signedToken = await sign({ ...credentials, pathname, operations: ["get"], validUntil });
