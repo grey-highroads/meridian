@@ -294,6 +294,28 @@ export function createTourStore(options = {}) {
       return setup;
     },
 
+    // The physical things in the room the media plays on, in the words a
+    // person used. Versioned the same way the dates are, so a list that
+    // changed still shows when it changed and who changed it. A project
+    // stored before this field reads an empty list and is not rewritten.
+    async readSurfaceVersions(tourId) {
+      const stored = await readTourDocument(tourId, "surfaces", { versions: [] });
+      return Array.isArray(stored.versions) ? stored.versions : [];
+    },
+
+    async addSurfaces(tourId, entry) {
+      const versions = await this.readSurfaceVersions(tourId);
+      if (versions.some((stored) => stored.version === entry.version)) {
+        const error = new Error("That surfaces version already exists.");
+        error.status = 409;
+        throw error;
+      }
+      versions.push(entry);
+      versions.sort((left, right) => left.version - right.version);
+      await writeTourDocument(tourId, "surfaces", { versions });
+      return entry;
+    },
+
     async readRequests(tourId) {
       const stored = await readTourDocument(tourId, "requests", { scenes: [] });
       return Array.isArray(stored.scenes) ? stored.scenes : [];

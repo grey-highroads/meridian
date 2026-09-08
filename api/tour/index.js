@@ -59,17 +59,23 @@ async function loadTour(tourId, options) {
     error.status = 404;
     throw error;
   }
-  const [directions, requests, dateVersions, setupVersions] = await Promise.all([
+  const [directions, requests, dateVersions, setupVersions, surfaceVersions] = await Promise.all([
     tourStore.readDirections(stored.tour.id),
     tourStore.readRequests(stored.tour.id),
     tourStore.readDateVersions(stored.tour.id),
     tourStore.readSetupVersions(stored.tour.id),
+    tourStore.readSurfaceVersions(stored.tour.id),
   ]);
   const direction = directions.length ? directions[directions.length - 1] : stored.tour.direction;
   // The tour document holds what the tour was seeded or created with. A later
   // version written through the app wins, and the earlier one stays stored.
   const dates = dateVersions.length ? dateVersions[dateVersions.length - 1].dates : (stored.tour.dates || []);
   const productionSetup = setupVersions.length ? setupVersions[setupVersions.length - 1] : (stored.tour.productionSetup || null);
+  // What the media plays on. A project from before this field reads an empty
+  // list rather than a missing one, so every reader gets the same shape.
+  const surfaces = surfaceVersions.length
+    ? surfaceVersions[surfaceVersions.length - 1].surfaces
+    : (Array.isArray(stored.tour.surfaces) ? stored.tour.surfaces : []);
   // Who the work is for, derived at read. The stored artistId from before
   // the subject list existed reads as the first subject; nothing stored is
   // rewritten. Order is artistId first, then attachments in the order made.
@@ -78,7 +84,7 @@ async function loadTour(tourId, options) {
     ? [stored.tour.artistId, ...attached.filter((entry) => entry !== stored.tour.artistId)]
     : [...attached];
   return {
-    tour: { ...stored.tour, direction, dates, productionSetup, subjectIds },
+    tour: { ...stored.tour, direction, dates, productionSetup, surfaces, subjectIds },
     assignments: [...(stored.assignments || []), ...requests],
   };
 }
@@ -431,6 +437,7 @@ const CLIENT_ACTIONS = new Set([
   "create-tour",
   "save-tour-dates",
   "save-production-setup",
+  "save-tour-surfaces",
   "create-scene-request",
   "get-scene-workspace",
   "save-scene-direction",
@@ -802,6 +809,47 @@ export async function handleAction(body, options = {}) {
       at: entry.setOn,
     });
     return { dates: entry };
+  }
+
+  // The things in the room the media plays on, in the words a person used. The
+  // whole list arrives and the whole list is written as a new version, so an
+  // edit to one entry leaves the others exactly as they were. Names and
+  // descriptions only. Geometry belongs to a production tool.
+  if (body.action === "save-tour-surfaces") {
+    const fixture = await loadTour(sanitizeClientId(body.tourId || ""), options);
+    const surfaces = (Array.isArray(body.surfaces) ? body.surfaces : [])
+      .map((entry) => {
+        const source = entry && typeof entry === "object" ? entry : {};
+        return {
+          name: optionalText(source.name),
+          description: optionalText(source.description),
+        };
+      })
+      .filter((entry) => entry.name || entry.description);
+    if (!surfaces.length) {
+      const error = new Error("Add at least one surface before saving.");
+      error.status = 400;
+      throw error;
+    }
+    const tourStore = options.tourStore || createTourStore({ accountId: actingAccount });
+    const existing = await tourStore.readSurfaceVersions(fixture.tour.id);
+    const entry = {
+      version: existing.length + 1,
+      surfaces,
+      setBy: optionalText(body.onBehalfOf) || user.displayName,
+      setOn: new Date().toISOString(),
+      recordedBy: user.displayName,
+      onBehalfOf: optionalText(body.onBehalfOf),
+    };
+    await tourStore.addSurfaces(fixture.tour.id, entry);
+    await tourStore.appendTourFact(fixture.tour.id, {
+      ...actor,
+      action: surfaces.length === 1 ? "Recorded 1 surface" : `Recorded ${surfaces.length} surfaces`,
+      version: `Surfaces V0${entry.version}`,
+      onBehalfOf: entry.onBehalfOf,
+      at: entry.setOn,
+    });
+    return { surfaces: entry };
   }
 
   // What the show plays on, stored as production gave it. Dates where the rig
