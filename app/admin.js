@@ -734,9 +734,9 @@ document.addEventListener("click", (event) => {
       }
       view.creatingAccount = false;
       if (!created.artist) {
-        return { summary: `${created.account.name} was created. Open the account above to start the first job.` };
+        return { summary: `${created.account.name} was created. Open the account above to start the first project.` };
       }
-      return { summary: `${created.account.name} was created with ${created.artist.name}. Open the account above to start the tour.` };
+      return { summary: `${created.account.name} was created with ${created.artist.name}. Open the account above to start the first project.` };
     });
   }
   if (target.hasAttribute("data-edit-artist-label")) {
