@@ -753,3 +753,25 @@ stays after it. No geometry, projector positions, throw distances, or anything a
 production tool owns. No change to the frozen brief payload, which is contract work and
 belongs with the brief contract version in the phase 2 roadmap. Feeding the list to
 concept development is internal and is fair.
+
+## Reference images are shown to everyone who can open the Scene, 2026-09-08, fourth session
+
+Recorded against the committed tree at `605409b`. Ruled by Grey in conversation after a
+screenshot of the Higher Roads Scene showing an attached file as the line `jpeg.jpeg`.
+
+**A reference image is shown as a picture.** The Scene listed the filenames of attached
+files and showed nothing of what was attached. Both Scene views now show each attachment
+as a thumbnail with its name under it, and clicking one opens it full size on the page.
+Attaching still happens on the request screen, where the asking happens. The Scene takes
+no upload, which is the 2026-08-27 ruling and is unchanged.
+
+No thumbnail pipeline. The stored file is scaled down by the browser, the same way the
+Reviews gallery does it, and the deferred-work entry naming when real thumbnails become
+necessary still governs.
+
+**All users see reference images attached to a Scene.** The read route refused a client
+any file that was not an artboard already presented to her, so her own attachment would
+not open for her. A client may now read a file the Scene record names as a reference.
+What the record names is what opens, so a file sitting in the Scene's folder with no fact
+behind it stays refused, and the artboard rule is untouched: an unpresented version is
+still refused to a client.
