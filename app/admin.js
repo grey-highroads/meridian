@@ -1,5 +1,5 @@
 import { scopedBody } from "./context.js";
-import { ARTIST_LABEL, artistLabel } from "./label.js";
+import { ARTIST_LABEL, artistLabel, subjectWord } from "./label.js";
 
 // Higher Roads maintenance. The lists come first: the accounts Meridian holds,
 // and inside the one being worked in its artists, its tours, and its people.
@@ -82,7 +82,7 @@ function accountRow(entry) {
   const armed = view.confirmName.trim() === entry.name;
   const controls = arming
     ? `<div class="m-admin-confirm">
-         <p class="m-copy">Deleting ${escape(entry.name)} removes its artists, its brains, its projects, and every approval on record. Nothing brings it back.</p>
+         <p class="m-copy">Deleting ${escape(entry.name)} removes its Intelligence sources, their research, its projects, and every approval on record. Nothing brings it back.</p>
          <div class="m-admin-confirm__actions">
            <input class="m-input" data-field="confirm" value="${escape(view.confirmName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the account name to delete it">
            <button class="m-button m-button--change" type="button" data-delete-account="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete account"}</button>
@@ -109,15 +109,15 @@ function tourRow(entry) {
   // second is a row pointing at something that is not there.
   const artist = entry.artistId ? view.artists.find((candidate) => candidate.id === entry.artistId) : null;
   const subjectLine = entry.artistId
-    ? (artist ? artist.name : `${ARTIST_LABEL} not found`)
-    : `No ${ARTIST_LABEL.toLowerCase()} on this job`;
-  const subject = artistLabel(artist).toLowerCase();
+    ? (artist ? artist.name : "The Intelligence source it names is gone")
+    : "No Intelligence source on this job";
+  const subject = subjectWord(artist).toLowerCase();
   const active = entry.id === view.activeTourId;
   const arming = view.deletingTour === entry.id;
   const armed = view.confirmTourName.trim() === entry.name;
   const remove = arming
     ? `<div class="m-admin-confirm">
-         <p class="m-copy">Deleting ${escape(entry.name)} removes its Scenes, files, reviews, and approvals.${entry.artistId ? ` The ${escape(subject)} and ${escape(artistLabel(artist))} Brain stay in the account.` : ""} This cannot be undone.</p>
+         <p class="m-copy">Deleting ${escape(entry.name)} removes its Scenes, files, reviews, and approvals.${entry.artistId ? ` The ${escape(subject)} and its research stay in the account.` : ""} This cannot be undone.</p>
          <div class="m-admin-confirm__actions">
            <input class="m-input" data-field="confirm-tour" value="${escape(view.confirmTourName)}" placeholder="Type ${escape(entry.name)}" aria-label="Type the project name to delete it">
            <button class="m-button m-button--change" type="button" data-delete-tour="${escape(entry.id)}" ${armed && !view.working ? "" : "disabled"}>${view.working ? "Deleting" : "Delete project"}</button>
@@ -296,18 +296,18 @@ function sectionHead(id, title, count, action = "") {
 function accountForm() {
   if (!view.creatingAccount) return "";
   return `<div class="m-admin-account-form" id="admin-account-form">
-      <p class="m-copy">Create the client account, with its first ${escape(ARTIST_LABEL.toLowerCase())} if the work is about one.</p>
+      <p class="m-copy">Create the client account, with the first thing Meridian should research if the work is about one.</p>
       <div class="m-field">
         <label class="m-label" for="account-name">Account name</label>
         <input class="m-input" id="account-name" data-field="account" value="${escape(acts.account.name)}" placeholder="For example, Northstar Live">
       </div>
       <div class="m-field">
-        <label class="m-label" for="account-artist">${escape(ARTIST_LABEL)} name</label>
+        <label class="m-label" for="account-artist">Name</label>
         <input class="m-input" id="account-artist" data-field="account-artist" value="${escape(acts.account.artistName)}" placeholder="For example, Wren Halloway">
-        <span class="m-help">Optional. Leave it blank for an account whose work is not about an ${escape(ARTIST_LABEL.toLowerCase())}, or add one here later.</span>
+        <span class="m-help">Optional. An artist, a venue or building, or a company. Leave it blank for an account whose work is about none of those, or add one here later.</span>
       </div>
       <div class="m-field">
-        <label class="m-label" for="account-artist-label">What to call this subject</label>
+        <label class="m-label" for="account-artist-label">What to call it</label>
         <input class="m-input" id="account-artist-label" data-field="account-artist-label" value="${escape(acts.account.artistLabel)}" placeholder="${escape(ARTIST_LABEL)}">
         <span class="m-help">Optional. Use Composer, Company, or whatever fits. Leave it blank for ${escape(ARTIST_LABEL)}.</span>
       </div>
@@ -347,7 +347,7 @@ function artistContent() {
         ? artistLabelForm(entry)
         : row(
           entry.name,
-          `${artistLabel(entry)} / ${(entry.identities || []).join(", ") || "One identity"}`,
+          `${subjectWord(entry)} / ${(entry.identities || []).join(", ") || "One identity"}`,
           undefined,
           `<button class="m-button m-button--quiet m-button--small" type="button" data-edit-artist-label="${escape(entry.id)}">Change the word</button>`,
         ))),
@@ -372,7 +372,7 @@ function artistContent() {
       <div class="m-cluster">
         <button class="m-button m-button--primary" type="button" data-create-artist ${acts.artist.working ? "disabled" : ""}>${acts.artist.working ? "Adding" : "Add"}</button>
       </div>
-      ${resultBlock(acts.artist, `${artistLabel(acts.artist.result)} added`)}
+      ${resultBlock(acts.artist, `${subjectWord(acts.artist.result)} added`)}
     </div>`;
 }
 
@@ -727,8 +727,8 @@ document.addEventListener("click", (event) => {
       // in the words the server used.
       if (created.artistError) {
         return {
-          summary: `${created.account.name} was created, but the artist was not: ${created.artistError}`,
-          lines: ["Open the account above and add the artist there."],
+          summary: `${created.account.name} was created, but the Intelligence source was not: ${created.artistError}`,
+          lines: ["Open the account above and add it there."],
         };
       }
       view.creatingAccount = false;

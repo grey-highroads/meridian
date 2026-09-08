@@ -2,6 +2,7 @@ import { ACCOUNT_ID, TOUR_ID, preserveContextNavigation, scopedBody } from "./co
 import { resolveArtifact } from "./artifact.js";
 import { showNoTour } from "./no-tour.js";
 import { renderBoardReviewInDrawer } from "./intelligence/board-view.js";
+import { subjectWord } from "./label.js";
 
 preserveContextNavigation();
 
@@ -22,6 +23,7 @@ const view = {
   user: null,
   actingAccount: null,
   tour: null,
+  subject: null,
   scenes: [],
   artifacts: new Map(),
   selected: null,
@@ -227,7 +229,7 @@ function operatorActions(detail, scene) {
         ${!latest ? `<p class="m-copy">Only the latest Artboard can be presented.</p>` : approved ? `<p class="m-copy">The client approved this Artboard.</p>` : ready ? `<p class="m-copy">The client can now review this Artboard.</p>` : `<p class="m-copy">Make this Artboard available for the client's decision.</p><div class="m-drawer__actions"><button class="m-button m-button--primary" type="button" data-present>Present to client</button></div>`}
         ${presentResult}
         <details class="m-drawer__context"><summary>Brief used for this Artboard</summary><div class="m-drawer__context-body"><p class="m-copy">${briefVersion ? `Brief V${version(briefVersion)}` : "No brief reference was recorded."}</p></div></details>
-        <details class="m-drawer__context"${view.boardReviewOpen ? " open" : ""}><summary>Checked against this artist's history</summary><div class="m-drawer__context-body">${boardReadBody(detail)}</div></details>
+        <details class="m-drawer__context"${view.boardReviewOpen ? " open" : ""}><summary>Checked against this ${escape(word())}'s history</summary><div class="m-drawer__context-body">${boardReadBody(detail)}</div></details>
       </section>
     </div>`;
 }
@@ -236,11 +238,18 @@ function operatorActions(detail, scene) {
 // Present to client action above is unchanged: it is written before this, it
 // never consults it, and a version with a read full of departures presents in
 // the same one click as a version with no read at all.
+// The subject's own word, lowercased for the middle of a sentence. A project
+// with no subject reads the word Meridian has always used, and the drawer that
+// names it only renders where a read exists.
+function word() {
+  return subjectWord(view.subject).toLowerCase();
+}
+
 function boardReadBody(detail) {
   if (view.boardReading) return `<p class="m-copy">Checking this Artboard.</p>`;
   const message = view.messageAt === "board" && view.message
     ? `<div class="m-drawer__result"><p class="m-copy">${escape(view.message)}</p></div>` : "";
-  return `${renderBoardReviewInDrawer(detail.boardRead)}${message}`;
+  return `${renderBoardReviewInDrawer(detail.boardRead, word())}${message}`;
 }
 
 function clientActions(detail, scene) {
@@ -494,10 +503,13 @@ async function load() {
     showNoTour(root, locationBar);
     return;
   }
-  const [{ user, actingAccount }, { tour, assignments }] = await Promise.all([call("get-me"), call("get-tour")]);
+  const [{ user, actingAccount }, { tour, assignments, subject }] = await Promise.all([call("get-me"), call("get-tour")]);
   view.user = user;
   view.actingAccount = actingAccount;
   view.tour = tour;
+  // What the reader calls the thing this project is about. A client session is
+  // sent no subject block and reads none of the copy that uses it.
+  view.subject = subject || null;
   const rows = await Promise.all(assignments.map(async (scene) => {
     const result = await call("get-artboards", { assignmentId: scene.id });
     const artboards = (result.artboards || []).slice().sort((left, right) => right.artboard.artboardVersion - left.artboard.artboardVersion);

@@ -117,3 +117,34 @@ test("the Intelligence page keeps its no-subject copy and gains no word", () => 
   assert.doesNotMatch(read("app/intelligence.html"), /artist/i, "the meta description still names an artist before any record is read");
 });
 
+
+// The Reviews page and Admin, where the word has to be read off the record
+// rather than passed in by a caller.
+
+test("the Reviews drawer summary reads the subject's word and the page reads it off get-tour", () => {
+  const source = read("app/reviews.js");
+  assert.match(source, /Checked against this \$\{escape\(word\(\)\)\}'s history/, "the drawer summary still names an artist");
+  assert.match(source, /renderBoardReviewInDrawer\(detail\.boardRead, word\(\)\)/, "the drawer body is rendered without the word");
+  assert.match(source, /\{ tour, assignments, subject \}/, "the page never reads the subject block");
+  assert.doesNotMatch(source, /artist/i, "the word artist survived on the Reviews page");
+});
+
+test("Admin names Intelligence sources rather than artists or brains", () => {
+  const source = read("app/admin.js");
+  for (const line of [
+    "removes its Intelligence sources, their research, its projects",
+    "No Intelligence source on this job",
+    "The Intelligence source it names is gone",
+  ]) {
+    assert.ok(source.includes(line), `Admin lost "${line}"`);
+  }
+  // Every word a person reads. Identifiers, routes, and stored field names
+  // carry artist and stay as they are, which is what the ruling says.
+  for (const wrong of [
+    "its artists, its brains",
+    "Brain stay in the account",
+    "What to call this subject",
+  ]) {
+    assert.ok(!source.includes(wrong), `Admin still reads "${wrong}"`);
+  }
+});
